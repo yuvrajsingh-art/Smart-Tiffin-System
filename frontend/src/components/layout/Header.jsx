@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -64,9 +65,9 @@ const Header = () => {
 
                     {/* Desktop Actions */}
                     <div className="hidden lg:flex items-center gap-4">
-                        <button className="text-sm font-bold text-[#111716] hover:text-primary transition-colors px-4 py-2">
+                        <Link to="/login" className="text-sm font-bold text-[#111716] hover:text-primary transition-colors px-4 py-2">
                             Login
-                        </button>
+                        </Link>
                         <button className="bg-primary text-white text-sm font-bold px-6 py-3 rounded-full shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:bg-orange-600 transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-2">
                             <span>Get Started</span>
                             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -120,9 +121,9 @@ const Header = () => {
                         transition: 'all 0.4s ease-out 0.2s'
                     }}
                 >
-                    <button className="w-full py-4 rounded-xl border-2 border-[#111716]/10 text-lg font-bold text-[#111716] hover:bg-[#111716]/5 transition-colors">
+                    <Link to="/login" className="w-full py-4 rounded-xl border-2 border-[#111716]/10 text-lg font-bold text-[#111716] hover:bg-[#111716]/5 transition-colors text-center">
                         Login
-                    </button>
+                    </Link>
                     <button className="w-full py-4 rounded-xl bg-primary text-white text-lg font-bold shadow-xl shadow-primary/20 hover:bg-orange-600 transition-colors flex items-center justify-center gap-2">
                         <span>Get Started</span>
                         <span className="material-symbols-outlined">arrow_forward</span>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function HeroSection() {
     return (
@@ -26,9 +27,9 @@ function HeroSection() {
                             <button className="bg-[#111716] text-white text-base font-bold px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 min-w-[200px]">
                                 Get Started
                             </button>
-                            <button className="bg-white text-[#111716] border border-gray-200 text-base font-bold px-8 py-4 rounded-xl shadow-sm hover:shadow-md hover:border-primary/50 hover:text-primary transition-all duration-300 flex items-center justify-center gap-3 min-w-[200px]">
+                            <Link to="/login" className="bg-white text-[#111716] border border-gray-200 text-base font-bold px-8 py-4 rounded-xl shadow-sm hover:shadow-md hover:border-primary/50 hover:text-primary transition-all duration-300 flex items-center justify-center gap-3 min-w-[200px]">
                                 Login
-                            </button>
+                            </Link>
                         </div>
                     </div>
                     <div className="flex-1 w-full relative perspective-1000">
