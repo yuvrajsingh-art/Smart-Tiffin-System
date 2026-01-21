@@ -31,9 +31,9 @@ function LandingPage() {
     return (
         <div className="font-display bg-[#FAFAFA] text-[#111716] overflow-x-hidden min-h-screen relative selection:bg-primary/10 selection:text-primary tracking-tight antialiased">
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="blob w-[300px] h-[300px] md:w-[700px] md:h-[700px] bg-orange-500/5 md:bg-orange-500/10 -top-20 -left-20 mix-blend-multiply"></div>
-                <div className="blob w-[200px] h-[200px] md:w-[600px] md:h-[600px] bg-amber-400/5 md:bg-amber-400/10 top-1/4 right-0 translate-x-1/4 mix-blend-multiply"></div>
-                <div className="blob w-[300px] h-[300px] md:w-[800px] md:h-[800px] bg-orange-300/5 md:bg-orange-300/10 bottom-0 left-1/4 mix-blend-multiply"></div>
+                <div className="blob w-[500px] h-[500px] md:w-[900px] md:h-[900px] bg-orange-200/20 -top-[10%] -left-[10%] mix-blend-multiply opacity-50 blur-[100px]"></div>
+                <div className="blob w-[400px] h-[400px] md:w-[700px] md:h-[700px] bg-rose-200/20 top-1/4 right-0 mix-blend-multiply opacity-50 blur-[90px]"></div>
+                <div className="blob w-[500px] h-[500px] md:w-[900px] md:h-[900px] bg-amber-100/30 bottom-0 left-1/4 mix-blend-multiply opacity-60 blur-[100px]"></div>
             </div>
             <Header />
             <main className="space-y-12 md:space-y-24 pb-12 md:pb-20">
