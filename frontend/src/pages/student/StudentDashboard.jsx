@@ -1,9 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 
 /**
  * Reusable Statistic Card Component
- * Displays a metric with an icon and subtext.
  */
 const StatCard = ({ title, value, subtext, icon, color }) => (
     <div className="glass-panel p-5 rounded-2xl flex items-start justify-between relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
@@ -19,8 +19,7 @@ const StatCard = ({ title, value, subtext, icon, color }) => (
 );
 
 /**
- * Menu Display Card
- * Shows the current meal image and actions (Eat/Skip).
+ * Menu Display Card (Preview)
  */
 const MenuCard = () => (
     <div className="glass-panel p-0 rounded-3xl overflow-hidden group">
@@ -39,7 +38,7 @@ const MenuCard = () => (
         <div className="p-5">
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
                 <div className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-gra-400 text-[18px]">schedule</span>
+                    <span className="material-symbols-outlined text-gray-400 text-[18px]">schedule</span>
                     <span>12:30 PM - 02:00 PM</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -49,8 +48,12 @@ const MenuCard = () => (
             </div>
 
             <div className="flex gap-3">
-                <Button className="flex-1 !py-2.5 text-sm">I'm Eating</Button>
-                <Button variant="outline" className="flex-1 !py-2.5 text-sm !border-red-200 !text-red-500 hover:!bg-red-50">Skip Meal</Button>
+                <Link to="/student/menu" className="flex-1">
+                    <Button className="w-full !py-2.5 text-sm">View Full Menu</Button>
+                </Link>
+                <Link to="/student/track" className="flex-1">
+                    <Button variant="outline" className="w-full !py-2.5 text-sm">Track Order</Button>
+                </Link>
             </div>
         </div>
     </div>
@@ -58,82 +61,131 @@ const MenuCard = () => (
 
 const StudentDashboard = () => {
     return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease-out]">
-            {/* Header */}
-            <div>
-                <h2 className="text-2xl font-bold text-gray-900">Welcome back, Rahul! 👋</h2>
-                <p className="text-gray-500 text-sm mt-1">Here's what's happening with your tiffin today.</p>
-            </div>
+        <div className="max-w-6xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease-out]">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 animate-[fadeIn_0.5s_ease-out]">
+                <div>
+                    <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Good Afternoon, Sumit! ☀️</h2>
+                    <p className="text-gray-500 font-medium mt-1 text-lg">Your tiffin is being prepared with love.</p>
+                </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard
-                    title="Remaining Meals"
-                    value="24"
-                    subtext="Expiring in 28 days"
-                    icon="lunch_dining"
-                    color="bg-primary"
-                />
-                <StatCard
-                    title="Wallet Balance"
-                    value="₹1,250"
-                    subtext="Last added ₹500"
-                    icon="account_balance_wallet"
-                    color="bg-emerald-500"
-                />
-                <StatCard
-                    title="Skipped Meals"
-                    value="2"
-                    subtext="Saved ₹160 this month"
-                    icon="no_meals"
-                    color="bg-rose-500"
-                />
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left: Today's Menu */}
-                <section>
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-gray-800">Your Next Meal</h3>
-                        <span className="text-primary text-sm font-bold cursor-pointer hover:underline">View Weekly Menu</span>
-                    </div>
-                    <MenuCard />
-                </section>
-
-                {/* Right: Recent Activity / Quick Actions */}
-                <section className="space-y-6">
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-                        <div className="glass-panel p-5 rounded-2xl space-y-4">
-                            <div className="flex items-center justify-between p-3 hover:bg-white/50 rounded-xl transition-colors cursor-pointer group">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-                                        <span className="material-symbols-outlined">calendar_month</span>
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900 text-sm">Pause Subscription</p>
-                                        <p className="text-xs text-gray-500">Going home for weekend?</p>
-                                    </div>
-                                </div>
-                                <span className="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">chevron_right</span>
-                            </div>
-
-                            <div className="flex items-center justify-between p-3 hover:bg-white/50 rounded-xl transition-colors cursor-pointer group">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
-                                        <span className="material-symbols-outlined">support_agent</span>
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900 text-sm">Help & Support</p>
-                                        <p className="text-xs text-gray-500">Report an issue</p>
-                                    </div>
-                                </div>
-                                <span className="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">chevron_right</span>
-                            </div>
+                <Link to="/student/wallet" className="group">
+                    <div className="glass-panel px-6 py-3 rounded-2xl flex items-center gap-3 hover:bg-emerald-50/50 transition-colors">
+                        <div className="bg-emerald-100 p-2 rounded-full text-emerald-600 group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
+                        </div>
+                        <div className="text-left">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Balance</p>
+                            <p className="text-xl font-bold text-gray-900">₹ 1,250</p>
                         </div>
                     </div>
-                </section>
+                </Link>
+            </div>
+
+            {/* Quick Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-[fadeIn_0.6s_ease-out]">
+                <StatCard
+                    title="Meal Plan"
+                    value="Gold"
+                    subtext="Valid till 30 Jan"
+                    icon="workspace_premium"
+                    color="bg-amber-500"
+                />
+                <StatCard
+                    title="Meals Left"
+                    value="24"
+                    subtext="Lunch & Dinner"
+                    icon="restaurant"
+                    color="bg-orange-500"
+                />
+                <StatCard
+                    title="Skipped"
+                    value="02"
+                    subtext="Saved ₹160"
+                    icon="timelapse"
+                    color="bg-blue-500"
+                />
+                <StatCard
+                    title="Rating"
+                    value="4.8"
+                    subtext="Your Avg Feedback"
+                    icon="star"
+                    color="bg-purple-500"
+                />
+            </div>
+
+            {/* Main Content: Split Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-[fadeIn_0.7s_ease-out]">
+
+                {/* Left Column (Menu) - Spans 8 Cols */}
+                <div className="lg:col-span-8 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-orange-500">lunch_dining</span>
+                            Today's Special
+                        </h3>
+                        <Link to="/student/menu" className="text-sm font-bold text-primary hover:bg-orange-50 px-3 py-1 rounded-lg transition-colors">
+                            View Full Menu &rarr;
+                        </Link>
+                    </div>
+                    <MenuCard />
+                </div>
+
+                {/* Right Column (Actions) - Spans 4 Cols */}
+                <div className="lg:col-span-4 space-y-6">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-gray-400">bolt</span>
+                        Quick Actions
+                    </h3>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        {/* Track Order */}
+                        <Link to="/student/track" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
+                            <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                                <span className="material-symbols-outlined text-2xl">local_shipping</span>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors">Track Order</h4>
+                                <p className="text-xs text-gray-500 font-medium">Live status</p>
+                            </div>
+                            <span className="material-symbols-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                        </Link>
+
+                        {/* Pause Subscription */}
+                        <Link to="/student/pause" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
+                            <div className="w-12 h-12 rounded-xl bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/20 group-hover:scale-110 transition-transform">
+                                <span className="material-symbols-outlined text-2xl">pause_circle</span>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-bold text-gray-900 text-lg group-hover:text-red-600 transition-colors">Pause Plan</h4>
+                                <p className="text-xs text-gray-500 font-medium">Skip meals</p>
+                            </div>
+                            <span className="material-symbols-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                        </Link>
+
+                        {/* Feedback */}
+                        <Link to="/student/feedback" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
+                            <div className="w-12 h-12 rounded-xl bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
+                                <span className="material-symbols-outlined text-2xl">rate_review</span>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-bold text-gray-900 text-lg group-hover:text-purple-600 transition-colors">Feedback</h4>
+                                <p className="text-xs text-gray-500 font-medium">Rate Service</p>
+                            </div>
+                            <span className="material-symbols-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                        </Link>
+                    </div>
+
+                    {/* Promo / Banner Area */}
+                    <div className="glass-panel p-5 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 text-white relative overflow-hidden group">
+                        <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
+                        <h4 className="font-bold text-lg mb-1 relative z-10">Refer a Friend 🎁</h4>
+                        <p className="text-gray-300 text-xs mb-3 relative z-10">Get ₹100 in your wallet instantly!</p>
+                        <button className="text-xs font-bold text-white bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors backdrop-blur-sm relative z-10">
+                            Invite Now
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
