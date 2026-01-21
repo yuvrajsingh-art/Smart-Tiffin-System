@@ -24,8 +24,9 @@ app.listen(PORT, () => {
 const authRoutes = require("./routes/authRoutes");
 const testRoutes = require("./routes/testRoutes");
 const tiffinRoutes = require("./routes/tiffinRoutes");
+const SubscriptionRoutes = require("./routes/subscriptionRoutes");
 
 app.use("/api/tiffins", tiffinRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
-
+app.use("/api/subscriptions", SubscriptionRoutes);

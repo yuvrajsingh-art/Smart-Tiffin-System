@@ -8,27 +8,35 @@ const tiffinSchema = new mongoose.Schema(
       required: true,
     },
 
-    title: {
+    planName: {
       type: String,
       required: true,
     },
 
-    description: {
+    planType: {
       type: String,
+      enum: ["weekly", "monthly"],
+      required: true,
     },
+
+    totalDays: {
+      type: Number,
+      required: true,
+    },
+
+    mealTypes: [
+      {
+        type: String,
+        enum: ["breakfast", "lunch", "dinner"],
+      },
+    ],
 
     price: {
       type: Number,
       required: true,
     },
 
-    mealType: {
-      type: String,
-      enum: ["breakfast", "lunch", "dinner"],
-      required: true,
-    },
-
-    isAvailable: {
+    isActive: {
       type: Boolean,
       default: true,
     },
@@ -37,3 +45,6 @@ const tiffinSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Tiffin", tiffinSchema);
+
+
+
