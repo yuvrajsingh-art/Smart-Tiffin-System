@@ -3,13 +3,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import DashboardLayout from './components/layout/DashboardLayout'
-import StudentDashboard from './pages/student/StudentDashboard'
-import Menu from './pages/student/Menu'
-import Track from './pages/student/Track'
-import Pause from './pages/student/Pause'
-import Feedback from './pages/student/Feedback'
-import Wallet from './pages/student/Wallet'
-import Profile from './pages/student/Profile'
+import CustomerDashboard from './pages/customer/CustomerDashboard'
+import Menu from './pages/customer/Menu'
+import Track from './pages/customer/Track'
+import Pause from './pages/customer/Pause'
+import Feedback from './pages/customer/Feedback'
+import Wallet from './pages/customer/Wallet'
+import Profile from './pages/customer/Profile'
 
 /**
  * Main Application Component
@@ -24,11 +24,11 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Protected Routes - Customer Dashboard
-            All routes under /student share the DashboardLayout (Sidebar + Topbar)
+            All routes under /customer share the DashboardLayout (Sidebar + Topbar)
         */}
-        <Route path="/student" element={<DashboardLayout />}>
-          {/* Index route for dashboard: /student/dashboard */}
-          <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="/customer" element={<DashboardLayout />}>
+          {/* Index route for dashboard: /customer/dashboard */}
+          <Route path="dashboard" element={<CustomerDashboard />} />
           <Route path="menu" element={<Menu />} />
           <Route path="track" element={<Track />} />
           <Route path="pause" element={<Pause />} />

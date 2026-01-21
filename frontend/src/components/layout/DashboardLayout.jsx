@@ -35,11 +35,11 @@ const DashboardLayout = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const navItems = [
-        { icon: 'dashboard', label: 'Overview', to: '/student/dashboard' },
-        { icon: 'lunch_dining', label: 'My Subscription', to: '/student/subscription' },
-        { icon: 'restaurant_menu', label: 'Weekly Menu', to: '/student/menu' },
-        { icon: 'history', label: 'Order History', to: '/student/history' },
-        { icon: 'account_balance_wallet', label: 'Billing', to: '/student/billing' },
+        { icon: 'dashboard', label: 'Overview', to: '/customer/dashboard' },
+        { icon: 'lunch_dining', label: 'My Subscription', to: '/customer/subscription' },
+        { icon: 'restaurant_menu', label: 'Weekly Menu', to: '/customer/menu' },
+        { icon: 'history', label: 'Order History', to: '/customer/track' }, // Changed to Track based on existing pages
+        { icon: 'account_balance_wallet', label: 'Billing/Wallet', to: '/customer/wallet' },
     ];
 
     return (

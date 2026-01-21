@@ -74,8 +74,8 @@ function Login() {
         // Navigate or show success (For now, just log)
         console.log("Logged in with:", formData);
 
-        // Redirect to Dashboard (Assuming successful login)
-        navigate('/student/dashboard');
+        // Mock Redirect to Dashboard
+        navigate('/customer/dashboard');
     };
 
     return (
