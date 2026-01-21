@@ -57,8 +57,8 @@ function Login() {
         // Navigate or show success (For now, just log)
         console.log("Logged in with:", formData);
 
-        // Mock Redirect to Dashboard
-        // navigate('/dashboard'); 
+        // Redirect to Dashboard
+        navigate('/student/dashboard');
     };
 
     return (
