@@ -1,9 +1,10 @@
-import React from "react";
+import React from 'react'
+import LandingPage from './pages/landingpage'
 
-const App = () => {
-  return <div className="bg-blue-500">
-App
-  </div>
+function App() {
+  return (
+      <LandingPage/>
+  )
 }
 
-export default App;
+export default App
