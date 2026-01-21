@@ -50,6 +50,50 @@ const DashboardLayout = () => {
                 <div className="blob w-[500px] h-[500px] bg-rose-200/20 top-1/4 right-0 mix-blend-multiply opacity-50 blur-[90px]"></div>
             </div>
 
+            {/* Mobile Menu Overlay */}
+            <div
+                className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Mobile Sidebar */}
+            <div className={`fixed top-0 left-0 bottom-0 w-64 bg-white/80 backdrop-blur-xl border-r border-white/50 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex items-center justify-between p-6">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gradient-to-tr from-primary to-orange-400 rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                            <span className="material-symbols-outlined text-lg">lunch_dining</span>
+                        </div>
+                        <span className="font-bold text-gray-900 text-lg tracking-tight">Smart<span className="text-primary">Tiffin</span></span>
+                    </div>
+                    <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-red-500 transition-colors">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <nav className="px-4 space-y-1">
+                    {navItems.map((item) => (
+                        <div key={item.to} onClick={() => setIsMobileMenuOpen(false)}> {/* Close menu on navigate */}
+                            <SidebarItem
+                                {...item}
+                                active={location.pathname === item.to}
+                            />
+                        </div>
+                    ))}
+                </nav>
+
+                <div className="absolute bottom-6 left-0 right-0 px-6">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 border border-white/50">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-900 truncate">Rahul Sharma</p>
+                            <Link to="/login" className="text-xs text-red-500 font-bold hover:underline">Log Out</Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className="flex h-screen relative z-10">
                 {/* Sidebar (Desktop) */}
                 <aside className="hidden lg:flex flex-col w-64 h-full p-6 border-r border-white/40 bg-white/30 backdrop-blur-2xl">
