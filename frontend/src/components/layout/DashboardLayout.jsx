@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
+/**
+ * Helper component for Sidebar Links
+ * Renders an icon and label with active state styling.
+ */
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
@@ -17,6 +21,15 @@ const SidebarItem = ({ icon, label, to, active }) => (
     </Link>
 );
 
+/**
+ * DashboardLayout Component
+ * Serves as the shell for all dashboard pages.
+ * Includes:
+ * 1. Fixed Background (Blobs)
+ * 2. Left Sidebar (Navigation)
+ * 3. Top Header (User Profile & Mobile Menu)
+ * 4. Main Content Area (<Outlet />) where pages are rendered
+ */
 const DashboardLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

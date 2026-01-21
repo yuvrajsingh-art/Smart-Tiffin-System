@@ -1,6 +1,10 @@
 import React from 'react';
 import Button from '../../components/ui/Button';
 
+/**
+ * Reusable Statistic Card Component
+ * Displays a metric with an icon and subtext.
+ */
 const StatCard = ({ title, value, subtext, icon, color }) => (
     <div className="glass-panel p-5 rounded-2xl flex items-start justify-between relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
         <div className="relative z-10">
@@ -14,6 +18,10 @@ const StatCard = ({ title, value, subtext, icon, color }) => (
     </div>
 );
 
+/**
+ * Menu Display Card
+ * Shows the current meal image and actions (Eat/Skip).
+ */
 const MenuCard = () => (
     <div className="glass-panel p-0 rounded-3xl overflow-hidden group">
         <div className="h-48 relative overflow-hidden">

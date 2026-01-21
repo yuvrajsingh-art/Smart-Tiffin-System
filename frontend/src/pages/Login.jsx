@@ -5,14 +5,23 @@ import Button from '../components/ui/Button';
 
 function Login() {
     const navigate = useNavigate();
+
+    // UI Loading State
     const [isLoading, setIsLoading] = useState(false);
+
+    // Form Input State
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         rememberMe: false
     });
+
+    // Validation Errors
     const [errors, setErrors] = useState({});
 
+    /**
+     * Handles changes in input fields
+     */
     const handleChange = (e) => {
         const { id, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -25,6 +34,10 @@ function Login() {
         }
     };
 
+    /**
+     * Validates email and password requirements
+     * Returns true if valid, false otherwise.
+     */
     const validateForm = () => {
         const newErrors = {};
         if (!formData.email) {
@@ -43,6 +56,10 @@ function Login() {
         return Object.keys(newErrors).length === 0;
     };
 
+    /**
+     * Handles form submission and login logic.
+     * Currently mimics an API call with setTimeout.
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -50,14 +67,14 @@ function Login() {
 
         setIsLoading(true);
 
-        // Simulate API Call
+        // Simulate API Call (Replace with axios.post in future)
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         setIsLoading(false);
         // Navigate or show success (For now, just log)
         console.log("Logged in with:", formData);
 
-        // Redirect to Dashboard
+        // Redirect to Dashboard (Assuming successful login)
         navigate('/student/dashboard');
     };
 
