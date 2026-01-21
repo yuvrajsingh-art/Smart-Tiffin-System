@@ -10,7 +10,7 @@ const Button = ({
     ...props
 }) => {
 
-    const baseStyles = "relative w-full py-3.5 rounded-xl text-base font-bold transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100";
+    const baseStyles = "relative w-full py-2.5 rounded-xl text-base font-bold transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100";
 
     const variants = {
         primary: "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-orange-600 hover:shadow-primary/30",

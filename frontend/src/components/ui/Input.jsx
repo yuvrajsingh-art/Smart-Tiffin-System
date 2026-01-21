@@ -39,7 +39,7 @@ const Input = ({
                     type={inputType}
                     id={id}
                     className={`
-                        w-full bg-white/50 border rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 
+                        w-full bg-white/50 border rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 
                         focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium
                         ${icon ? 'pl-11' : ''}
                         ${isPassword ? 'pr-11' : ''}
