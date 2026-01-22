@@ -4,7 +4,7 @@ function PricingSection() {
     return (
         <section className="max-w-7xl mx-auto w-full px-4 md:px-8" id="pricing">
             <div className="text-center mb-16">
-                <h2 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-600 tracking-tight mb-4">Simple, Transparent Pricing</h2>
+                <h2 className="text-4xl md:text-5xl font-black text-[#2D241E] tracking-tight mb-6">Simple, Transparent Pricing</h2>
                 <p className="text-base text-gray-500 max-w-2xl mx-auto">No hidden fees. Choose the plan that fits your role.</p>
             </div>
 

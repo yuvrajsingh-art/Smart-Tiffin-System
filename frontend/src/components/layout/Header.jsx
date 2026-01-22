@@ -30,107 +30,87 @@ const Header = () => {
         { name: 'Home', href: '#' },
         { name: 'Features', href: '#features' },
         { name: 'Roles', href: '#roles' },
-        { name: 'Contact', href: '#contact' },
+        { name: 'Process', href: '#how-it-works' },
     ];
 
     return (
-        <>
-            <header
-                className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-white/50 h-20' : 'bg-transparent h-24'
-                    }`}
-            >
-                <div className="max-w-7xl mx-auto px-4 md:px-8 h-full flex items-center justify-between">
-                    {/* Logo Section */}
-                    <div className="flex items-center gap-3 relative z-[70]">
-                        <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
-                            <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
-                        </div>
-                        <span className="text-xl font-bold tracking-tight text-[#111716] whitespace-nowrap">
-                            Smart Tiffin
-                        </span>
+        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-nav h-20' : 'bg-transparent h-24'}`}>
+            <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+                {/* Logo */}
+                <Link to="/" className="flex items-center gap-3 group">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+                        <span className="material-symbols-outlined text-2xl">lunch_dining</span>
                     </div>
+                    <span className="text-xl font-bold text-gray-900 tracking-tight group-hover:text-primary transition-colors">
+                        Smart Tiffin
+                    </span>
+                </Link>
 
-                    {/* Desktop Navigation */}
-                    <nav className="hidden lg:flex items-center gap-2 bg-white/40 px-2 py-1.5 rounded-full border border-white/60 backdrop-blur-sm shadow-sm opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]" style={{ animationDelay: '0.1s' }}>
-                        {navLinks.map((link) => (
-                            <a
-                                key={link.name}
-                                href={link.href}
-                                className="px-6 py-2.5 text-sm font-semibold text-[#111716]/80 hover:text-white hover:bg-[#111716] transition-all duration-300 rounded-full"
-                            >
-                                {link.name}
-                            </a>
-                        ))}
-                    </nav>
-
-                    {/* Desktop Actions */}
-                    <div className="hidden lg:flex items-center gap-4">
-                        <Link to="/login" className="text-sm font-bold text-[#111716] hover:text-primary transition-colors px-4 py-2">
-                            Login
-                        </Link>
-                        <button className="bg-primary text-white text-sm font-bold px-6 py-3 rounded-full shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:bg-orange-600 transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-2">
-                            <span>Get Started</span>
-                            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                        </button>
-                    </div>
-
-                    {/* Mobile Toggle Button */}
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="lg:hidden relative z-[70] p-2 text-[#111716] hover:bg-black/5 rounded-lg transition-colors group"
-                        aria-label="Toggle menu"
-                    >
-                        <span className={`material-symbols-outlined text-3xl transition-transform duration-300 group-hover:scale-110 ${isMenuOpen ? 'rotate-90' : ''}`}>
-                            {isMenuOpen ? 'close' : 'menu'}
-                        </span>
-                    </button>
-                </div>
-            </header>
-
-            {/* Mobile Menu Overlay */}
-            <div
-                className={`fixed inset-0 z-[50] bg-[#FFF8F0] lg:hidden transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col pt-32 px-6 ${isMenuOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'
-                    }`}
-            >
-                {/* Mobile Links */}
-                <nav className="flex flex-col gap-6 w-full">
-                    {navLinks.map((link, index) => (
+                {/* Desktop Menu */}
+                <div className="hidden md:flex items-center gap-8">
+                    {navLinks.map((link) => (
                         <a
                             key={link.name}
                             href={link.href}
-                            onClick={() => setIsMenuOpen(false)}
-                            className="text-3xl font-bold text-[#111716] border-b border-black/5 pb-4 active:text-primary transition-colors"
-                            style={{
-                                transitionDelay: isMenuOpen ? `${index * 50}ms` : '0ms',
-                                opacity: isMenuOpen ? 1 : 0,
-                                transform: isMenuOpen ? 'translateY(0)' : 'translateY(10px)',
-                                transition: 'all 0.3s ease-out'
-                            }}
+                            className="text-sm font-medium text-gray-600 hover:text-primary transition-colors relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
                         >
                             {link.name}
                         </a>
                     ))}
-                </nav>
+                </div>
 
-                {/* Mobile Buttons */}
-                <div
-                    className="flex flex-col gap-4 mt-auto mb-10"
-                    style={{
-                        opacity: isMenuOpen ? 1 : 0,
-                        transform: isMenuOpen ? 'translateY(0)' : 'translateY(20px)',
-                        transition: 'all 0.4s ease-out 0.2s'
-                    }}
-                >
-                    <Link to="/login" className="w-full py-4 rounded-xl border-2 border-[#111716]/10 text-lg font-bold text-[#111716] hover:bg-[#111716]/5 transition-colors text-center">
+                {/* Auth Buttons */}
+                <div className="hidden md:flex items-center gap-4">
+                    <Link
+                        to="/login"
+                        className="text-sm font-bold text-gray-700 hover:text-primary transition-colors px-4 py-2"
+                    >
                         Login
                     </Link>
-                    <button className="w-full py-4 rounded-xl bg-primary text-white text-lg font-bold shadow-xl shadow-primary/20 hover:bg-orange-600 transition-colors flex items-center justify-center gap-2">
-                        <span>Get Started</span>
-                        <span className="material-symbols-outlined">arrow_forward</span>
+                    <button className="bg-[#111716] text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group">
+                        Get Started
+                        <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                </div>
+
+                {/* Mobile Menu Button */}
+                <button
+                    className="md:hidden w-10 h-10 flex items-center justify-center text-gray-700"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                    <span className="material-symbols-outlined text-2xl">
+                        {isMenuOpen ? 'close' : 'menu'}
+                    </span>
+                </button>
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            <div className={`md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-lg border-b border-gray-100 shadow-xl transition-all duration-300 overflow-hidden ${isMenuOpen ? 'max-h-[400px] py-6' : 'max-h-0 py-0'}`}>
+                <div className="px-6 flex flex-col gap-4">
+                    {navLinks.map((link) => (
+                        <a
+                            key={link.name}
+                            href={link.href}
+                            className="text-base font-medium text-gray-700 hover:text-primary"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            {link.name}
+                        </a>
+                    ))}
+                    <div className="h-px bg-gray-100 my-2"></div>
+                    <Link
+                        to="/login"
+                        className="text-base font-bold text-gray-900"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Login
+                    </Link>
+                    <button className="bg-primary text-white text-base font-bold py-3 rounded-xl shadow-lg w-full">
+                        Get Started
                     </button>
                 </div>
             </div>
-        </>
+        </nav>
     );
 };
 

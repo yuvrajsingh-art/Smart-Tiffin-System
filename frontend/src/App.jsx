@@ -1,5 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -18,6 +19,7 @@ import Profile from './pages/customer/Profile'
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-center" reverseOrder={false} />
       <Routes>
         {/* Public Routes - Accessible without login */}
         <Route path="/" element={<LandingPage />} />

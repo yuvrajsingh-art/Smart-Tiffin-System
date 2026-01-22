@@ -2,77 +2,89 @@ import React from 'react';
 
 function RolesSection() {
     return (
-        <section className="max-w-7xl mx-auto w-full px-4 md:px-8" id="roles">
-            <div className="text-center mb-12">
-                <h2 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-600 tracking-tight mb-3">Built for Everyone</h2>
+        <section className="max-w-7xl mx-auto w-full px-6" id="roles">
+            <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-black text-[#2D241E] tracking-tight mb-6">Designed For Every User</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-panel p-6 rounded-3xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                        <span className="material-symbols-outlined text-8xl">school</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className="glass-panel p-10 rounded-[3rem] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform duration-500">
+                        <span className="material-symbols-outlined text-[120px] text-primary">school</span>
                     </div>
-                    <h3 className="text-xl font-bold text-[#111716] mb-1">Student</h3>
-                    <p className="text-gray-500 mb-6 text-sm">The hungry learner</p>
-                    <ul className="space-y-3">
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>View daily menus & nutritional info</span>
-                        </li>
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>Easy QR code authentication</span>
-                        </li>
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>Cancel meals to save credits</span>
-                        </li>
-                    </ul>
+                    <div className="relative z-10">
+                        <h3 className="text-3xl font-black text-[#2D241E] mb-2">Student</h3>
+                        <p className="text-primary font-bold mb-8 flex items-center gap-2">
+                            <span className="w-8 h-0.5 bg-primary"></span> The Hungry Learner
+                        </p>
+                        <ul className="space-y-5">
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">Manage wallet & meal credits</span>
+                            </li>
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">One-tap meal cancellation</span>
+                            </li>
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">Live menu & nutrition labels</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div className="glass-panel p-6 rounded-3xl relative overflow-hidden ring-1 ring-primary/20 bg-white/60">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                        <span className="material-symbols-outlined text-8xl">store</span>
+                <div className="glass-panel p-10 rounded-[3rem] relative overflow-hidden border-primary/40 shadow-xl group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform duration-500">
+                        <span className="material-symbols-outlined text-[120px] text-primary">storefront</span>
                     </div>
-                    <h3 className="text-xl font-bold text-[#111716] mb-1">Mess Owner</h3>
-                    <p className="text-gray-500 mb-6 text-sm">The provider</p>
-                    <ul className="space-y-3">
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>Manage daily menu offerings</span>
-                        </li>
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>Track active subscribers</span>
-                        </li>
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>View daily requirement stats</span>
-                        </li>
-                    </ul>
+                    <div className="relative z-10">
+                        <h3 className="text-3xl font-black text-[#2D241E] mb-2">Mess Owner</h3>
+                        <p className="text-primary font-bold mb-8 flex items-center gap-2">
+                            <span className="w-8 h-0.5 bg-primary"></span> The Food Provider
+                        </p>
+                        <ul className="space-y-5">
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">Automated daily count report</span>
+                            </li>
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">Inventory & cost management</span>
+                            </li>
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">Subscription renewal alerts</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div className="glass-panel p-6 rounded-3xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                        <span className="material-symbols-outlined text-8xl">admin_panel_settings</span>
+                <div className="glass-panel p-10 rounded-[3rem] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform duration-500">
+                        <span className="material-symbols-outlined text-[120px] text-primary">admin_panel_settings</span>
                     </div>
-                    <h3 className="text-xl font-bold text-[#111716] mb-1">Admin</h3>
-                    <p className="text-gray-500 mb-6 text-sm">The overseer</p>
-                    <ul className="space-y-3">
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>Manage all users and roles</span>
-                        </li>
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>System-wide analytics</span>
-                        </li>
-                        <li className="flex items-start gap-3 text-sm text-[#111716]/80">
-                            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
-                            <span>Resolve disputes & support</span>
-                        </li>
-                    </ul>
+                    <div className="relative z-10">
+                        <h3 className="text-3xl font-black text-[#2D241E] mb-2">Admin</h3>
+                        <p className="text-primary font-bold mb-8 flex items-center gap-2">
+                            <span className="w-8 h-0.5 bg-primary"></span> The Orchestrator
+                        </p>
+                        <ul className="space-y-5">
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">Comprehensive system logs</span>
+                            </li>
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">User role & access control</span>
+                            </li>
+                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
+                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
+                                <span className="font-semibold">System-wide performance metrics</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </section>
     )
 }
 
-export default RolesSection
+export default RolesSection;

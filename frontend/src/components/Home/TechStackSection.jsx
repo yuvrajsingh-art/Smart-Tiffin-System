@@ -2,21 +2,33 @@ import React from 'react';
 
 function TechStackSection() {
     return (
-        <section className="max-w-4xl mx-auto w-full px-4 md:px-8">
-            <div className="glass-panel p-8 rounded-2xl">
-                <h3 className="text-center text-lg font-semibold text-gray-500 mb-8 uppercase tracking-widest">Powered By Modern Tech</h3>
-                <div className="flex flex-wrap justify-center items-center gap-8 md:gap-24 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-                    <div className="flex flex-col items-center gap-2">
-                        <span className="material-symbols-outlined text-5xl text-[#61DAFB]">code</span>
-                        <span className="font-bold text-sm">React</span>
+        <section className="max-w-4xl mx-auto w-full px-6">
+            <div className="glass-panel p-10 md:p-14 rounded-[3rem] text-center">
+                <h3 className="text-sm font-black text-primary mb-12 uppercase tracking-[0.3em]">Built with Modern Stack</h3>
+                <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20">
+                    <div className="flex flex-col items-center gap-4 group">
+                        <div className="size-16 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+                            <span className="material-symbols-outlined text-4xl text-[#61DAFB]">deployed_code</span>
+                        </div>
+                        <span className="font-extrabold text-[#2D241E]">React.js</span>
                     </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <span className="material-symbols-outlined text-5xl text-[#339933]">dns</span>
-                        <span className="font-bold text-sm">Node.js</span>
+                    <div className="flex flex-col items-center gap-4 group">
+                        <div className="size-16 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+                            <span className="material-symbols-outlined text-4xl text-[#339933]">dns</span>
+                        </div>
+                        <span className="font-extrabold text-[#2D241E]">Node.js</span>
                     </div>
-                    <div className="flex flex-col items-center gap-2">
-                        <span className="material-symbols-outlined text-5xl text-[#47A248]">database</span>
-                        <span className="font-bold text-sm">MongoDB</span>
+                    <div className="flex flex-col items-center gap-4 group">
+                        <div className="size-16 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+                            <span className="material-symbols-outlined text-4xl text-[#47A248]">database</span>
+                        </div>
+                        <span className="font-extrabold text-[#2D241E]">MongoDB</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-4 group">
+                        <div className="size-16 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+                            <span className="material-symbols-outlined text-4xl text-primary">speed</span>
+                        </div>
+                        <span className="font-extrabold text-[#2D241E]">Express</span>
                     </div>
                 </div>
             </div>
@@ -24,4 +36,4 @@ function TechStackSection() {
     )
 }
 
-export default TechStackSection
+export default TechStackSection;
