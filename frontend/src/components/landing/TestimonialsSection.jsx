@@ -2,9 +2,9 @@ import React from 'react';
 
 function TestimonialsSection() {
     return (
-        <section className="max-w-7xl mx-auto w-full px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="glass-panel p-12 rounded-[3rem] flex flex-col gap-8 relative overflow-hidden">
+        <section className="max-w-6xl mx-auto w-full px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="glass-panel p-8 rounded-[2rem] flex flex-col gap-6 relative overflow-hidden">
                     <span className="material-symbols-outlined text-8xl absolute -top-4 -right-4 opacity-5 text-primary rotate-12">format_quote</span>
                     <div className="flex items-center gap-1 text-primary">
                         <span className="material-symbols-outlined font-bold">star</span>
@@ -13,7 +13,7 @@ function TestimonialsSection() {
                         <span className="material-symbols-outlined font-bold">star</span>
                         <span className="material-symbols-outlined font-bold">star</span>
                     </div>
-                    <p className="text-2xl text-[#2D241E] font-bold italic leading-relaxed relative z-10">
+                    <p className="text-lg text-[#2D241E] font-bold italic leading-relaxed relative z-10">
                         "This system revolutionized my university life. No more standing in long lines or worrying about manual entries. It's so fast!"
                     </p>
                     <div className="flex items-center gap-5 mt-auto">
@@ -24,7 +24,7 @@ function TestimonialsSection() {
                         </div>
                     </div>
                 </div>
-                <div className="glass-panel p-12 rounded-[3rem] flex flex-col gap-8 relative overflow-hidden">
+                <div className="glass-panel p-8 rounded-[2rem] flex flex-col gap-6 relative overflow-hidden">
                     <span className="material-symbols-outlined text-8xl absolute -top-4 -right-4 opacity-5 text-primary rotate-12">format_quote</span>
                     <div className="flex items-center gap-1 text-primary">
                         <span className="material-symbols-outlined font-bold">star</span>
@@ -33,7 +33,7 @@ function TestimonialsSection() {
                         <span className="material-symbols-outlined font-bold">star</span>
                         <span className="material-symbols-outlined font-bold">star</span>
                     </div>
-                    <p className="text-2xl text-[#2D241E] font-bold italic leading-relaxed relative z-10">
+                    <p className="text-lg text-[#2D241E] font-bold italic leading-relaxed relative z-10">
                         "I finally have peace of mind. I know exactly how much food to prepare every day, and my revenue tracking is now 100% accurate."
                     </p>
                     <div className="flex items-center gap-5 mt-auto">

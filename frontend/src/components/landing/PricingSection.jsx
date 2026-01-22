@@ -2,18 +2,18 @@ import React from 'react';
 
 function PricingSection() {
     return (
-        <section className="max-w-7xl mx-auto w-full px-4 md:px-8" id="pricing">
-            <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-black text-[#2D241E] tracking-tight mb-6">Simple, Transparent Pricing</h2>
-                <p className="text-base text-gray-500 max-w-2xl mx-auto">No hidden fees. Choose the plan that fits your role.</p>
+        <section className="max-w-6xl mx-auto w-full px-4 md:px-8" id="pricing">
+            <div className="text-center mb-10">
+                <h2 className="text-3xl md:text-4xl font-black text-[#2D241E] tracking-tight mb-4">Simple, Transparent Pricing</h2>
+                <p className="text-sm text-gray-500 max-w-xl mx-auto">No hidden fees. Choose the plan that fits your role.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 {/* Student Plan */}
-                <div className="glass-panel p-8 rounded-3xl flex flex-col hover:-translate-y-2 transition-transform duration-300">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Student</h3>
-                    <div className="text-4xl font-bold text-gray-900 mb-6">Free<span className="text-base text-gray-400 font-normal">/forever</span></div>
-                    <p className="text-sm text-gray-500 mb-8">Perfect for students managing their daily meals comfortably.</p>
+                <div className="glass-panel p-6 rounded-3xl flex flex-col hover:-translate-y-2 transition-transform duration-300">
+                    <h3 className="text-base font-bold text-gray-900 mb-1">Student</h3>
+                    <div className="text-3xl font-bold text-gray-900 mb-4">Free<span className="text-sm text-gray-400 font-normal">/forever</span></div>
+                    <p className="text-xs text-gray-500 mb-6">Perfect for students managing their daily meals comfortably.</p>
                     <ul className="space-y-4 mb-8 flex-1">
                         <li className="flex items-center gap-3 text-sm text-gray-600">
                             <span className="material-symbols-outlined text-primary text-[20px]">check</span>
@@ -38,11 +38,11 @@ function PricingSection() {
                 </div>
 
                 {/* Mess Owner Plan */}
-                <div className="relative p-8 rounded-3xl flex flex-col bg-[#111716] text-white shadow-xl scale-105 z-10">
-                    <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">POPULAR</div>
-                    <h3 className="text-lg font-bold text-white mb-2">Mess Partner</h3>
-                    <div className="text-4xl font-bold text-white mb-6">₹499<span className="text-base text-gray-400 font-normal">/month</span></div>
-                    <p className="text-sm text-gray-400 mb-8">All-in-one digital toolkit to grow your tiffin business.</p>
+                <div className="relative p-6 rounded-3xl flex flex-col bg-[#111716] text-white shadow-xl scale-105 z-10">
+                    <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">POPULAR</div>
+                    <h3 className="text-base font-bold text-white mb-1">Mess Partner</h3>
+                    <div className="text-3xl font-bold text-white mb-4">₹499<span className="text-sm text-gray-400 font-normal">/month</span></div>
+                    <p className="text-xs text-gray-400 mb-6">All-in-one digital toolkit to grow your tiffin business.</p>
                     <ul className="space-y-4 mb-8 flex-1">
                         <li className="flex items-center gap-3 text-sm text-gray-300">
                             <span className="material-symbols-outlined text-primary text-[20px]">check_circle</span>
@@ -67,10 +67,10 @@ function PricingSection() {
                 </div>
 
                 {/* Enterprise Plan */}
-                <div className="glass-panel p-8 rounded-3xl flex flex-col hover:-translate-y-2 transition-transform duration-300">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Enterprise</h3>
-                    <div className="text-4xl font-bold text-gray-900 mb-6">Custom</div>
-                    <p className="text-sm text-gray-500 mb-8">For large institutions, hostels, and universities.</p>
+                <div className="glass-panel p-6 rounded-3xl flex flex-col hover:-translate-y-2 transition-transform duration-300">
+                    <h3 className="text-base font-bold text-gray-900 mb-1">Enterprise</h3>
+                    <div className="text-3xl font-bold text-gray-900 mb-4">Custom</div>
+                    <p className="text-xs text-gray-500 mb-6">For large institutions, hostels, and universities.</p>
                     <ul className="space-y-4 mb-8 flex-1">
                         <li className="flex items-center gap-3 text-sm text-gray-600">
                             <span className="material-symbols-outlined text-primary text-[20px]">check</span>

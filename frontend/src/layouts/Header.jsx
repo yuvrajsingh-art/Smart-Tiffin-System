@@ -4,11 +4,23 @@ import { Link } from 'react-router-dom';
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [activeSection, setActiveSection] = useState('home');
 
-    // Handle scroll effect for glassmorphism
+    // Handle scroll effect for glassmorphism and active link
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 20);
+
+            // Active Section Logic
+            const sections = ['home', 'features', 'roles', 'how-it-works'];
+            const scrollPosition = window.scrollY + 100; // Offset for header height
+
+            for (const section of sections) {
+                const element = document.getElementById(section);
+                if (element && element.offsetTop <= scrollPosition && (element.offsetTop + element.offsetHeight) > scrollPosition) {
+                    setActiveSection(section);
+                }
+            }
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
@@ -27,14 +39,14 @@ const Header = () => {
     }, [isMenuOpen]);
 
     const navLinks = [
-        { name: 'Home', href: '#' },
-        { name: 'Features', href: '#features' },
-        { name: 'Roles', href: '#roles' },
-        { name: 'Process', href: '#how-it-works' },
+        { name: 'Home', href: '#home', id: 'home' },
+        { name: 'Features', href: '#features', id: 'features' },
+        { name: 'Roles', href: '#roles', id: 'roles' },
+        { name: 'Process', href: '#how-it-works', id: 'how-it-works' },
     ];
 
     return (
-        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-nav h-20' : 'bg-transparent h-24'}`}>
+        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-nav h-16' : 'bg-transparent h-20'}`}>
             <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-3 group">
@@ -52,7 +64,7 @@ const Header = () => {
                         <a
                             key={link.name}
                             href={link.href}
-                            className="text-sm font-medium text-gray-600 hover:text-primary transition-colors relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
+                            className={`text-sm font-medium transition-colors relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${activeSection === link.id ? 'text-primary after:w-full' : 'text-gray-600 hover:text-primary after:w-0 hover:after:w-full'}`}
                         >
                             {link.name}
                         </a>
@@ -94,7 +106,7 @@ const Header = () => {
                         <a
                             key={link.name}
                             href={link.href}
-                            className="text-base font-medium text-gray-700 hover:text-primary"
+                            className={`text-base font-medium ${activeSection === link.id ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
                             onClick={() => setIsMenuOpen(false)}
                         >
                             {link.name}

@@ -28,9 +28,9 @@ function FAQSection() {
 
     return (
         <section className="max-w-4xl mx-auto w-full px-4 md:px-8" id="faq">
-            <div className="text-center mb-12">
-                <h2 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-600 tracking-tight mb-3">Frequently Asked Questions</h2>
-                <p className="text-base text-gray-500">Got questions? We've got answers.</p>
+            <div className="text-center mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-600 tracking-tight mb-2">Frequently Asked Questions</h2>
+                <p className="text-sm text-gray-500">Got questions? We've got answers.</p>
             </div>
 
             <div className="space-y-4">
@@ -40,10 +40,10 @@ function FAQSection() {
                         className={`glass-panel rounded-2xl overflow-hidden transition-all duration-300 ${openIndex === index ? 'ring-2 ring-primary/20' : ''}`}
                     >
                         <button
-                            className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none"
+                            className="w-full px-5 py-4 flex items-center justify-between text-left focus:outline-none"
                             onClick={() => setOpenIndex(index === openIndex ? -1 : index)}
                         >
-                            <span className="font-bold text-[#111716] text-lg">{faq.question}</span>
+                            <span className="font-bold text-[#111716] text-base">{faq.question}</span>
                             <span className={`material-symbols-outlined text-gray-400 transition-transform duration-300 ${openIndex === index ? 'rotate-180 text-primary' : ''}`}>
                                 expand_more
                             </span>

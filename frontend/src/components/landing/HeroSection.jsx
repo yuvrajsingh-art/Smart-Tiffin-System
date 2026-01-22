@@ -3,30 +3,30 @@ import { Link } from 'react-router-dom';
 
 function HeroSection() {
     return (
-        <section className="glass-panel rounded-[3rem] p-8 md:p-16 lg:p-20 relative overflow-hidden mx-4 md:mx-8 max-w-[1440px] md:self-center">
-            <div className="absolute -right-20 -top-20 w-[700px] h-[700px] bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-            <div className="flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-20 relative z-10">
-                <div className="flex-1 flex flex-col gap-8 text-center lg:text-left items-center lg:items-start">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100/50 border border-orange-200 text-primary text-xs font-black uppercase tracking-widest">
-                        <span className="relative flex h-2 w-2">
+        <section className="glass-panel rounded-[2rem] p-6 md:p-10 relative overflow-hidden mx-4 md:mx-8 max-w-[1200px] md:self-center" id="home">
+            <div className="absolute -right-20 -top-20 w-[600px] h-[600px] bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div className="flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-16 relative z-10">
+                <div className="flex-1 flex flex-col gap-6 text-center lg:text-left items-center lg:items-start">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/50 border border-orange-200 text-primary text-[10px] font-bold uppercase tracking-widest">
+                        <span className="relative flex h-1.5 w-1.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
                         </span>
                         Digital Mess System v3.0
                     </div>
-                    <h1 className="text-5xl md:text-6xl lg:text-8xl font-black text-[#2D241E] leading-[1.05] tracking-tight">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#2D241E] leading-tight tracking-tight">
                         Smart Mess <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">Management</span> <br />
                         System
                     </h1>
-                    <p className="text-lg md:text-2xl text-[#5C4D42] max-w-xl font-medium leading-relaxed">
+                    <p className="text-sm md:text-base text-[#5C4D42] max-w-lg font-medium leading-relaxed">
                         Elevate your tiffin service experience. Automated subscriptions, digital menus, and real-time tracking in one warm, easy-to-use interface.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
-                        <Link to="/role-selection" className="bg-primary text-white text-lg font-extrabold px-10 py-5 rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 min-w-[220px]">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <Link to="/role-selection" className="bg-primary text-white text-base font-bold px-8 py-3 rounded-xl shadow-lg shadow-primary/30 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 min-w-[180px]">
                             Get Started Free
                         </Link>
-                        <button className="bg-white/80 text-[#2D241E] border border-orange-100 text-lg font-extrabold px-10 py-5 rounded-2xl shadow-sm hover:border-primary/40 hover:text-primary transition-all duration-300 flex items-center justify-center gap-3 min-w-[220px]">
+                        <button className="bg-white/80 text-[#2D241E] border border-orange-100 text-base font-bold px-8 py-3 rounded-xl shadow-sm hover:border-primary/40 hover:text-primary transition-all duration-300 flex items-center justify-center gap-2 min-w-[180px]">
                             Watch Demo
                         </button>
                     </div>
