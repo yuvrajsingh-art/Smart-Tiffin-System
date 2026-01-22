@@ -36,10 +36,12 @@ const DashboardLayout = () => {
 
     const navItems = [
         { icon: 'dashboard', label: 'Overview', to: '/customer/dashboard' },
-        { icon: 'lunch_dining', label: 'My Subscription', to: '/customer/subscription' },
         { icon: 'restaurant_menu', label: 'Weekly Menu', to: '/customer/menu' },
-        { icon: 'history', label: 'Order History', to: '/customer/track' }, // Changed to Track based on existing pages
+        { icon: 'history', label: 'Order History', to: '/customer/track' },
         { icon: 'account_balance_wallet', label: 'Billing/Wallet', to: '/customer/wallet' },
+        { icon: 'pause_circle', label: 'Pause Plan', to: '/customer/pause' },
+        { icon: 'rate_review', label: 'Feedback', to: '/customer/feedback' },
+        { icon: 'person', label: 'Profile', to: '/customer/profile' },
     ];
 
     return (

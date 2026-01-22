@@ -23,9 +23,9 @@ function HeroSection() {
                         Elevate your tiffin service experience. Automated subscriptions, digital menus, and real-time tracking in one warm, easy-to-use interface.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
-                        <button className="bg-primary text-white text-lg font-extrabold px-10 py-5 rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 min-w-[220px]">
+                        <Link to="/role-selection" className="bg-primary text-white text-lg font-extrabold px-10 py-5 rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 min-w-[220px]">
                             Get Started Free
-                        </button>
+                        </Link>
                         <button className="bg-white/80 text-[#2D241E] border border-orange-100 text-lg font-extrabold px-10 py-5 rounded-2xl shadow-sm hover:border-primary/40 hover:text-primary transition-all duration-300 flex items-center justify-center gap-3 min-w-[220px]">
                             Watch Demo
                         </button>

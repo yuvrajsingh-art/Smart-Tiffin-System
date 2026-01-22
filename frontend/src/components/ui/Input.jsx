@@ -8,6 +8,7 @@ const Input = ({
     placeholder,
     id,
     className = "",
+    variant = "default",
     ...props
 }) => {
     const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +16,21 @@ const Input = ({
 
     // Determine the actual type to render
     const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
+
+    const baseStyles = "w-full px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none transition-all font-medium";
+
+    const variants = {
+        default: "bg-white/50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-primary/50 focus:border-primary/50",
+        glass: "glass-input rounded-xl focus:ring-0"
+    };
+
+    const inputClasses = `
+        ${baseStyles}
+        ${variants[variant] || variants.default}
+        ${icon ? 'pl-11' : ''}
+        ${isPassword ? 'pr-11' : ''}
+        ${error ? 'border-red-300 focus:border-red-500 ring-red-200' : ''}
+    `;
 
     return (
         <div className={`w-full ${className}`}>
@@ -38,13 +54,7 @@ const Input = ({
                 <input
                     type={inputType}
                     id={id}
-                    className={`
-                        w-full bg-white/50 border rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 
-                        focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium
-                        ${icon ? 'pl-11' : ''}
-                        ${isPassword ? 'pr-11' : ''}
-                        ${error ? 'border-red-300 focus:border-red-500 ring-red-200' : 'border-gray-200 focus:border-primary/50'}
-                    `}
+                    className={inputClasses}
                     placeholder={placeholder}
                     {...props}
                 />

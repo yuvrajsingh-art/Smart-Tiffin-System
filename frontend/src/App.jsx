@@ -2,8 +2,10 @@ import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import LandingPage from './pages/LandingPage'
-import Login from './pages/Login'
-import DashboardLayout from './components/layout/DashboardLayout'
+import Login from './pages/auth/Login'
+import RoleSelection from './pages/auth/RoleSelection'
+import Register from './pages/auth/Register'
+import DashboardLayout from './layouts/DashboardLayout'
 import CustomerDashboard from './pages/customer/CustomerDashboard'
 import Menu from './pages/customer/Menu'
 import Track from './pages/customer/Track'
@@ -24,6 +26,8 @@ function App() {
         {/* Public Routes - Accessible without login */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/role-selection" element={<RoleSelection />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Protected Routes - Customer Dashboard
             All routes under /customer share the DashboardLayout (Sidebar + Topbar)

@@ -48,10 +48,10 @@ const MenuCard = () => (
             </div>
 
             <div className="flex gap-3">
-                <Link to="/student/menu" className="flex-1">
+                <Link to="/customer/menu" className="flex-1">
                     <Button className="w-full !py-2.5 text-sm">View Full Menu</Button>
                 </Link>
-                <Link to="/student/track" className="flex-1">
+                <Link to="/customer/track" className="flex-1">
                     <Button variant="outline" className="w-full !py-2.5 text-sm">Track Order</Button>
                 </Link>
             </div>
@@ -59,7 +59,7 @@ const MenuCard = () => (
     </div>
 );
 
-const StudentDashboard = () => {
+const CustomerDashboard = () => {
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease-out]">
             {/* Header Section */}
@@ -69,7 +69,7 @@ const StudentDashboard = () => {
                     <p className="text-gray-500 font-medium mt-1 text-lg">Your tiffin is being prepared with love.</p>
                 </div>
 
-                <Link to="/student/wallet" className="group">
+                <Link to="/customer/wallet" className="group">
                     <div className="glass-panel px-6 py-3 rounded-2xl flex items-center gap-3 hover:bg-emerald-50/50 transition-colors">
                         <div className="bg-emerald-100 p-2 rounded-full text-emerald-600 group-hover:scale-110 transition-transform">
                             <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
@@ -124,7 +124,7 @@ const StudentDashboard = () => {
                             <span className="material-symbols-outlined text-orange-500">lunch_dining</span>
                             Today's Special
                         </h3>
-                        <Link to="/student/menu" className="text-sm font-bold text-primary hover:bg-orange-50 px-3 py-1 rounded-lg transition-colors">
+                        <Link to="/customer/menu" className="text-sm font-bold text-primary hover:bg-orange-50 px-3 py-1 rounded-lg transition-colors">
                             View Full Menu &rarr;
                         </Link>
                     </div>
@@ -140,7 +140,7 @@ const StudentDashboard = () => {
 
                     <div className="grid grid-cols-1 gap-4">
                         {/* Track Order */}
-                        <Link to="/student/track" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
+                        <Link to="/customer/track" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
                             <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
                                 <span className="material-symbols-outlined text-2xl">local_shipping</span>
                             </div>
@@ -152,7 +152,7 @@ const StudentDashboard = () => {
                         </Link>
 
                         {/* Pause Subscription */}
-                        <Link to="/student/pause" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
+                        <Link to="/customer/pause" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
                             <div className="w-12 h-12 rounded-xl bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/20 group-hover:scale-110 transition-transform">
                                 <span className="material-symbols-outlined text-2xl">pause_circle</span>
                             </div>
@@ -164,7 +164,7 @@ const StudentDashboard = () => {
                         </Link>
 
                         {/* Feedback */}
-                        <Link to="/student/feedback" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
+                        <Link to="/customer/feedback" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
                             <div className="w-12 h-12 rounded-xl bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
                                 <span className="material-symbols-outlined text-2xl">rate_review</span>
                             </div>
@@ -191,4 +191,4 @@ const StudentDashboard = () => {
     );
 };
 
-export default StudentDashboard;
+export default CustomerDashboard;

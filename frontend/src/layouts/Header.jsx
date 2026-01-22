@@ -67,10 +67,13 @@ const Header = () => {
                     >
                         Login
                     </Link>
-                    <button className="bg-[#111716] text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group">
+                    <Link
+                        to="/role-selection"
+                        className="bg-[#111716] text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group"
+                    >
                         Get Started
                         <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                    </button>
+                    </Link>
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -105,9 +108,12 @@ const Header = () => {
                     >
                         Login
                     </Link>
-                    <button className="bg-primary text-white text-base font-bold py-3 rounded-xl shadow-lg w-full">
+                    <Link
+                        to="/login"
+                        className="bg-primary text-white text-base font-bold py-3 rounded-xl shadow-lg w-full text-center block"
+                    >
                         Get Started
-                    </button>
+                    </Link>
                 </div>
             </div>
         </nav>

@@ -1,19 +1,19 @@
 import React, { useEffect } from 'react';
-import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
-import HeroSection from "../components/Home/HeroSection";
-import StatsSection from "../components/Home/StatsSection";
-import ProblemSection from "../components/Home/ProblemSection";
-import FeaturesSection from "../components/Home/FeaturesSection";
-import RolesSection from "../components/Home/RolesSection";
-import HowItWorksSection from "../components/Home/HowItWorksSection";
-import PricingSection from "../components/Home/PricingSection";
-import TestimonialsSection from "../components/Home/TestimonialsSection";
-import FAQSection from "../components/Home/FAQSection";
-import CTASection from "../components/Home/CTASection";
+import Header from "../layouts/Header";
+import Footer from "../layouts/Footer";
+import HeroSection from "../components/landing/HeroSection";
+import StatsSection from "../components/landing/StatsSection";
+import ProblemSection from "../components/landing/ProblemSection";
+import FeaturesSection from "../components/landing/FeaturesSection";
+import RolesSection from "../components/landing/RolesSection";
+import HowItWorksSection from "../components/landing/HowItWorksSection";
+import PricingSection from "../components/landing/PricingSection";
+import TestimonialsSection from "../components/landing/TestimonialsSection";
+import FAQSection from "../components/landing/FAQSection";
+import CTASection from "../components/landing/CTASection";
 
 
-import TechStackSection from "../components/Home/TechStackSection";
+import TechStackSection from "../components/landing/TechStackSection";
 
 // ... imports remain the same, just remove unused ones if cleaning up, 
 // strictly we will just use the available components in the new order
