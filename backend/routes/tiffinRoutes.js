@@ -1,14 +1,16 @@
 const express = require("express");
-const {addTiffin,getAllTiffins} = require("../controllers/tiffinController");
-
-const { protect, authorizeRoles } = require("../middleware/authMiddleware.middleware");
-
 const router = express.Router();
 
-// Provider add tiffin
-router.post("/", protect,authorizeRoles("provider"),addTiffin);
+const {createTiffinPlan,getAllTiffinPlans,getMyTiffinPlans,updateTiffinPlan,disableTiffinPlan  } = require("../controllers/tiffinController");
+const { protect } = require("../middleware/authMiddleware.middleware");
 
-// Customer & Admin view tiffins
-router.get("/", protect, getAllTiffins);
+// customer can view all active plans 
+router.get("/", getAllTiffinPlans);
+
+// provider routes
+router.post("/create", protect, createTiffinPlan);
+router.get("/my-plans", protect, getMyTiffinPlans);
+router.put("/update/:id", protect, updateTiffinPlan);
+router.put("/disable/:id", protect, disableTiffinPlan);
 
 module.exports = router;

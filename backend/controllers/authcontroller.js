@@ -80,3 +80,39 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+exports.signOut = async (req, res) => {
+    try {
+        res.clearCookie("token");
+        return res.status(200).json({ message: "sign out successfully" });
+    } catch (error) {
+        return res.status(500).json(`sign out error ${error}`)
+    }
+}
+
+
+exports.googleAuth = async (req, res) => {
+   try {
+    const {fullName,email,mobile,role}=req.body
+    let user =await User.findOne({email})
+    if (!user) {
+       user=await User.create({
+        fullName,email,mobile,role
+       })   
+    }
+    const token = await genToken(user._id)
+        res.cookie("token",token,{
+            secure:false,
+            sameSite:"strict",
+            maxAge:7*24*60*60*1000,
+            httpOnly:true
+        })
+        
+        return res.status(200).json(user)
+
+   } catch (error) {
+    return res.status(500).json(`googleAuth error ${error}`)
+   } 
+}
