@@ -1,190 +1,145 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Button from '../../components/ui/Button';
-
-/**
- * Reusable Statistic Card Component
- */
-const StatCard = ({ title, value, subtext, icon, color }) => (
-    <div className="glass-panel p-5 rounded-2xl flex items-start justify-between relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-        <div className="relative z-10">
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">{value}</h3>
-            <p className="text-xs text-gray-400 font-medium">{subtext}</p>
-        </div>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} text-white shadow-lg`}>
-            <span className="material-symbols-outlined">{icon}</span>
-        </div>
-    </div>
-);
-
-/**
- * Menu Display Card (Preview)
- */
-const MenuCard = () => (
-    <div className="glass-panel p-0 rounded-3xl overflow-hidden group">
-        <div className="h-48 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
-            <img
-                src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=800&auto=format&fit=crop"
-                alt="Lunch"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute bottom-4 left-4 z-20">
-                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider mb-2 inline-block">Today's Lunch</span>
-                <h3 className="text-white text-xl font-bold">Paneer Butter Masala Thali</h3>
-            </div>
-        </div>
-        <div className="p-5">
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
-                <div className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-gray-400 text-[18px]">schedule</span>
-                    <span>12:30 PM - 02:00 PM</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-amber-500 text-[18px]">star</span>
-                    <span className="font-bold text-gray-900">4.8</span>
-                </div>
-            </div>
-
-            <div className="flex gap-3">
-                <Link to="/customer/menu" className="flex-1">
-                    <Button className="w-full !py-2.5 text-sm">View Full Menu</Button>
-                </Link>
-                <Link to="/customer/track" className="flex-1">
-                    <Button variant="outline" className="w-full !py-2.5 text-sm">Track Order</Button>
-                </Link>
-            </div>
-        </div>
-    </div>
-);
 
 const CustomerDashboard = () => {
     return (
-        <div className="max-w-6xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease-out]">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 animate-[fadeIn_0.5s_ease-out]">
-                <div>
-                    <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Good Afternoon, Sumit! ☀️</h2>
-                    <p className="text-gray-500 font-medium mt-1 text-lg">Your tiffin is being prepared with love.</p>
-                </div>
+        <div className="max-w-7xl mx-auto flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out]">
 
-                <Link to="/customer/wallet" className="group">
-                    <div className="glass-panel px-6 py-3 rounded-2xl flex items-center gap-3 hover:bg-emerald-50/50 transition-colors">
-                        <div className="bg-emerald-100 p-2 rounded-full text-emerald-600 group-hover:scale-110 transition-transform">
-                            <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
+            {/* Active Plan & Stats Section */}
+            <section className="glass-panel p-8 rounded-[2rem] relative overflow-hidden group">
+                <div className="absolute -right-10 -top-10 w-64 h-64 bg-orange-100 rounded-full blur-3xl opacity-50 group-hover:opacity-80 transition-opacity"></div>
+                <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
+                    <div className="flex-1 space-y-6">
+                        <div>
+                            <h2 className="text-sm font-extrabold text-[#5C4D42] uppercase tracking-widest mb-1">Current Subscription</h2>
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-4xl font-black text-[#2D241E]">Standard Monthly</span>
+                                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wide flex items-center gap-1">
+                                    <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
+                                    Active
+                                </span>
+                            </div>
                         </div>
-                        <div className="text-left">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Balance</p>
-                            <p className="text-xl font-bold text-gray-900">₹ 1,250</p>
+                        <div className="flex flex-wrap gap-10">
+                            <div>
+                                <p className="text-sm text-[#5C4D42] font-semibold mb-1">Wallet Balance</p>
+                                <p className="text-2xl font-black text-primary">₹ 450.00</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-[#5C4D42] font-semibold mb-1">Meals Remaining</p>
+                                <p className="text-2xl font-black text-[#2D241E]">24</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-[#5C4D42] font-semibold mb-1">Valid Until</p>
+                                <p className="text-2xl font-black text-[#2D241E]">12 Nov</p>
+                            </div>
                         </div>
                     </div>
-                </Link>
-            </div>
 
-            {/* Quick Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-[fadeIn_0.6s_ease-out]">
-                <StatCard
-                    title="Meal Plan"
-                    value="Gold"
-                    subtext="Valid till 30 Jan"
-                    icon="workspace_premium"
-                    color="bg-amber-500"
-                />
-                <StatCard
-                    title="Meals Left"
-                    value="24"
-                    subtext="Lunch & Dinner"
-                    icon="restaurant"
-                    color="bg-orange-500"
-                />
-                <StatCard
-                    title="Skipped"
-                    value="02"
-                    subtext="Saved ₹160"
-                    icon="timelapse"
-                    color="bg-blue-500"
-                />
-                <StatCard
-                    title="Rating"
-                    value="4.8"
-                    subtext="Your Avg Feedback"
-                    icon="star"
-                    color="bg-purple-500"
-                />
-            </div>
-
-            {/* Main Content: Split Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-[fadeIn_0.7s_ease-out]">
-
-                {/* Left Column (Menu) - Spans 8 Cols */}
-                <div className="lg:col-span-8 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-orange-500">lunch_dining</span>
-                            Today's Special
-                        </h3>
-                        <Link to="/customer/menu" className="text-sm font-bold text-primary hover:bg-orange-50 px-3 py-1 rounded-lg transition-colors">
-                            View Full Menu &rarr;
-                        </Link>
-                    </div>
-                    <MenuCard />
-                </div>
-
-                {/* Right Column (Actions) - Spans 4 Cols */}
-                <div className="lg:col-span-4 space-y-6">
-                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-gray-400">bolt</span>
-                        Quick Actions
-                    </h3>
-
-                    <div className="grid grid-cols-1 gap-4">
-                        {/* Track Order */}
-                        <Link to="/customer/track" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
-                            <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
-                                <span className="material-symbols-outlined text-2xl">local_shipping</span>
+                    {/* Next Meal Card inside the big card */}
+                    <div className="w-full md:w-80 bg-white/60 rounded-3xl p-5 border border-orange-100 shadow-sm flex flex-col gap-3">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs font-bold text-primary uppercase tracking-wider">Next Meal: Lunch</span>
+                            <span className="text-xs font-bold text-[#5C4D42]">12:30 PM - 2:30 PM</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="size-14 rounded-xl bg-orange-50 flex items-center justify-center text-3xl">🍛</div>
+                            <div>
+                                <p className="font-bold text-[#2D241E] leading-tight">Paneer Butter Masala</p>
+                                <p className="text-sm text-[#5C4D42]">with 3 Rotis & Jeera Rice</p>
                             </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors">Track Order</h4>
-                                <p className="text-xs text-gray-500 font-medium">Live status</p>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
-                        </Link>
-
-                        {/* Pause Subscription */}
-                        <Link to="/customer/pause" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
-                            <div className="w-12 h-12 rounded-xl bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/20 group-hover:scale-110 transition-transform">
-                                <span className="material-symbols-outlined text-2xl">pause_circle</span>
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-gray-900 text-lg group-hover:text-red-600 transition-colors">Pause Plan</h4>
-                                <p className="text-xs text-gray-500 font-medium">Skip meals</p>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
-                        </Link>
-
-                        {/* Feedback */}
-                        <Link to="/customer/feedback" className="glass-panel p-4 rounded-2xl flex items-center gap-4 group cursor-pointer">
-                            <div className="w-12 h-12 rounded-xl bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
-                                <span className="material-symbols-outlined text-2xl">rate_review</span>
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-gray-900 text-lg group-hover:text-purple-600 transition-colors">Feedback</h4>
-                                <p className="text-xs text-gray-500 font-medium">Rate Service</p>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
-                        </Link>
-                    </div>
-
-                    {/* Promo / Banner Area */}
-                    <div className="glass-panel p-5 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 text-white relative overflow-hidden group">
-                        <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
-                        <h4 className="font-bold text-lg mb-1 relative z-10">Refer a Friend 🎁</h4>
-                        <p className="text-gray-300 text-xs mb-3 relative z-10">Get ₹100 in your wallet instantly!</p>
-                        <button className="text-xs font-bold text-white bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors backdrop-blur-sm relative z-10">
-                            Invite Now
+                        </div>
+                        <button className="mt-auto w-full py-2.5 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                            <span className="material-symbols-outlined text-[18px]">qr_code</span>
+                            View QR Code
                         </button>
                     </div>
+                </div>
+            </section>
+
+            {/* Quick Actions */}
+            <div>
+                <h3 className="text-xl font-bold text-[#2D241E] mb-6 px-2">Quick Actions</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <Link to="/customer/wallet" className="glass-panel p-6 rounded-3xl flex flex-col items-start gap-4 hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 group text-left">
+                        <div className="size-12 rounded-2xl bg-orange-100 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined">add_card</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#2D241E] text-lg">Recharge Wallet</h4>
+                            <p className="text-sm text-[#5C4D42] mt-1">Add funds securely</p>
+                        </div>
+                    </Link>
+                    <Link to="/customer/menu" className="glass-panel p-6 rounded-3xl flex flex-col items-start gap-4 hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 group text-left">
+                        <div className="size-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined">menu_book</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#2D241E] text-lg">Full Menu</h4>
+                            <p className="text-sm text-[#5C4D42] mt-1">Check upcoming meals</p>
+                        </div>
+                    </Link>
+                    <Link to="/customer/pause" className="glass-panel p-6 rounded-3xl flex flex-col items-start gap-4 hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 group text-left">
+                        <div className="size-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined">cancel_presentation</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#2D241E] text-lg">Skip Meal</h4>
+                            <p className="text-sm text-[#5C4D42] mt-1">Cancel for today</p>
+                        </div>
+                    </Link>
+                    <Link to="/customer/feedback" className="glass-panel p-6 rounded-3xl flex flex-col items-start gap-4 hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 group text-left">
+                        <div className="size-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined">support_agent</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#2D241E] text-lg">Help & Support</h4>
+                            <p className="text-sm text-[#5C4D42] mt-1">Contact mess owner</p>
+                        </div>
+                    </Link>
+                </div>
+            </div>
+
+            {/* Recent Activity Table */}
+            <div>
+                <h3 className="text-xl font-bold text-[#2D241E] mb-6 px-2">Recent Activity</h3>
+                <div className="glass-panel rounded-3xl overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-orange-50/50 border-b border-orange-100">
+                                <th className="p-5 text-xs font-extrabold text-[#5C4D42] uppercase tracking-wider">Date</th>
+                                <th className="p-5 text-xs font-extrabold text-[#5C4D42] uppercase tracking-wider">Type</th>
+                                <th className="p-5 text-xs font-extrabold text-[#5C4D42] uppercase tracking-wider">Details</th>
+                                <th className="p-5 text-xs font-extrabold text-[#5C4D42] uppercase tracking-wider text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-sm font-semibold text-[#2D241E]">
+                            <tr className="border-b border-orange-100/30 hover:bg-white/40 transition-colors">
+                                <td className="p-5">Today, 9:00 AM</td>
+                                <td className="p-5 flex items-center gap-2">
+                                    <span className="size-2 rounded-full bg-blue-500"></span> Meal Consumed
+                                </td>
+                                <td className="p-5 text-[#5C4D42]">Breakfast - Aloo Paratha</td>
+                                <td className="p-5 text-right">- ₹60.00</td>
+                            </tr>
+                            <tr className="border-b border-orange-100/30 hover:bg-white/40 transition-colors">
+                                <td className="p-5">Yesterday, 8:15 PM</td>
+                                <td className="p-5 flex items-center gap-2">
+                                    <span className="size-2 rounded-full bg-blue-500"></span> Meal Consumed
+                                </td>
+                                <td className="p-5 text-[#5C4D42]">Dinner - Thali Standard</td>
+                                <td className="p-5 text-right">- ₹90.00</td>
+                            </tr>
+                            <tr className="hover:bg-white/40 transition-colors">
+                                <td className="p-5">22 Oct, 11:30 AM</td>
+                                <td className="p-5 flex items-center gap-2">
+                                    <span className="size-2 rounded-full bg-green-500"></span> Wallet Recharge
+                                </td>
+                                <td className="p-5 text-[#5C4D42]">UPI Transaction</td>
+                                <td className="p-5 text-right text-green-600">+ ₹500.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
