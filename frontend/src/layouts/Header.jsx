@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../components/ui/Logo';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,14 +50,7 @@ const Header = () => {
         <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-nav h-16' : 'bg-transparent h-20'}`}>
             <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
                 {/* Logo */}
-                <Link to="/" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
-                        <span className="material-symbols-outlined text-2xl">lunch_dining</span>
-                    </div>
-                    <span className="text-xl font-bold text-gray-900 tracking-tight group-hover:text-primary transition-colors">
-                        Smart Tiffin
-                    </span>
-                </Link>
+               <Logo />
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center gap-8">

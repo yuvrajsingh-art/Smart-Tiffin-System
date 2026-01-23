@@ -1,4 +1,5 @@
 import React from 'react';
+import Logo from './../components/ui/Logo.jsx'; // Logo component ka correct path dalna (jaise same folder me ho to './Logo')
 
 function Footer() {
     return (
@@ -7,10 +8,7 @@ function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
                     <div className="col-span-1 md:col-span-1">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                                <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
-                            </div>
-                            <span className="text-2xl font-black text-[#2D241E]">Smart Tiffin</span>
+                            <Logo />
                         </div>
                         <p className="text-[#5C4D42] font-medium leading-relaxed mb-8">
                             Solving the core challenges of community food management through intuitive digital tools.
@@ -62,4 +60,4 @@ function Footer() {
     )
 }
 
-export default Footer
+export default Footer;
