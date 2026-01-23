@@ -8,7 +8,7 @@ import Register from './pages/auth/Register'
 import DashboardLayout from './layouts/DashboardLayout'
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import TodayMenu from './pages/customer/TodayMenu';
-import Track from './pages/customer/Track'
+import TrackDelivery from './pages/customer/TrackDelivery';
 import Pause from './pages/customer/Pause'
 import Feedback from './pages/customer/Feedback'
 import Wallet from './pages/customer/Wallet'
@@ -36,7 +36,7 @@ function App() {
           {/* Index route for dashboard: /customer/dashboard */}
           <Route path="dashboard" element={<CustomerDashboard />} />
           <Route path="menu" element={<TodayMenu />} />
-          <Route path="track" element={<Track />} />
+         <Route path="track" element={<TrackDelivery />} />
           <Route path="pause" element={<Pause />} />
           <Route path="feedback" element={<Feedback />} />
           <Route path="wallet" element={<Wallet />} />

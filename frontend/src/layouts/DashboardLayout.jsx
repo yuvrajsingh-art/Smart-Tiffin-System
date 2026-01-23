@@ -24,8 +24,8 @@ const DashboardLayout = () => {
     // Updated Nav Items list
     const navItems = [
         { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard' },
-           { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu' },
-        { icon: 'local_shipping', label: 'Track Delivery', to: '/customer/track' },
+        { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu' },
+        { icon: 'local_shipping', label: 'Track Order', to: '/customer/track' },
         { icon: 'pause_circle', label: 'Pause Subscription', to: '/customer/pause' },
         { icon: 'history', label: 'History', to: '/customer/history' }, // Added History
         { icon: 'thumb_up', label: 'Feedback', to: '/customer/feedback' },
