@@ -7,8 +7,8 @@ import RoleSelection from './pages/auth/RoleSelection'
 import Register from './pages/auth/Register'
 import DashboardLayout from './layouts/DashboardLayout'
 import CustomerDashboard from './pages/customer/CustomerDashboard';
-import TodayMenu from './pages/customer/TodayMenu';
-import TrackDelivery from './pages/customer/TrackDelivery';
+import Menu from './pages/customer/Menu';
+import TrackDelivery from './pages/customer/Track';
 import Pause from './pages/customer/Pause'
 import Feedback from './pages/customer/Feedback'
 import Wallet from './pages/customer/Wallet'
@@ -35,7 +35,7 @@ function App() {
         <Route path="/customer" element={<DashboardLayout />}>
           {/* Index route for dashboard: /customer/dashboard */}
           <Route path="dashboard" element={<CustomerDashboard />} />
-          <Route path="menu" element={<TodayMenu />} />
+          <Route path="menu" element={<Menu />} />
          <Route path="track" element={<TrackDelivery />} />
           <Route path="pause" element={<Pause />} />
           <Route path="feedback" element={<Feedback />} />
