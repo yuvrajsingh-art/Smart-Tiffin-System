@@ -7,20 +7,19 @@ function HeroSection() {
             <div className="absolute -right-20 -top-20 w-[600px] h-[600px] bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
             <div className="flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-16 relative z-10">
                 <div className="flex-1 flex flex-col gap-6 text-center lg:text-left items-center lg:items-start">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/50 border border-orange-200 text-primary text-[10px] font-bold uppercase tracking-widest">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/50 border border-orange-200 text-primary text-[10px] font-bold uppercase tracking-widest animate-pulse-slow">
                         <span className="relative flex h-1.5 w-1.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
                         </span>
-                        Digital Mess System v3.0
+                        #1 Tiffin Service in Your City
                     </div>
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#2D241E] leading-tight tracking-tight">
-                        Smart Mess <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">Management</span> <br />
-                        System
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-[#2D241E] leading-tight tracking-tight">
+                        Ghar Jaisa Khana, <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">Door Reh Kar Bhi.</span>
                     </h1>
-                    <p className="text-sm md:text-base text-[#5C4D42] max-w-lg font-medium leading-relaxed">
-                        Elevate your tiffin service experience. Automated subscriptions, digital menus, and real-time tracking in one warm, easy-to-use interface.
+                    <p className="text-base md:text-lg text-[#5C4D42] max-w-lg font-medium leading-relaxed">
+                        Miss mom's cooking? Join thousands of students and professionals enjoying hot, healthy, and hygienic home-cooked meals delivered daily.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <Link to="/role-selection" className="bg-primary text-white text-base font-bold px-8 py-3 rounded-xl shadow-lg shadow-primary/30 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 min-w-[180px]">
