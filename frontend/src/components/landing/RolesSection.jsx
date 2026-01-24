@@ -1,85 +1,40 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function RolesSection() {
     return (
-        <section className="max-w-6xl mx-auto w-full px-6" id="roles">
-            <div className="text-center mb-10">
-                <h2 className="text-3xl md:text-4xl font-black text-[#2D241E] tracking-tight mb-4">Designed For Every User</h2>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 transition-transform duration-500">
-                        <span className="material-symbols-outlined text-[100px] text-primary">school</span>
+        <section className="max-w-7xl mx-auto w-full px-6 py-10" id="roles">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Eater Card */}
+                <div className="glass-panel rounded-2xl overflow-hidden group hover:shadow-xl transition-shadow flex flex-col h-full min-h-[500px]">
+                    <div className="h-64 bg-cover bg-center relative" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCNVCDMliaUdGyF8cPtHt4lGPDyEo6CNQ8NwD0AmEHWUY7SDEHdlPF8qnuNf65J4IYZY0LfsHg_FCJFFjN5p04BjTw3yHOUwSYdLQtFnSf-wHDRI4ygBD2Zizj8QdtLoo-SESKqMSK3C44AHbJ8dYzT1LzwRzbeU06Fcaep_pY299lYel5DMTC68A6_SavJ3IyMkFJ98iPyRI4PnGQixYiVG5taIzQ1nZD-Q_00OLvx_8Z8rgsEYoNHUKQ_ctBa1SCglAM1gM6j')" }}>
+                        <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent"></div>
+                        <div className="absolute bottom-6 left-6 text-white">
+                            <span className="bg-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 inline-block">Student</span>
+                            <h3 className="text-2xl font-bold">I want to Eat</h3>
+                        </div>
                     </div>
-                    <div className="relative z-10">
-                        <h3 className="text-3xl font-black text-[#2D241E] mb-2">Student</h3>
-                        <p className="text-primary font-bold mb-8 flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-primary"></span> The Hungry Learner
-                        </p>
-                        <ul className="space-y-5">
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">Manage wallet & meal credits</span>
-                            </li>
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">One-tap meal cancellation</span>
-                            </li>
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">Live menu & nutrition labels</span>
-                            </li>
-                        </ul>
+                    <div className="p-8 flex flex-col flex-grow items-start">
+                        <p className="text-secondary/70 mb-6 flex-grow text-lg">Browse nearby messes, subscribe to monthly plans, and never miss a home-cooked meal again.</p>
+                        <Link to="/role-selection" className="flex items-center gap-2 text-primary font-bold hover:text-secondary transition-colors text-lg">
+                            Join as Eater <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                        </Link>
                     </div>
                 </div>
-                <div className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden border-primary/40 shadow-xl group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 transition-transform duration-500">
-                        <span className="material-symbols-outlined text-[100px] text-primary">storefront</span>
+                {/* Provider Card */}
+                <div className="glass-panel rounded-2xl overflow-hidden group hover:shadow-xl transition-shadow flex flex-col h-full min-h-[500px]">
+                    <div className="h-64 bg-cover bg-center relative" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAg_9In9jykwB9Xpx1GALOSgxtX3ZWo8vn7Eop86MZjuImlwLgF4FbGNc4320yUBls5ze1zuvQqFo46YoZ3p7j0fASGbwHNUSi3vQHhdB94FwA8686TaZAwZOcHBom8lUhasCpb-OPr1xX-faojUuyT2HEAArefJaxuJlXJzGCR3qR9-lLs5GFZYuxuhUQXfMKtyzcEX_YO968hiDIc_7yq_z_wuJo0Qac_md7_q8wtFlf884nUWzX4yNbzQDa4gHpuqlAGRpJr')" }}>
+                        <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent"></div>
+                        <div className="absolute bottom-6 left-6 text-white">
+                            <span className="bg-white text-secondary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 inline-block">Kitchen Partner</span>
+                            <h3 className="text-2xl font-bold">I want to Serve</h3>
+                        </div>
                     </div>
-                    <div className="relative z-10">
-                        <h3 className="text-3xl font-black text-[#2D241E] mb-2">Mess Owner</h3>
-                        <p className="text-primary font-bold mb-8 flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-primary"></span> The Food Provider
-                        </p>
-                        <ul className="space-y-5">
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">Automated daily count report</span>
-                            </li>
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">Inventory & cost management</span>
-                            </li>
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">Subscription renewal alerts</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 transition-transform duration-500">
-                        <span className="material-symbols-outlined text-[100px] text-primary">admin_panel_settings</span>
-                    </div>
-                    <div className="relative z-10">
-                        <h3 className="text-3xl font-black text-[#2D241E] mb-2">Admin</h3>
-                        <p className="text-primary font-bold mb-8 flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-primary"></span> The Orchestrator
-                        </p>
-                        <ul className="space-y-5">
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">Comprehensive system logs</span>
-                            </li>
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">User role & access control</span>
-                            </li>
-                            <li className="flex items-start gap-4 text-base text-[#2D241E]">
-                                <span className="material-symbols-outlined text-primary font-bold">check_circle</span>
-                                <span className="font-semibold">System-wide performance metrics</span>
-                            </li>
-                        </ul>
+                    <div className="p-8 flex flex-col flex-grow items-start">
+                        <p className="text-secondary/70 mb-6 flex-grow text-lg">Digitize your mess, manage subscriptions automatically, and get paid on time, every time.</p>
+                        <Link to="/role-selection" className="flex items-center gap-2 text-secondary font-bold hover:text-primary transition-colors text-lg">
+                            Partner with Us <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                        </Link>
                     </div>
                 </div>
             </div>
