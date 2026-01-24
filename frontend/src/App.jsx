@@ -13,6 +13,8 @@ import Pause from './pages/customer/Pause'
 import Feedback from './pages/customer/Feedback'
 import Wallet from './pages/customer/Wallet'
 import Profile from './pages/customer/Profile'
+import ProviderSidebar from './components/ui/ProviderSidebar';
+import ProviderDashboard from './pages/Provider/ProviderDashboard';
 
 /**
  * Main Application Component
@@ -49,6 +51,13 @@ function App() {
       </Routes>
     </BrowserRouter>
   )
+
+
+  // return (
+  //   <BrowserRouter>
+  //     <ProviderDashboard />
+  //   </BrowserRouter>
+  // )
 }
 
 export default App
