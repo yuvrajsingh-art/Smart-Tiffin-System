@@ -46,24 +46,27 @@ const FindMess = () => {
     const [location, setLocation] = useState('');
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease-out] pb-20">
-            {/* Premium Hero Search Header */}
-            <div className="relative py-12 md:py-20 text-center overflow-hidden rounded-3xl bg-orange-50/50 mb-12">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-40"></div>
-                <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+        <div className="max-w-7xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease-out] pb-20 relative">
 
+            {/* Background Blobs (Premium Warm Theme) - Only if not already in Layout, but adding local for safety or specific positioning */}
+            <div className="absolute top-0 right-0 overflow-hidden pointer-events-none z-0">
+                <div className="blob w-[800px] h-[800px] bg-orange-200/20 -top-40 -right-40"></div>
+            </div>
+
+            {/* Premium Hero Search Header */}
+            <div className="relative py-12 md:py-16 text-center z-10">
                 <div className="relative z-10 px-6">
-                    <span className="inline-block py-1 px-3 rounded-full bg-orange-100 text-primary text-xs font-black uppercase tracking-widest mb-4">Discovery</span>
+                    <span className="inline-block py-1.5 px-4 rounded-full bg-orange-100 text-primary text-xs font-black uppercase tracking-widest mb-6 border border-orange-200/50">Discovery</span>
                     <h1 className="text-4xl md:text-6xl font-black text-[#2D241E] tracking-tight mb-6">
                         Find Your Next <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-600">Favorite Meal</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-600">Home Meal</span>
                     </h1>
-                    <p className="text-[#5C4D42] text-lg max-w-2xl mx-auto font-medium mb-10">
+                    <p className="text-[#5C4D42] text-lg max-w-2xl mx-auto font-medium mb-12">
                         Explore top-rated homemade tiffin services nearby. Healthy, hygienic, and just like mom's cooking.
                     </p>
 
                     {/* Glass Control Center */}
-                    <div className="max-w-4xl mx-auto glass-panel p-3 rounded-[2rem] shadow-2xl shadow-orange-500/10 backdrop-blur-xl border border-white/40 flex flex-col md:flex-row gap-2 relative z-20">
+                    <div className="max-w-4xl mx-auto glass-panel p-3 rounded-[2rem] shadow-2xl shadow-primary/10 backdrop-blur-xl border border-white/60 flex flex-col md:flex-row gap-2 relative z-20">
 
                         {/* Location Input */}
                         <div className="flex-1 relative group">
@@ -72,7 +75,7 @@ const FindMess = () => {
                             </div>
                             <input
                                 type="text"
-                                className="w-full h-14 pl-12 pr-4 bg-white/50 hover:bg-white/80 focus:bg-white rounded-2xl border-none outline-none text-[#2D241E] font-bold placeholder:text-gray-400 placeholder:font-medium transition-all"
+                                className="w-full h-14 pl-12 pr-4 bg-white/40 hover:bg-white/60 focus:bg-white rounded-2xl border-none outline-none text-[#2D241E] font-bold placeholder:text-gray-400 placeholder:font-medium transition-all"
                                 placeholder="Locate area..."
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
@@ -80,7 +83,7 @@ const FindMess = () => {
                         </div>
 
                         {/* Divider (Desktop) */}
-                        <div className="hidden md:block w-px bg-gray-200 my-2"></div>
+                        <div className="hidden md:block w-px bg-[#2D241E]/10 my-2"></div>
 
                         {/* Search Input */}
                         <div className="flex-[1.5] relative group">
@@ -89,7 +92,7 @@ const FindMess = () => {
                             </div>
                             <input
                                 type="text"
-                                className="w-full h-14 pl-12 pr-4 bg-white/50 hover:bg-white/80 focus:bg-white rounded-2xl border-none outline-none text-[#2D241E] font-bold placeholder:text-gray-400 placeholder:font-medium transition-all"
+                                className="w-full h-14 pl-12 pr-4 bg-white/40 hover:bg-white/60 focus:bg-white rounded-2xl border-none outline-none text-[#2D241E] font-bold placeholder:text-gray-400 placeholder:font-medium transition-all"
                                 placeholder="Search 'Veg Thali' or 'Annapurna'..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -97,7 +100,7 @@ const FindMess = () => {
                         </div>
 
                         {/* Search Button */}
-                        <button className="h-14 px-8 bg-[#111716] text-white rounded-xl font-bold shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <button className="h-14 px-8 bg-[#111716] text-white rounded-2xl font-bold shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                             <span>Search</span>
                         </button>
                     </div>
@@ -105,7 +108,7 @@ const FindMess = () => {
                     {/* Quick Filters */}
                     <div className="flex flex-wrap justify-center gap-3 mt-8">
                         {['Pure Veg', 'Rating 4.0+', 'Under ₹3000', 'Student Special'].map((filter) => (
-                            <button key={filter} className="px-5 py-2 rounded-full bg-white border border-gray-100 shadow-sm text-sm font-bold text-gray-600 hover:text-primary hover:border-primary/30 hover:bg-orange-50 transition-all">
+                            <button key={filter} className="px-5 py-2 rounded-full bg-white/40 border border-white/60 shadow-sm text-sm font-bold text-[#5C4D42] hover:text-primary hover:border-primary/30 hover:bg-orange-50 transition-all backdrop-blur-md">
                                 {filter}
                             </button>
                         ))}
@@ -114,11 +117,11 @@ const FindMess = () => {
             </div>
 
             {/* Results Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6">
                 {MOCK_PROVIDERS.map((provider) => (
-                    <div key={provider.id} className="group bg-white rounded-[2.5rem] p-3 shadow-xl shadow-gray-100 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-2 border border-gray-100">
+                    <div key={provider.id} className="group glass-panel rounded-[2.5rem] p-3 hover:border-primary/30 hover:-translate-y-2 transition-all duration-500 bg-white/60 border-white/50">
                         {/* Image Wrapper */}
-                        <div className="relative h-64 rounded-[2rem] overflow-hidden mb-4">
+                        <div className="relative h-64 rounded-[2rem] overflow-hidden mb-4 shadow-md">
                             <img src={provider.image} alt={provider.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
 
                             {/* Overlay Gradient */}
@@ -137,7 +140,7 @@ const FindMess = () => {
                             </div>
 
                             <div className="absolute bottom-4 left-4 text-white">
-                                <div className="flex items-center gap-1.5 text-white/90 text-sm font-bold bg-black/40 backdrop-blur-md px-3 py-1 rounded-full">
+                                <div className="flex items-center gap-1.5 text-white/90 text-sm font-bold bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                                     <span className="material-symbols-outlined text-[16px]">location_on</span>
                                     {provider.distance}
                                 </div>
@@ -145,7 +148,7 @@ const FindMess = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="px-4 pb-2">
+                        <div className="px-4 pb-4">
                             <div className="flex justify-between items-start mb-2">
                                 <h3 className="text-xl font-black text-[#2D241E] group-hover:text-primary transition-colors line-clamp-1">{provider.name}</h3>
                             </div>
@@ -155,14 +158,14 @@ const FindMess = () => {
 
                             <div className="flex items-center justify-between gap-4 mt-auto">
                                 <div>
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-0.5">Monthly</p>
+                                    <p className="text-[10px] text-[#5C4D42]/60 font-black uppercase tracking-widest mb-0.5">Monthly</p>
                                     <p className="text-2xl font-black text-[#2D241E]">{provider.priceRange.split(' - ')[0]}<span className="text-sm text-gray-400 font-bold">+</span></p>
                                 </div>
                                 <div className="flex gap-2">
-                                    <Link to={`/customer/mess/${provider.id}`} className="size-12 rounded-full border-2 border-gray-100 flex items-center justify-center text-[#2D241E] hover:border-primary hover:text-primary transition-colors bg-white">
+                                    <Link to={`/customer/mess/${provider.id}`} className="size-12 rounded-full border border-white/50 flex items-center justify-center text-[#2D241E] hover:border-primary hover:text-primary transition-colors bg-white/40 glass-inner hover:scale-105 active:scale-95 shadow-sm">
                                         <span className="material-symbols-outlined">menu_book</span>
                                     </Link>
-                                    <Link to={`/customer/mess/${provider.id}`} className="h-12 px-6 bg-[#111716] text-white rounded-full font-bold text-sm flex items-center gap-2 hover:bg-primary transition-colors shadow-lg hover:shadow-primary/30">
+                                    <Link to={`/customer/mess/${provider.id}`} className="h-12 px-6 bg-[#111716] text-white rounded-full font-bold text-sm flex items-center gap-2 hover:bg-primary transition-all shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95">
                                         View
                                         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                                     </Link>

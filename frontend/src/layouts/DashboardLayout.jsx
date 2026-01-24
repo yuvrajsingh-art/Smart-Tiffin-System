@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useSubscription } from '../context/SubscriptionContext';
 
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
@@ -21,16 +22,22 @@ const DashboardLayout = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Updated Nav Items list
+    // Auth & Subscription State
+    const { hasActiveSubscription, cancelSubscription } = useSubscription();
+    const isSubscribed = hasActiveSubscription();
+
+    // Nav Items with Access Control
     const navItems = [
-        { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard' },
-        { icon: 'search', label: 'Find Mess', to: '/customer/find-mess' }, // New Discovery Link
-        { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu' },
-        { icon: 'local_shipping', label: 'Track Order', to: '/customer/track' },
-        { icon: 'pause_circle', label: 'Pause Subscription', to: '/customer/pause' },
-        { icon: 'history', label: 'History', to: '/customer/history' }, // Added History
-        { icon: 'thumb_up', label: 'Feedback', to: '/customer/feedback' },
+        { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard', public: true },
+        { icon: 'search', label: 'Find Mess', to: '/customer/find-mess', public: true }, // Always visible
+        { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu', public: false },
+        { icon: 'local_shipping', label: 'Track Order', to: '/customer/track', public: false },
+        { icon: 'pause_circle', label: 'Pause Subscription', to: '/customer/pause', public: false },
+        { icon: 'history', label: 'History', to: '/customer/history', public: false },
+        { icon: 'thumb_up', label: 'Feedback', to: '/customer/feedback', public: false },
     ];
+
+    const visibleNavItems = navItems.filter(item => item.public || isSubscribed);
 
     return (
         <div className="font-display bg-[#FFFBF5] text-[#2D241E] h-screen overflow-hidden selection:bg-primary/20 selection:text-primary flex relative">
@@ -57,7 +64,7 @@ const DashboardLayout = () => {
                     <span className="text-xl font-extrabold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
                 <nav className="p-4 space-y-2">
-                    {navItems.map((item) => (
+                    {visibleNavItems.map((item) => (
                         <div key={item.to} onClick={() => setIsMobileMenuOpen(false)}>
                             <SidebarItem {...item} active={location.pathname === item.to} />
                         </div>
@@ -76,7 +83,7 @@ const DashboardLayout = () => {
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-                    {navItems.map((item) => (
+                    {visibleNavItems.map((item) => (
                         <SidebarItem key={item.to} {...item} active={location.pathname === item.to} />
                     ))}
                     <div className="my-4 h-px bg-orange-100 w-full"></div>
@@ -87,7 +94,13 @@ const DashboardLayout = () => {
                         <span className="material-symbols-outlined">person</span>
                         Profile
                     </Link>
-                    <button className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 font-semibold hover:bg-red-50 hover:text-red-600 transition-all">
+                    <button
+                        onClick={() => {
+                            cancelSubscription();
+                            window.location.reload(); // Reload to reflect state change immediately
+                        }}
+                        className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 font-semibold hover:bg-red-50 hover:text-red-600 transition-all"
+                    >
                         <span className="material-symbols-outlined">logout</span>
                         Logout
                     </button>
@@ -120,7 +133,11 @@ const DashboardLayout = () => {
                         <div className="flex items-center gap-3 pl-6 border-l border-orange-200/50">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-bold text-[#2D241E]">Rohan Das</p>
-                                <p className="text-xs text-primary font-bold uppercase tracking-wider">Premium Plan</p>
+                                {isSubscribed ? (
+                                    <p className="text-xs text-primary font-bold uppercase tracking-wider">Premium Plan</p>
+                                ) : (
+                                    <p className="text-xs text-[#5C4D42] font-bold uppercase tracking-wider">Start Journey</p>
+                                )}
                             </div>
                             <img alt="Profile" className="size-12 rounded-full border-2 border-white shadow-sm object-cover" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" />
                         </div>
