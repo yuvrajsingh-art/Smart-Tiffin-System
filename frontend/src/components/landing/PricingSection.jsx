@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
+import PaymentModal from '../ui/PaymentModal';
 
 function PricingSection() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState({ name: '', price: '' });
+
+    const openPaymentModal = (name, price) => {
+        setSelectedPlan({ name, price });
+        setIsModalOpen(true);
+    };
+
     return (
         <section className="max-w-6xl mx-auto w-full px-4 md:px-8" id="pricing">
             <div className="text-center mb-10">
@@ -32,7 +41,10 @@ function PricingSection() {
                             Meal Cancellation (Save Money)
                         </li>
                     </ul>
-                    <button className="w-full py-3 rounded-xl border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition-colors">
+                    <button
+                        onClick={() => openPaymentModal('Student Plan', '₹0')}
+                        className="w-full py-3 rounded-xl border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition-colors"
+                    >
                         Get Started
                     </button>
                 </div>
@@ -61,7 +73,10 @@ function PricingSection() {
                             Priority Support
                         </li>
                     </ul>
-                    <button className="w-full py-3 rounded-xl bg-primary text-white font-bold hover:bg-orange-600 transition-colors shadow-lg shadow-primary/20">
+                    <button
+                        onClick={() => openPaymentModal('Mess Partner', '₹499')}
+                        className="w-full py-3 rounded-xl bg-primary text-white font-bold hover:bg-orange-600 transition-colors shadow-lg shadow-primary/20"
+                    >
                         Join as Partner
                     </button>
                 </div>
@@ -94,6 +109,13 @@ function PricingSection() {
                     </button>
                 </div>
             </div>
+
+            <PaymentModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                plan={selectedPlan.name}
+                price={selectedPlan.price}
+            />
         </section>
     );
 }

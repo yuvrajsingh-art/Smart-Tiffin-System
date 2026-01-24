@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Logo from '../../components/ui/Logo';
+
 
 const RoleSelection = () => {
     const navigate = useNavigate();
@@ -24,8 +24,8 @@ const RoleSelection = () => {
             {/* Simplified Header matching RolePage layout */}
             <nav className="fixed top-0 w-full z-50 glass-nav transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                         <Logo />
-                     <div className="flex items-center gap-4">
+                    <span className="text-2xl font-black text-primary tracking-tighter">Smart Tiffin</span>
+                    <div className="flex items-center gap-4">
                         <span className="hidden sm:block text-sm text-[#6A717B] font-medium">Already have an account?</span>
                         <Link to="/login" className="text-sm font-bold text-primary hover:text-orange-700 transition-colors">Login</Link>
                     </div>

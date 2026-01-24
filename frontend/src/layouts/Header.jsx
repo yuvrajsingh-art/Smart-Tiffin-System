@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Logo from '../components/ui/Logo';
+
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,7 +50,7 @@ const Header = () => {
         <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-nav h-16' : 'bg-transparent h-20'}`}>
             <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
                 {/* Logo */}
-               <Logo />
+                <span className="text-2xl font-black text-primary tracking-tighter">Smart Tiffin</span>
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center gap-8">
