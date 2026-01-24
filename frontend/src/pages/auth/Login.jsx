@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Input from '../../components/ui/Input';
-import Button from '../../components/ui/Button';
 import toast from 'react-hot-toast';
 
 function Login() {
@@ -16,42 +14,22 @@ function Login() {
         password: '',
     });
 
-    // Validation Errors
-    const [errors, setErrors] = useState({});
-
     const handleChange = (e) => {
-        const { id, value } = e.target;
+        const { value, type } = e.target;
+        const id = e.target.id || e.target.name; // Handle both id and name
         setFormData(prev => ({
             ...prev,
             [id]: value
         }));
-        if (errors[id]) {
-            setErrors(prev => ({ ...prev, [id]: '' }));
-        }
-    };
-
-    const validateForm = () => {
-        const newErrors = {};
-        if (!formData.email) {
-            newErrors.email = 'Email address is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Please enter a valid email address';
-        }
-
-        if (!formData.password) {
-            newErrors.password = 'Password is required';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        if (!formData.email || !formData.password) {
+            toast.error("Please fill in all fields");
+            return;
+        }
 
         setIsLoading(true);
 
@@ -66,13 +44,11 @@ function Login() {
 
         setIsLoading(false);
         console.log("Logged in with:", formData);
-
-        // Redirect
         navigate('/customer/dashboard');
     };
 
     return (
-        <div className="relative flex flex-col items-center min-h-screen text-[#2D241E] bg-[#FFFBF5] overflow-x-hidden">
+        <div className="relative flex flex-col items-center min-h-screen text-[#2D241E] bg-[#FFFBF5] overflow-x-hidden selection:bg-primary/20 selection:text-primary">
 
             {/* Background Blobs (Exact Match with Role/Register Page) */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -81,97 +57,93 @@ function Login() {
             </div>
 
             {/* Header */}
-            <header className="w-full max-w-6xl px-6 py-6 flex justify-between items-center z-50">
-                <Link to="/" className="flex items-center gap-2 group">
-                    <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+            <header className="w-full max-w-7xl px-6 py-6 flex justify-between items-center z-50">
+                <Link to="/" className="flex items-center gap-2">
+                    <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white shadow-md">
                         <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
                     </div>
-                    <span className="text-base font-black text-[#2D241E] tracking-tight">Smart Tiffin</span>
+                    <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#2D241E] to-primary">Smart Tiffin</span>
                 </Link>
                 <div className="hidden sm:block">
-                    <span className="text-xs text-[#5C4D42]/80 font-medium">New here?</span>
-                    <Link to="/role-selection" className="ml-2 text-xs font-bold text-primary hover:text-[#e04112] transition-colors">Create Account</Link>
+                    <span className="text-xs text-[#5C4D42]/80 font-medium">Don't have an account?</span>
+                    <Link to="/role-selection" className="ml-2 text-xs font-bold text-primary hover:text-[#e04112] transition-colors">Register</Link>
                 </div>
             </header>
 
-            {/* Main Form Container - Compact & Responsive */}
-            <main className="w-full flex justify-center items-start pt-8 pb-12 px-4 z-10 flex-grow">
+            {/* Main Content */}
+            <main className="w-full flex justify-center items-start pt-4 pb-12 px-4 z-10 flex-grow">
                 <div className="glass-panel w-full max-w-lg rounded-[2rem] p-6 md:p-8 bg-white/60 backdrop-blur-xl border border-white/70 shadow-2xl shadow-primary/5 mx-auto">
-
-                    <div className="mb-8 text-center">
-                        <h1 className="text-2xl font-black text-[#2D241E] mb-1">Welcome Back!</h1>
-                        <p className="text-xs text-[#2D241E]/60 font-bold uppercase tracking-wider">Login to manage your meals</p>
+                    <div className="mb-6 text-center">
+                        <h1 className="text-2xl font-black text-[#2D241E] mb-1">Welcome Back</h1>
+                        <p className="text-xs text-[#2D241E]/60 font-bold uppercase tracking-wider">Login to your Smart Tiffin account</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="relative flex flex-col">
+                            <span className="material-symbols-outlined absolute left-4 top-4 text-[#2D241E]/40 text-[20px]">alternate_email</span>
+                            <input
+                                id="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className="w-full bg-white/40 border border-white/50 rounded-2xl pl-11 pr-4 py-3.5 outline-none transition-all duration-300 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 focus:bg-white/60 font-medium placeholder:text-gray-400"
+                                placeholder="Email Address"
+                            />
+                        </div>
 
-                        <div className="space-y-4">
-                            <div className="relative">
-                                <span className="material-symbols-outlined absolute left-4 top-3 text-[#2D241E]/40 text-[18px]">alternate_email</span>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    className="w-full bg-white/50 border border-white/60 rounded-xl pl-10 pr-4 h-11 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white placeholder:text-gray-400/80 transition-all"
-                                    placeholder="Email Address"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                />
-                                {errors.email && <p className="text-[10px] text-red-500 font-bold ml-2 mt-1">{errors.email}</p>}
-                            </div>
-
-                            <div className="relative">
-                                <span className="material-symbols-outlined absolute left-4 top-3 text-[#2D241E]/40 text-[18px]">lock</span>
+                        <div className="space-y-2">
+                            <div className="relative flex flex-col">
+                                <span className="material-symbols-outlined absolute left-4 top-4 text-[#2D241E]/40 text-[20px]">lock</span>
                                 <input
                                     id="password"
                                     type="password"
-                                    className="w-full bg-white/50 border border-white/60 rounded-xl pl-10 pr-4 h-11 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white placeholder:text-gray-400/80 transition-all"
-                                    placeholder="Password"
                                     value={formData.password}
                                     onChange={handleChange}
+                                    className="w-full bg-white/40 border border-white/50 rounded-2xl pl-11 pr-4 py-3.5 outline-none transition-all duration-300 focus:ring-2 focus:ring-primary/20 focus:border-primary/50 focus:bg-white/60 font-medium placeholder:text-gray-400"
+                                    placeholder="Password"
                                 />
-                                {errors.password && <p className="text-[10px] text-red-500 font-bold ml-2 mt-1">{errors.password}</p>}
                             </div>
-                        </div>
-
-                        <div className="flex justify-end">
-                            <Link to="/forgot-password" className="text-[11px] font-bold text-primary hover:text-orange-700 hover:underline transition-colors">
-                                Forgot Password?
-                            </Link>
+                            <div className="flex justify-end px-1">
+                                <Link to="#" className="text-sm font-bold text-primary hover:text-[#e04112] transition-colors">Forgot Password?</Link>
+                            </div>
                         </div>
 
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#111716] hover:bg-black text-white font-bold h-12 rounded-xl shadow-lg shadow-black/10 transition-all hover:scale-[1.01] active:scale-[0.98] mt-2 text-sm flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full bg-gradient-to-r from-primary to-orange-500 hover:to-orange-600 text-white font-extrabold py-4 rounded-xl shadow-[0_10px_20px_-5px_rgba(255,87,36,0.4)] transition-all hover:scale-[1.01] active:scale-[0.98] mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? (
-                                <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                            ) : (
-                                <>
-                                    Login <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                                </>
-                            )}
+                            {isLoading ? 'Logging In...' : 'Login'}
                         </button>
-                    </form>
 
-                    {/* Social Footer */}
-                    <div className="mt-8 pt-6 border-t border-gray-200/50">
-                        <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Or continue with</p>
-                        <div className="flex justify-center gap-4">
-                            <button className="size-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
-                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsnS2Q9jote0zTwDBTaQW3-Hp5bXCKiqORGLI3HeWG8NeLc_Bk7tzlpIGqszu3aof4jHImylcUjk7M-auzE2VsRbeCdbzdrs36_aEbCWMRjFREwfHFwbokCBt5UjzdeGrZnVyLe4ghM54i7uerahR4tepsHNH-4SXUvqm0hveFxnfvDF4JzxUjFasRYHHtn10Wgqb3paugB76O__RPwerL9bgxXfZgn83KSyzxkrgGg_o1Wn1e4ZFaacjEtuRAm_J2uSIXCSMa" alt="G" className="w-5 h-5" />
+                        <div className="relative py-4 flex items-center">
+                            <div className="flex-grow border-t border-[#2D241E]/10"></div>
+                            <span className="flex-shrink mx-4 text-xs font-bold text-[#2D241E]/40 uppercase tracking-widest">Or login with</span>
+                            <div className="flex-grow border-t border-[#2D241E]/10"></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button type="button" className="flex items-center justify-center gap-3 py-3 bg-white/40 hover:bg-white/60 border border-white/50 rounded-2xl transition-all shadow-sm hover:shadow-md">
+                                <img alt="Google" className="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsnS2Q9jote0zTwDBTaQW3-Hp5bXCKiqORGLI3HeWG8NeLc_Bk7tzlpIGqszu3aof4jHImylcUjk7M-auzE2VsRbeCdbzdrs36_aEbCWMRjFREwfHFwbokCBt5UjzdeGrZnVyLe4ghM54i7uerahR4tepsHNH-4SXUvqm0hveFxnfvDF4JzxUjFasRYHHtn10Wgqb3paugB76O__RPwerL9bgxXfZgn83KSyzxkrgGg_o1Wn1e4ZFaacjEtuRAm_J2uSIXCSMa" />
+                                <span className="text-sm font-bold text-[#2D241E]">Google</span>
                             </button>
-                            <button className="size-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:scale-110 transition-transform shadow-sm">
-                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBC_GuhkVOHy_E4cGw5zY6R-ALLVj0OOOOPafEdFrLH-7UakSdUPJ6kqbm0k9NWvEXX7muPBNXxY4awL6DcSwiZTfZDRe_uE1RwHl6n1C2iFHimWjexrmFMHvgi5pERv7nJGKJJVIt9BcacNvNT1GrgThYdWFVlR4mn6rgGXJTbicYN7PGTCOFJNH4BwJ0bWuQqBdjHw7s4NTMQv8-GZ8IThDvzsezlaAIn8T3-izlPHWw3qPeqcVDERXrlxWQKY5Y6L3C2B4w1" alt="A" className="w-5 h-5" />
+                            <button type="button" className="flex items-center justify-center gap-3 py-3 bg-white/40 hover:bg-white/60 border border-white/50 rounded-2xl transition-all shadow-sm hover:shadow-md">
+                                <img alt="Apple" className="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBC_GuhkVOHy_E4cGw5zY6R-ALLVj0OOOOPafEdFrLH-7UakSdUPJ6kqbm0k9NWvEXX7muPBNXxY4awL6DcSwiZTfZDRe_uE1RwHl6n1C2iFHimWjexrmFMHvgi5pERv7nJGKJJVIt9BcacNvNT1GrgThYdWFVlR4mn6rgGXJTbicYN7PGTCOFJNH4BwJ0bWuQqBdjHw7s4NTMQv8-GZ8IThDvzsezlaAIn8T3-izlPHWw3qPeqcVDERXrlxWQKY5Y6L3C2B4w1" />
+                                <span className="text-sm font-bold text-[#2D241E]">Apple</span>
                             </button>
                         </div>
-                    </div>
-
+                    </form>
                 </div>
             </main>
 
-            <footer className="py-6 text-center text-[#2D241E]/30 text-[10px] font-bold w-full relative z-10 uppercase tracking-widest">
-                © 2024 Smart Tiffin System
+            {/* Footer */}
+            <footer className="mt-auto py-8 text-center text-[#2D241E]/40 text-xs font-medium w-full relative z-10">
+                <p>© 2024 Smart Tiffin Technology. All rights reserved.</p>
+                <div className="flex justify-center gap-6 mt-3">
+                    <Link to="#" className="hover:text-primary transition-colors">Privacy</Link>
+                    <Link to="#" className="hover:text-primary transition-colors">Terms</Link>
+                    <Link to="#" className="hover:text-primary transition-colors">Support</Link>
+                </div>
             </footer>
         </div>
     );
