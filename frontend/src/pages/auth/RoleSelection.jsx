@@ -1,172 +1,112 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const RoleSelection = () => {
-    const navigate = useNavigate();
-    const [selectedRole, setSelectedRole] = useState('');
-
-    const handleContinue = () => {
-        if (selectedRole) {
-            navigate(`/register?role=${selectedRole}`);
-        }
-    };
-
     return (
-        <div className="font-display mesh-gradient min-h-screen relative overflow-hidden flex flex-col selection:bg-primary/20 selection:text-primary">
-
-            {/* Ambient Background */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-[#FFFBF5] z-0"></div>
-                <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-orange-200/20 rounded-full blur-[100px] animate-pulse-slow"></div>
-                <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-yellow-200/20 rounded-full blur-[80px]"></div>
+        <div className="min-h-screen md:h-screen w-full relative flex flex-col md:overflow-hidden bg-[#FFFBF5]">
+            {/* Background Blobs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-[#ffe0d6] rounded-full blur-[80px] opacity-60"></div>
+                <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-[#ffe8cc] rounded-full blur-[80px] opacity-60"></div>
             </div>
 
-            {/* Navigation */}
-            <nav className="relative z-50 w-full p-6 flex justify-between items-center max-w-7xl mx-auto">
+            {/* Header */}
+            <header className="relative z-50 w-full h-14 flex items-center border-b border-orange-100/50 bg-white/80 backdrop-blur-md px-6 justify-between flex-shrink-0">
                 <div className="flex items-center gap-2">
-                    <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
+                    <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white">
+                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
                     </div>
-                    <span className="text-xl font-black text-[#2D241E] tracking-tight">Smart Tiffin</span>
+                    <span className="text-base font-black text-[#2D241E] tracking-tight">Smart Tiffin</span>
                 </div>
-                <div className="flex items-center gap-4">
-                    <span className="hidden sm:block text-sm text-[#5C4D42] font-medium">Already a member?</span>
-                    <Link to="/login" className="px-5 py-2.5 rounded-xl bg-white/50 border border-orange-100 text-primary font-bold text-sm hover:bg-white transition-all shadow-sm">
-                        Login
-                    </Link>
-                </div>
-            </nav>
+                <Link to="/" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span> Back
+                </Link>
+            </header>
 
             {/* Main Content */}
-            <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-4">
-                <div className="text-center mb-12 max-w-2xl mx-auto animate-[fadeIn_0.5s_ease-out]">
-                    <span className="inline-block px-4 py-1.5 rounded-full bg-orange-100/50 border border-orange-200 text-primary text-[11px] font-bold uppercase tracking-widest mb-4">
-                        Getting Started
-                    </span>
-                    <h1 className="text-4xl md:text-5xl font-black text-[#2D241E] tracking-tight mb-4">
-                        Choose your journey
-                    </h1>
-                    <p className="text-[#5C4D42] text-lg font-medium">
-                        Are you here to find delicious meals or to grow your food business?
-                    </p>
+            <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 w-full max-w-5xl mx-auto h-full min-h-0">
+                <div className="text-center mb-6 flex-shrink-0 animate-[fadeIn_0.5s_ease-out]">
+                    <h1 className="text-2xl md:text-3xl font-black text-[#2D241E] mb-1">Select Role</h1>
+                    <p className="text-sm text-[#5C4D42]/80 font-medium">Join as a Student or Provider</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto mb-12">
-                    {/* Customer Card */}
-                    <label className="group relative cursor-pointer perspective-1000">
-                        <input
-                            type="radio"
-                            name="role"
-                            value="customer"
-                            className="peer sr-only"
-                            onChange={(e) => setSelectedRole(e.target.value)}
-                            checked={selectedRole === 'customer'}
-                        />
-                        <div className="relative h-[400px] glass-panel rounded-[2.5rem] p-8 flex flex-col items-center justify-between overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl peer-checked:ring-4 peer-checked:ring-primary/20 peer-checked:border-primary peer-checked:bg-white/80">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl h-auto items-center justify-center">
 
-                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-orange-50/50 opacity-0 group-hover:opacity-100 peer-checked:opacity-100 transition-opacity duration-500"></div>
-
-                            {/* Checkmark */}
-                            <div className="absolute top-6 right-6 size-8 rounded-full bg-primary text-white flex items-center justify-center opacity-0 scale-50 peer-checked:opacity-100 peer-checked:scale-100 transition-all duration-300 shadow-lg shadow-primary/30 z-20">
-                                <span className="material-symbols-outlined text-xl">check</span>
-                            </div>
-
-                            <div className="relative z-10 w-full text-center mt-4">
-                                <div className="size-20 mx-auto bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 mb-6 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                    <span className="material-symbols-outlined text-4xl">restaurant</span>
-                                </div>
-                                <h3 className="text-2xl font-black text-[#2D241E] mb-2">I want to Eat</h3>
-                                <p className="text-[#5C4D42] font-medium leading-relaxed max-w-xs mx-auto">
-                                    Subscribe to daily tiffins, browse menus, and managing your meals.
-                                </p>
-                            </div>
-
-                            <div className="relative z-10 w-full mt-auto">
-                                <div className="h-40 w-full rounded-2xl bg-gradient-to-br from-orange-100 to-white overflow-hidden border border-orange-100/50 flex items-center justify-center relative group-hover:shadow-lg transition-shadow duration-500">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop"
-                                        alt="Delicious Food"
-                                        className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                                    <span className="relative text-white font-bold text-sm bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                                        Join 500+ Students
-                                    </span>
-                                </div>
+                    {/* Customer Card - Compact Vertical (320px) */}
+                    <div className="glass-panel group rounded-3xl overflow-hidden flex flex-col shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white/60 border border-white/50 h-80 w-full max-w-sm mx-auto">
+                        <div className="h-32 bg-gray-100 relative overflow-hidden flex-shrink-0">
+                            <img alt="Student" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNVCDMliaUdGyF8cPtHt4lGPDyEo6CNQ8NwD0AmEHWUY7SDEHdlPF8qnuNf65J4IYZY0LfsHg_FCJFFjN5p04BjTw3yHOUwSYdLQtFnSf-wHDRI4ygBD2Zizj8QdtLoo-SESKqMSK3C44AHbJ8dYzT1LzwRzbeU06Fcaep_pY299lYel5DMTC68A6_SavJ3IyMkFJ98iPyRI4PnGQixYiVG5taIzQ1nZD-Q_00OLvx_8Z8rgsEYoNHUKQ_ctBa1SCglAM1gM6j" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+                            <div className="absolute bottom-3 left-5 text-white">
+                                <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 backdrop-blur-md border border-white/20 text-[9px] font-bold uppercase tracking-wider mb-1">Student</span>
+                                <h2 className="text-xl font-bold leading-none">I want to Eat</h2>
                             </div>
                         </div>
-                    </label>
-
-                    {/* Provider Card */}
-                    <label className="group relative cursor-pointer perspective-1000">
-                        <input
-                            type="radio"
-                            name="role"
-                            value="provider"
-                            className="peer sr-only"
-                            onChange={(e) => setSelectedRole(e.target.value)}
-                            checked={selectedRole === 'provider'}
-                        />
-                        <div className="relative h-[400px] glass-panel rounded-[2.5rem] p-8 flex flex-col items-center justify-between overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl peer-checked:ring-4 peer-checked:ring-primary/20 peer-checked:border-primary peer-checked:bg-white/80">
-
-                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-orange-50/50 opacity-0 group-hover:opacity-100 peer-checked:opacity-100 transition-opacity duration-500"></div>
-
-                            {/* Checkmark */}
-                            <div className="absolute top-6 right-6 size-8 rounded-full bg-primary text-white flex items-center justify-center opacity-0 scale-50 peer-checked:opacity-100 peer-checked:scale-100 transition-all duration-300 shadow-lg shadow-primary/30 z-20">
-                                <span className="material-symbols-outlined text-xl">check</span>
+                        <div className="p-5 flex flex-col flex-1 justify-between">
+                            <div className="space-y-2">
+                                {[
+                                    { icon: 'search', title: 'Browse Messes' },
+                                    { icon: 'calendar_month', title: 'Manage Plans' },
+                                    { icon: 'monitoring', title: 'Track Diet' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <div className="size-6 rounded-full bg-orange-50 text-primary flex items-center justify-center flex-shrink-0">
+                                            <span className="material-symbols-outlined text-[14px]">{item.icon}</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-[#2D241E]">{item.title}</span>
+                                    </div>
+                                ))}
                             </div>
+                            <Link to="/register?role=customer" className="w-full bg-primary hover:bg-[#e04112] text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 mt-2 hover:shadow-lg">
+                                Join as Eater <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            </Link>
+                        </div>
+                    </div>
 
-                            <div className="relative z-10 w-full text-center mt-4">
-                                <div className="size-20 mx-auto bg-[#111716] rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl shadow-black/10 group-hover:scale-110 transition-transform duration-500">
-                                    <span className="material-symbols-outlined text-4xl">soup_kitchen</span>
-                                </div>
-                                <h3 className="text-2xl font-black text-[#2D241E] mb-2">I want to Serve</h3>
-                                <p className="text-[#5C4D42] font-medium leading-relaxed max-w-xs mx-auto">
-                                    Manage your kitchen, track orders, and grow your tiffin business.
-                                </p>
-                            </div>
-
-                            <div className="relative z-10 w-full mt-auto">
-                                <div className="h-40 w-full rounded-2xl bg-[#111716] overflow-hidden border border-gray-800 flex items-center justify-center relative group-hover:shadow-lg transition-shadow duration-500">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=500&auto=format&fit=crop"
-                                        alt="Chef Cooking"
-                                        className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-700"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                                    <span className="relative text-white font-bold text-sm bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                                        Partner with Us
-                                    </span>
-                                </div>
+                    {/* Provider Card - Compact Vertical (320px) */}
+                    <div className="glass-panel group rounded-3xl overflow-hidden flex flex-col shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white/60 border border-white/50 h-80 w-full max-w-sm mx-auto">
+                        <div className="h-32 bg-gray-100 relative overflow-hidden flex-shrink-0">
+                            <img alt="Chef" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAg_9In9jykwB9Xpx1GALOSgxtX3ZWo8vn7Eop86MZjuImlwLgF4FbGNc4320yUBls5ze1zuvQqFo46YoZ3p7j0fASGbwHNUSi3vQHhdB94FwA8686TaZAwZOcHBom8lUhasCpb-OPr1xX-faojUuyT2HEAArefJaxuJlXJzGCR3qR9-lLs5GFZYuxuhUQXfMKtyzcEX_YO968hiDIc_7yq_z_wuJo0Qac_md7_q8wtFlf884nUWzX4yNbzQDa4gHpuqlAGRpJr" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+                            <div className="absolute bottom-3 left-5 text-white">
+                                <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 backdrop-blur-md border border-white/20 text-[9px] font-bold uppercase tracking-wider mb-1">Partner</span>
+                                <h2 className="text-xl font-bold leading-none">I want to Serve</h2>
                             </div>
                         </div>
-                    </label>
+                        <div className="p-5 flex flex-col flex-1 justify-between">
+                            <div className="space-y-2">
+                                {[
+                                    { icon: 'devices', title: 'Go Digital' },
+                                    { icon: 'receipt_long', title: 'Auto Billing' },
+                                    { icon: 'trending_up', title: 'Grow Sales' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <div className="size-6 rounded-full bg-orange-50 text-primary flex items-center justify-center flex-shrink-0">
+                                            <span className="material-symbols-outlined text-[14px]">{item.icon}</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-[#2D241E]">{item.title}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <Link to="/register?role=provider" className="w-full bg-[#111716] hover:bg-black text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 mt-2 hover:shadow-lg">
+                                Partner with Us <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            </Link>
+                        </div>
+                    </div>
+
                 </div>
 
-                {/* Continue Action */}
-                <div className="w-full max-w-md mx-auto animate-[fadeIn_0.5s_ease-out_0.3s]">
-                    <button
-                        onClick={handleContinue}
-                        disabled={!selectedRole}
-                        className={`
-                            w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all duration-500
-                            ${selectedRole
-                                ? 'bg-[#111716] text-white shadow-2xl hover:scale-[1.02] hover:-translate-y-1'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            }
-                        `}
-                    >
-                        Continue Journey
-                        <span className={`material-symbols-outlined transition-transform duration-300 ${selectedRole ? 'translate-x-1' : ''}`}>
-                            arrow_forward
-                        </span>
-                    </button>
-
-                    <p className="text-center mt-6 text-sm text-[#5C4D42] opacity-60">
-                        Secure & Verified Platform • 100% Hygienic Food
+                <div className="mt-6 text-center flex-shrink-0">
+                    <p className="text-xs text-[#5C4D42]/60">
+                        Already have an account? <Link className="text-primary font-bold hover:underline" to="/login">Log in here</Link>
                     </p>
                 </div>
             </main>
+
+            {/* Footer */}
+            <footer className="w-full py-3 text-center border-t border-orange-100/30 flex-shrink-0 bg-white/40">
+                <p className="text-[10px] text-[#5C4D42]/40">© 2024 Smart Tiffin • Privacy</p>
+            </footer>
         </div>
     );
 };
