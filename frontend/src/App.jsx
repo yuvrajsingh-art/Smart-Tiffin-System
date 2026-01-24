@@ -19,7 +19,8 @@ import FindMess from './pages/discovery/FindMess'
 import MessDetails from './pages/discovery/MessDetails'
 import SubscriptionCheckout from './pages/discovery/SubscriptionCheckout'
 import Profile from './pages/customer/Profile'
-import { SubscriptionProvider } from './context/SubscriptionContext';
+ import { SubscriptionProvider } from './context/SubscriptionContext';
+ 
 
 /**
  * Main Application Component
@@ -65,6 +66,13 @@ function App() {
       </BrowserRouter>
     </SubscriptionProvider>
   )
+
+
+  // return (
+  //   <BrowserRouter>
+  //     <ProviderDashboard />
+  //   </BrowserRouter>
+  // )
 }
 
 export default App
