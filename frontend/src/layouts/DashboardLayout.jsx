@@ -44,8 +44,8 @@ const DashboardLayout = () => {
 
             {/* Background Blobs (Premium Warm Theme) */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="blob w-[600px] h-[600px] bg-orange-200/30 -top-20 -right-20"></div>
-                <div className="blob w-[500px] h-[500px] bg-amber-100/40 bottom-0 left-0"></div>
+                <div className="blob blob-1 blob-primary -top-20 -right-20"></div>
+                <div className="blob blob-2 blob-secondary bottom-0 left-0"></div>
             </div>
 
             {/* Mobile Menu Overlay */}

@@ -37,9 +37,9 @@ function LandingPage() {
     return (
         <div className="font-display mesh-gradient text-[#2D241E] overflow-x-hidden min-h-screen relative selection:bg-primary/20 selection:text-primary">
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="blob blob-1"></div>
-                <div className="blob blob-2"></div>
-                <div className="blob blob-3"></div>
+                <div className="blob blob-1 blob-primary"></div>
+                <div className="blob blob-2 blob-secondary"></div>
+                <div className="blob blob-3 blob-primary"></div>
             </div>
             <Header />
             <main className="relative z-10 pt-20 pb-16 px-4 md:px-8 max-w-[1280px] mx-auto flex flex-col gap-16">

@@ -50,10 +50,10 @@ function Login() {
     return (
         <div className="relative flex flex-col items-center min-h-screen text-[#2D241E] bg-[#FFFBF5] overflow-x-hidden selection:bg-primary/20 selection:text-primary">
 
-            {/* Background Blobs (Exact Match with Role/Register Page) */}
+            {/* Background Blobs (Unified) */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-[#ffe0d6] rounded-full blur-[80px] opacity-60"></div>
-                <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-[#ffe8cc] rounded-full blur-[80px] opacity-60"></div>
+                <div className="blob blob-1 blob-primary"></div>
+                <div className="blob blob-2 blob-secondary"></div>
             </div>
 
             {/* Header */}
