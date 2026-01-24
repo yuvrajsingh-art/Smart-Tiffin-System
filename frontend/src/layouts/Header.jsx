@@ -94,7 +94,13 @@ const Header = () => {
                 </nav>
 
                 {/* Auth Button */}
-                <div className="hidden md:block">
+                <div className="hidden md:flex items-center gap-6">
+                    <Link
+                        to="/login"
+                        className="text-sm font-bold text-secondary/80 hover:text-primary transition-colors"
+                    >
+                        Login
+                    </Link>
                     <Link
                         to="/role-selection"
                         className="bg-black hover:bg-secondary/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105 shadow-lg shadow-black/20"
@@ -128,6 +134,13 @@ const Header = () => {
                         </a>
                     ))}
                     <div className="h-px bg-gray-100 my-2"></div>
+                    <Link
+                        to="/login"
+                        className="text-base font-bold text-secondary/80 hover:text-primary text-center py-2"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Login
+                    </Link>
                     <Link
                         to="/role-selection"
                         className="bg-black text-white text-base font-bold py-3 rounded-full shadow-lg w-full text-center block"
