@@ -58,4 +58,4 @@ dist-ssr
 
 # Temp Directories
 temp_*
-public/temp_*
+public/
