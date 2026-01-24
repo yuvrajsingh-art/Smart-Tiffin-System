@@ -12,22 +12,22 @@ function ProblemSection() {
                     <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500">
                         <span className="material-symbols-outlined text-3xl">menu_book</span>
                     </div>
-                    <h3 className="text-xl font-black text-[#2D241E]">Manual Registers</h3>
-                    <p className="text-[#5C4D42] leading-relaxed text-sm">Ditch the messy notebooks. Eliminate human error and lost records with 100% digital logs.</p>
+                    <h3 className="text-xl font-black text-[#2D241E]">Lost Coupons?</h3>
+                    <p className="text-[#5C4D42] leading-relaxed text-sm">Stop worrying about paper coupons or tokens. Your phone is now your meal pass.</p>
                 </div>
                 <div className="glass-panel p-6 rounded-[2rem] flex flex-col items-center text-center gap-4 hover:border-primary/30 transition-all duration-500 group">
                     <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500">
-                        <span className="material-symbols-outlined text-3xl">calculate</span>
+                        <span className="material-symbols-outlined text-3xl">sentiment_dissatisfied</span>
                     </div>
-                    <h3 className="text-xl font-black text-[#2D241E]">Calculation Confusion</h3>
-                    <p className="text-[#5C4D42] leading-relaxed text-sm">Automated billing ensures every penny is accounted for. No more end-of-month disputes.</p>
+                    <h3 className="text-xl font-black text-[#2D241E]">Boring Daily Menu</h3>
+                    <p className="text-[#5C4D42] leading-relaxed text-sm">Don't eat the same dal every day. Vote for your favorite dishes and diverse weekly menus.</p>
                 </div>
                 <div className="glass-panel p-6 rounded-[2rem] flex flex-col items-center text-center gap-4 hover:border-primary/30 transition-all duration-500 group">
                     <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500">
                         <span className="material-symbols-outlined text-3xl">history_toggle_off</span>
                     </div>
-                    <h3 className="text-xl font-black text-[#2D241E]">Lack of Tracking</h3>
-                    <p className="text-[#5C4D42] leading-relaxed text-sm">Real-time visibility for both students and owners. Know your status, anytime, anywhere.</p>
+                    <h3 className="text-xl font-black text-[#2D241E]">Late Delivery?</h3>
+                    <p className="text-[#5C4D42] leading-relaxed text-sm">Track your tiffin in real-time. Know exactly when your hot food arrives at your door.</p>
                 </div>
             </div>
         </section>

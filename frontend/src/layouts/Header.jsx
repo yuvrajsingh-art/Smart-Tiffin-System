@@ -50,7 +50,12 @@ const Header = () => {
         <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-nav h-16' : 'bg-transparent h-20'}`}>
             <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
                 {/* Logo */}
-                <span className="text-2xl font-black text-primary tracking-tighter">Smart Tiffin</span>
+                <div className="flex items-center gap-2">
+                    <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
+                    </div>
+                    <span className="text-2xl font-black text-[#2D241E] tracking-tight">Smart Tiffin</span>
+                </div>
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center gap-8">
