@@ -1,8 +1,30 @@
 import React, { useState } from 'react';
 import Button from '../../components/ui/Button';
+import { useSubscription } from '../../context/SubscriptionContext';
+import { Link } from 'react-router-dom';
 
 const Feedback = () => {
+    const { hasActiveSubscription } = useSubscription();
     const [rating, setRating] = useState(4);
+
+    if (!hasActiveSubscription()) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6 animate-[fadeIn_0.5s_ease-out]">
+                <div className="size-24 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-4xl text-gray-400">lock</span>
+                </div>
+                <div>
+                    <h2 className="text-2xl font-black text-[#2D241E]">Feature Locked</h2>
+                    <p className="text-[#5C4D42] mt-2 max-w-md mx-auto">
+                        You can only provide feedback for meals after subscribing.
+                    </p>
+                </div>
+                <Link to="/customer/find-mess" className="px-8 py-3 bg-primary text-white rounded-xl font-bold shadow-lg hover:bg-[#e05d00] transition-colors">
+                    Find a Mess
+                </Link>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-[fadeIn_0.5s_ease-out]">

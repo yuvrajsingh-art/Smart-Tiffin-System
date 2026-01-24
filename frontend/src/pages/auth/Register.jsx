@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
-import Logo from "../../components/ui/Logo";
+
 
 const Register = () => {
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const role = searchParams.get("role") || "customer";
 
@@ -133,14 +134,19 @@ const Register = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
 
         // Simulate API Call
         console.log("Registration Payload:", formData);
-        alert(`Success! Welcome ${formData.name}`);
-        // Navigate('/login') or similar
+
+        // Simulating delay
+        setTimeout(() => {
+            alert(`Success! Welcome ${formData.name}`);
+            // Redirect to Dashboard
+            navigate('/customer/dashboard');
+        }, 1000);
     };
 
     // Auto-detect Location Logic
@@ -216,7 +222,7 @@ const Register = () => {
             {/* Nav */}
             <nav className="fixed top-0 w-full z-50 glass-nav transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                   <Logo />
+                    <span className="text-2xl font-black text-primary tracking-tighter">Smart Tiffin</span>
                     <div className="flex items-center gap-4">
                         <span className="hidden sm:block text-sm text-[#6A717B] font-medium">Already have an account?</span>
                         <Link to="/login" className="text-sm font-bold text-primary hover:text-orange-700 transition-colors">Login</Link>

@@ -1,6 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function PricingSection() {
+
     return (
         <section className="max-w-6xl mx-auto w-full px-4 md:px-8" id="pricing">
             <div className="text-center mb-10">
@@ -32,9 +34,9 @@ function PricingSection() {
                             Meal Cancellation (Save Money)
                         </li>
                     </ul>
-                    <button className="w-full py-3 rounded-xl border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition-colors">
+                    <Link to="/register" className="w-full py-3 rounded-xl border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition-colors text-center block">
                         Get Started
-                    </button>
+                    </Link>
                 </div>
 
                 {/* Mess Owner Plan */}
@@ -61,9 +63,9 @@ function PricingSection() {
                             Priority Support
                         </li>
                     </ul>
-                    <button className="w-full py-3 rounded-xl bg-primary text-white font-bold hover:bg-orange-600 transition-colors shadow-lg shadow-primary/20">
+                    <Link to="/register?role=provider" className="w-full py-3 rounded-xl bg-primary text-white font-bold hover:bg-orange-600 transition-colors shadow-lg shadow-primary/20 text-center block">
                         Join as Partner
-                    </button>
+                    </Link>
                 </div>
 
                 {/* Enterprise Plan */}

@@ -24,6 +24,7 @@ const DashboardLayout = () => {
     // Updated Nav Items list
     const navItems = [
         { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard' },
+        { icon: 'search', label: 'Find Mess', to: '/customer/find-mess' }, // New Discovery Link
         { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu' },
         { icon: 'local_shipping', label: 'Track Order', to: '/customer/track' },
         { icon: 'pause_circle', label: 'Pause Subscription', to: '/customer/pause' },

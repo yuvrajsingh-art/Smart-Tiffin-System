@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function CTASection() {
     return (
@@ -8,9 +9,9 @@ function CTASection() {
                 <h2 className="text-3xl md:text-5xl font-black text-[#2D241E] mb-6 relative z-10 leading-tight">Ready to simplify your <br /> mess management?</h2>
                 <p className="text-lg text-[#5C4D42] font-semibold mb-8 max-w-xl mx-auto relative z-10">Join thousands of students and owners in the digital revolution of food services.</p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-                    <button className="bg-primary text-white text-lg font-black px-10 py-4 rounded-2xl shadow-xl shadow-primary/30 hover:scale-105 hover:shadow-primary/50 transition-all duration-300">
+                    <Link to="/register" className="bg-primary text-white text-lg font-black px-10 py-4 rounded-2xl shadow-xl shadow-primary/30 hover:scale-105 hover:shadow-primary/50 transition-all duration-300 flex items-center justify-center">
                         Register Now
-                    </button>
+                    </Link>
                     <button className="bg-white/90 text-primary border-2 border-primary/20 text-lg font-black px-10 py-4 rounded-2xl hover:bg-white transition-all duration-300">
                         Talk to Sales
                     </button>

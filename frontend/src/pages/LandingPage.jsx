@@ -49,6 +49,7 @@ function LandingPage() {
                 <div className="reveal-section"><RolesSection /></div>
                 <div className="reveal-section"><HowItWorksSection /></div>
                 <div className="reveal-section"><TechStackSection /></div>
+                <div className="reveal-section"><PricingSection /></div>
                 <div className="reveal-section"><TestimonialsSection /></div>
                 <div className="reveal-section"><CTASection /></div>
             </main>
