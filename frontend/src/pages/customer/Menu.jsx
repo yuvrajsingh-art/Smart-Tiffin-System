@@ -1,224 +1,146 @@
 import React, { useState } from 'react';
-import { useSubscription } from '../../context/SubscriptionContext';
 import { Link } from 'react-router-dom';
 
 const Menu = () => {
-    const { hasActiveSubscription } = useSubscription();
-    const hasSubscription = hasActiveSubscription();
+    const [selectedDay, setSelectedDay] = useState('Mon');
 
-    const [activeTab, setActiveTab] = useState('lunch');
-    const [rotiCount, setRotiCount] = useState(4);
-    const [riceCount, setRiceCount] = useState(1);
-    const [guestMeals, setGuestMeals] = useState(0);
-    const [isSaved, setIsSaved] = useState(false);
+    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const GUEST_MEAL_PRICE = 120;
-
-    const handleSave = () => {
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
+    const menuData = {
+        'Mon': { lunch: { title: 'Paneer Butter Masala', items: '3 Rotis, Jeera Rice, Dal Fry, Salad', cal: 650 }, dinner: { title: 'Aloo Gobi Dry', items: '3 Rotis, Dal Tadka, Rice', cal: 500 } },
+        'Tue': { lunch: { title: 'Veg Kofta Curry', items: '3 Rotis, Steam Rice, Curd', cal: 620 }, dinner: { title: 'Sev Bhaji (Spicy)', items: '2 Bhakri/Rotis, Thecha, Rice', cal: 550 } },
+        'Wed': { lunch: { title: 'Rajma Chawal Special', items: 'Jeera Rice, Fryums, Pickle', cal: 700 }, dinner: { title: 'Mix Veg Handi', items: '3 Rotis, Dal Fry, Rice', cal: 480 } },
+        'Thu': { lunch: { title: 'Baingan Bharta', items: '3 Rotis, Varan Bhat, Salad', cal: 580 }, dinner: { title: 'Methi Matar Malai', items: '3 Rotis, Jeera Rice', cal: 520 } },
+        'Fri': { lunch: { title: 'Chole Bhature Treat', items: '2 Bhature, Chole, Onion Salad', cal: 850 }, dinner: { title: 'Soyabean Curry', items: '3 Rotis, Rice, Buttermilk', cal: 500 } },
+        'Sat': { lunch: { title: 'Maharashtrian Thali', items: 'Puran Poli, Katachi Amti, Rice', cal: 900 }, dinner: { title: 'Egg Curry / Paneer Bhurji', items: '3 Rotis, Rice', cal: 600 } },
+        'Sun': { lunch: { title: 'Sunday Special Biryani', items: 'Veg Hyderabadi Biryani, Raita', cal: 750 }, dinner: { title: 'Light Khichdi Kadhi', items: 'Roasted Papad, Pickle', cal: 400 } },
     };
 
+    const currentMenu = menuData[selectedDay];
+
     return (
-        <div className="relative space-y-6 animate-[fadeIn_0.5s_ease-out] pb-20">
+        <div className="max-w-4xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4">
 
-            {/* Header with Date */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-6">
+                <Link to="/customer/dashboard" className="size-10 rounded-full bg-white flex items-center justify-center text-[#2D241E] shadow-sm hover:scale-110 transition-transform">
+                    <span className="material-symbols-outlined">arrow_back</span>
+                </Link>
                 <div>
-                    <h2 className="text-3xl font-black text-[#2D241E]">Today's Menu 🍽️</h2>
-                    <p className="text-sm font-medium text-[#5C4D42] mt-1">Customize your meal or add for friends.</p>
-                </div>
-                <div className="bg-white/50 px-4 py-2 rounded-xl border border-orange-100/50">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Provider</p>
-                    <p className="text-lg font-bold text-primary">Annapurna Mess</p>
+                    <h1 className="text-2xl font-black text-[#2D241E] leading-none">Weekly Menu</h1>
+                    <p className="text-xs font-bold text-[#5C4D42] mt-1">Plan your week ahead 📅</p>
                 </div>
             </div>
 
-            {/* Locked Content Overlay */}
-            {!hasSubscription && (
-                <div className="absolute inset-0 z-50 backdrop-blur-md bg-white/30 flex items-center justify-center rounded-3xl h-full">
-                    <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-md text-center border border-orange-100">
-                        <div className="size-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <span className="material-symbols-outlined text-3xl text-primary">lock</span>
-                        </div>
-                        <h3 className="text-2xl font-black text-[#2D241E] mb-2">Menu Locked</h3>
-                        <p className="text-[#5C4D42] mb-8">You need an active subscription to view the daily menu and book meals.</p>
-                        <Link
-                            to="/customer/find-mess"
-                            className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-[#e05d00] transition-colors shadow-lg shadow-orange-500/20 inline-block"
-                        >
-                            Subscribe Now
-                        </Link>
-                    </div>
-                </div>
-            )}
-
-            {/* Meal Type Tabs */}
-            <div className="flex p-1 bg-white/60 rounded-2xl w-full max-w-md mx-auto relative z-10">
-                <button
-                    onClick={() => setActiveTab('lunch')}
-                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'lunch' ? 'bg-white shadow-md text-primary' : 'text-gray-500 hover:bg-white/50'}`}
-                >
-                    <span className="material-symbols-outlined">wb_sunny</span>
-                    Lunch (12:30 PM)
-                </button>
-                <button
-                    onClick={() => setActiveTab('dinner')}
-                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === 'dinner' ? 'bg-[#111716] shadow-md text-white' : 'text-gray-500 hover:bg-white/50'}`}
-                >
-                    <span className="material-symbols-outlined">dark_mode</span>
-                    Dinner (8:00 PM)
-                </button>
+            {/* Day Selector */}
+            <div className="flex gap-3 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+                {weekDays.map((day) => (
+                    <button
+                        key={day}
+                        onClick={() => setSelectedDay(day)}
+                        className={`min-w-[4rem] h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-300 ${selectedDay === day ? 'bg-[#2D241E] text-white shadow-lg scale-105' : 'bg-white hover:bg-gray-50 text-[#5C4D42] border border-gray-100'}`}
+                    >
+                        <span className="text-xs font-bold opacity-60 uppercase tracking-wider">{day}</span>
+                        {/* Mock Date for demo */}
+                        <span className="text-xl font-black">
+                            {20 + weekDays.indexOf(day)}
+                        </span>
+                    </button>
+                ))}
             </div>
 
-            {activeTab === 'lunch' ? (
-                /* Lunch Card */
-                <div className="glass-panel p-0 rounded-[2rem] overflow-hidden group">
-                    <div className="h-48 md:h-64 relative">
-                        <img src="https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=1200&auto=format&fit=crop" alt="Lunch" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div className="absolute bottom-6 left-6 text-white">
-                            <span className="bg-orange-500 text-xs font-bold px-3 py-1 rounded-full mb-2 inline-block shadow-lg">TODAY'S SPECIAL</span>
-                            <h3 className="text-3xl font-black">Paneer Butter Masala Thali</h3>
-                            <p className="text-white/80 font-medium">Rich gravy, soft paneer, homestyle taste.</p>
-                        </div>
-                    </div>
+            {/* Menu Cards */}
+            <div className="space-y-6">
 
-                    <div className="p-6 md:p-8 space-y-8">
-                        {/* Customization Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <h4 className="text-lg font-bold text-[#2D241E] flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-primary">tune</span>
-                                    Customize Your Meal
-                                </h4>
+                {/* Lunch Card */}
+                <div className="glass-panel p-6 rounded-[2rem] border border-white/60 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100/50 rounded-full blur-3xl pointer-events-none group-hover:bg-orange-200/50 transition-colors"></div>
 
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
-                                                <span className="material-symbols-outlined">bakery_dining</span>
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-[#2D241E]">Butter Roti</p>
-                                                <p className="text-xs text-[#5C4D42]">Whole Wheat</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 bg-white rounded-lg p-1 shadow-sm border border-gray-100">
-                                            <button
-                                                onClick={() => setRotiCount(Math.max(0, rotiCount - 1))}
-                                                className="size-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-md transition-colors"
-                                            >-</button>
-                                            <span className="font-black text-[#2D241E] w-4 text-center">{rotiCount}</span>
-                                            <button
-                                                onClick={() => setRotiCount(rotiCount + 1)}
-                                                className="size-8 flex items-center justify-center text-primary hover:bg-orange-50 rounded-md transition-colors"
-                                            >+</button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                                                <span className="material-symbols-outlined">rice_bowl</span>
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-[#2D241E]">Jeera Rice</p>
-                                                <p className="text-xs text-[#5C4D42]">Basmati</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 bg-white rounded-lg p-1 shadow-sm border border-gray-100">
-                                            <button
-                                                onClick={() => setRiceCount(Math.max(0, riceCount - 1))}
-                                                className="size-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-md transition-colors"
-                                            >-</button>
-                                            <span className="font-black text-[#2D241E] w-4 text-center">{riceCount}</span>
-                                            <button
-                                                onClick={() => setRiceCount(riceCount + 1)}
-                                                className="size-8 flex items-center justify-center text-primary hover:bg-orange-50 rounded-md transition-colors"
-                                            >+</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Guest Meal Section */}
-                            <div className="relative overflow-hidden bg-gradient-to-br from-[#111716] to-[#2D241E] rounded-3xl p-6 text-white shadow-xl">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                                <h4 className="text-lg font-bold mb-1 flex items-center gap-2 relative z-10">
-                                    <span className="material-symbols-outlined text-yellow-400">group_add</span>
-                                    Add Guest Meals
-                                </h4>
-                                <p className="text-white/60 text-xs mb-6 relative z-10">Friend visiting? Add an extra tiffin.</p>
-
-                                <div className="flex items-center justify-between mb-6 relative z-10">
-                                    <div>
-                                        <p className="text-3xl font-black">{guestMeals}</p>
-                                        <p className="text-xs text-white/60">Extra Tiffins</p>
-                                    </div>
-                                    <div className="flex items-center gap-3 bg-white/10 rounded-xl p-1.5 backdrop-blur-sm">
-                                        <button
-                                            onClick={() => setGuestMeals(Math.max(0, guestMeals - 1))}
-                                            className="size-10 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined">remove</span>
-                                        </button>
-                                        <button
-                                            onClick={() => setGuestMeals(guestMeals + 1)}
-                                            className="size-10 flex items-center justify-center bg-primary text-white hover:bg-orange-600 rounded-lg transition-colors shadow-lg"
-                                        >
-                                            <span className="material-symbols-outlined">add</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {guestMeals > 0 && (
-                                    <div className="bg-white/10 rounded-xl p-3 flex justify-between items-center text-sm animate-[fadeIn_0.3s_ease-out]">
-                                        <span>Extra Charges:</span>
-                                        <span className="font-bold text-yellow-400">₹ {guestMeals * GUEST_MEAL_PRICE}</span>
-                                    </div>
-                                )}
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">wb_sunny</span> Lunch
+                            </span>
+                            <div className="flex gap-2">
+                                <button className="size-8 rounded-full bg-white hover:bg-gray-50 flex items-center justify-center text-[#5C4D42] transition-colors" title="Change Meal">
+                                    <span className="material-symbols-outlined text-lg">swap_horiz</span>
+                                </button>
+                                <button className="size-8 rounded-full bg-white hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-[#5C4D42] transition-colors" title="Skip Meal">
+                                    <span className="material-symbols-outlined text-lg">close</span>
+                                </button>
                             </div>
                         </div>
 
-                        {/* Sticky Action Footer */}
-                        <div className="pt-4 border-t border-orange-100 flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-[#5C4D42] font-semibold">Total to Pay</p>
-                                <p className="text-2xl font-black text-[#2D241E]">₹ {guestMeals * GUEST_MEAL_PRICE}</p>
+                        <div className="flex items-start gap-4">
+                            <div className="size-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-4xl">
+                                🍛
                             </div>
-                            <button
-                                onClick={handleSave}
-                                className={`
-                                    px-8 py-4 rounded-xl font-bold flex items-center gap-2 shadow-xl transition-all duration-300
-                                    ${isSaved ? 'bg-green-500 text-white' : 'bg-primary text-white hover:scale-105 hover:shadow-primary/40'}
-                                `}
-                            >
-                                {isSaved ? (
-                                    <>
-                                        <span className="material-symbols-outlined">check</span>
-                                        Preferences Saved
-                                    </>
-                                ) : (
-                                    <>
-                                        Confirm Order
-                                        <span className="material-symbols-outlined">arrow_forward</span>
-                                    </>
-                                )}
-                            </button>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-black text-[#2D241E] mb-1">{currentMenu.lunch.title}</h3>
+                                <p className="text-sm font-medium text-[#5C4D42] mb-3">{currentMenu.lunch.items}</p>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-xs">local_fire_department</span>
+                                        {currentMenu.lunch.cal} kcal
+                                    </span>
+                                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+                                        Pure Veg
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            ) : (
-                /* Mock Dinner View */
-                <div className="glass-panel p-10 rounded-[2rem] text-center py-20">
-                    <div className="size-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 grayscale opacity-50">
-                        <span className="material-symbols-outlined text-4xl text-gray-400">nights_stay</span>
+
+                {/* Dinner Card */}
+                <div className="glass-panel p-6 rounded-[2rem] border border-white/60 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-200/50 transition-colors"></div>
+
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">bedtime</span> Dinner
+                            </span>
+                            <div className="flex gap-2">
+                                <button className="size-8 rounded-full bg-white hover:bg-gray-50 flex items-center justify-center text-[#5C4D42] transition-colors" title="Change Meal">
+                                    <span className="material-symbols-outlined text-lg">swap_horiz</span>
+                                </button>
+                                <button className="size-8 rounded-full bg-white hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-[#5C4D42] transition-colors" title="Skip Meal">
+                                    <span className="material-symbols-outlined text-lg">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4">
+                            <div className="size-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-4xl">
+                                🍲
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-black text-[#2D241E] mb-1">{currentMenu.dinner.title}</h3>
+                                <p className="text-sm font-medium text-[#5C4D42] mb-3">{currentMenu.dinner.items}</p>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-xs">local_fire_department</span>
+                                        {currentMenu.dinner.cal} kcal
+                                    </span>
+                                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+                                        Pure Veg
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <h3 className="text-2xl font-black text-gray-400">Dinner Menu Not Live Yet</h3>
-                    <p className="text-gray-400 mt-2">Check back after 5:00 PM</p>
                 </div>
-            )}
+
+                {/* Info Note */}
+                <div className="text-center p-4">
+                    <p className="text-xs text-gray-400 font-medium">
+                        <span className="material-symbols-outlined text-sm align-bottom mr-1">info</span>
+                        You can change or skip meals up to 2 hours before delivery.
+                    </p>
+                </div>
+
+            </div>
         </div>
     );
 };

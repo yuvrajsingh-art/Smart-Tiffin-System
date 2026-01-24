@@ -113,9 +113,9 @@ const CustomerDashboard = () => {
                                     <h2 className="text-4xl font-black mb-6">₹ 450<span className="text-lg text-white/60">.00</span></h2>
 
                                     <div className="flex gap-3">
-                                        <button className="flex-1 py-3 bg-white text-black rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors">
+                                        <Link to="/customer/wallet" className="flex-1 py-3 bg-white text-black rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors flex items-center justify-center">
                                             + Add Money
-                                        </button>
+                                        </Link>
                                         <button className="px-4 py-3 bg-white/10 text-white rounded-xl font-bold text-sm hover:bg-white/20 transition-colors backdrop-blur-md">
                                             History
                                         </button>
