@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Profile = () => {
+    const navigate = useNavigate();
     // Mock user data
     const [user, setUser] = useState({
         name: 'Rohan Das',
@@ -15,6 +16,7 @@ const Profile = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const stats = [
         { label: 'Member Since', value: user.memberSince, icon: 'calendar_month' },
@@ -25,6 +27,11 @@ const Profile = () => {
     const handleSave = () => {
         setIsEditing(false);
         setShowSuccessModal(true);
+    };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/');
     };
 
     return (
@@ -114,7 +121,10 @@ const Profile = () => {
                             </div>
                             <span className="material-symbols-outlined text-gray-300 text-sm">arrow_forward_ios</span>
                         </button>
-                        <button className="w-full flex items-center justify-between p-3 hover:bg-red-50 rounded-xl transition-colors group">
+                        <button
+                            onClick={() => setShowLogoutModal(true)}
+                            className="w-full flex items-center justify-between p-3 hover:bg-red-50 rounded-xl transition-colors group"
+                        >
                             <div className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-red-300 group-hover:text-red-500">logout</span>
                                 <span className="font-bold text-red-500 text-sm">Log Out Account</span>
@@ -135,8 +145,8 @@ const Profile = () => {
                         <button
                             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                             className={`px-6 py-2.5 rounded-full font-black text-xs transition-all uppercase tracking-widest ${isEditing
-                                    ? 'bg-primary text-white shadow-lg shadow-orange-500/20'
-                                    : 'bg-[#2D241E] text-white hover:bg-black'
+                                ? 'bg-primary text-white shadow-lg shadow-orange-500/20'
+                                : 'bg-[#2D241E] text-white hover:bg-black'
                                 }`}
                         >
                             {isEditing ? 'Save Profile' : 'Edit Details'}
@@ -198,8 +208,8 @@ const Profile = () => {
                                         disabled={!isEditing}
                                         onClick={() => setUser({ ...user, diet: d })}
                                         className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${user.diet === d
-                                                ? 'bg-[#2D241E] text-white shadow-xl shadow-black/10'
-                                                : 'bg-white/40 text-gray-400 border-2 border-transparent hover:bg-white'
+                                            ? 'bg-[#2D241E] text-white shadow-xl shadow-black/10'
+                                            : 'bg-white/40 text-gray-400 border-2 border-transparent hover:bg-white'
                                             } ${!isEditing && 'cursor-default'}`}
                                     >
                                         <div className="flex items-center justify-center gap-2">
@@ -238,6 +248,39 @@ const Profile = () => {
                             >
                                 Great, Thanks!
                             </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+            {/* Logout Confirmation Modal */}
+            {showLogoutModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-lg animate-[fadeIn_0.3s]" onClick={() => setShowLogoutModal(false)}></div>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl animate-[scaleIn_0.3s] relative overflow-hidden z-10 text-center border border-white/20">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-100 rounded-full blur-[80px] -translate-y-1/2 pointer-events-none opacity-50"></div>
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="size-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                                <span className="material-symbols-outlined text-4xl font-bold">logout</span>
+                            </div>
+                            <h3 className="text-2xl font-black text-[#2D241E] mb-2">Logout?</h3>
+                            <p className="text-[#5C4D42] text-sm font-medium leading-relaxed mb-8 opacity-80">
+                                Are you sure you want to log out of your Smart Tiffin account?
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setShowLogoutModal(false)}
+                                    className="flex-1 py-4 bg-gray-100 text-[#5C4D42] rounded-[1.5rem] font-bold text-sm hover:bg-gray-200 transition-all font-display"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex-1 py-4 bg-red-500 text-white rounded-[1.5rem] font-bold text-sm shadow-xl shadow-red-500/20 hover:bg-red-600 transition-all font-display"
+                                >
+                                    Yes, Log out
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>,

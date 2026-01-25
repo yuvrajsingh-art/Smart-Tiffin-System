@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSubscription } from '../context/SubscriptionContext';
 
 const SidebarItem = ({ icon, label, to, active }) => (
@@ -20,10 +21,12 @@ const SidebarItem = ({ icon, label, to, active }) => (
 
 const DashboardLayout = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     // Auth & Subscription State
-    const { hasActiveSubscription, cancelSubscription } = useSubscription();
+    const { hasActiveSubscription } = useSubscription();
     const isSubscribed = hasActiveSubscription();
 
     // Nav Items with Access Control
@@ -39,6 +42,11 @@ const DashboardLayout = () => {
     ];
 
     const visibleNavItems = navItems.filter(item => item.public || isSubscribed);
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/');
+    };
 
     return (
         <div className="font-display bg-[#FFFBF5] text-[#2D241E] h-screen overflow-hidden selection:bg-primary/20 selection:text-primary flex relative">
@@ -96,10 +104,7 @@ const DashboardLayout = () => {
                         Profile
                     </Link>
                     <button
-                        onClick={() => {
-                            cancelSubscription();
-                            window.location.reload(); // Reload to reflect state change immediately
-                        }}
+                        onClick={() => setShowLogoutModal(true)}
                         className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 font-semibold hover:bg-red-50 hover:text-red-600 transition-all"
                     >
                         <span className="material-symbols-outlined">logout</span>
@@ -150,8 +155,43 @@ const DashboardLayout = () => {
                     <Outlet />
                 </div>
             </main>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-lg animate-[fadeIn_0.3s]" onClick={() => setShowLogoutModal(false)}></div>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl animate-[scaleIn_0.3s] relative overflow-hidden z-10 text-center border border-white/20">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-100 rounded-full blur-[80px] -translate-y-1/2 pointer-events-none opacity-50"></div>
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="size-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                                <span className="material-symbols-outlined text-4xl font-bold">logout</span>
+                            </div>
+                            <h3 className="text-2xl font-black text-[#2D241E] mb-2">Logout?</h3>
+                            <p className="text-[#5C4D42] text-sm font-medium leading-relaxed mb-8 opacity-80">
+                                Are you sure you want to log out of your Smart Tiffin account?
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setShowLogoutModal(false)}
+                                    className="flex-1 py-4 bg-gray-100 text-[#5C4D42] rounded-[1.5rem] font-bold text-sm hover:bg-gray-200 transition-all font-display"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex-1 py-4 bg-red-500 text-white rounded-[1.5rem] font-bold text-sm shadow-xl shadow-red-500/20 hover:bg-red-600 transition-all font-display"
+                                >
+                                    Yes, Log out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
 
 export default DashboardLayout;
+
