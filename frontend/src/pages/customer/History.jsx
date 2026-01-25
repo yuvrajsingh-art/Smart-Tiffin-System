@@ -42,9 +42,9 @@ const History = () => {
         <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 md:px-6">
 
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8 pt-4">
-                <Link to="/customer/dashboard" className="size-10 rounded-full bg-white flex items-center justify-center text-[#2D241E] shadow-sm hover:scale-110 transition-transform hover:shadow-md border border-gray-100">
-                    <span className="material-symbols-outlined text-xl">arrow_back</span>
+            <div className="flex flex-col gap-1 mb-8 pt-4">
+                <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit transition-colors">
+                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
                 </Link>
                 <div>
                     <h1 className="text-2xl font-black text-[#2D241E] leading-tight">Order History</h1>
@@ -59,8 +59,8 @@ const History = () => {
                         key={f}
                         onClick={() => setFilter(f)}
                         className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${filter === f
-                                ? 'bg-[#2D241E] text-white border-[#2D241E] shadow-md'
-                                : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+                            ? 'bg-[#2D241E] text-white border-[#2D241E] shadow-md'
+                            : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
                             }`}
                     >
                         {f}

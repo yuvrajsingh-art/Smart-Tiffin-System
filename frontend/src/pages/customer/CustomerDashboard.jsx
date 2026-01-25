@@ -10,7 +10,13 @@ const CustomerDashboard = () => {
     const [trackerState] = useState(2); // 1: Prep, 2: Cooking, 3: Packed, 4: Out, 5: Delivered
 
     return (
-        <div className="max-w-7xl mx-auto flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] pb-20 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
+
+            {/* Background Blobs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
+                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
+            </div>
 
             {/* Active Subscription View */}
             {isActive ? (

@@ -42,8 +42,9 @@ const MessDetails = () => {
                 <img src={provider.banner} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
 
                 {/* Back Button */}
-                <Link to="/customer/find-mess" className="absolute top-4 left-4 z-20 size-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-colors">
-                    <span className="material-symbols-outlined">arrow_back</span>
+                {/* Back Button */}
+                <Link to="/customer/find-mess" className="absolute top-4 left-4 z-20 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md flex items-center gap-1 text-white hover:bg-white/40 transition-colors text-xs font-bold">
+                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back
                 </Link>
 
                 <div className="absolute bottom-0 left-0 w-full p-6 z-20">
