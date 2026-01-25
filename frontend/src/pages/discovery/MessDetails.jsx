@@ -34,34 +34,39 @@ const MessDetails = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4">
+        <div className="max-w-6xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
 
-            {/* Compact Header */}
-            <div className="relative h-48 md:h-64 rounded-[2rem] overflow-hidden mb-6 shadow-xl group">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
-                <img src={provider.banner} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+            {/* Background Blobs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
+                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
+            </div>
+
+            {/* Header Section */}
+            <div className="relative h-56 md:h-72 rounded-[2.5rem] overflow-hidden mb-8 shadow-2xl group border border-white/20">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#2D241E] via-black/20 to-transparent z-10"></div>
+                <img src={provider.banner} alt="Banner" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
 
                 {/* Back Button */}
-                {/* Back Button */}
-                <Link to="/customer/find-mess" className="absolute top-4 left-4 z-20 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md flex items-center gap-1 text-white hover:bg-white/40 transition-colors text-xs font-bold">
-                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back
+                <Link to="/customer/find-mess" className="absolute top-6 left-6 z-20 px-4 py-2 rounded-full bg-white/20 backdrop-blur-xl flex items-center gap-1 text-white hover:bg-white/40 border border-white/30 transition-all text-xs font-bold shadow-lg">
+                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Discovery
                 </Link>
 
-                <div className="absolute bottom-0 left-0 w-full p-6 z-20">
+                <div className="absolute bottom-0 left-0 w-full p-8 z-20">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="bg-primary text-white px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider shadow-sm">
+                        <div className="max-w-xl">
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <span className="bg-primary text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/20">
                                     {provider.type}
                                 </span>
-                                <span className="flex items-center gap-1 text-white/90 text-xs font-bold bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-md">
+                                <span className="flex items-center gap-1 text-white font-black text-xs bg-black/40 px-3 py-1 rounded-full backdrop-blur-md border border-white/10">
                                     <span className="material-symbols-outlined text-[14px] text-amber-400 fill-current">star</span>
-                                    {provider.rating} ({provider.reviews})
+                                    {provider.rating} <span className="text-white/40 mx-0.5">•</span> {provider.reviews} Reviews
                                 </span>
                             </div>
-                            <h1 className="text-3xl font-black text-white tracking-tight shadow-sm leading-none">{provider.name}</h1>
-                            <p className="text-white/80 text-sm font-medium flex items-center gap-1 mt-1">
-                                <span className="material-symbols-outlined text-[16px]">location_on</span>
+                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-md mb-2">{provider.name}</h1>
+                            <p className="text-white/90 text-sm font-bold flex items-center gap-2 drop-shadow-sm">
+                                <span className="material-symbols-outlined text-[18px] text-orange-200">location_on</span>
                                 {provider.address}
                             </p>
                         </div>

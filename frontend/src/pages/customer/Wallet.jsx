@@ -51,17 +51,20 @@ const Wallet = () => {
 
     return (
         <>
-            <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 md:px-6">
+            <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 md:px-6 relative">
 
-                {/* Header - Matches Dashboard Style */}
-                <div className="flex flex-col gap-1 mb-6 pt-4">
-                    <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit transition-colors">
+                {/* Background Blobs */}
+                <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                    <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
+                    <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
+                </div>
+
+                {/* Header */}
+                <div className="flex flex-col gap-1 mb-8 pt-4">
+                    <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit transition-all">
                         <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
                     </Link>
-                    <div>
-                        <h1 className="text-2xl font-black text-[#2D241E] leading-tight">Smart Wallet</h1>
-                        <p className="text-xs font-bold text-[#5C4D42] opacity-60 uppercase tracking-widest">Manage Funds</p>
-                    </div>
+                    <h1 className="text-3xl font-black text-[#2D241E]">Smart Wallet</h1>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -206,119 +209,124 @@ const Wallet = () => {
                 </div>
             </div>
 
+
             {/* Add Money Modal (Portland to Body) */}
-            {showAddMoney && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    {/* Backdrop with heavy blur */}
-                    <div
-                        className="absolute inset-0 bg-[#2D241E]/60 backdrop-blur-xl animate-[fadeIn_0.3s]"
-                        onClick={() => setShowAddMoney(false)}
-                    ></div>
+            {
+                showAddMoney && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        {/* Backdrop with heavy blur */}
+                        <div
+                            className="absolute inset-0 bg-[#2D241E]/60 backdrop-blur-xl animate-[fadeIn_0.3s]"
+                            onClick={() => setShowAddMoney(false)}
+                        ></div>
 
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-6 shadow-2xl animate-[scaleIn_0.3s] relative overflow-hidden z-10 border border-white/20">
-                        {/* Decorative Background Elements */}
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-orange-100 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-100 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
+                        <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-6 shadow-2xl animate-[scaleIn_0.3s] relative overflow-hidden z-10 border border-white/20">
+                            {/* Decorative Background Elements */}
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-orange-100 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-100 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
 
-                        <div className="relative z-10">
-                            {/* Header */}
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="text-xl font-black text-[#2D241E] leading-none">Add Money</h3>
-                                    <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">Secure Payment</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowAddMoney(false)}
-                                    className="size-10 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors group"
-                                >
-                                    <span className="material-symbols-outlined text-[#2D241E] text-lg group-hover:rotate-90 transition-transform duration-300">close</span>
-                                </button>
-                            </div>
-
-                            {/* Amount Input */}
-                            <div className="mb-6">
-                                <label className="block text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Enter Amount</label>
-                                <div className="relative flex justify-center items-baseline gap-1">
-                                    <span className="text-3xl font-black text-gray-300 transform translate-y-[-2px]">₹</span>
-                                    <input
-                                        type="number"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        placeholder="0"
-                                        className="w-40 text-center bg-transparent text-6xl font-black text-[#2D241E] placeholder:text-gray-200 outline-none border-b-2 border-transparent focus:border-primary/20 transition-all pb-1 no-spinner"
-                                        autoFocus
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Quick Select Grid */}
-                            <div className="grid grid-cols-3 gap-2 mb-6">
-                                {[100, 200, 500, 1000, 2000, 5000].map((val) => (
+                            <div className="relative z-10">
+                                {/* Header */}
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h3 className="text-xl font-black text-[#2D241E] leading-none">Add Money</h3>
+                                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">Secure Payment</p>
+                                    </div>
                                     <button
-                                        key={val}
-                                        onClick={() => setAmount(val)}
-                                        className="py-2.5 px-3 rounded-xl border border-gray-100 bg-white shadow-sm text-xs font-bold text-[#5C4D42] hover:bg-[#2D241E] hover:text-white hover:border-[#2D241E] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                                        onClick={() => setShowAddMoney(false)}
+                                        className="size-10 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors group"
                                     >
-                                        ₹{val}
+                                        <span className="material-symbols-outlined text-[#2D241E] text-lg group-hover:rotate-90 transition-transform duration-300">close</span>
                                     </button>
-                                ))}
+                                </div>
+
+                                {/* Amount Input */}
+                                <div className="mb-6">
+                                    <label className="block text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Enter Amount</label>
+                                    <div className="relative flex justify-center items-baseline gap-1">
+                                        <span className="text-3xl font-black text-gray-300 transform translate-y-[-2px]">₹</span>
+                                        <input
+                                            type="number"
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                            placeholder="0"
+                                            className="w-40 text-center bg-transparent text-6xl font-black text-[#2D241E] placeholder:text-gray-200 outline-none border-b-2 border-transparent focus:border-primary/20 transition-all pb-1 no-spinner"
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Quick Select Grid */}
+                                <div className="grid grid-cols-3 gap-2 mb-6">
+                                    {[100, 200, 500, 1000, 2000, 5000].map((val) => (
+                                        <button
+                                            key={val}
+                                            onClick={() => setAmount(val)}
+                                            className="py-2.5 px-3 rounded-xl border border-gray-100 bg-white shadow-sm text-xs font-bold text-[#5C4D42] hover:bg-[#2D241E] hover:text-white hover:border-[#2D241E] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                                        >
+                                            ₹{val}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Pay Button */}
+                                <button
+                                    onClick={handleAddMoney}
+                                    className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] font-bold text-base shadow-xl shadow-gray-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                    <span className="material-symbols-outlined text-lg group-hover:rotate-12 transition-transform">lock</span>
+                                    <span className="relative z-10">Proceed to Pay</span>
+                                </button>
+
+                                <p className="text-center mt-4 text-[9px] font-bold text-gray-300 flex items-center justify-center gap-1">
+                                    <span className="material-symbols-outlined text-[10px]">verified_user</span>
+                                    SSL Secured • Instant Refund
+                                </p>
                             </div>
-
-                            {/* Pay Button */}
-                            <button
-                                onClick={handleAddMoney}
-                                className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] font-bold text-base shadow-xl shadow-gray-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                <span className="material-symbols-outlined text-lg group-hover:rotate-12 transition-transform">lock</span>
-                                <span className="relative z-10">Proceed to Pay</span>
-                            </button>
-
-                            <p className="text-center mt-4 text-[9px] font-bold text-gray-300 flex items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-[10px]">verified_user</span>
-                                SSL Secured • Instant Refund
-                            </p>
                         </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+                    </div>,
+                    document.body
+                )
+            }
 
             {/* QR Scanner Mock Modal (Portal to Body) */}
-            {showScanner && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-[fadeIn_0.2s]">
-                    <div className="w-full max-w-sm relative">
-                        <button onClick={() => setShowScanner(false)} className="absolute -top-12 right-0 size-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 backdrop-blur-md z-50">
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
+            {
+                showScanner && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-[fadeIn_0.2s]">
+                        <div className="w-full max-w-sm relative">
+                            <button onClick={() => setShowScanner(false)} className="absolute -top-12 right-0 size-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 backdrop-blur-md z-50">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
 
-                        <div className="aspect-[3/4] rounded-[2.5rem] bg-gray-900 border-2 border-white/20 relative overflow-hidden shadow-2xl">
-                            {/* Scanning Animation */}
-                            <div className="absolute inset-0 z-10">
-                                <div className="w-full h-1 bg-green-500 shadow-[0_0_20px_rgba(34,197,94,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
-                            </div>
+                            <div className="aspect-[3/4] rounded-[2.5rem] bg-gray-900 border-2 border-white/20 relative overflow-hidden shadow-2xl">
+                                {/* Scanning Animation */}
+                                <div className="absolute inset-0 z-10">
+                                    <div className="w-full h-1 bg-green-500 shadow-[0_0_20px_rgba(34,197,94,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
+                                </div>
 
-                            {/* Camera Mock */}
-                            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover opacity-60 grayscale" alt="Camera Feed" />
+                                {/* Camera Mock */}
+                                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover opacity-60 grayscale" alt="Camera Feed" />
 
-                            {/* Overlay Frame */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="size-64 border-2 border-white/50 rounded-3xl relative">
-                                    <div className="absolute top-0 left-0 size-8 border-t-4 border-l-4 border-green-500 -translate-x-1 -translate-y-1 rounded-tl-xl"></div>
-                                    <div className="absolute top-0 right-0 size-8 border-t-4 border-r-4 border-green-500 translate-x-1 -translate-y-1 rounded-tr-xl"></div>
-                                    <div className="absolute bottom-0 left-0 size-8 border-b-4 border-l-4 border-green-500 -translate-x-1 translate-y-1 rounded-bl-xl"></div>
-                                    <div className="absolute bottom-0 right-0 size-8 border-b-4 border-r-4 border-green-500 translate-x-1 translate-y-1 rounded-br-xl"></div>
+                                {/* Overlay Frame */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="size-64 border-2 border-white/50 rounded-3xl relative">
+                                        <div className="absolute top-0 left-0 size-8 border-t-4 border-l-4 border-green-500 -translate-x-1 -translate-y-1 rounded-tl-xl"></div>
+                                        <div className="absolute top-0 right-0 size-8 border-t-4 border-r-4 border-green-500 translate-x-1 -translate-y-1 rounded-tr-xl"></div>
+                                        <div className="absolute bottom-0 left-0 size-8 border-b-4 border-l-4 border-green-500 -translate-x-1 translate-y-1 rounded-bl-xl"></div>
+                                        <div className="absolute bottom-0 right-0 size-8 border-b-4 border-r-4 border-green-500 translate-x-1 translate-y-1 rounded-br-xl"></div>
+                                    </div>
+                                </div>
+
+                                <div className="absolute bottom-8 left-0 right-0 text-center">
+                                    <p className="text-white font-bold text-sm bg-black/50 inline-block px-4 py-2 rounded-full backdrop-blur-md">Scanning Q-Code...</p>
                                 </div>
                             </div>
-
-                            <div className="absolute bottom-8 left-0 right-0 text-center">
-                                <p className="text-white font-bold text-sm bg-black/50 inline-block px-4 py-2 rounded-full backdrop-blur-md">Scanning Q-Code...</p>
-                            </div>
                         </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+                    </div>,
+                    document.body
+                )
+            }
         </>
     );
 };
