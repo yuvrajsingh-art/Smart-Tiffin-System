@@ -7,15 +7,15 @@ const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
         className={`
-            flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+            flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group
             ${active
-                ? 'bg-orange-100/60 text-primary font-bold shadow-sm ring-1 ring-primary/10'
-                : 'text-[#5C4D42] font-semibold hover:bg-white/60 hover:text-primary hover:shadow-sm'
+                ? 'bg-orange-100/60 text-primary font-semibold shadow-sm ring-1 ring-primary/10'
+                : 'text-[#5C4D42] font-medium hover:bg-white/60 hover:text-primary hover:shadow-sm'
             }
         `}
     >
-        <span className={`material-symbols-outlined ${active ? '' : 'text-[#5C4D42] group-hover:text-primary transition-colors'}`}>{icon}</span>
-        <span>{label}</span>
+        <span className={`material-symbols-outlined text-[20px] ${active ? '' : 'text-[#5C4D42] group-hover:text-primary transition-colors'}`}>{icon}</span>
+        <span className="text-sm">{label}</span>
     </Link>
 );
 
@@ -66,11 +66,11 @@ const DashboardLayout = () => {
             {/* Mobile Sidebar (Slide-in) */}
             <div className={`fixed top-0 left-0 bottom-0 w-72 bg-white/90 backdrop-blur-2xl border-r border-orange-100 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logic same as desktop but simpler structure for mobile if needed, or re-use styling */}
-                <div className="h-24 flex items-center gap-3 px-8 border-b border-orange-100/50">
-                    <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
+                <div className="h-20 flex items-center gap-3 px-8 border-b border-orange-100/50">
+                    <div className="size-9 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
                     </div>
-                    <span className="text-xl font-extrabold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                    <span className="text-lg font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
                 <nav className="p-4 space-y-2">
                     {visibleNavItems.map((item) => (
@@ -84,11 +84,11 @@ const DashboardLayout = () => {
 
             {/* Desktop Sidebar (Glass) */}
             <aside className="hidden lg:flex w-72 h-full glass-sidebar flex-col flex-shrink-0 z-50 relative transition-all duration-300">
-                <div className="h-24 flex items-center gap-3 px-8 flex-shrink-0">
-                    <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
+                <div className="h-20 flex items-center gap-3 px-8 flex-shrink-0">
+                    <div className="size-9 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
                     </div>
-                    <span className="text-xl font-extrabold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                    <span className="text-lg font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
@@ -98,17 +98,17 @@ const DashboardLayout = () => {
                     <div className="my-4 h-px bg-orange-100 w-full"></div>
                 </nav>
 
-                <div className="p-4 border-t border-orange-100/50 space-y-2 bg-white/30">
-                    <Link to="/customer/profile" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[#5C4D42] font-semibold hover:bg-white/80 hover:text-primary transition-all group">
-                        <span className="material-symbols-outlined">person</span>
-                        Profile
+                <div className="p-4 border-t border-orange-100/50 space-y-1.5 bg-white/30">
+                    <Link to="/customer/profile" className="flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[#5C4D42] font-medium hover:bg-white/80 hover:text-primary transition-all group">
+                        <span className="material-symbols-outlined text-[20px]">person</span>
+                        <span className="text-sm">Profile</span>
                     </Link>
                     <button
                         onClick={() => setShowLogoutModal(true)}
-                        className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 font-semibold hover:bg-red-50 hover:text-red-600 transition-all"
+                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-red-500 font-medium hover:bg-red-50 hover:text-red-600 transition-all"
                     >
-                        <span className="material-symbols-outlined">logout</span>
-                        Logout
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        <span className="text-sm">Logout</span>
                     </button>
                 </div>
             </aside>
