@@ -33,7 +33,7 @@ const DashboardLayout = () => {
         { icon: 'account_balance_wallet', label: 'Wallet', to: '/customer/wallet', public: false },
         { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu', public: false },
         { icon: 'local_shipping', label: 'Track Order', to: '/customer/track', public: false },
-        { icon: 'pause_circle', label: 'Pause Subscription', to: '/customer/pause', public: false },
+        { icon: 'pause_circle', label: 'Manage Subscription', to: '/customer/manage-subscription', public: false },
         { icon: 'history', label: 'History', to: '/customer/history', public: false },
         { icon: 'thumb_up', label: 'Feedback', to: '/customer/feedback', public: false },
     ];

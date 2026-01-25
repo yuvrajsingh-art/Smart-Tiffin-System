@@ -11,7 +11,7 @@ import CustomerDashboard from './pages/customer/CustomerDashboard';
 import Menu from './pages/customer/Menu';
 
 import TrackDelivery from './pages/customer/Track';
-import Pause from './pages/customer/Pause'
+import ManageSubscription from './pages/customer/ManageSubscription'
 import Feedback from './pages/customer/Feedback'
 import Wallet from './pages/customer/Wallet'
 import History from './pages/customer/History'
@@ -19,8 +19,8 @@ import FindMess from './pages/discovery/FindMess'
 import MessDetails from './pages/discovery/MessDetails'
 import SubscriptionCheckout from './pages/discovery/SubscriptionCheckout'
 import Profile from './pages/customer/Profile'
- import { SubscriptionProvider } from './context/SubscriptionContext';
- 
+import { SubscriptionProvider } from './context/SubscriptionContext';
+
 
 /**
  * Main Application Component
@@ -52,7 +52,7 @@ function App() {
 
             <Route path="menu" element={<Menu />} />
             <Route path="track" element={<TrackDelivery />} />
-            <Route path="pause" element={<Pause />} />
+            <Route path="manage-subscription" element={<ManageSubscription />} />
             <Route path="feedback" element={<Feedback />} />
             <Route path="wallet" element={<Wallet />} />
             <Route path="history" element={<History />} />
