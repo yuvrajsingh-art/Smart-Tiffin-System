@@ -19,6 +19,7 @@ import FindMess from './pages/discovery/FindMess'
 import MessDetails from './pages/discovery/MessDetails'
 import SubscriptionCheckout from './pages/discovery/SubscriptionCheckout'
 import Profile from './pages/customer/Profile'
+import Notifications from './pages/customer/Notifications'
 import { SubscriptionProvider } from './context/SubscriptionContext';
 
 
@@ -57,6 +58,7 @@ function App() {
             <Route path="wallet" element={<Wallet />} />
             <Route path="history" element={<History />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="notifications" element={<Notifications />} />
 
             {/* Future routes can be added here, e.g.:
                  <Route path="profile" element={<Profile />} />

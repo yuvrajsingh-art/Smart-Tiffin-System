@@ -127,10 +127,10 @@ const DashboardLayout = () => {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <button className="size-12 rounded-full bg-white/60 hover:bg-white hover:shadow-md transition-all flex items-center justify-center text-[#5C4D42] relative">
-                            <span className="material-symbols-outlined">notifications</span>
-                            <span className="absolute top-3 right-3 size-2 bg-primary rounded-full ring-2 ring-white"></span>
-                        </button>
+                        <Link to="/customer/notifications" className="size-12 rounded-full bg-white/60 hover:bg-white hover:shadow-md transition-all flex items-center justify-center text-[#5C4D42] relative group">
+                            <span className="material-symbols-outlined transition-transform group-hover:scale-110">notifications</span>
+                            <span className="absolute top-3 right-3 size-2.5 bg-primary rounded-full ring-2 ring-white animate-pulse"></span>
+                        </Link>
                         <div className="flex items-center gap-3 pl-6 border-l border-orange-200/50">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-bold text-[#2D241E]">Rohan Das</p>
