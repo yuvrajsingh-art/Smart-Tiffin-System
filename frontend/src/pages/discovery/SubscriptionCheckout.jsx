@@ -203,7 +203,7 @@ const SubscriptionCheckout = () => {
                                     value={delivery.address.street}
                                     onChange={e => setDelivery({ ...delivery, address: { ...delivery.address, street: e.target.value } })}
                                 />
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 border-b border-gray-100">
                                     <input
                                         placeholder="City"
                                         className="w-1/2 h-10 bg-transparent px-3 font-bold text-[#2D241E] placeholder:text-gray-300 outline-none border-r border-gray-100 text-sm"
@@ -217,12 +217,23 @@ const SubscriptionCheckout = () => {
                                         onChange={e => setDelivery({ ...delivery, address: { ...delivery.address, pincode: e.target.value } })}
                                     />
                                 </div>
+                                <input
+                                    placeholder="Phone Number (Required)"
+                                    className="w-full h-10 bg-transparent px-3 font-bold text-[#2D241E] placeholder:text-gray-300 outline-none text-sm"
+                                    maxLength={10}
+                                    value={delivery.phone || ''}
+                                    onChange={e => setDelivery({ ...delivery, phone: e.target.value.replace(/\D/g, '') })}
+                                />
                             </div>
                         </div>
 
                         <div className="flex gap-3 mt-6">
                             <button onClick={() => setCurrentStep(2)} className="px-5 text-xs font-bold text-gray-400 hover:text-[#2D241E] transition-colors">Back</button>
-                            <button onClick={() => setCurrentStep(4)} className="flex-1 py-3 bg-[#2D241E] text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm">
+                            <button
+                                onClick={() => setCurrentStep(4)}
+                                disabled={!delivery.address.street || !delivery.address.pincode || !delivery.phone || delivery.phone.length < 10}
+                                className="flex-1 py-3 bg-[#2D241E] text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm"
+                            >
                                 Review Payment
                             </button>
                         </div>
@@ -230,7 +241,15 @@ const SubscriptionCheckout = () => {
                 );
             case 4: // Payment
                 return (
-                    <div className="animate-[fadeIn_0.5s_ease-out]">
+                    <div className="animate-[fadeIn_0.5s_ease-out] relative">
+                        {isProcessing && (
+                            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-[2.5rem]">
+                                <div className="size-16 border-4 border-gray-200 border-t-[#2D241E] rounded-full animate-spin mb-4"></div>
+                                <h3 className="text-[#2D241E] font-black text-lg animate-pulse">Contacting Bank...</h3>
+                                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Do not close window</p>
+                            </div>
+                        )}
+
                         <StepTitle title="Secure Payment" subtitle="Complete your subscription safely." />
 
                         <div className="space-y-3">
@@ -260,13 +279,7 @@ const SubscriptionCheckout = () => {
                                 disabled={isProcessing}
                                 className="flex-1 py-3 bg-primary text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-[#e05d00] hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm"
                             >
-                                {isProcessing ? (
-                                    <>Processing...</>
-                                ) : (
-                                    <>
-                                        <span className="material-symbols-outlined text-base">lock</span> Pay ₹{grandTotal}
-                                    </>
-                                )}
+                                <span className="material-symbols-outlined text-base">lock</span> Pay ₹{grandTotal}
                             </button>
                         </div>
                     </div>

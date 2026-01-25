@@ -21,7 +21,7 @@ function PricingSection() {
                         <li className="flex items-center gap-2"><span className="material-symbols-outlined text-green-500 text-sm">check</span> Track Expenses</li>
                         <li className="flex items-center gap-2"><span className="material-symbols-outlined text-green-500 text-sm">check</span> Rate Meals</li>
                     </ul>
-                    <Link to="/role-selection" className="mt-4 w-full py-3 rounded-full border border-secondary/20 font-bold hover:bg-secondary hover:text-white transition-colors flex items-center justify-center">Join Free</Link>
+                    <Link to="/customer/find-mess" className="mt-4 w-full py-3 rounded-full border border-secondary/20 font-bold hover:bg-secondary hover:text-white transition-colors flex items-center justify-center">Join Free</Link>
                 </div>
                 {/* Mess Partner Plan (Premium) */}
                 <div className="glass-panel-dark p-8 rounded-2xl flex flex-col gap-6 transform md:scale-110 shadow-2xl relative z-10">

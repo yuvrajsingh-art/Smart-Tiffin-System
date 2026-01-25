@@ -36,7 +36,7 @@ const Pause = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4">
+        <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4">
 
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">

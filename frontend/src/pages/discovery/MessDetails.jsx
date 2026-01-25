@@ -17,14 +17,19 @@ const MessDetails = () => {
         address: "Kothrud, Pune",
         description: "Authentic Maharashtrian Thali. Serving since 2012.",
         features: ["Hygiene Verified", "Sunday Sweet", "Ghar Jaisa Taste"],
+        reviewsList: [
+            { id: 1, user: "Rohan D.", rating: 5, date: "2 days ago", text: "Best Paneer Masala I've had in Pune! Reminds me of home." },
+            { id: 2, user: "Neha S.", rating: 4, date: "1 week ago", text: "Good variety, but Sunday delivery is sometimes late. Food is tasty." },
+            { id: 3, user: "Amit K.", rating: 5, date: "2 weeks ago", text: "Hygiene is top notch. Packaging is spill-proof." }
+        ],
         menu: [
-            { day: "Mon", lunch: "Paneer Masala, 3 Rotis, Rice", dinner: "Aloo Gobi, 3 Rotis, Dal" },
+            { day: "Mon", lunch: "Paneer Butter Masala, 3 Rotis, Rice", dinner: "Aloo Gobi Dry, 3 Rotis, Dal", badges: ["Bestseller"] },
             { day: "Tue", lunch: "Aloo Matar, 3 Rotis, Jeera Rice", dinner: "Sev Bhaji, 3 Rotis, Khichdi" },
-            { day: "Wed", lunch: "Veg Kofta, 3 Rotis, Rice", dinner: "Dal Fry, Jeera Rice, Salad" },
-            { day: "Thu", lunch: "Baingan Bharta, 3 Rotis, Rice", dinner: "Methi Matar, 3 Rotis, Dal" },
+            { day: "Wed", lunch: "Veg Kofta Curry, 3 Rotis, Rice", dinner: "Dal Fry, Jeera Rice, Salad" },
+            { day: "Thu", lunch: "Baingan Bharta, 3 Rotis, Rice", dinner: "Methi Matar, 3 Rotis, Dal", badges: ["Chef's Special"] },
             { day: "Fri", lunch: "Chole Masala, 2 Bhature, Rice", dinner: "Soyabean Curry, 3 Rotis" },
-            { day: "Sat", lunch: "Rajma Chawal, Curd, Salad", dinner: "Egg Curry / Paneer Bhurji" },
-            { day: "Sun", lunch: "Puran Poli Special Thali", dinner: "Light Khichdi Kadhi" },
+            { day: "Sat", lunch: "Rajma Chawal, Curd, Salad", dinner: "Egg Curry / Paneer Bhurji", badges: ["Protein Heavy"] },
+            { day: "Sun", lunch: "Puran Poli Special Thali", dinner: "Light Khichdi Kadhi", badges: ["Sweet Treat"] },
         ]
     };
 
@@ -90,8 +95,15 @@ const MessDetails = () => {
                                 </h3>
                                 <div className="grid gap-3">
                                     {provider.menu.map((day, idx) => (
-                                        <div key={idx} className="flex gap-4 p-3 rounded-2xl hover:bg-orange-50/50 border border-transparent hover:border-orange-100 transition-colors group">
-                                            <div className="w-12 h-12 rounded-xl bg-[#2D241E] text-white flex items-center justify-center font-black text-sm uppercase shadow-sm">
+                                        <div key={idx} className="relative flex gap-4 p-4 rounded-2xl hover:bg-orange-50/50 border border-transparent hover:border-orange-100 transition-colors group overflow-hidden">
+                                            {/* Badges */}
+                                            {day.badges && (
+                                                <div className="absolute top-0 right-0 bg-primary/10 text-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">
+                                                    {day.badges[0]}
+                                                </div>
+                                            )}
+
+                                            <div className="w-12 h-12 rounded-xl bg-[#2D241E] text-white flex items-center justify-center font-black text-sm uppercase shadow-sm shrink-0">
                                                 {day.day}
                                             </div>
                                             <div className="flex-1 grid grid-cols-2 gap-4">
@@ -126,9 +138,32 @@ const MessDetails = () => {
                         )}
 
                         {activeTab === 'reviews' && (
-                            <div className="animate-[fadeIn_0.3s] text-center py-10">
-                                <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">reviews</span>
-                                <p className="text-[#5C4D42] font-medium">Reviews coming soon!</p>
+                            <div className="animate-[fadeIn_0.3s] space-y-4">
+                                <h3 className="text-lg font-black text-[#2D241E] mb-4 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-amber-500">star</span>
+                                    Student Reviews
+                                </h3>
+                                {provider.reviewsList.map((review) => (
+                                    <div key={review.id} className="p-4 rounded-2xl bg-white/50 border border-white/60 shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="size-8 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center font-black text-xs text-orange-700">
+                                                    {review.user.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-[#2D241E]">{review.user}</p>
+                                                    <p className="text-[9px] text-gray-400 font-medium">{review.date}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex text-amber-400 text-[10px]">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <span key={i} className={`material-symbols-outlined text-[14px] ${i < review.rating ? 'fill-current' : 'text-gray-200'}`}>star</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-[#5C4D42] leading-relaxed font-medium">"{review.text}"</p>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>

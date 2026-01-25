@@ -27,34 +27,68 @@ const Feedback = () => {
     }
 
     return (
-        <div className="space-y-6 animate-[fadeIn_0.5s_ease-out]">
-            <h2 className="text-2xl font-bold text-gray-900">Give Feedback ✍️</h2>
+        <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 md:px-6">
 
-            <div className="glass-panel p-8 rounded-3xl text-center">
-                <h3 className="text-lg font-bold text-gray-800 mb-2">How was today's Lunch?</h3>
-                <p className="text-sm text-gray-500 mb-6">Your feedback helps us improve.</p>
-
-                {/* Star Rating */}
-                <div className="flex justify-center gap-2 mb-8">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                            key={star}
-                            onClick={() => setRating(star)}
-                            className="transition-transform hover:scale-110 focus:outline-none"
-                        >
-                            <span className={`material-symbols-outlined text-[40px] ${star <= rating ? 'fill-1 text-amber-400' : 'text-gray-300'}`}>
-                                star
-                            </span>
-                        </button>
-                    ))}
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8 pt-4">
+                <Link to="/customer/dashboard" className="size-10 rounded-full bg-white flex items-center justify-center text-[#2D241E] shadow-sm hover:scale-110 transition-transform hover:shadow-md border border-gray-100">
+                    <span className="material-symbols-outlined text-xl">arrow_back</span>
+                </Link>
+                <div>
+                    <h1 className="text-2xl font-black text-[#2D241E] leading-tight">Meal Feedback</h1>
+                    <p className="text-xs font-bold text-[#5C4D42] opacity-60 uppercase tracking-widest">Rate your experience</p>
                 </div>
+            </div>
 
-                <textarea
-                    className="w-full h-32 bg-white/50 border border-white rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-primary/50 placeholder-gray-400 resize-none mb-6"
-                    placeholder="Tell us what you liked or disliked..."
-                ></textarea>
+            {/* Feedback Main Card */}
+            <div className="max-w-xl mx-auto">
+                <div className="glass-panel p-8 sm:p-10 rounded-[2.5rem] text-center relative overflow-hidden border border-white shadow-xl">
 
-                <Button className="w-full">Submit Feedback</Button>
+                    {/* Decorative Background */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-50 rounded-full blur-[60px] -translate-x-1/2 translate-y-1/2"></div>
+
+                    <div className="relative z-10">
+                        <div className="inline-block p-4 rounded-2xl bg-orange-50 text-orange-600 mb-6">
+                            <span className="material-symbols-outlined text-4xl">lunch_dining</span>
+                        </div>
+
+                        <h3 className="text-2xl font-black text-[#2D241E] mb-2 leading-tight">How was today's Lunch?</h3>
+                        <p className="text-sm font-medium text-gray-400 mb-8">Paneer Butter Masala • Today</p>
+
+                        {/* Star Rating */}
+                        <div className="flex justify-center gap-3 mb-10">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    onClick={() => setRating(star)}
+                                    className="group focus:outline-none transition-transform active:scale-90"
+                                >
+                                    <span
+                                        className={`material-symbols-outlined text-[48px] transition-all duration-300 ${star <= rating
+                                                ? 'fill-1 text-amber-400 drop-shadow-md scale-110'
+                                                : 'text-gray-200 hover:text-gray-300 scale-100'
+                                            }`}
+                                    >
+                                        star
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="mb-8 text-left">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 block ml-1">Write a Review</label>
+                            <textarea
+                                className="w-full h-40 bg-white/60 backdrop-blur-sm border border-white rounded-[1.5rem] p-5 text-sm font-medium text-[#2D241E] outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all resize-none shadow-inner placeholder:text-gray-300"
+                                placeholder="What did you like? What can be improved?"
+                            ></textarea>
+                        </div>
+
+                        <Button className="w-full py-4 text-base rounded-[1.5rem] shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]">
+                            Submit Feedback
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -174,7 +174,16 @@ body {
   }
 }
 
-.bg-clip-text {
   -webkit-background-clip: text;
   background-clip: text;
+}
+
+/* Hide Number Spinners */
+.no-spinner::-webkit-inner-spin-button, 
+.no-spinner::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+.no-spinner { 
+  -moz-appearance: textfield; 
 }
