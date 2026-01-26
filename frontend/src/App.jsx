@@ -13,7 +13,7 @@ import Menu from './pages/customer/Menu';
 import TrackDelivery from './pages/customer/Track';
 import ManageSubscription from './pages/customer/ManageSubscription'
 import Feedback from './pages/customer/Feedback'
-import Wallet from './pages/customer/Wallet'
+// Wallet route removed
 import History from './pages/customer/History'
 import FindMess from './pages/discovery/FindMess'
 import MessDetails from './pages/discovery/MessDetails'
@@ -55,7 +55,7 @@ function App() {
             <Route path="track" element={<TrackDelivery />} />
             <Route path="manage-subscription" element={<ManageSubscription />} />
             <Route path="feedback" element={<Feedback />} />
-            <Route path="wallet" element={<Wallet />} />
+            {/* Wallet route removed */}
             <Route path="history" element={<History />} />
             <Route path="profile" element={<Profile />} />
             <Route path="notifications" element={<Notifications />} />

@@ -109,26 +109,6 @@ const CustomerDashboard = () => {
                         {/* Right Col: Wallet & Actions */}
                         <div className="space-y-6">
 
-                            {/* Wallet Card */}
-                            <div className="bg-[#1a1a1a] text-white p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <span className="material-symbols-outlined text-8xl">account_balance_wallet</span>
-                                </div>
-                                <div className="relative z-10">
-                                    <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Total Balance</p>
-                                    <h2 className="text-4xl font-black mb-6">₹ 450<span className="text-lg text-white/60">.00</span></h2>
-
-                                    <div className="flex gap-3">
-                                        <Link to="/customer/wallet" className="flex-1 py-3 bg-white text-black rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors flex items-center justify-center">
-                                            + Add Money
-                                        </Link>
-                                        <button className="px-4 py-3 bg-white/10 text-white rounded-xl font-bold text-sm hover:bg-white/20 transition-colors backdrop-blur-md">
-                                            History
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Quick Actions Grid */}
                             <div>
                                 <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Quick Actions</h3>
