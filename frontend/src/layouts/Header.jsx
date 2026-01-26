@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState('home');
+    const location = useLocation();
+    const navigate = useNavigate();
 
     // Handle scroll effect for glassmorphism and active link
     useEffect(() => {
@@ -12,79 +14,98 @@ const Header = () => {
             setScrolled(window.scrollY > 20);
 
             // Active Section Logic
-            const sections = ['home', 'features', 'roles', 'how-it-works'];
-            const scrollPosition = window.scrollY + 100; // Offset for header height
+            // The navLinks have simple names but their hashes are #features, #process, #pricing, #reviews
+            // 'home' is a catch-all for top
+            // Note: code.html used id="features", id="process", etc.
+            const sections = ['features', 'process', 'pricing', 'reviews'];
+            const scrollPosition = window.scrollY + 120; // Offset for header + padding
 
+            // Improved Active Detection logic
+            let current = 'home';
             for (const section of sections) {
                 const element = document.getElementById(section);
-                if (element && element.offsetTop <= scrollPosition && (element.offsetTop + element.offsetHeight) > scrollPosition) {
-                    setActiveSection(section);
+                if (element && element.offsetTop <= scrollPosition) {
+                    current = '#' + section;
                 }
             }
+            // Check if we are near top
+            if (window.scrollY < 100) current = 'home';
+
+            setActiveSection(current);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Handle body scroll lock when mobile menu is open
-    useEffect(() => {
-        if (isMenuOpen) {
-            document.body.style.overflow = 'hidden';
+    const scrollToSection = (e, sectionId) => {
+        e.preventDefault();
+        setIsMenuOpen(false);
+
+        // If we are not on the home page, go there first
+        if (location.pathname !== '/') {
+            navigate('/');
+            // Wait for navigation then scroll
+            setTimeout(() => {
+                const element = document.querySelector(sectionId);
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
         } else {
-            document.body.style.overflow = 'unset';
+            // We are already on home
+            const element = document.querySelector(sectionId);
+            if (element) element.scrollIntoView({ behavior: 'smooth' });
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isMenuOpen]);
+    };
 
     const navLinks = [
-        { name: 'Home', href: '#home', id: 'home' },
-        { name: 'Features', href: '#features', id: 'features' },
-        { name: 'Roles', href: '#roles', id: 'roles' },
-        { name: 'Process', href: '#how-it-works', id: 'how-it-works' },
+        { name: 'Features', href: '#features' },
+        { name: 'How it works', href: '#process' },
+        { name: 'Pricing', href: '#pricing' },
+        { name: 'Reviews', href: '#reviews' },
     ];
 
     return (
-        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-nav h-16' : 'bg-transparent h-20'}`}>
-            <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+        <header className={`fixed top-0 z-50 w-full transition-all duration-300 ${scrolled ? 'glass-nav py-2 shadow-sm' : 'bg-transparent py-4'}`}>
+            <div className="max-w-[1280px] mx-auto px-6 flex items-center justify-between">
                 {/* Logo */}
-                <Link to="/" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
-                        <span className="material-symbols-outlined text-2xl">lunch_dining</span>
+                <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white">
+                        <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
                     </div>
-                    <span className="text-xl font-bold text-gray-900 tracking-tight group-hover:text-primary transition-colors">
+                    <h1 className="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-secondary to-primary">
                         Smart Tiffin
-                    </span>
-                </Link>
+                    </h1>
+                </div>
 
                 {/* Desktop Menu */}
-                <div className="hidden md:flex items-center gap-8">
+                <nav className="hidden md:flex items-center gap-8">
                     {navLinks.map((link) => (
                         <a
                             key={link.name}
                             href={link.href}
-                            className={`text-sm font-medium transition-colors relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${activeSection === link.id ? 'text-primary after:w-full' : 'text-gray-600 hover:text-primary after:w-0 hover:after:w-full'}`}
+                            onClick={(e) => scrollToSection(e, link.href)}
+                            className={`text-sm font-bold transition-all duration-300 relative 
+                                after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-primary after:transition-all after:duration-300
+                                ${activeSection === link.href ? 'text-primary after:w-full' : 'text-secondary/80 hover:text-primary after:w-0 hover:after:w-full'}
+                            `}
                         >
                             {link.name}
                         </a>
                     ))}
-                </div>
+                </nav>
 
-                {/* Auth Buttons */}
-                <div className="hidden md:flex items-center gap-4">
+                {/* Auth Button */}
+                <div className="hidden md:flex items-center gap-6">
                     <Link
                         to="/login"
-                        className="text-sm font-bold text-gray-700 hover:text-primary transition-colors px-4 py-2"
+                        className="text-sm font-bold text-secondary/80 hover:text-primary transition-colors"
                     >
                         Login
                     </Link>
                     <Link
                         to="/role-selection"
-                        className="bg-[#111716] text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group"
+                        className="bg-black hover:bg-secondary/90 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105 shadow-lg shadow-black/20"
                     >
                         Get Started
-                        <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </Link>
                 </div>
 
@@ -106,8 +127,8 @@ const Header = () => {
                         <a
                             key={link.name}
                             href={link.href}
-                            className={`text-base font-medium ${activeSection === link.id ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
-                            onClick={() => setIsMenuOpen(false)}
+                            className={`text-base font-bold ${activeSection === link.href ? 'text-primary' : 'text-secondary/80 hover:text-primary'}`}
+                            onClick={(e) => scrollToSection(e, link.href)}
                         >
                             {link.name}
                         </a>
@@ -115,20 +136,21 @@ const Header = () => {
                     <div className="h-px bg-gray-100 my-2"></div>
                     <Link
                         to="/login"
-                        className="text-base font-bold text-gray-900"
+                        className="text-base font-bold text-secondary/80 hover:text-primary text-center py-2"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Login
                     </Link>
                     <Link
-                        to="/login"
-                        className="bg-primary text-white text-base font-bold py-3 rounded-xl shadow-lg w-full text-center block"
+                        to="/role-selection"
+                        className="bg-black text-white text-base font-bold py-3 rounded-full shadow-lg w-full text-center block"
+                        onClick={() => setIsMenuOpen(false)}
                     >
                         Get Started
                     </Link>
                 </div>
             </div>
-        </nav>
+        </header>
     );
 };
 

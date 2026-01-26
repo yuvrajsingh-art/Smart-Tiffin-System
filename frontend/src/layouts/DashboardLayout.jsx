@@ -1,43 +1,60 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useSubscription } from '../context/SubscriptionContext';
 
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
         className={`
-            flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+            flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group
             ${active
-                ? 'bg-orange-100/60 text-primary font-bold shadow-sm ring-1 ring-primary/10'
-                : 'text-[#5C4D42] font-semibold hover:bg-white/60 hover:text-primary hover:shadow-sm'
+                ? 'bg-orange-100/60 text-primary font-semibold shadow-sm ring-1 ring-primary/10'
+                : 'text-[#5C4D42] font-medium hover:bg-white/60 hover:text-primary hover:shadow-sm'
             }
         `}
     >
-        <span className={`material-symbols-outlined ${active ? '' : 'text-[#5C4D42] group-hover:text-primary transition-colors'}`}>{icon}</span>
-        <span>{label}</span>
+        <span className={`material-symbols-outlined text-[20px] ${active ? '' : 'text-[#5C4D42] group-hover:text-primary transition-colors'}`}>{icon}</span>
+        <span className="text-sm">{label}</span>
     </Link>
 );
 
 const DashboardLayout = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-    // Updated Nav Items list
+    // Auth & Subscription State
+    const { hasActiveSubscription } = useSubscription();
+    const isSubscribed = hasActiveSubscription();
+
+    // Nav Items with Access Control
     const navItems = [
-        { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard' },
-        { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu' },
-        { icon: 'local_shipping', label: 'Track Order', to: '/customer/track' },
-        { icon: 'pause_circle', label: 'Pause Subscription', to: '/customer/pause' },
-        { icon: 'history', label: 'History', to: '/customer/history' }, // Added History
-        { icon: 'thumb_up', label: 'Feedback', to: '/customer/feedback' },
+        { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard', public: true },
+        { icon: 'search', label: 'Find Mess', to: '/customer/find-mess', public: true }, // Always visible
+        { icon: 'account_balance_wallet', label: 'Wallet', to: '/customer/wallet', public: false },
+        { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu', public: false },
+        { icon: 'local_shipping', label: 'Track Order', to: '/customer/track', public: false },
+        { icon: 'pause_circle', label: 'Manage Subscription', to: '/customer/manage-subscription', public: false },
+        { icon: 'history', label: 'History', to: '/customer/history', public: false },
+        { icon: 'thumb_up', label: 'Feedback', to: '/customer/feedback', public: false },
     ];
+
+    const visibleNavItems = navItems.filter(item => item.public || isSubscribed);
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/');
+    };
 
     return (
         <div className="font-display bg-[#FFFBF5] text-[#2D241E] h-screen overflow-hidden selection:bg-primary/20 selection:text-primary flex relative">
 
             {/* Background Blobs (Premium Warm Theme) */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="blob w-[600px] h-[600px] bg-orange-200/30 -top-20 -right-20"></div>
-                <div className="blob w-[500px] h-[500px] bg-amber-100/40 bottom-0 left-0"></div>
+                <div className="blob blob-1 blob-primary -top-20 -right-20"></div>
+                <div className="blob blob-2 blob-secondary bottom-0 left-0"></div>
             </div>
 
             {/* Mobile Menu Overlay */}
@@ -49,14 +66,14 @@ const DashboardLayout = () => {
             {/* Mobile Sidebar (Slide-in) */}
             <div className={`fixed top-0 left-0 bottom-0 w-72 bg-white/90 backdrop-blur-2xl border-r border-orange-100 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logic same as desktop but simpler structure for mobile if needed, or re-use styling */}
-                <div className="h-24 flex items-center gap-3 px-8 border-b border-orange-100/50">
-                    <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
+                <div className="h-20 flex items-center gap-3 px-8 border-b border-orange-100/50">
+                    <div className="size-9 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
                     </div>
-                    <span className="text-xl font-extrabold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                    <span className="text-lg font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
                 <nav className="p-4 space-y-2">
-                    {navItems.map((item) => (
+                    {visibleNavItems.map((item) => (
                         <div key={item.to} onClick={() => setIsMobileMenuOpen(false)}>
                             <SidebarItem {...item} active={location.pathname === item.to} />
                         </div>
@@ -67,28 +84,31 @@ const DashboardLayout = () => {
 
             {/* Desktop Sidebar (Glass) */}
             <aside className="hidden lg:flex w-72 h-full glass-sidebar flex-col flex-shrink-0 z-50 relative transition-all duration-300">
-                <div className="h-24 flex items-center gap-3 px-8 flex-shrink-0">
-                    <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
+                <div className="h-20 flex items-center gap-3 px-8 flex-shrink-0">
+                    <div className="size-9 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
                     </div>
-                    <span className="text-xl font-extrabold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                    <span className="text-lg font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-                    {navItems.map((item) => (
+                    {visibleNavItems.map((item) => (
                         <SidebarItem key={item.to} {...item} active={location.pathname === item.to} />
                     ))}
                     <div className="my-4 h-px bg-orange-100 w-full"></div>
                 </nav>
 
-                <div className="p-4 border-t border-orange-100/50 space-y-2 bg-white/30">
-                    <Link to="/customer/profile" className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[#5C4D42] font-semibold hover:bg-white/80 hover:text-primary transition-all group">
-                        <span className="material-symbols-outlined">person</span>
-                        Profile
+                <div className="p-4 border-t border-orange-100/50 space-y-1.5 bg-white/30">
+                    <Link to="/customer/profile" className="flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[#5C4D42] font-medium hover:bg-white/80 hover:text-primary transition-all group">
+                        <span className="material-symbols-outlined text-[20px]">person</span>
+                        <span className="text-sm">Profile</span>
                     </Link>
-                    <button className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 font-semibold hover:bg-red-50 hover:text-red-600 transition-all">
-                        <span className="material-symbols-outlined">logout</span>
-                        Logout
+                    <button
+                        onClick={() => setShowLogoutModal(true)}
+                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-red-500 font-medium hover:bg-red-50 hover:text-red-600 transition-all"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
+                        <span className="text-sm">Logout</span>
                     </button>
                 </div>
             </aside>
@@ -112,14 +132,18 @@ const DashboardLayout = () => {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <button className="size-12 rounded-full bg-white/60 hover:bg-white hover:shadow-md transition-all flex items-center justify-center text-[#5C4D42] relative">
-                            <span className="material-symbols-outlined">notifications</span>
-                            <span className="absolute top-3 right-3 size-2 bg-primary rounded-full ring-2 ring-white"></span>
-                        </button>
+                        <Link to="/customer/notifications" className="size-12 rounded-full bg-white/60 hover:bg-white hover:shadow-md transition-all flex items-center justify-center text-[#5C4D42] relative group">
+                            <span className="material-symbols-outlined transition-transform group-hover:scale-110">notifications</span>
+                            <span className="absolute top-3 right-3 size-2.5 bg-primary rounded-full ring-2 ring-white animate-pulse"></span>
+                        </Link>
                         <div className="flex items-center gap-3 pl-6 border-l border-orange-200/50">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-bold text-[#2D241E]">Rohan Das</p>
-                                <p className="text-xs text-primary font-bold uppercase tracking-wider">Premium Plan</p>
+                                {isSubscribed ? (
+                                    <p className="text-xs text-primary font-bold uppercase tracking-wider">Premium Plan</p>
+                                ) : (
+                                    <p className="text-xs text-[#5C4D42] font-bold uppercase tracking-wider">Start Journey</p>
+                                )}
                             </div>
                             <img alt="Profile" className="size-12 rounded-full border-2 border-white shadow-sm object-cover" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" />
                         </div>
@@ -131,8 +155,43 @@ const DashboardLayout = () => {
                     <Outlet />
                 </div>
             </main>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-lg animate-[fadeIn_0.3s]" onClick={() => setShowLogoutModal(false)}></div>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl animate-[scaleIn_0.3s] relative overflow-hidden z-10 text-center border border-white/20">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-red-100 rounded-full blur-[80px] -translate-y-1/2 pointer-events-none opacity-50"></div>
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="size-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                                <span className="material-symbols-outlined text-4xl font-bold">logout</span>
+                            </div>
+                            <h3 className="text-2xl font-black text-[#2D241E] mb-2">Logout?</h3>
+                            <p className="text-[#5C4D42] text-sm font-medium leading-relaxed mb-8 opacity-80">
+                                Are you sure you want to log out of your Smart Tiffin account?
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setShowLogoutModal(false)}
+                                    className="flex-1 py-4 bg-gray-100 text-[#5C4D42] rounded-[1.5rem] font-bold text-sm hover:bg-gray-200 transition-all font-display"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex-1 py-4 bg-red-500 text-white rounded-[1.5rem] font-bold text-sm shadow-xl shadow-red-500/20 hover:bg-red-600 transition-all font-display"
+                                >
+                                    Yes, Log out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
 
 export default DashboardLayout;
+

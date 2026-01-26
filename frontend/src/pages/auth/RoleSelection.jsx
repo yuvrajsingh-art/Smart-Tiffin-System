@@ -1,129 +1,111 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const RoleSelection = () => {
-    const navigate = useNavigate();
-    const [selectedRole, setSelectedRole] = useState('');
-
-    const handleContinue = () => {
-        if (selectedRole) {
-            navigate(`/register?role=${selectedRole}`);
-        }
-    };
-
     return (
-        <div className="font-display mesh-gradient text-[#2D241E] overflow-x-hidden min-h-screen relative selection:bg-primary/20 selection:text-primary flex flex-col">
-            {/* Background Blobs matching original theme */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="blob w-[800px] h-[800px] bg-orange-200/40 -top-40 -left-20"></div>
-                <div className="blob w-[700px] h-[700px] bg-amber-100/40 top-1/4 right-0"></div>
-                <div className="blob w-[900px] h-[900px] bg-orange-100/30 bottom-0 left-1/4"></div>
+        <div className="min-h-screen md:h-screen w-full relative flex flex-col md:overflow-hidden bg-[#FFFBF5]">
+            {/* Background Blobs (Unified) */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="blob blob-1 blob-primary"></div>
+                <div className="blob blob-2 blob-secondary"></div>
             </div>
 
-            {/* Simplified Header matching RolePage layout */}
-            <nav className="fixed top-0 w-full z-50 glass-nav transition-all duration-300">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 group cursor-pointer">
-                        <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                            <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
-                        </div>
-                        <span className="text-lg font-bold tracking-tight text-[#111716] group-hover:text-primary transition-colors font-display">Smart Tiffin</span>
-                    </Link>
-                    <div className="flex items-center gap-4">
-                        <span className="hidden sm:block text-sm text-[#6A717B] font-medium">Already have an account?</span>
-                        <Link to="/login" className="text-sm font-bold text-primary hover:text-orange-700 transition-colors">Login</Link>
+            {/* Header */}
+            <header className="w-full max-w-7xl px-6 py-6 flex justify-between items-center z-50">
+                <div className="flex items-center gap-2">
+                    <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white shadow-md">
+                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
                     </div>
+                    <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#2D241E] to-primary">Smart Tiffin</span>
                 </div>
-            </nav>
+                <Link to="/" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span> Back
+                </Link>
+            </header>
 
-            <main className="relative z-10 flex-grow flex items-center justify-center px-4 py-32">
-                <div className="w-full max-w-[900px] perspective-1000">
-                    <div className="glass-panel rounded-[2rem] p-8 md:p-12 relative overflow-hidden transition-all duration-500 hover:shadow-glass-hover">
-                        <div className="text-center mb-10">
-                            <h1 className="text-3xl font-bold text-[#111716] tracking-tight mb-2 font-display">
-                                How would you like to join us?
-                            </h1>
-                            <p className="text-[#6A717B] text-sm font-medium">
-                                Select your role to get started
-                            </p>
+            {/* Main Content */}
+            <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-4 w-full max-w-5xl mx-auto h-full min-h-0">
+                <div className="text-center mb-6 flex-shrink-0 animate-[fadeIn_0.5s_ease-out]">
+                    <h1 className="text-2xl md:text-3xl font-black text-[#2D241E] mb-1">Select Role</h1>
+                    <p className="text-sm text-[#5C4D42]/80 font-medium">Join as a Student or Provider</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl h-auto items-center justify-center">
+
+                    {/* Customer Card - Compact Vertical (320px) */}
+                    <div className="glass-panel group rounded-3xl overflow-hidden flex flex-col shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white/60 border border-white/50 h-80 w-full max-w-sm mx-auto">
+                        <div className="h-32 bg-gray-100 relative overflow-hidden flex-shrink-0">
+                            <img alt="Student" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNVCDMliaUdGyF8cPtHt4lGPDyEo6CNQ8NwD0AmEHWUY7SDEHdlPF8qnuNf65J4IYZY0LfsHg_FCJFFjN5p04BjTw3yHOUwSYdLQtFnSf-wHDRI4ygBD2Zizj8QdtLoo-SESKqMSK3C44AHbJ8dYzT1LzwRzbeU06Fcaep_pY299lYel5DMTC68A6_SavJ3IyMkFJ98iPyRI4PnGQixYiVG5taIzQ1nZD-Q_00OLvx_8Z8rgsEYoNHUKQ_ctBa1SCglAM1gM6j" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+                            <div className="absolute bottom-3 left-5 text-white">
+                                <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 backdrop-blur-md border border-white/20 text-[9px] font-bold uppercase tracking-wider mb-1">Student</span>
+                                <h2 className="text-xl font-bold leading-none">I want to Eat</h2>
+                            </div>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                            {/* Customer Role */}
-                            <label className="group relative cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value="customer"
-                                    className="peer sr-only"
-                                    onChange={(e) => setSelectedRole(e.target.value)}
-                                    checked={selectedRole === 'customer'}
-                                />
-                                <div className="glass-card h-full rounded-2xl p-6 flex flex-col items-center text-center gap-4 hover:bg-white/60 peer-checked:bg-orange-50/60 peer-checked:border-primary peer-checked:shadow-glass-hover peer-checked:ring-1 peer-checked:ring-primary/50 transition-all duration-300">
-                                    <div className="size-16 rounded-full bg-gradient-to-br from-orange-100 to-white flex items-center justify-center shadow-inner mb-2 group-hover:scale-110 transition-transform duration-300">
-                                        <span className="material-symbols-outlined text-3xl text-primary">person</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-[#111716] mb-2">I am a Customer</h3>
-                                        <p className="text-xs text-gray-500 leading-relaxed">
-                                            Subscribe to healthy meals and track your daily tiffins.
-                                        </p>
-                                    </div>
-                                    <div className="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
-                                        <div className="size-5 rounded-full bg-primary flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-white text-[14px]">check</span>
+                        <div className="p-5 flex flex-col flex-1 justify-between">
+                            <div className="space-y-2">
+                                {[
+                                    { icon: 'search', title: 'Browse Messes' },
+                                    { icon: 'calendar_month', title: 'Manage Plans' },
+                                    { icon: 'monitoring', title: 'Track Diet' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <div className="size-6 rounded-full bg-orange-50 text-primary flex items-center justify-center flex-shrink-0">
+                                            <span className="material-symbols-outlined text-[14px]">{item.icon}</span>
                                         </div>
+                                        <span className="text-sm font-bold text-[#2D241E]">{item.title}</span>
                                     </div>
-                                </div>
-                            </label>
-
-                            {/* Provider Role */}
-                            <label className="group relative cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value="provider"
-                                    className="peer sr-only"
-                                    onChange={(e) => setSelectedRole(e.target.value)}
-                                    checked={selectedRole === 'provider'}
-                                />
-                                <div className="glass-card h-full rounded-2xl p-6 flex flex-col items-center text-center gap-4 hover:bg-white/60 peer-checked:bg-orange-50/60 peer-checked:border-primary peer-checked:shadow-glass-hover peer-checked:ring-1 peer-checked:ring-primary/50 transition-all duration-300">
-                                    <div className="size-16 rounded-full bg-gradient-to-br from-orange-100 to-white flex items-center justify-center shadow-inner mb-2 group-hover:scale-110 transition-transform duration-300">
-                                        <span className="material-symbols-outlined text-3xl text-primary">soup_kitchen</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-[#111716] mb-2">I am a Mess Owner</h3>
-                                        <p className="text-xs text-gray-500 leading-relaxed">
-                                            Manage your menu, track orders, and grow your tiffin business.
-                                        </p>
-                                    </div>
-                                    <div className="absolute top-4 right-4 opacity-0 peer-checked:opacity-100 transition-opacity duration-300">
-                                        <div className="size-5 rounded-full bg-primary flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-white text-[14px]">check</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </label>
-
+                                ))}
+                            </div>
+                            <Link to="/register?role=customer" className="w-full bg-primary hover:bg-[#e04112] text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 mt-2 hover:shadow-lg">
+                                Join as Eater <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            </Link>
                         </div>
-
-                        <button
-                            onClick={handleContinue}
-                            disabled={!selectedRole}
-                            className={`w-full bg-gradient-to-r from-primary to-orange-600 text-white text-base font-bold py-4 rounded-xl shadow-glow transition-all duration-300 ${selectedRole
-                                ? 'hover:shadow-lg hover:shadow-orange-500/40 hover:-translate-y-0.5 opacity-100 cursor-pointer'
-                                : 'opacity-50 cursor-not-allowed grayscale'
-                                }`}
-                        >
-                            Continue
-                        </button>
                     </div>
+
+                    {/* Provider Card - Compact Vertical (320px) */}
+                    <div className="glass-panel group rounded-3xl overflow-hidden flex flex-col shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white/60 border border-white/50 h-80 w-full max-w-sm mx-auto">
+                        <div className="h-32 bg-gray-100 relative overflow-hidden flex-shrink-0">
+                            <img alt="Chef" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAg_9In9jykwB9Xpx1GALOSgxtX3ZWo8vn7Eop86MZjuImlwLgF4FbGNc4320yUBls5ze1zuvQqFo46YoZ3p7j0fASGbwHNUSi3vQHhdB94FwA8686TaZAwZOcHBom8lUhasCpb-OPr1xX-faojUuyT2HEAArefJaxuJlXJzGCR3qR9-lLs5GFZYuxuhUQXfMKtyzcEX_YO968hiDIc_7yq_z_wuJo0Qac_md7_q8wtFlf884nUWzX4yNbzQDa4gHpuqlAGRpJr" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+                            <div className="absolute bottom-3 left-5 text-white">
+                                <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 backdrop-blur-md border border-white/20 text-[9px] font-bold uppercase tracking-wider mb-1">Partner</span>
+                                <h2 className="text-xl font-bold leading-none">I want to Serve</h2>
+                            </div>
+                        </div>
+                        <div className="p-5 flex flex-col flex-1 justify-between">
+                            <div className="space-y-2">
+                                {[
+                                    { icon: 'devices', title: 'Go Digital' },
+                                    { icon: 'receipt_long', title: 'Auto Billing' },
+                                    { icon: 'trending_up', title: 'Grow Sales' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <div className="size-6 rounded-full bg-orange-50 text-primary flex items-center justify-center flex-shrink-0">
+                                            <span className="material-symbols-outlined text-[14px]">{item.icon}</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-[#2D241E]">{item.title}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <Link to="/register?role=provider" className="w-full bg-[#111716] hover:bg-black text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 mt-2 hover:shadow-lg">
+                                Partner with Us <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            </Link>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div className="mt-6 text-center flex-shrink-0">
+                    <p className="text-xs text-[#5C4D42]/60">
+                        Already have an account? <Link className="text-primary font-bold hover:underline" to="/login">Log in here</Link>
+                    </p>
                 </div>
             </main>
 
-            {/* Simplified Footer matching RolePage layout */}
-            <footer className="relative z-10 w-full py-6 text-center">
-                <p className="text-xs text-gray-500 font-medium">© 2024 Smart Tiffin. Designed with <span className="text-red-500">♥</span> for better food.</p>
+            {/* Footer */}
+            <footer className="w-full py-3 text-center border-t border-orange-100/30 flex-shrink-0 bg-white/40">
+                <p className="text-[10px] text-[#5C4D42]/40">© 2024 Smart Tiffin • Privacy</p>
             </footer>
         </div>
     );

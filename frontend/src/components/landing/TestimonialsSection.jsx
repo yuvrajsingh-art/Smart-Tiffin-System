@@ -2,45 +2,28 @@ import React from 'react';
 
 function TestimonialsSection() {
     return (
-        <section className="max-w-6xl mx-auto w-full px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="glass-panel p-8 rounded-[2rem] flex flex-col gap-6 relative overflow-hidden">
-                    <span className="material-symbols-outlined text-8xl absolute -top-4 -right-4 opacity-5 text-primary rotate-12">format_quote</span>
-                    <div className="flex items-center gap-1 text-primary">
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                    </div>
-                    <p className="text-lg text-[#2D241E] font-bold italic leading-relaxed relative z-10">
-                        "This system revolutionized my university life. No more standing in long lines or worrying about manual entries. It's so fast!"
-                    </p>
-                    <div className="flex items-center gap-5 mt-auto">
-                        <img alt="Student" className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMgkmnlVyXwiGbwjntBdrDHFUlyHOll5mj7IZVHsb2tjiJD7NOWN97NvtocAAyguiSp8vntG2B46w-4ctia61Btezu3ty2hQ7W9907QxsOsMHDdMYAUiV1EVLPzQgYN6zc6vr8CohQvj5T8-Xt91J6aEEhKX3GZ3M0_SUl-kbHG6N6kB1GcR1SoB-jhUN-LAz9gnKqAhDBW0m6sNxzdZGx78cWIaf-t7rQG5CMQAJW6rA5ECVwI56ZzEpgHDS9KYmXiovDRojtBC8" />
+        <section className="py-10" id="reviews">
+            <h2 className="text-3xl font-black text-secondary text-center mb-10">Stories from the Table</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="glass-panel p-8 rounded-2xl relative">
+                    <span className="material-symbols-outlined absolute top-6 right-6 text-4xl text-primary/20">format_quote</span>
+                    <p className="text-lg font-medium text-secondary/80 italic mb-6">"Finally, I don't have to worry about carrying cash or losing those paper cards. The food tracking is a lifesaver during exams."</p>
+                    <div className="flex items-center gap-4">
+                        <img alt="Student Reviewer" className="w-12 h-12 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJBUDU7d8RpZHw4DRjglzpDUlKxe-pLReeHVViDUpqb3nx5HK8zv_G5xSwDKDmYDGZmKphRayTcWirWs2hfZhUn2otxWzKB6hPGtjjWuLGp4qMdQ4RoUmKKhRaJm_k3DpjsVFHDiUlfLI-4BIGDI4mroaoDf_5FApqIc3fngMBmLZAHsPl1i4DfnDj42Wbuspx7dgQ4ZnF5CeZzNJjrfV9EfKUSmGpf8a4nkgR4ZRHZTaeZBxdDBf9XpM7SDRkzDMvxrovgm2F" />
                         <div>
-                            <p className="font-black text-xl text-[#2D241E]">Rohan Das</p>
-                            <p className="text-[#5C4D42] font-semibold">Senior Engineering Student</p>
+                            <h4 className="font-bold text-secondary">Rohan Sharma</h4>
+                            <p className="text-xs text-secondary/60">Engineering Student, Kota</p>
                         </div>
                     </div>
                 </div>
-                <div className="glass-panel p-8 rounded-[2rem] flex flex-col gap-6 relative overflow-hidden">
-                    <span className="material-symbols-outlined text-8xl absolute -top-4 -right-4 opacity-5 text-primary rotate-12">format_quote</span>
-                    <div className="flex items-center gap-1 text-primary">
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                        <span className="material-symbols-outlined font-bold">star</span>
-                    </div>
-                    <p className="text-lg text-[#2D241E] font-bold italic leading-relaxed relative z-10">
-                        "I finally have peace of mind. I know exactly how much food to prepare every day, and my revenue tracking is now 100% accurate."
-                    </p>
-                    <div className="flex items-center gap-5 mt-auto">
-                        <img alt="Owner" className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuyoZ1WxEmlxEqbX3jULs-nDGnqIjRYxJB2jDdET16unCHP54_zyF42kMDCbcosk9QInHP2LlVgxvt4h2Vk39k4EKEHxQCKczQkc4yjCfujSH2ZucDFDohHs8Xj8vOSDw6-VRfjrx1SHaQU0xbBQwCHbKWd7MOsxY9er54OGV-zN2EvKdMdF-BJBoPrSIRCIoz2lvNbYzrPIHn2DcIq82FVoV5NNcPup4tSTXUMXOuajUtzWtr3xLM2kZS8I_e0fSv80zDwZNrW6k" />
+                <div className="glass-panel p-8 rounded-2xl relative">
+                    <span className="material-symbols-outlined absolute top-6 right-6 text-4xl text-primary/20">format_quote</span>
+                    <p className="text-lg font-medium text-secondary/80 italic mb-6">"Smart Tiffin helped me scale my mess business by 3x. The automated billing saved me hours of manual calculation every night."</p>
+                    <div className="flex items-center gap-4">
+                        <img alt="Mess Owner Reviewer" className="w-12 h-12 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5AZGYsXWYp1r-KOoVDW0IFl9WDtpDDYMXI0RRzeMJcupE1NE-L1R5RGjz80X5NZFFvu1834ZcWwPeM__1-3-hs_sli6x9bpXc52QGEMhBF900_TPcSy5nLV_pnYBi3JmduySANwGwGZqZ3eSogT0SvRcnFlfOE9YsCZlvL4yhqRJrYTuQ85x-NiTSKV3HqAsYjgiF23fksK2LI71Yi_dGoLOs4MLYNq45UhwdNA9M73UNN-Y36YQzMps_fVJMjN_KGjsLj2-5" />
                         <div>
-                            <p className="font-black text-xl text-[#2D241E]">Mrs. Iyer</p>
-                            <p className="text-[#5C4D42] font-semibold">Tiffin Service Proprietor</p>
+                            <h4 className="font-bold text-secondary">Anjali Gupta</h4>
+                            <p className="text-xs text-secondary/60">Owner, Annapurna Mess</p>
                         </div>
                     </div>
                 </div>

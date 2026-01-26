@@ -1,45 +1,95 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+
+const Counter = ({ end, duration = 2000, suffix = '' }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        let startTime;
+        let animationFrame;
+
+        const animate = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = timestamp - startTime;
+            const percentage = Math.min(progress / duration, 1);
+
+            // Ease out quart
+            const ease = 1 - Math.pow(1 - percentage, 4);
+
+            setCount(Math.floor(ease * end));
+
+            if (progress < duration) {
+                animationFrame = requestAnimationFrame(animate);
+            }
+        };
+
+        animationFrame = requestAnimationFrame(animate);
+
+        return () => cancelAnimationFrame(animationFrame);
+    }, [end, duration]);
+
+    return <span>{count}{suffix}</span>;
+};
 
 function HeroSection() {
     return (
-        <section className="glass-panel rounded-[2rem] p-6 md:p-10 relative overflow-hidden mx-4 md:mx-8 max-w-[1200px] md:self-center" id="home">
-            <div className="absolute -right-20 -top-20 w-[600px] h-[600px] bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-            <div className="flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-16 relative z-10">
-                <div className="flex-1 flex flex-col gap-6 text-center lg:text-left items-center lg:items-start">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/50 border border-orange-200 text-primary text-[10px] font-bold uppercase tracking-widest">
-                        <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
-                        </span>
-                        Digital Mess System v3.0
+        <section className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20 min-h-[80vh] pt-10">
+            <div className="flex-1 flex flex-col items-start gap-8 z-10 animate-[fadeIn_0.5s_ease-out]">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 rounded-full border border-white/60 shadow-sm backdrop-blur-sm hover:scale-105 transition-transform cursor-default">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    <span className="text-xs font-bold text-secondary tracking-wide uppercase">Now Live in Kota & Indore</span>
+                </div>
+                <h1 className="text-5xl lg:text-7xl font-black text-secondary leading-[1.1] tracking-tight">
+                    Ghar Jaisa Khana, <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">Door Reh Kar Bhi.</span>
+                </h1>
+                <p className="text-lg lg:text-xl text-secondary/70 max-w-lg leading-relaxed font-medium">
+                    Experience the warmth of home-cooked meals delivered with tech-enabled precision. No more lost coupons, just pure taste.
+                </p>
+                <div className="flex flex-wrap gap-4 pt-2">
+                    <Link to="/role-selection" className="bg-black hover:bg-secondary/90 text-white h-14 px-8 rounded-full text-base font-bold transition-all shadow-xl shadow-black/20 flex items-center gap-2 hover:scale-105 hover:-translate-y-1">
+                        View Daily Menu
+                        <span className="material-symbols-outlined">arrow_forward</span>
+                    </Link>
+                    <button className="h-14 px-8 rounded-full text-base font-bold text-secondary bg-white/50 border border-white/60 hover:bg-white transition-all flex items-center gap-2 hover:shadow-lg">
+                        <span className="material-symbols-outlined text-primary fill-current">play_circle</span>
+                        Watch Video
+                    </button>
+                </div>
+                <div className="flex items-center gap-4 mt-6">
+                    <div className="flex -space-x-4 hover:space-x-1 transition-all duration-300">
+                        <img alt="User Avatar" className="w-12 h-12 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLZFKAB8lqHNMT9qzGnIqNYmGdZTCTtXeKa19A7SyhI-cO7sbXUhMSQn0H_2YGEekyxAx0CbVJizJoq44pKUA3V6TfpCkLZtN3zoiE4ePDBvBlplDTewqYmaqcs9OzAW4NemwQylEacycsCtLyPrNF3jRp6YapPgwdl7SHRz4D6chRRYdybOC_YseiyWwZLVlUTrzuC3NxFzWOTZjUBin8pbhYZszSe6ldL38DVsobJDyXlsJjbNOuevNohd6IK4-wOU-IIDHz" />
+                        <img alt="User Avatar" className="w-12 h-12 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALIZQPCvJizi8YXMNQpoPjxU0X9SE0_gfn5ymWRW263sJcvvuxTi_pQXSCtL2IZ39bLQYgM62iDD5cJwazHaXZMPsWvcm89bw3nCmYzRY_UXMlUsTgHjIqaGgg6EW91hu3UuRbNhmZ2c7eHqQeGZVkX3u0LerjIOYFIVVe4c3R-Ws4Umyl1WQDHRwjfS9J9tjEgI51SNbrCfJKCcs5UjNTsDkPhUjuJsPAPTk-LtBBu9NR05uJyRA3NmG-qLIkLulNMpJC2nxn" />
+                        <img alt="User Avatar" className="w-12 h-12 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDW3-Uyi2mPbT4mnArNp5xI1a3YbDUaJ3Vd32CfZxh4-vvtYldowpWJTTmsQdEYVaJtAYwVT7C4f7ltD_B28c3nRetB2mTuTZzWLDGdBq4POCl4gN4Wn4K_6z-7a51FhG_lwzWsDXu0J1PPIrMoGjon_QmgfJSm8XEMk-cUqf-emKObp8u0tJteWk2-kdGATBGxNzvYK4UqGoCQUgdsG2E2gIG7lJFiil458UHP-HtYcHHW02yk94jbC9ceghLKX9GJu3reFpgA" />
+                        <div className="w-12 h-12 rounded-full border-2 border-white bg-black text-white flex items-center justify-center text-xs font-bold shadow-md relative overflow-hidden">
+                            <span className="relative z-10 font-black flex">
+                                +<Counter end={2} duration={1500} suffix="k" />
+                            </span>
+                        </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#2D241E] leading-tight tracking-tight">
-                        Smart Mess <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">Management</span> <br />
-                        System
-                    </h1>
-                    <p className="text-sm md:text-base text-[#5C4D42] max-w-lg font-medium leading-relaxed">
-                        Elevate your tiffin service experience. Automated subscriptions, digital menus, and real-time tracking in one warm, easy-to-use interface.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                        <Link to="/role-selection" className="bg-primary text-white text-base font-bold px-8 py-3 rounded-xl shadow-lg shadow-primary/30 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 min-w-[180px]">
-                            Get Started Free
-                        </Link>
-                        <button className="bg-white/80 text-[#2D241E] border border-orange-100 text-base font-bold px-8 py-3 rounded-xl shadow-sm hover:border-primary/40 hover:text-primary transition-all duration-300 flex items-center justify-center gap-2 min-w-[180px]">
-                            Watch Demo
-                        </button>
+                    <div className="flex flex-col">
+                        <div className="flex text-yellow-500 text-sm">★★★★★</div>
+                        <span className="text-xs font-bold text-secondary/80">Happy Students</span>
                     </div>
                 </div>
-                <div className="flex-1 w-full relative">
-                    <div className="relative w-full aspect-square max-w-[550px] mx-auto">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-orange-200/30 rounded-full blur-3xl"></div>
-                        <img
-                            className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(255,107,0,0.2)] rounded-full border-8 border-white/20"
-                            alt="Thali view"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjH1r5x4ip3JwmaWlGEf1CDDJiy5PvwRX4UMhIOdBjN5JPKcTMQ8FbIfTccSSjGN_f4cQBOwfgYBpWi-3fCtHKo_aSuXUOoQFtgzNXAGL48GeF5Zz_9wFsDT2KKUlqTpegQSyB5PMtX67sYMbK1zmWdJKEWgp_ax3vFrfd-gFkx6HI-QEi4QousvxXs5WNIkE1HCexE9IjLoJNeNF0Qioe1E3Rt_S_X27REp9TRgx3hsIo2iSJjO-R5h9gjhD2jnmMHhEIM5QZ074"
-                            style={{ maskImage: 'radial-gradient(circle, black 70%, transparent 100%)' }}
-                        />
+            </div>
+            <div className="flex-1 relative w-full flex justify-center lg:justify-end animate-[fadeIn_0.5s_ease-out_0.2s]">
+                {/* Decorative Glow Behind Image */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-orange-400/20 rounded-full blur-[80px] pointer-events-none"></div>
+                <div className="relative w-full max-w-[500px] aspect-square rounded-[3rem] overflow-hidden shadow-2xl shadow-orange-900/10 group">
+                    <img alt="Delicious Indian Thali with various curries and roti" className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRbCML920fVXfkmdpm94lCGJjr6pcGRb7iv4-LWVwO-PjKSOOZAuAMNG90iidQeFGiCfC6aifg0NCN_OuTaCZpVorf2ps7Y840Cw9i2AxU2HYDln7e7af4BsSubsPQsOzn9bpb3IXLRLu1RVZd4zaDGPscmess5fpLM5wbtxq5iR4SUtmjhZVwpuZKggql7oN_kvmleO3qIx9uyUjcy-jPMPYSfERcjvYdSbP6p6iiDpwtLHmVoAT1m6svhLxn5tT-nqbw7Bhh" />
+                    {/* Floating Badge */}
+                    <div className="absolute bottom-8 left-8 glass-panel px-5 py-3 rounded-full flex items-center gap-3 pulsing-badge hover:bg-white transition-colors cursor-pointer">
+                        <div className="bg-green-100 text-green-700 p-1.5 rounded-full flex items-center justify-center">
+                            <span className="material-symbols-outlined text-sm">verified</span>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-secondary">#1 Tiffin Service</p>
+                            <p className="text-[10px] font-semibold text-secondary/60">Voted by Students</p>
+                        </div>
                     </div>
                 </div>
             </div>

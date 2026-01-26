@@ -1,60 +1,103 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 function Footer() {
+    const [email, setEmail] = useState('');
+    const [status, setStatus] = useState('idle'); // idle, success, error
+
+    const handleSubscribe = (e) => {
+        e.preventDefault();
+        if (!email) return;
+
+        // Simulate API call
+        setStatus('success');
+        setEmail('');
+        setTimeout(() => setStatus('idle'), 3000);
+    };
+
     return (
-        <footer className="relative z-10 border-t border-orange-100 bg-white/70 backdrop-blur-xl pt-24 pb-12 font-display">
-            <div className="max-w-7xl mx-auto px-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
-                    <div className="col-span-1 md:col-span-1">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+        <footer className="bg-white border-t border-orange-100/50 pt-24 pb-12 mt-20 relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-50/50 rounded-full blur-[120px] -z-10"></div>
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] -z-10"></div>
+
+            <div className="max-w-[1280px] mx-auto px-6 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                    {/* Brand Column */}
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white shadow-lg shadow-orange-200">
                                 <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
                             </div>
-                            <span className="text-2xl font-black text-[#2D241E]">Smart Tiffin</span>
+                            <h2 className="text-2xl font-black tracking-tight text-[#2D241E]">
+                                Smart Tiffin
+                            </h2>
                         </div>
-                        <p className="text-[#5C4D42] font-medium leading-relaxed mb-8">
-                            Solving the core challenges of community food management through intuitive digital tools.
+                        <p className="text-[#5C4D42] leading-relaxed text-sm font-medium">
+                            Revolutionizing the way students and professionals access healthy, homemade meals.
+                            Connecting hungry bellies with caring kitchens since 2024.
                         </p>
                         <div className="flex gap-4">
-                            <a className="size-10 rounded-full bg-orange-100 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300" href="#"><span className="material-symbols-outlined text-sm">alternate_email</span></a>
-                            <a className="size-10 rounded-full bg-orange-100 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300" href="#"><span className="material-symbols-outlined text-sm">public</span></a>
+                            {['facebook', 'twitter', 'instagram', 'linkedin'].map((social) => (
+                                <a key={social} href="#" className="size-10 rounded-full bg-orange-50 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 text-[#5C4D42] shadow-sm hover:shadow-lg hover:-translate-y-1">
+                                    <i className={`fab fa-${social}`}></i>
+                                </a>
+                            ))}
                         </div>
                     </div>
+
+                    {/* Quick Links */}
                     <div>
-                        <h4 className="font-black text-[#2D241E] mb-8 uppercase tracking-widest text-sm">Solutions</h4>
+                        <h3 className="text-lg font-black mb-6 text-[#2D241E]">Product</h3>
                         <ul className="space-y-4">
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">For Students</a></li>
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">For Mess Owners</a></li>
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">College Admins</a></li>
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">Vendor Dashboard</a></li>
+                            <li><Link to="/role-selection" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">Find a Mess</Link></li>
+                            <li><Link to="/role-selection" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">Partner with Us</Link></li>
+                            <li><Link to="#features" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">Features</Link></li>
+                            <li><Link to="#pricing" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">Pricing</Link></li>
                         </ul>
                     </div>
+
+                    {/* Company */}
                     <div>
-                        <h4 className="font-black text-[#2D241E] mb-8 uppercase tracking-widest text-sm">Support</h4>
+                        <h3 className="text-lg font-black mb-6 text-[#2D241E]">Company</h3>
                         <ul className="space-y-4">
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">Documentation</a></li>
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">API Access</a></li>
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
-                            <li><a className="text-[#5C4D42] font-bold hover:text-primary transition-colors" href="#">Terms of Use</a></li>
+                            <li><a href="#" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">About Us</a></li>
+                            <li><a href="#" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">Careers</a></li>
+                            <li><a href="#" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">Blog</a></li>
+                            <li><a href="#" className="text-[#5C4D42] hover:text-primary transition-colors text-sm font-medium">Contact</a></li>
                         </ul>
                     </div>
+
+                    {/* Newsletter */}
                     <div>
-                        <h4 className="font-black text-[#2D241E] mb-8 uppercase tracking-widest text-sm">Stay Updated</h4>
-                        <div className="flex flex-col gap-4">
-                            <p className="text-sm text-[#5C4D42] font-medium">Get the latest updates on new mess additions.</p>
-                            <div className="flex gap-2">
-                                <input className="bg-orange-50/50 border-orange-100 rounded-xl px-4 py-3 text-sm flex-1 focus:ring-primary focus:border-primary" placeholder="Your email" type="email" />
-                                <button className="bg-primary text-white p-3 rounded-xl shadow-lg"><span className="material-symbols-outlined">send</span></button>
+                        <h3 className="text-lg font-black mb-6 text-[#2D241E]">Stay Updated</h3>
+                        <p className="text-[#5C4D42] text-sm mb-4 font-medium">Get the latest offers and menu updates right in your inbox.</p>
+                        <form onSubmit={handleSubscribe} className="relative">
+                            <input
+                                type="email"
+                                placeholder="Enter your email"
+                                className="w-full bg-white border border-gray-200 rounded-xl py-3 pl-4 pr-12 text-[#2D241E] placeholder:text-gray-400 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all shadow-sm"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            <button className="absolute right-2 top-1/2 -translate-y-1/2 size-8 bg-primary rounded-lg flex items-center justify-center text-white hover:bg-orange-600 transition-colors shadow-md">
+                                <span className="material-symbols-outlined text-sm">send</span>
+                            </button>
+                        </form>
+                        {status === 'success' && (
+                            <div className="mt-3 flex items-center gap-2 text-green-600 text-xs font-bold animate-pulse bg-green-50 px-3 py-2 rounded-lg inline-flex">
+                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                Subscribed successfully!
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
-                <div className="border-t border-orange-100 pt-12 flex flex-col md:flex-row justify-between items-center gap-6 text-sm">
-                    <div className="text-[#5C4D42] font-bold">© 2024 Smart Tiffin Final Year Project. Designed with passion.</div>
-                    <div className="flex items-center gap-2 font-bold text-primary bg-orange-100 px-5 py-2 rounded-full">
-                        <span>Handcrafted with</span>
-                        <span className="material-symbols-outlined text-[18px] fill-current">favorite</span>
-                        <span>by Team Tiffin</span>
+
+                <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-gray-400 text-sm font-medium">© 2024 Smart Tiffin System. All rights reserved.</p>
+                    <div className="flex gap-6">
+                        <a href="#" className="text-gray-400 hover:text-primary text-sm font-medium transition-colors">Privacy Policy</a>
+                        <a href="#" className="text-gray-400 hover:text-primary text-sm font-medium transition-colors">Terms of Service</a>
                     </div>
                 </div>
             </div>
@@ -62,4 +105,4 @@ function Footer() {
     )
 }
 
-export default Footer
+export default Footer;
