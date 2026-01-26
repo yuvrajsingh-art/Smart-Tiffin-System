@@ -33,7 +33,7 @@ const DashboardLayout = () => {
     const navItems = [
         { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard', public: true },
         { icon: 'search', label: 'Find Mess', to: '/customer/find-mess', public: true }, // Always visible
-        { icon: 'account_balance_wallet', label: 'Wallet', to: '/customer/wallet', public: false },
+        // Wallet link removed
         { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu', public: false },
         { icon: 'local_shipping', label: 'Track Order', to: '/customer/track', public: false },
         { icon: 'pause_circle', label: 'Manage Subscription', to: '/customer/manage-subscription', public: false },
