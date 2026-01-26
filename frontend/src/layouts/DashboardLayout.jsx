@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-
+import Logo from '../components/ui/Logo.jsx'
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
@@ -49,12 +49,7 @@ const DashboardLayout = () => {
             {/* Mobile Sidebar (Slide-in) */}
             <div className={`fixed top-0 left-0 bottom-0 w-72 bg-white/90 backdrop-blur-2xl border-r border-orange-100 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logic same as desktop but simpler structure for mobile if needed, or re-use styling */}
-                <div className="h-24 flex items-center gap-3 px-8 border-b border-orange-100/50">
-                    <div className="size-10 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
-                    </div>
-                    <span className="text-xl font-extrabold tracking-tight text-[#2D241E]">Smart Tiffin</span>
-                </div>
+               <Logo />
                 <nav className="p-4 space-y-2">
                     {navItems.map((item) => (
                         <div key={item.to} onClick={() => setIsMobileMenuOpen(false)}>
