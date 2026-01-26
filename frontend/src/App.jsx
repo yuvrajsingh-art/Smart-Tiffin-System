@@ -19,10 +19,12 @@ import FindMess from './pages/discovery/FindMess'
 import MessDetails from './pages/discovery/MessDetails'
 import SubscriptionCheckout from './pages/discovery/SubscriptionCheckout'
 import Profile from './pages/customer/Profile'
-import Notifications from './pages/customer/Notifications'
+ import Notifications from './pages/customer/Notifications'
 import { SubscriptionProvider } from './context/SubscriptionContext';
 
-
+ import ProviderSidebar from './components/ui/Provider/ProviderSidebar';
+import ProviderDashboard from './pages/Provider/ProviderDashboard';
+ 
 /**
  * Main Application Component
  * Handles the client-side routing using React Router.
@@ -72,9 +74,41 @@ function App() {
 
   // return (
   //   <BrowserRouter>
-  //     <ProviderDashboard />
+  //     <Toaster position="top-center" reverseOrder={false} />
+  //     <Routes>
+  //       {/* Public Routes - Accessible without login */}
+  //       <Route path="/" element={<LandingPage />} />
+  //       <Route path="/login" element={<Login />} />
+  //       <Route path="/role-selection" element={<RoleSelection />} />
+  //       <Route path="/register" element={<Register />} />
+
+  //       {/* Protected Routes - Customer Dashboard
+  //           All routes under /customer share the DashboardLayout (Sidebar + Topbar)
+  //       */}
+  //       <Route path="/customer" element={<DashboardLayout />}>
+  //         {/* Index route for dashboard: /customer/dashboard */}
+  //         <Route path="dashboard" element={<CustomerDashboard />} />
+  //         <Route path="menu" element={<TodayMenu />} />
+  //        <Route path="track" element={<TrackDelivery />} />
+  //         <Route path="pause" element={<Pause />} />
+  //         <Route path="feedback" element={<Feedback />} />
+  //         <Route path="wallet" element={<Wallet />} />
+  //         <Route path="profile" element={<Profile />} />
+
+  //         {/* Future routes can be added here, e.g.:
+  //              <Route path="profile" element={<Profile />} />
+  //          */}
+  //       </Route>
+  //     </Routes>
   //   </BrowserRouter>
   // )
+
+
+  return (
+    <BrowserRouter>
+      <ProviderDashboard />
+    </BrowserRouter>
+  )
 }
 
 export default App
