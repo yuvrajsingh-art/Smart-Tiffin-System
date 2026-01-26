@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
-<<<<<<< HEAD
 import { createPortal } from 'react-dom';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSubscription } from '../context/SubscriptionContext';
-
-=======
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import Logo from '../components/ui/Logo.jsx'
->>>>>>> Radhika-Tiwari
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
@@ -71,16 +65,12 @@ const DashboardLayout = () => {
             {/* Mobile Sidebar (Slide-in) */}
             <div className={`fixed top-0 left-0 bottom-0 w-72 bg-white/90 backdrop-blur-2xl border-r border-orange-100 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logic same as desktop but simpler structure for mobile if needed, or re-use styling */}
-<<<<<<< HEAD
                 <div className="h-20 flex items-center gap-3 px-8 border-b border-orange-100/50">
                     <div className="size-9 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
                         <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
                     </div>
                     <span className="text-lg font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
-=======
-               <Logo />
->>>>>>> Radhika-Tiwari
                 <nav className="p-4 space-y-2">
                     {visibleNavItems.map((item) => (
                         <div key={item.to} onClick={() => setIsMobileMenuOpen(false)}>
