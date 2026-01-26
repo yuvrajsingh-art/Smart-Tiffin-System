@@ -29,9 +29,11 @@ const AdminLayout = () => {
     const navItems = [
         { icon: 'dashboard', label: 'Dashboard', to: '/admin/dashboard' },
         { icon: 'group', label: 'Customers', to: '/admin/customers' },
-        { icon: 'soup_kitchen', label: 'Kitchen & Menus', to: '/admin/providers' },
+        { icon: 'soup_kitchen', label: 'Manage Kitchens', to: '/admin/providers' },
+        { icon: 'calendar_today', label: 'Daily Menu', to: '/admin/menu' },
         { icon: 'restaurant_menu', label: 'Meal Plans', to: '/admin/plans' },
         { icon: 'local_shipping', label: 'Orders & Delivery', to: '/admin/orders' },
+        { icon: 'feedback', label: 'Complaints & Support', to: '/admin/support' },
         { icon: 'payments', label: 'Finance & Billing', to: '/admin/finance' },
         { icon: 'bar_chart', label: 'Reports', to: '/admin/reports' },
         { icon: 'settings', label: 'Settings', to: '/admin/settings' },

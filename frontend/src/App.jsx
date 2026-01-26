@@ -31,6 +31,15 @@ import ProviderDashboard from './pages/provider/ProviderDashboard'; // Note: Upd
 
 // Pages - Admin
 import AdminDashboard from './pages/admin/AdminDashboard'; // [NEW]
+import AdminReports from './pages/admin/AdminReports'; // [NEW]
+import AdminCustomers from './pages/admin/AdminCustomers'; // [NEW]
+import AdminProviders from './pages/admin/AdminProviders'; // [NEW]
+import AdminPlans from './pages/admin/AdminPlans'; // [NEW]
+import AdminOrders from './pages/admin/AdminOrders'; // [NEW]
+import AdminMenu from './pages/admin/AdminMenu'; // [NEW]
+import AdminFinance from './pages/admin/AdminFinance'; // [NEW]
+import AdminSettings from './pages/admin/AdminSettings'; // [NEW]
+import AdminSupport from './pages/admin/AdminSupport'; // [NEW]
 
 /**
  * Main Application Component
@@ -69,7 +78,18 @@ function App() {
           {/* Admin Routes - [NEW] */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
-            {/* Placeholder routes for now, redirecting to dashboard or showing placeholder component */}
+            <Route path="reports" element={<AdminReports />} />
+
+            {/* Finalized Foundation & Daily Ops Pages */}
+            <Route path="plans" element={<AdminPlans />} />
+            <Route path="providers" element={<AdminProviders />} />
+            <Route path="menu" element={<AdminMenu />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="support" element={<AdminSupport />} />
+            <Route path="finance" element={<AdminFinance />} />
+            <Route path="settings" element={<AdminSettings />} />
+
             <Route path="*" element={<AdminDashboard />} />
           </Route>
 
