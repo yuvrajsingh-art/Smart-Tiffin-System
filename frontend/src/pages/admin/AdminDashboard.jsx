@@ -30,6 +30,8 @@ const recentSignups = [
 const pendingApprovals = [
     { id: 1, type: 'Provider', name: 'Spice Kitchen', req: 'Join Request', time: '2h' },
     { id: 2, type: 'Complaint', name: 'Order #2991', req: 'Late Delivery', time: '5h' },
+    { id: 3, type: 'Menu', name: 'Annapurna Rasoi', req: 'Lunch (Jan 28)', time: '1h' },
+    { id: 4, type: 'Plan', name: 'Home Taste', req: 'Diet Special (₹4.5k)', time: '30m' },
 ];
 
 const StatCard = ({ title, value, subtext, icon, trend, trendValue, color, delay, onClick }) => (
@@ -299,7 +301,11 @@ const AdminDashboard = () => {
                             ) : approvals.map((item) => (
                                 <div key={item.id} className="p-2.5 bg-white/50 rounded-xl border border-white/40 hover:bg-white transition-all cursor-pointer group">
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-white ${item.type === 'Provider' ? 'bg-violet-500' : 'bg-red-500'}`}>{item.type}</span>
+                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-white ${item.type === 'Provider' ? 'bg-violet-500' :
+                                                item.type === 'Menu' ? 'bg-orange-500' :
+                                                    item.type === 'Plan' ? 'bg-indigo-500' :
+                                                        'bg-red-500'
+                                            }`}>{item.type}</span>
                                         <span className="text-[9px] text-[#5C4D42]">{item.time} ago</span>
                                     </div>
                                     <p className="text-xs font-bold text-[#2D241E] leading-tight">{item.name}</p>
