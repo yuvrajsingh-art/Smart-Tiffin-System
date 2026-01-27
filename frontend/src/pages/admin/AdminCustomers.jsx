@@ -12,6 +12,7 @@ const initialCustomersData = [
 ];
 
 const AdminCustomers = () => {
+    const formRef = React.useRef(null);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [customers, setCustomers] = useState(initialCustomersData);
@@ -31,28 +32,56 @@ const AdminCustomers = () => {
     });
 
     const handleAddNewCustomer = (e) => {
-        e.preventDefault();
-        const newId = `CUS00${customers.length + 1}`;
-        const newCustomer = {
-            id: newId,
-            ...newCustomerData,
-            status: 'Active',
-            joins: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-            balance: '₹0',
-            kyc: 'Pending',
-            tags: ['New'],
-            tickets: 0,
-            referrals: 0
-        };
-        // In a real app, this would be an API call
-        // For now we just push to the list (requires customersData to be a state or we just simulate it)
-        setCustomers(prev => [...prev, newCustomer]); // Note: Since customersData is a const outside, this won't trigger re-render properly without state, but for 'check ui' it demonstrates the flow. Ideally move customersData to state if persistence is needed in this sessions.
+        console.log("handleAddNewCustomer called");
+        try {
+            if (e && e.preventDefault) e.preventDefault();
+            const form = formRef.current;
+            if (!form) {
+                console.error("Form Ref is null!");
+                toast.error("Internal Error: Form not found");
+                return;
+            }
 
-        toast.success(`User ${newCustomer.name} onboarded successfully!`, {
-            style: { borderRadius: '10px', background: '#2D241E', color: '#fff', fontSize: '10px' }
-        });
-        setShowAddCustomerModal(false);
-        setNewCustomerData({ name: '', email: '', phone: '', plan: 'None', address: '' });
+            // Immediate feedback
+            const procToast = toast.loading("Onboarding customer...");
+
+            const name = form.elements['name']?.value;
+            if (!name) {
+                toast.dismiss(procToast);
+                toast.error("Customer Name is required");
+                return;
+            }
+
+            const newId = `CUS00${customers.length + 1}`;
+            const newCustomer = {
+                id: newId,
+                name: name,
+                email: form.elements['email']?.value || '',
+                phone: form.elements['phone']?.value || '',
+                plan: form.elements['plan']?.value || 'None',
+                address: form.elements['address']?.value || '',
+                status: 'Active',
+                joins: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                balance: '₹0',
+                kyc: 'Pending',
+                tags: ['New'],
+                tickets: 0,
+                referrals: 0
+            };
+
+            setCustomers(prev => [...prev, newCustomer]);
+
+            toast.dismiss(procToast);
+            toast.success(`User ${newCustomer.name} onboarded successfully!`, {
+                icon: '🚀',
+                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+            });
+            setShowAddCustomerModal(false);
+            // Reset logic if needed, but closing modal handles it
+        } catch (err) {
+            console.error("Add Customer Logic Error:", err);
+            toast.error("Error: " + err.message);
+        }
     };
 
     const handleAction = (type, name) => {
@@ -97,13 +126,39 @@ const AdminCustomers = () => {
         return matchesSearch && matchesFilter;
     });
 
-    const handleUpdateCustomer = () => {
-        setCustomers(prev => prev.map(c => c.id === editingCustomer.id ? editingCustomer : c));
-        toast.success(`Profile updated for ${editingCustomer.name}`, {
-            icon: '✅',
-            style: { borderRadius: '10px', background: '#2D241E', color: '#fff', fontSize: '10px' }
-        });
-        setEditingCustomer(null);
+    const handleUpdateCustomer = (e) => {
+        console.log("handleUpdateCustomer called");
+        try {
+            if (e && e.preventDefault) e.preventDefault();
+            const form = formRef.current;
+            if (!form) return;
+
+            const procToast = toast.loading("Updating profile...");
+
+            const updatedCustomer = {
+                ...editingCustomer,
+                name: form.elements['name']?.value,
+                email: form.elements['email']?.value,
+                phone: form.elements['phone']?.value,
+                address: form.elements['address']?.value,
+                status: form.elements['status']?.value,
+                kyc: form.elements['kyc']?.value,
+                // Tags logic needs to be handled separately as it's not a standard input, 
+                // but for now we keep existing tags from state
+            };
+
+            setCustomers(prev => prev.map(c => c.id === editingCustomer.id ? updatedCustomer : c));
+
+            toast.dismiss(procToast);
+            toast.success(`Profile updated for ${updatedCustomer.name}`, {
+                icon: '✅',
+                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+            });
+            setEditingCustomer(null);
+        } catch (err) {
+            console.error("Update Logic Error:", err);
+            toast.error("Failed to update.");
+        }
     };
 
     return (
@@ -572,7 +627,7 @@ const AdminCustomers = () => {
                                 </button>
                             </div>
 
-                            <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
+                            <form ref={formRef} className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
 
                                 {/* Profile Summary Card (DNA Style) */}
                                 <div className="p-5 bg-[#FDFBF9] border border-orange-100/50 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
@@ -600,18 +655,18 @@ const AdminCustomers = () => {
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Full Name</label>
                                             <input
+                                                name="name"
                                                 type="text"
-                                                value={editingCustomer.name}
-                                                onChange={(e) => setEditingCustomer({ ...editingCustomer, name: e.target.value })}
+                                                defaultValue={editingCustomer.name}
                                                 className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
                                             />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Phone Number</label>
                                             <input
+                                                name="phone"
                                                 type="text"
-                                                value={editingCustomer.phone || ''}
-                                                onChange={(e) => setEditingCustomer({ ...editingCustomer, phone: e.target.value })}
+                                                defaultValue={editingCustomer.phone || ''}
                                                 className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
                                             />
                                         </div>
@@ -619,9 +674,9 @@ const AdminCustomers = () => {
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Email Address</label>
                                         <input
+                                            name="email"
                                             type="email"
-                                            value={editingCustomer.email}
-                                            onChange={(e) => setEditingCustomer({ ...editingCustomer, email: e.target.value })}
+                                            defaultValue={editingCustomer.email}
                                             className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
                                         />
                                     </div>
@@ -636,8 +691,8 @@ const AdminCustomers = () => {
                                     <div className="space-y-1.5">
                                         <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Delivery Address</label>
                                         <textarea
-                                            value={editingCustomer.address || ''}
-                                            onChange={(e) => setEditingCustomer({ ...editingCustomer, address: e.target.value })}
+                                            name="address"
+                                            defaultValue={editingCustomer.address || ''}
                                             className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none h-24 resize-none leading-relaxed"
                                             placeholder="Enter full delivery address..."
                                         />
@@ -655,8 +710,8 @@ const AdminCustomers = () => {
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Status</label>
                                             <div className="relative">
                                                 <select
-                                                    value={editingCustomer.status}
-                                                    onChange={(e) => setEditingCustomer({ ...editingCustomer, status: e.target.value })}
+                                                    name="status"
+                                                    defaultValue={editingCustomer.status}
                                                     className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
                                                 >
                                                     {['Active', 'Paused', 'Inactive'].map(s => <option key={s} value={s}>{s}</option>)}
@@ -668,8 +723,8 @@ const AdminCustomers = () => {
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">KYC Level</label>
                                             <div className="relative">
                                                 <select
-                                                    value={editingCustomer.kyc}
-                                                    onChange={(e) => setEditingCustomer({ ...editingCustomer, kyc: e.target.value })}
+                                                    name="kyc"
+                                                    defaultValue={editingCustomer.kyc}
                                                     className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
                                                 >
                                                     {['Verified', 'Pending', 'Not Started', 'Rejected'].map(k => <option key={k} value={k}>{k}</option>)}
@@ -700,11 +755,12 @@ const AdminCustomers = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </form>
 
-                            <div className="flex gap-4 p-8 pt-0 shrink-0 border-t border-gray-50 mt-4 pt-6">
+                            <div className="flex gap-4 p-8 pt-0 shrink-0 border-t border-gray-50 mt-4 pt-6 bg-white z-10">
                                 <button onClick={() => setEditingCustomer(null)} className="flex-1 py-4 rounded-2xl text-xs font-black text-[#897a70] hover:bg-gray-50 transition-all uppercase tracking-widest">Discard</button>
                                 <button
+                                    type="button"
                                     onClick={handleUpdateCustomer}
                                     className="flex-[2] py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-black shadow-[0_10px_25px_-5px_rgba(45,36,30,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(45,36,30,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2"
                                 >
@@ -736,7 +792,7 @@ const AdminCustomers = () => {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleAddNewCustomer} className="p-8 space-y-6 overflow-y-auto">
+                            <form ref={formRef} className="p-8 space-y-6 overflow-y-auto flex-1">
                                 {/* Profile Section */}
                                 <div className="flex gap-6 items-start">
                                     <div className="size-20 bg-gray-50 rounded-[1.5rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-1 hover:border-orange-200 hover:text-orange-500 hover:bg-orange-50 transition-all cursor-pointer">
@@ -747,10 +803,9 @@ const AdminCustomers = () => {
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Full Name</label>
                                             <input
+                                                name="name"
                                                 type="text"
                                                 required
-                                                value={newCustomerData.name}
-                                                onChange={(e) => setNewCustomerData({ ...newCustomerData, name: e.target.value })}
                                                 placeholder="e.g. Aditi Sharma"
                                                 className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-sm font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none placeholder:text-gray-300"
                                             />
@@ -762,10 +817,8 @@ const AdminCustomers = () => {
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Email Address</label>
                                         <input
+                                            name="email"
                                             type="email"
-                                            required
-                                            value={newCustomerData.email}
-                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, email: e.target.value })}
                                             placeholder="user@example.com"
                                             className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none placeholder:text-gray-300"
                                         />
@@ -775,10 +828,8 @@ const AdminCustomers = () => {
                                         <div className="relative">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">+91</span>
                                             <input
+                                                name="phone"
                                                 type="tel"
-                                                required
-                                                value={newCustomerData.phone}
-                                                onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })}
                                                 placeholder="98765 43210"
                                                 className="w-full bg-gray-50/50 border border-gray-100 pl-12 pr-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none placeholder:text-gray-300"
                                             />
@@ -791,8 +842,7 @@ const AdminCustomers = () => {
                                         <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Initial Plan</label>
                                         <div className="relative">
                                             <select
-                                                value={newCustomerData.plan}
-                                                onChange={(e) => setNewCustomerData({ ...newCustomerData, plan: e.target.value })}
+                                                name="plan"
                                                 className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
                                             >
                                                 <option value="None">No Plan (Pay as you go)</option>
@@ -803,34 +853,28 @@ const AdminCustomers = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Delivery Area</label>
-                                        <div className="relative">
-                                            <select
-                                                value={newCustomerData.address}
-                                                onChange={(e) => setNewCustomerData({ ...newCustomerData, address: e.target.value })}
-                                                className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
-                                            >
-                                                <option value="">Select Zone</option>
-                                                <option value="Vijay Nagar">Vijay Nagar</option>
-                                                <option value="Bhawarkua">Bhawarkua</option>
-                                            </select>
-                                            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px] pointer-events-none">location_on</span>
-                                        </div>
+                                        <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Area/Locality</label>
+                                        <input
+                                            name="address"
+                                            type="text"
+                                            placeholder="e.g. Vijay Nagar"
+                                            className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none placeholder:text-gray-300"
+                                        />
                                     </div>
                                 </div>
-
-                                {/* Actions Footer */}
-                                <div className="flex gap-4 pt-4 mt-2 shrink-0">
-                                    <button type="button" onClick={() => setShowAddCustomerModal(false)} className="flex-1 py-4 rounded-2xl text-xs font-black text-[#897a70] hover:bg-gray-50 transition-all uppercase tracking-widest">Discard</button>
-                                    <button
-                                        type="submit"
-                                        className="flex-[2] py-4 bg-[#FF5722] text-white rounded-[1.5rem] text-xs font-black shadow-[0_10px_25px_-5px_rgba(255,87,34,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(255,87,34,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                                        Create Account
-                                    </button>
-                                </div>
                             </form>
+
+                            <div className="flex gap-4 p-8 pt-0 shrink-0 border-t border-gray-50 mt-4 pt-6 bg-white z-10">
+                                <button onClick={() => setShowAddCustomerModal(false)} className="flex-1 py-4 rounded-2xl text-xs font-black text-[#897a70] hover:bg-gray-50 transition-all uppercase tracking-widest">Discard</button>
+                                <button
+                                    type="button"
+                                    onClick={handleAddNewCustomer}
+                                    className="flex-[2] py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-black shadow-[0_10px_25px_-5px_rgba(45,36,30,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(45,36,30,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                                    Onboard User
+                                </button>
+                            </div>
                         </div>
                     </div>,
                     document.body
