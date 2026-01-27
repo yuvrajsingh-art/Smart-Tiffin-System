@@ -31,7 +31,7 @@ const AdminLayout = () => {
         { icon: 'group', label: 'Customers', to: '/admin/customers' },
         { icon: 'soup_kitchen', label: 'Manage Kitchens', to: '/admin/providers' },
         { icon: 'restaurant', label: 'Menu Management', to: '/admin/menu' },
-        { icon: 'restaurant_menu', label: 'Meal Plans', to: '/admin/plans' },
+        { icon: 'restaurant_menu', label: 'Manage Plans', to: '/admin/plans' },
         { icon: 'local_shipping', label: 'Orders & Delivery', to: '/admin/orders' },
         { icon: 'feedback', label: 'Complaints & Support', to: '/admin/support' },
         { icon: 'payments', label: 'Finance & Billing', to: '/admin/finance' },

@@ -47,18 +47,30 @@ const AdminReports = () => {
     const [activeTab, setActiveTab] = useState('Overview');
     const [showReportEngine, setShowReportEngine] = useState(false);
     const [genConfig, setGenConfig] = useState({ range: 'Last 30 Days', metric: 'Summary' });
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    // Mock Data States - Simulating dynamic reports
+    const [currentRevenueData, setCurrentRevenueData] = useState(revenueData);
 
     const handleGenerate = () => {
-        toast.promise(
-            new Promise(resolve => setTimeout(resolve, 2000)),
-            {
-                loading: 'Synthesizing data models...',
-                success: 'Report compiled successfuly!',
-                error: 'Generation failed.',
-            },
-            { style: { borderRadius: '15px' } }
-        );
-        setShowReportEngine(false);
+        setIsGenerating(true);
+        // Simulate computation
+        setTimeout(() => {
+            setIsGenerating(false);
+            setShowReportEngine(false);
+            // Randomize data slightly to show "live" report generation
+            const newData = revenueData.map(d => ({
+                ...d,
+                profit: d.profit + Math.floor(Math.random() * 5000),
+                retention: Math.min(100, d.retention + Math.floor(Math.random() * 3))
+            }));
+            setCurrentRevenueData(newData);
+
+            toast.success(`Report Compiled: ${genConfig.metric}`, {
+                icon: '📑',
+                style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+            });
+        }, 2000);
     };
 
     const handleAction = (label) => {
@@ -77,7 +89,7 @@ const AdminReports = () => {
                         Analytics & Insights
                         <span className="px-2 py-0.5 bg-orange-500 text-white text-[9px] font-black rounded-lg uppercase tracking-wider shadow-lg shadow-orange-500/20">Ultimate Portal</span>
                     </h2>
-                    <p className="text-[#5C4D42] text-xs font-medium opacity-80 mt-0.5 font-display italic">Consolidated Business Intelligence Center</p>
+                    <p className="text-[#5C4D42] text-xs font-medium opacity-80 mt-0.5 font-display italic">Consolidated Business Intelligence Center for Orders & Delivery.</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md">
@@ -86,7 +98,7 @@ const AdminReports = () => {
                             key={tab}
                             onClick={() => {
                                 setActiveTab(tab);
-                                toast(`Viewing ${tab}`, { icon: '📊', style: { fontSize: '10px' } });
+                                toast(`Viewing ${tab} Dashboard`, { icon: '📊', style: { fontSize: '12px' } });
                             }}
                             className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all ${activeTab === tab ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#5C4D42] hover:bg-white/80'}`}
                         >
@@ -108,14 +120,14 @@ const AdminReports = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     { label: 'EBITDA', val: '₹4.24L', change: '+12.4%', color: 'from-emerald-500 to-emerald-600', sub: 'Net Profit Margin' },
-                    { label: 'Retention', val: '94.2%', change: '+3.1%', color: 'from-blue-500 to-indigo-600', sub: 'Monthly Renewal Rate' },
+                    { label: 'Avg Delivery', val: '28m', change: '-2.1%', color: 'from-blue-500 to-indigo-600', sub: 'Order Fulfillment Time' },
                     { label: 'Churn Rate', val: '2.5%', change: '-1.2%', color: 'from-rose-400 to-rose-600', sub: 'User Attrition Score' },
                     { label: 'Avg Rating', val: '4.85/5', change: '+0.2%', color: 'from-amber-400 to-yellow-600', sub: 'Global Satisfaction' },
                 ].map((item, i) => (
-                    <div key={i} className="bg-white/70 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-sm group hover:shadow-md transition-all">
+                    <div key={i} className="bg-white/70 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-sm group hover:shadow-md transition-all cursor-pointer" onClick={() => handleAction(`${item.label} Drilldown`)}>
                         <div className="flex justify-between items-start mb-2">
                             <span className="text-[10px] font-bold text-[#5C4D42] uppercase tracking-[0.05em]">{item.label}</span>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${item.change.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{item.change}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${item.change.startsWith('+') || item.change.startsWith('-2') ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{item.change}</span>
                         </div>
                         <h3 className="text-2xl font-black text-[#2D241E] tracking-tight">{item.val}</h3>
                         <p className="text-[10px] text-[#5C4D42]/60 font-medium mt-1">{item.sub}</p>
@@ -143,7 +155,7 @@ const AdminReports = () => {
                     </div>
                     <div className="flex-1 w-full min-h-0 -ml-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={revenueData}>
+                            <AreaChart data={currentRevenueData}>
                                 <defs>
                                     <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
@@ -170,7 +182,7 @@ const AdminReports = () => {
 
                     <div className="flex-1 space-y-4 overflow-y-auto pr-1 custom-scrollbar">
                         {popularItems.map((item, idx) => (
-                            <div key={idx} className="relative p-3 rounded-2xl bg-white/40 border border-white/40 group overflow-hidden">
+                            <div key={idx} className="relative p-3 rounded-2xl bg-white/40 border border-white/40 group overflow-hidden hover:bg-white/60 transition-colors cursor-pointer" onClick={() => handleAction(`Restocking ${item.name}`)}>
                                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${item.color.replace('bg-', 'bg-')}`}></div>
                                 <div className="flex justify-between items-start mb-1.5 relative z-10">
                                     <h4 className="text-xs font-black text-[#2D241E] truncate max-w-[150px]">{item.name}</h4>
@@ -218,7 +230,7 @@ const AdminReports = () => {
                     </div>
                     <div className="space-y-4">
                         {kitchenPerformance.map((item, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-white/40 border border-white/40 rounded-2xl hover:bg-white/60 transition-colors cursor-pointer group">
+                            <div key={i} className="flex items-center justify-between p-3 bg-white/40 border border-white/40 rounded-2xl hover:bg-white/60 transition-colors cursor-pointer group" onClick={() => handleAction(`Contacting ${item.name}`)}>
                                 <div className="flex items-center gap-3">
                                     <div className="size-9 bg-[#2D241E] text-orange-400 rounded-xl flex items-center justify-center font-bold text-sm shadow-md group-hover:scale-110 transition-transform">
                                         {item.name.charAt(0)}
@@ -248,7 +260,7 @@ const AdminReports = () => {
 
                 {/* 4.2 Unit Economics Card (Enhanced) */}
                 <div className="bg-white/70 backdrop-blur-xl p-5 rounded-[1.75rem] border border-white/60 shadow-lg flex items-center gap-6">
-                    <div className="size-32 relative flex-shrink-0">
+                    <div className="size-32 relative flex-shrink-0 animate-[spin_60s_linear_infinite]">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -293,63 +305,74 @@ const AdminReports = () => {
                 </div>
             </div>
 
-            {/* AI Report Engine Modal - [NEW] */}
+            {/* AI Report Engine Modal */}
             {showReportEngine && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-lg animate-[fadeIn_0.3s]" onClick={() => setShowReportEngine(false)}></div>
+                    <div className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-lg animate-[fadeIn_0.3s]" onClick={() => !isGenerating && setShowReportEngine(false)}></div>
                     <div className="bg-white rounded-[3rem] w-full max-w-xl p-10 shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20">
                         <div className="flex justify-between items-center mb-8">
                             <div>
                                 <h3 className="text-3xl font-black text-[#2D241E] italic">Digital Insights Engine</h3>
                                 <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-[0.2em] mt-1">Configure Analysis Parameters</p>
                             </div>
-                            <button onClick={() => setShowReportEngine(false)} className="size-12 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all"><span className="material-symbols-outlined">close</span></button>
+                            <button onClick={() => setShowReportEngine(false)} disabled={isGenerating} className="size-12 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all disabled:opacity-50"><span className="material-symbols-outlined">close</span></button>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Timeframe</label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {['Last 7 Days', 'Last 30 Days', 'Quarterly'].map(r => (
-                                        <button
-                                            key={r}
-                                            onClick={() => setGenConfig({ ...genConfig, range: r })}
-                                            className={`py-3 rounded-2xl text-[10px] font-black transition-all ${genConfig.range === r ? 'bg-[#2D241E] text-white shadow-lg shadow-black/20' : 'bg-gray-100 text-[#5C4D42]'}`}
-                                        >
-                                            {r}
-                                        </button>
-                                    ))}
-                                </div>
+                        {/* Loading State during Generation */}
+                        {isGenerating ? (
+                            <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                                <div className="size-16 border-4 border-[#2D241E] border-t-transparent rounded-full animate-spin"></div>
+                                <h4 className="text-lg font-black text-[#2D241E] animate-pulse">Running Neural Inference...</h4>
+                                <p className="text-xs font-bold text-[#897a70]">Analyzing {genConfig.range} of {genConfig.metric} data</p>
                             </div>
+                        ) : (
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Timeframe</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {['Last 7 Days', 'Last 30 Days', 'Quarterly'].map(r => (
+                                            <button
+                                                key={r}
+                                                onClick={() => setGenConfig({ ...genConfig, range: r })}
+                                                className={`py-3 rounded-2xl text-[10px] font-black transition-all ${genConfig.range === r ? 'bg-[#2D241E] text-white shadow-lg shadow-black/20' : 'bg-gray-100 text-[#5C4D42]'}`}
+                                            >
+                                                {r}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
 
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Target Metrics</label>
-                                <div className="space-y-3">
-                                    {[
-                                        { id: 'Summary', label: 'Executive Financial Summary', icon: 'finance' },
-                                        { id: 'Kitchen', label: 'Detailed Kitchen Performance', icon: 'soup_kitchen' },
-                                        { id: 'Retention', label: 'Customer Cohort Retention', icon: 'group_work' },
-                                    ].map(m => (
-                                        <div
-                                            key={m.id}
-                                            onClick={() => setGenConfig({ ...genConfig, metric: m.id })}
-                                            className={`p-5 rounded-3xl border-2 cursor-pointer transition-all flex items-center justify-between ${genConfig.metric === m.id ? 'border-[#2D241E] bg-[#2D241E]/5 shadow-inner' : 'border-gray-100 hover:border-gray-200'}`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <span className={`material-symbols-outlined ${genConfig.metric === m.id ? 'text-[#2D241E]' : 'text-gray-400'}`}>{m.icon}</span>
-                                                <span className={`text-xs font-black ${genConfig.metric === m.id ? 'text-[#2D241E]' : 'text-[#897a70]'}`}>{m.label}</span>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Target Metrics</label>
+                                    <div className="space-y-3">
+                                        {[
+                                            { id: 'Summary', label: 'Executive Financial Summary', icon: 'finance' },
+                                            { id: 'Kitchen', label: 'Detailed Kitchen Performance', icon: 'soup_kitchen' },
+                                            { id: 'Retention', label: 'Customer Cohort Retention', icon: 'group_work' },
+                                        ].map(m => (
+                                            <div
+                                                key={m.id}
+                                                onClick={() => setGenConfig({ ...genConfig, metric: m.id })}
+                                                className={`p-5 rounded-3xl border-2 cursor-pointer transition-all flex items-center justify-between ${genConfig.metric === m.id ? 'border-[#2D241E] bg-[#2D241E]/5 shadow-inner' : 'border-gray-100 hover:border-gray-200'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <span className={`material-symbols-outlined ${genConfig.metric === m.id ? 'text-[#2D241E]' : 'text-gray-400'}`}>{m.icon}</span>
+                                                    <span className={`text-xs font-black ${genConfig.metric === m.id ? 'text-[#2D241E]' : 'text-[#897a70]'}`}>{m.label}</span>
+                                                </div>
+                                                {genConfig.metric === m.id && <span className="material-symbols-outlined text-emerald-500">check_circle</span>}
                                             </div>
-                                            {genConfig.metric === m.id && <span className="material-symbols-outlined text-emerald-500">check_circle</span>}
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="flex gap-3 mt-10">
-                            <button onClick={() => setShowReportEngine(false)} className="flex-1 py-5 bg-gray-100 text-[#5C4D42] rounded-[2rem] font-black text-xs hover:bg-gray-200 transition-all">Discard View</button>
-                            <button onClick={handleGenerate} className="flex-1 py-5 bg-[#2D241E] text-white rounded-[2rem] font-black text-xs shadow-2xl shadow-black/20 hover:bg-blue-600 transition-all uppercase tracking-widest">Compile Report</button>
-                        </div>
+                        {!isGenerating && (
+                            <div className="flex gap-3 mt-10">
+                                <button onClick={() => setShowReportEngine(false)} className="flex-1 py-5 bg-gray-100 text-[#5C4D42] rounded-[2rem] font-black text-xs hover:bg-gray-200 transition-all">Discard View</button>
+                                <button onClick={handleGenerate} className="flex-1 py-5 bg-[#2D241E] text-white rounded-[2rem] font-black text-xs shadow-2xl shadow-black/20 hover:bg-blue-600 transition-all uppercase tracking-widest">Compile Report</button>
+                            </div>
+                        )}
                     </div>
                 </div>,
                 document.body
