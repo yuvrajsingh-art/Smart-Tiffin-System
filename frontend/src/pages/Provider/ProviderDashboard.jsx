@@ -6,7 +6,7 @@ import { FaUtensils, FaUsers, FaTruck, FaRupeeSign } from 'react-icons/fa';
 
 function ProviderDashboard() {
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-gray-50 bg-gradient-to-r from-[#fffbf0] to-[#fff9eb] ">
             <ProviderSidebar />
             
             <div className="flex-1 flex flex-col overflow-hidden">

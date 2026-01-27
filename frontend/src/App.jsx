@@ -25,6 +25,7 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
  import ProviderSidebar from './components/ui/Provider/ProviderSidebar';
 import ProviderDashboard from './pages/Provider/ProviderDashboard';
 import ManageMenu from './pages/Provider/ManageMenu';
+import ActiveCustomer from './pages/Provider/ActiveCustomers';
  
 /**
  * Main Application Component

@@ -22,7 +22,7 @@ function ProviderSidebar() {
   ];
 
   return (
-   <div className="w-64 h-screen shadow-md p-4 bg-[#fffdfa]">
+   <div className="w-64 h-screen shadow-md p-4 bg-[#fffdf9]">
   <Logo />
 
   <div className="flex flex-col justify-between mt-7 h-[calc(100vh-88px)]">
