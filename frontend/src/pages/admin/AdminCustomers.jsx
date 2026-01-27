@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 
-const customersData = [
+const initialCustomersData = [
     { id: 'CUS001', name: 'Rahul Sharma', email: 'rahul@gmail.com', phone: '9876543210', plan: 'Monthly Veg', status: 'Active', joins: '12 Jan 2024', balance: '₹400', kyc: 'Verified', tags: ['VIP', 'Frequent'], tickets: 0, referrals: 12 },
     { id: 'CUS002', name: 'Priya Verma', email: 'priya.v@outlook.com', phone: '8877665544', plan: 'Weekly Non-Veg', status: 'Active', joins: '15 Jan 2024', balance: '₹0', kyc: 'Pending', tags: ['Regular'], tickets: 1, referrals: 3 },
     { id: 'CUS003', name: 'Amit Kumar', email: 'amitk@yahoo.com', phone: '7766554433', plan: 'None', status: 'Inactive', joins: '18 Jan 2024', balance: '₹0', kyc: 'Not Started', tags: ['New'], tickets: 0, referrals: 0 },
@@ -11,12 +12,47 @@ const customersData = [
 ];
 
 const AdminCustomers = () => {
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchParams] = useSearchParams();
+    const [customers, setCustomers] = useState(initialCustomersData);
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [filter, setFilter] = useState('All');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [modalTab, setModalTab] = useState('Vitals');
     const [editingCustomer, setEditingCustomer] = useState(null);
+    const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+    const [newCustomerData, setNewCustomerData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        plan: 'None',
+        address: ''
+    });
+
+    const handleAddNewCustomer = (e) => {
+        e.preventDefault();
+        const newId = `CUS00${customers.length + 1}`;
+        const newCustomer = {
+            id: newId,
+            ...newCustomerData,
+            status: 'Active',
+            joins: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+            balance: '₹0',
+            kyc: 'Pending',
+            tags: ['New'],
+            tickets: 0,
+            referrals: 0
+        };
+        // In a real app, this would be an API call
+        // For now we just push to the list (requires customersData to be a state or we just simulate it)
+        setCustomers(prev => [...prev, newCustomer]); // Note: Since customersData is a const outside, this won't trigger re-render properly without state, but for 'check ui' it demonstrates the flow. Ideally move customersData to state if persistence is needed in this sessions.
+
+        toast.success(`User ${newCustomer.name} onboarded successfully!`, {
+            style: { borderRadius: '10px', background: '#2D241E', color: '#fff', fontSize: '10px' }
+        });
+        setShowAddCustomerModal(false);
+        setNewCustomerData({ name: '', email: '', phone: '', plan: 'None', address: '' });
+    };
 
     const handleAction = (type, name) => {
         toast.success(`${type} action triggered for ${name}`, {
@@ -40,7 +76,7 @@ const AdminCustomers = () => {
         }, 2100);
     };
 
-    const filteredCustomers = customersData.filter(cus => {
+    const filteredCustomers = customers.filter(cus => {
         const matchesSearch = cus.name.toLowerCase().includes(searchQuery.toLowerCase()) || cus.id.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter = filter === 'All' || cus.status === filter;
         return matchesSearch && matchesFilter;
@@ -68,7 +104,7 @@ const AdminCustomers = () => {
                         Export CSV
                     </button>
                     <button
-                        onClick={() => handleAction('Create', 'New User')}
+                        onClick={() => setShowAddCustomerModal(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-[#2D241E] text-white rounded-xl text-[10px] font-bold hover:bg-[#453831] shadow-lg shadow-[#2D241E]/10 transition-all"
                     >
                         <span className="material-symbols-outlined text-[16px]">person_add</span>
@@ -606,6 +642,123 @@ const AdminCustomers = () => {
                                 Sync Profile
                             </button>
                         </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Add Customer Modal - [NEW & POLISHED] */}
+            {showAddCustomerModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowAddCustomerModal(false)}></div>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20">
+
+                        {/* Header - Clean & White */}
+                        <div className="p-8 pb-2 flex justify-between items-start">
+                            <div>
+                                <h3 className="text-2xl font-black text-[#2D241E] tracking-tight">Onboard New User</h3>
+                                <p className="text-[11px] font-bold text-[#897a70] mt-1">Manual entry protocol for offline/support cases</p>
+                            </div>
+                            <button onClick={() => setShowAddCustomerModal(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
+                                <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddNewCustomer} className="p-8 space-y-6">
+                            {/* Profile Section */}
+                            <div className="flex gap-6 items-start">
+                                <div className="size-20 bg-gray-50 rounded-[1.5rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 gap-1 hover:border-orange-200 hover:text-orange-500 hover:bg-orange-50 transition-all cursor-pointer">
+                                    <span className="material-symbols-outlined text-[20px]">add_a_photo</span>
+                                    <span className="text-[8px] font-black uppercase">Photo</span>
+                                </div>
+                                <div className="flex-1 space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Full Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={newCustomerData.name}
+                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, name: e.target.value })}
+                                            placeholder="e.g. Aditi Sharma"
+                                            className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-sm font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none placeholder:text-gray-300"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Email Address</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={newCustomerData.email}
+                                        onChange={(e) => setNewCustomerData({ ...newCustomerData, email: e.target.value })}
+                                        placeholder="user@example.com"
+                                        className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none placeholder:text-gray-300"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Phone Number</label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">+91</span>
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={newCustomerData.phone}
+                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })}
+                                            placeholder="98765 43210"
+                                            className="w-full bg-gray-50/50 border border-gray-100 pl-12 pr-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none placeholder:text-gray-300"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Initial Plan</label>
+                                    <div className="relative">
+                                        <select
+                                            value={newCustomerData.plan}
+                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, plan: e.target.value })}
+                                            className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
+                                        >
+                                            <option value="None">No Plan (Pay as you go)</option>
+                                            <option value="Weekly Veg">Weekly Veg</option>
+                                            <option value="Monthly Veg">Monthly Veg</option>
+                                        </select>
+                                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px] pointer-events-none">expand_more</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-[#2D241E] uppercase ml-1 tracking-widest">Delivery Area</label>
+                                    <div className="relative">
+                                        <select
+                                            value={newCustomerData.address}
+                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, address: e.target.value })}
+                                            className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
+                                        >
+                                            <option value="">Select Zone</option>
+                                            <option value="Vijay Nagar">Vijay Nagar</option>
+                                            <option value="Bhawarkua">Bhawarkua</option>
+                                        </select>
+                                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px] pointer-events-none">location_on</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Actions Footer */}
+                            <div className="flex gap-4 pt-4 mt-2">
+                                <button type="button" onClick={() => setShowAddCustomerModal(false)} className="flex-1 py-4 rounded-2xl text-xs font-black text-[#897a70] hover:bg-gray-50 transition-all uppercase tracking-widest">Discard</button>
+                                <button
+                                    type="submit"
+                                    className="flex-[2] py-4 bg-[#FF5722] text-white rounded-[1.5rem] text-xs font-black shadow-[0_10px_25px_-5px_rgba(255,87,34,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(255,87,34,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                                    Create Account
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>,
                 document.body

@@ -431,63 +431,91 @@ const AdminDashboard = () => {
                     </button>
                 </div>
 
-                {/* Broadcast Modal - [NEW] */}
+                {/* Broadcast Modal - [POLISHED] */}
                 {showBroadcast && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowBroadcast(false)}></div>
-                        <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl animate-[scaleIn_0.3s] relative z-10">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-2xl font-black text-[#2D241E] italic">Global Broadcast</h3>
-                                <button onClick={() => setShowBroadcast(false)} className="size-10 rounded-full bg-gray-100 flex items-center justify-center"><span className="material-symbols-outlined">close</span></button>
-                            </div>
-                            <div className="space-y-4">
-                                <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-widest pl-2">System-Wide Message</p>
-                                <textarea
-                                    placeholder="Enter message for all users & kitchen partners..."
-                                    value={broadcastMsg}
-                                    onChange={(e) => setBroadcastMsg(e.target.value)}
-                                    className="w-full h-32 bg-gray-50 border-none rounded-3xl p-5 text-sm font-medium focus:ring-2 focus:ring-blue-500/10 outline-none resize-none transition-all"
-                                />
-                                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-blue-600">info</span>
-                                    <p className="text-[10px] font-bold text-blue-800 leading-tight">This will send a Push Notification & In-app alert to all 1,248 active users.</p>
+                        <div className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20">
+
+                            {/* Header */}
+                            <div className="p-8 pb-2 flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-2xl font-black text-[#2D241E] tracking-tight">Global Broadcast</h3>
+                                    <p className="text-[11px] font-bold text-[#897a70] mt-1">System-wide alert protocol</p>
                                 </div>
+                                <button onClick={() => setShowBroadcast(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
+                                    <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
+                                </button>
                             </div>
-                            <div className="flex gap-3 mt-8">
-                                <button onClick={() => setShowBroadcast(false)} className="flex-1 py-4 bg-gray-100 text-[#5C4D42] rounded-2xl font-black text-xs hover:bg-gray-200 transition-all">Cancel Request</button>
-                                <button onClick={sendBroadcast} className="flex-1 py-4 bg-[#2D241E] text-white rounded-2xl font-black text-xs shadow-xl shadow-black/20 hover:bg-blue-600 transition-all">Push Broadcast</button>
+
+                            <div className="p-8 space-y-6">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center px-1">
+                                        <label className="text-[10px] font-black text-[#2D241E] uppercase tracking-widest">Message Content</label>
+                                        <span className="text-[9px] font-bold text-gray-400">{broadcastMsg.length}/140</span>
+                                    </div>
+                                    <textarea
+                                        placeholder="Type your announcement here..."
+                                        value={broadcastMsg}
+                                        onChange={(e) => setBroadcastMsg(e.target.value)}
+                                        className="w-full h-32 bg-gray-50/50 border border-gray-100 rounded-2xl p-5 text-sm font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 outline-none resize-none transition-all placeholder:text-gray-300"
+                                    />
+                                </div>
+
+                                <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-start gap-3">
+                                    <span className="material-symbols-outlined text-blue-600 text-[18px] mt-0.5">info</span>
+                                    <div>
+                                        <p className="text-[11px] font-black text-blue-800">Target Audience: All Users</p>
+                                        <p className="text-[10px] font-bold text-blue-600/80 leading-tight mt-0.5">This will trigger push notifications for 1,248 active users and 15 providers.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 pt-2">
+                                    <button onClick={() => setShowBroadcast(false)} className="flex-1 py-4 rounded-2xl text-xs font-black text-[#897a70] hover:bg-gray-50 transition-all uppercase tracking-widest">Discard</button>
+                                    <button onClick={sendBroadcast} className="flex-[2] py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-black shadow-[0_10px_25px_-5px_rgba(45,36,30,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(45,36,30,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+                                        <span className="material-symbols-outlined text-[18px]">campaign</span>
+                                        Push Broadcast
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>,
                     document.body
                 )}
-                {/* Activity Logs Modal - [NEW] */}
+
+                {/* Activity Logs Modal - [POLISHED] */}
                 {showLogs && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/60 backdrop-blur-sm animate-[fadeIn_0.3s]" onClick={() => setShowLogs(false)}></div>
-                        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl p-8 shadow-2xl animate-[scaleIn_0.3s] relative z-10">
-                            <div className="flex justify-between items-center mb-6">
+                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowLogs(false)}></div>
+                        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20">
+
+                            <div className="p-8 pb-2 flex justify-between items-start">
                                 <div>
-                                    <h3 className="text-2xl font-black text-[#2D241E]">System Activity Logs</h3>
-                                    <p className="text-[10px] text-[#897a70] font-bold uppercase tracking-widest">Real-time Admin events</p>
+                                    <h3 className="text-2xl font-black text-[#2D241E] tracking-tight">System Logs</h3>
+                                    <p className="text-[11px] font-bold text-[#897a70] mt-1">Real-time audit trail monitoring</p>
                                 </div>
-                                <button onClick={() => setShowLogs(false)} className="size-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all"><span className="material-symbols-outlined">close</span></button>
+                                <button onClick={() => setShowLogs(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
+                                    <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
+                                </button>
                             </div>
-                            <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                                {activityLogs.map((log, i) => (
-                                    <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-white transition-all cursor-default">
-                                        <div className={`size-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${log.color} shadow-sm`}>
-                                            <span className="material-symbols-outlined text-[20px]">{log.icon}</span>
+
+                            <div className="p-8 space-y-6">
+                                <div className="max-h-[360px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                    {activityLogs.map((log, i) => (
+                                        <div key={i} className="flex items-center gap-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-white hover:border-gray-200 hover:shadow-sm transition-all cursor-default group">
+                                            <div className={`size-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${log.color} shadow-sm group-hover:scale-110 transition-transform`}>
+                                                <span className="material-symbols-outlined text-[20px]">{log.icon}</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-[11px] font-black text-[#2D241E]">{log.event}</p>
+                                                <p className="text-[9px] font-bold text-[#897a70] uppercase mt-0.5">{log.time}</p>
+                                            </div>
+                                            <span className="material-symbols-outlined text-gray-300 text-[18px]">verified_user</span>
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-[11px] font-black text-[#2D241E]">{log.event}</p>
-                                            <p className="text-[9px] font-bold text-[#897a70] uppercase">{log.time}</p>
-                                        </div>
-                                        <span className="material-symbols-outlined text-gray-300 text-[18px]">verified_user</span>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                                <button className="w-full py-4 border-2 border-dashed border-gray-200 rounded-[1.5rem] text-[10px] font-black text-[#897a70] uppercase tracking-widest hover:border-[#2D241E]/20 hover:text-[#2D241E] hover:bg-gray-50 transition-all">Download Full Audit Report (PDF)</button>
                             </div>
-                            <button className="w-full mt-6 py-4 border-2 border-dashed border-gray-200 rounded-2xl text-[10px] font-black text-[#897a70] uppercase tracking-widest hover:border-[#2D241E]/20 transition-all">Download Audit Report (PDF)</button>
                         </div>
                     </div>,
                     document.body
