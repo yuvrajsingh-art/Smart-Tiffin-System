@@ -24,52 +24,53 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 
  import ProviderSidebar from './components/ui/Provider/ProviderSidebar';
 import ProviderDashboard from './pages/Provider/ProviderDashboard';
+import ManageMenu from './pages/Provider/ManageMenu';
  
 /**
  * Main Application Component
  * Handles the client-side routing using React Router.
  */
 function App() {
-  return (
-    <SubscriptionProvider>
-      <BrowserRouter>
-        <Toaster position="top-center" reverseOrder={false} />
-        <Routes>
-          {/* Public Routes - Accessible without login */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/role-selection" element={<RoleSelection />} />
-          <Route path="/register" element={<Register />} />
+  // return (
+  //   <SubscriptionProvider>
+  //     <BrowserRouter>
+  //       <Toaster position="top-center" reverseOrder={false} />
+  //       <Routes>
+  //         {/* Public Routes - Accessible without login */}
+  //         <Route path="/" element={<LandingPage />} />
+  //         <Route path="/login" element={<Login />} />
+  //         <Route path="/role-selection" element={<RoleSelection />} />
+  //         <Route path="/register" element={<Register />} />
 
-          {/* Protected Routes - Customer Dashboard
-              All routes under /customer share the DashboardLayout (Sidebar + Topbar)
-          */}
-          <Route path="/customer" element={<DashboardLayout />}>
-            {/* Index route for dashboard: /customer/dashboard */}
-            <Route path="dashboard" element={<CustomerDashboard />} />
+  //         {/* Protected Routes - Customer Dashboard
+  //             All routes under /customer share the DashboardLayout (Sidebar + Topbar)
+  //         */}
+  //         <Route path="/customer" element={<DashboardLayout />}>
+  //           {/* Index route for dashboard: /customer/dashboard */}
+  //           <Route path="dashboard" element={<CustomerDashboard />} />
 
-            {/* Discovery & Subscription Flow */}
-            <Route path="find-mess" element={<FindMess />} />
-            <Route path="mess/:id" element={<MessDetails />} />
-            <Route path="mess/:id/subscribe" element={<SubscriptionCheckout />} />
+  //           {/* Discovery & Subscription Flow */}
+  //           <Route path="find-mess" element={<FindMess />} />
+  //           <Route path="mess/:id" element={<MessDetails />} />
+  //           <Route path="mess/:id/subscribe" element={<SubscriptionCheckout />} />
 
-            <Route path="menu" element={<Menu />} />
-            <Route path="track" element={<TrackDelivery />} />
-            <Route path="manage-subscription" element={<ManageSubscription />} />
-            <Route path="feedback" element={<Feedback />} />
-            {/* Wallet route removed */}
-            <Route path="history" element={<History />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="notifications" element={<Notifications />} />
+  //           <Route path="menu" element={<Menu />} />
+  //           <Route path="track" element={<TrackDelivery />} />
+  //           <Route path="manage-subscription" element={<ManageSubscription />} />
+  //           <Route path="feedback" element={<Feedback />} />
+  //           {/* Wallet route removed */}
+  //           <Route path="history" element={<History />} />
+  //           <Route path="profile" element={<Profile />} />
+  //           <Route path="notifications" element={<Notifications />} />
 
-            {/* Future routes can be added here, e.g.:
-                 <Route path="profile" element={<Profile />} />
-             */}
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </SubscriptionProvider>
-  )
+  //           {/* Future routes can be added here, e.g.:
+  //                <Route path="profile" element={<Profile />} />
+  //            */}
+  //         </Route>
+  //       </Routes>
+  //     </BrowserRouter>
+  //   </SubscriptionProvider>
+  // )
 
 
   // return (
@@ -106,7 +107,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ProviderDashboard />
+      <ManageMenu />
     </BrowserRouter>
   )
 }
