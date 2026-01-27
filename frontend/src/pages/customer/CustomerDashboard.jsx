@@ -8,9 +8,35 @@ const CustomerDashboard = () => {
     const isActive = hasActiveSubscription();
 
     const [trackerState] = useState(2); // 1: Prep, 2: Cooking, 3: Packed, 4: Out, 5: Delivered
+    const userName = localStorage.getItem('userName') || 'Student';
+    const isImpersonating = localStorage.getItem('impersonationMode') === 'true';
 
     return (
         <div className="max-w-7xl mx-auto flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
+
+            {/* Impersonation Banner */}
+            {isImpersonating && (
+                <div className="bg-[#2D241E] text-white px-4 py-3 rounded-xl flex items-center justify-between shadow-xl mb-2 animate-[slideInDown_0.5s]">
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-orange-500 animate-pulse">visibility</span>
+                        <div className="text-xs font-medium">
+                            <span className="font-bold text-orange-400 uppercase tracking-wider block text-[10px]">Admin View</span>
+                            Viewing as <span className="font-bold text-xl">{userName}</span>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('impersonationMode');
+                            localStorage.removeItem('userName');
+                            localStorage.setItem('userRole', 'admin');
+                            window.history.back();
+                        }}
+                        className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                    >
+                        Exit View <span className="material-symbols-outlined text-[14px]">logout</span>
+                    </button>
+                </div>
+            )}
 
             {/* Background Blobs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
@@ -24,7 +50,7 @@ const CustomerDashboard = () => {
                     {/* Welcome Header */}
                     <div className="flex justify-between items-end">
                         <div>
-                            <h1 className="text-3xl font-black text-[#2D241E] leading-tight">Hello, Student! 👋</h1>
+                            <h1 className="text-3xl font-black text-[#2D241E] leading-tight">Hello, {userName.split(' ')[0]}! 👋</h1>
                             <p className="text-[#5C4D42] font-medium">Your tiffin is being prepared with love.</p>
                         </div>
                         <div className="hidden md:block">
