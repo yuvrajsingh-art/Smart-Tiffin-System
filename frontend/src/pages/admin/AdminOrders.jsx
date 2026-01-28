@@ -29,6 +29,7 @@ const AdminOrders = () => {
     const [viewMode, setViewMode] = useState('Today'); // 'Today' | 'Past'
     const [orders, setOrders] = useState(generateTodayOrders());
     const [filter, setFilter] = useState('All');
+    const [searchQuery, setSearchQuery] = useState(''); // [NEW] Search State
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalTab, setModalTab] = useState('Intelligence');
     const [showRiderModal, setShowRiderModal] = useState(false);
@@ -43,6 +44,7 @@ const AdminOrders = () => {
             setOrders(generatePastOrders());
         }
         setFilter('All'); // Reset filter on view switch
+        setSearchQuery(''); // Reset search on view switch
     }, [viewMode]);
 
     // -- Handlers --
@@ -107,7 +109,17 @@ const AdminOrders = () => {
         }
     };
 
-    const filteredOrders = filter === 'All' ? orders : orders.filter(o => o.status === filter);
+    const filteredOrders = orders.filter(o => {
+        // 1. Status Filter
+        const matchesStatus = filter === 'All' ? true : o.status === filter;
+        // 2. Search Filter (ID, Customer, Kitchen) [NEW]
+        const matchesSearch = searchQuery === '' ? true :
+            o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            o.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            o.kitchen.toLowerCase().includes(searchQuery.toLowerCase());
+
+        return matchesStatus && matchesSearch;
+    });
 
     // -- Calculations for Stats --
     const stats = {
@@ -158,6 +170,17 @@ const AdminOrders = () => {
                 </div>
 
                 <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md">
+                    {/* Search Input */}
+                    <div className="relative group">
+                        <span className="absolute left-3 top-2.5 material-symbols-outlined text-[18px] text-gray-400 group-focus-within:text-[#2D241E] transition-colors">search</span>
+                        <input
+                            type="text"
+                            placeholder="Search Order ID, Customer..."
+                            className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-2.5 pl-9 w-32 focus:w-48 transition-all placeholder:text-gray-400"
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <button
                         onClick={() => setViewMode('Today')}
                         className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all ${viewMode === 'Today' ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#5C4D42] hover:bg-white/80'}`}
@@ -469,12 +492,112 @@ const AdminOrders = () => {
                             )}
 
                             {/* Other tabs remain similar with static mock data for now, but fully rendered */}
-                            {['Manifest', 'Finance', 'Audit'].includes(modalTab) && (
-                                <div className="space-y-4 animate-[fadeIn_0.3s]">
-                                    <div className="p-8 bg-gray-50 rounded-[2.5rem] flex flex-col items-center justify-center text-center">
-                                        <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">lock</span>
-                                        <h4 className="text-sm font-black text-[#2D241E]">{modalTab} View Locked</h4>
-                                        <p className="text-[10px] font-bold text-[#897a70]">This data is archived for audit purposes.</p>
+                            {/* Manifest Tab (Order Items) */}
+                            {modalTab === 'Manifest' && (
+                                <div className="space-y-6 animate-[fadeIn_0.3s]">
+                                    <div className="p-6 bg-[#FDFBF9] border border-orange-100/50 rounded-[2.5rem]">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-gray-100">
+                                                    <th className="pb-3 text-[10px] font-black text-[#897a70] uppercase tracking-widest">Item Name</th>
+                                                    <th className="pb-3 text-[10px] font-black text-[#897a70] uppercase tracking-widest text-center">Qty</th>
+                                                    <th className="pb-3 text-[10px] font-black text-[#897a70] uppercase tracking-widest text-right">Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {[
+                                                    { name: 'Paneer Butter Masala (300ml)', qty: 1, price: '₹140' },
+                                                    { name: 'Butter Tawa Roti', qty: 4, price: '₹40' },
+                                                    { name: 'Jeera Rice (Half)', qty: 1, price: '₹60' },
+                                                    { name: 'Gulab Jamun (2pcs)', qty: 1, price: '₹40' }
+                                                ].map((item, i) => (
+                                                    <tr key={i}>
+                                                        <td className="py-3 text-xs font-bold text-[#2D241E]">{item.name}</td>
+                                                        <td className="py-3 text-xs font-bold text-[#5C4D42] text-center">x{item.qty}</td>
+                                                        <td className="py-3 text-xs font-bold text-[#2D241E] text-right">{item.price}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        <div className="mt-4 pt-4 border-t border-gray-100 flex gap-3 text-[10px]">
+                                            <span className="font-black text-[#897a70] uppercase">Note:</span>
+                                            <span className="text-[#5C4D42] italic">"Less oil in paneer, please. Send extra onions."</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button onClick={handlePrintManifest} className="flex items-center gap-2 px-6 py-3 bg-[#2D241E] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                                            <span className="material-symbols-outlined text-[16px]">print</span>
+                                            Print KOT
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Finance Tab (Cost Breakdown) */}
+                            {modalTab === 'Finance' && (
+                                <div className="space-y-6 animate-[fadeIn_0.3s]">
+                                    <div className="p-6 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm">
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="font-bold text-[#897a70]">Item Total</span>
+                                                <span className="font-black text-[#2D241E]">₹280.00</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="font-bold text-[#897a70]">Taxes & Charges</span>
+                                                <span className="font-black text-[#2D241E]">₹14.00</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="font-bold text-[#897a70]">Delivery Fee</span>
+                                                <span className="font-black text-[#2D241E]">₹25.00</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs text-emerald-600">
+                                                <span className="font-bold">Discount (Coupon)</span>
+                                                <span className="font-black">-₹30.00</span>
+                                            </div>
+                                            <div className="pt-3 border-t border-gray-100 flex justify-between items-center text-sm">
+                                                <span className="font-black text-[#2D241E]">Grand Total</span>
+                                                <span className="font-black text-orange-600">₹289.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100">
+                                            <p className="text-[9px] font-black text-[#897a70] uppercase mb-1">Payment Method</p>
+                                            <div className="flex items-center gap-2 text-[#2D241E] font-bold text-xs">
+                                                <span className="material-symbols-outlined text-[16px]">credit_card</span>
+                                                UPI (PhonePe)
+                                            </div>
+                                        </div>
+                                        <div className="p-5 bg-emerald-50 rounded-[2rem] border border-emerald-100">
+                                            <p className="text-[9px] font-black text-emerald-700/50 uppercase mb-1">Payment Status</p>
+                                            <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
+                                                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                                Paid Successfully
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Audit Tab (Timeline) */}
+                            {modalTab === 'Audit' && (
+                                <div className="space-y-6 animate-[fadeIn_0.3s]">
+                                    <div className="relative pl-4 space-y-6 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-gray-100">
+                                        {[
+                                            { action: 'Order Delivered', user: 'System (Rider App)', time: '1:45 PM', icon: 'check_circle', color: 'text-emerald-600' },
+                                            { action: 'Rider Assigned (Vikram)', user: 'Admin (You)', time: '1:15 PM', icon: 'two_wheeler', color: 'text-blue-600' },
+                                            { action: 'Order Picked Up', user: 'Kitchen App', time: '1:10 PM', icon: 'inventory_2', color: 'text-orange-600' },
+                                            { action: 'Preparation Started', user: 'Kitchen App', time: '12:55 PM', icon: 'soup_kitchen', color: 'text-amber-600' },
+                                            { action: 'Payment Verified', user: 'System (Razorpay)', time: '12:45 PM', icon: 'payments', color: 'text-[#2D241E]' },
+                                            { action: 'Order Placed', user: 'Customer App', time: '12:44 PM', icon: 'shopping_bag', color: 'text-gray-400' },
+                                        ].map((log, i) => (
+                                            <div key={i} className="relative pl-6">
+                                                <span className={`absolute left-[-5px] top-1 bg-white ring-4 ring-white material-symbols-outlined text-[16px] ${log.color} bg-white`}>{log.icon}</span>
+                                                <p className="text-xs font-black text-[#2D241E]">{log.action}</p>
+                                                <p className="text-[10px] text-[#897a70] font-medium mt-0.5">by {log.user} • {log.time}</p>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

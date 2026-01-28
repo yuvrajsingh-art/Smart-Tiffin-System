@@ -65,8 +65,8 @@ const AdminSettings = () => {
                     <button
                         onClick={handleEmergencyFreeze}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${settings.globalFreeze
-                                ? 'bg-blue-600 text-white animate-pulse shadow-lg shadow-blue-500/30'
-                                : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100'
+                            ? 'bg-blue-600 text-white animate-pulse shadow-lg shadow-blue-500/30'
+                            : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100'
                             }`}
                     >
                         <span className="material-symbols-outlined text-[16px]">{settings.globalFreeze ? 'ac_unit' : 'lock_person'}</span>
@@ -258,6 +258,83 @@ const AdminSettings = () => {
                                     <option>INR (₹) - India</option>
                                     <option>USD ($) - International</option>
                                 </select>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeSection === 'Security' && (
+                        <div className="space-y-8 animate-[fadeIn_0.3s]">
+
+                            {/* Security Health Status */}
+                            <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100 flex items-center gap-6">
+                                <div className="size-16 bg-white rounded-2xl flex items-center justify-center shadow-sm text-emerald-600">
+                                    <span className="material-symbols-outlined text-3xl">shield_lock</span>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-[#2D241E]">System Fortress Active</h3>
+                                    <p className="text-xs font-medium text-[#5C4D42] mt-1">2FA Enabled • IP Whitelisting Active • Encrypted Logs</p>
+                                </div>
+                                <button className="ml-auto px-6 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all">
+                                    Run Security Audit
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                                {/* Active Sessions */}
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-black text-[#2D241E] flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-gray-400">devices</span> Active Sessions
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="p-4 bg-white border border-gray-100 rounded-2xl flex items-center gap-4 shadow-sm relative overflow-hidden">
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
+                                            <span className="material-symbols-outlined text-2xl text-[#2D241E]">laptop_mac</span>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-xs font-black text-[#2D241E]">Windows PC (Chrome)</p>
+                                                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">Current</span>
+                                                </div>
+                                                <p className="text-[10px] text-[#897a70] mt-0.5">Mumbai, India • 192.168.1.1</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-gray-50 border border-gray-100/50 rounded-2xl flex items-center gap-4 opacity-70">
+                                            <span className="material-symbols-outlined text-2xl text-gray-400">smartphone</span>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-xs font-black text-gray-600">iPhone 14 Pro</p>
+                                                    <button className="text-[9px] font-bold text-rose-500 hover:underline uppercase">Revoke</button>
+                                                </div>
+                                                <p className="text-[10px] text-[#897a70] mt-0.5">Pune, India • Last active 2h ago</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Audit Logs */}
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-black text-[#2D241E] flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-gray-400">history_edu</span> Recent Admin Actions
+                                    </h4>
+                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                                        {[
+                                            { action: 'Updated Menu Rules', detail: 'Changed daily cutoff to 10:30 AM', time: '10 mins ago', user: 'Admin' },
+                                            { action: 'Refund Processed', detail: 'Authorized ₹450 to Rahul S.', time: '1h ago', user: 'FinanceBot' },
+                                            { action: 'Kitchen Freeze', detail: 'Temporarily suspended "Spice Hub"', time: '3h ago', user: 'SuperAdmin' },
+                                            { action: 'System Backup', detail: 'Automated database snapshot', time: '5h ago', user: 'System' },
+                                        ].map((log, i) => (
+                                            <div key={i} className="flex gap-3 items-start pb-3 border-b border-gray-50 last:border-0">
+                                                <div className="size-2 rounded-full bg-[#2D241E] mt-1.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-[11px] font-black text-[#2D241E]">{log.action}</p>
+                                                    <p className="text-[10px] text-[#897a70] font-medium leading-tight">{log.detail}</p>
+                                                    <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">{log.time} • {log.user}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     )}
