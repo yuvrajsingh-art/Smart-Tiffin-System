@@ -244,12 +244,12 @@ const AdminOrders = () => {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-white/50 border-b border-gray-100">
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Order ID</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Customer & Plan</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Kitchen Hub</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Logistics</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-6 py-5 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Order ID</th>
+                                <th className="px-6 py-5 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Customer & Plan</th>
+                                <th className="px-6 py-5 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Kitchen Hub</th>
+                                <th className="px-6 py-5 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Logistics</th>
+                                <th className="px-6 py-5 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Status</th>
+                                <th className="px-6 py-5 text-[9px] font-black text-[#897a70] uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -331,10 +331,13 @@ const AdminOrders = () => {
             {selectedOrder && !showRiderModal && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setSelectedOrder(null)}></div>
-                    <div className="bg-white rounded-[3rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-black/5 flex flex-col max-h-[92vh]">
+                    <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex flex-col max-h-[92vh]">
+
+                        {/* Texture Overlay */}
+                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                         {/* Modal Header [DNA STYLE] */}
-                        <div className="p-8 pb-4 flex justify-between items-start shrink-0">
+                        <div className="relative z-10 p-8 pb-4 bg-white/80 backdrop-blur-xl border-b border-[#2D241E]/5 flex justify-between items-start shrink-0">
                             <div>
                                 <h3 className="text-2xl font-black text-[#2D241E]">Order DNA</h3>
                                 <p className="text-[11px] font-bold text-[#897a70] mt-1">Live tracking & cluster logistics intelligence</p>
@@ -345,8 +348,8 @@ const AdminOrders = () => {
                         </div>
 
                         {/* Tab Navigation */}
-                        <div className="px-8 mb-4 shrink-0 overflow-x-auto no-scrollbar">
-                            <div className="flex gap-1 bg-gray-50 p-1.5 rounded-[1.5rem] border border-black/5 w-fit">
+                        <div className="relative z-10 px-8 py-4 shrink-0 overflow-x-auto no-scrollbar bg-white/40 backdrop-blur-sm border-b border-[#2D241E]/5">
+                            <div className="flex gap-1 bg-white/60 p-1.5 rounded-[1.5rem] border border-white/50 w-fit shadow-sm">
                                 {[
                                     { id: 'Intelligence', label: 'Intelligence', icon: 'near_me' },
                                     { id: 'Manifest', label: 'Manifest', icon: 'list_alt' },
@@ -367,10 +370,10 @@ const AdminOrders = () => {
                         </div>
 
                         {/* Modal Content */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pb-4 space-y-8">
+                        <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar px-8 pb-4 space-y-8 pt-4">
 
                             {/* Order Identification Card */}
-                            <div className="p-5 bg-[#FDFBF9] border border-orange-100/50 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
+                            <div className="p-5 bg-white border border-[#2D241E]/5 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
                                 <div className="relative">
                                     <div className="size-20 rounded-2xl bg-[#2D241E] flex items-center justify-center text-white shadow-lg border-2 border-white">
                                         <span className="material-symbols-outlined text-4xl">inventory_2</span>
@@ -417,7 +420,7 @@ const AdminOrders = () => {
                                             <span className="material-symbols-outlined text-orange-500 text-[18px]">route</span>
                                             Delivery Pulse
                                         </h5>
-                                        <div className="p-6 bg-gray-50/50 border border-gray-100 rounded-[2.5rem] space-y-6">
+                                        <div className="p-6 bg-white/60 border border-white/50 rounded-[2.5rem] space-y-6 shadow-sm">
                                             {[
                                                 { time: '12:40 PM', label: 'Order Confirmed', done: true },
                                                 { time: '1:05 PM', label: 'Kitchen Handover', done: true },
@@ -437,11 +440,11 @@ const AdminOrders = () => {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-5 bg-blue-50/50 border border-blue-100 rounded-[2rem] flex items-center justify-between">
+                                        <div className="p-5 bg-blue-50/80 border border-blue-100 rounded-[2rem] flex items-center justify-between shadow-sm">
                                             <div><p className="text-[9px] font-black text-blue-900/50 uppercase">Current Zone</p><h5 className="text-xl font-black text-blue-900 italic">{selectedOrder.zone}</h5></div>
                                             <span className="material-symbols-outlined text-blue-400">near_me</span>
                                         </div>
-                                        <div className="p-5 bg-violet-50/50 border border-violet-100 rounded-[2rem] flex items-center justify-between">
+                                        <div className="p-5 bg-violet-50/80 border border-violet-100 rounded-[2rem] flex items-center justify-between shadow-sm">
                                             <div><p className="text-[9px] font-black text-violet-900/50 uppercase">Fleet Sync</p><h5 className="text-xl font-black text-violet-900 italic">{selectedOrder.rider}</h5></div>
                                             <span className="material-symbols-outlined text-violet-400">delivery_dining</span>
                                         </div>
@@ -452,7 +455,7 @@ const AdminOrders = () => {
                             {modalTab === 'Logistics' && (
                                 <div className="space-y-6 animate-[fadeIn_0.3s]">
                                     {/* Simulated Live Map */}
-                                    <div className="aspect-video bg-[#E5E5E5] rounded-[2.5rem] relative overflow-hidden flex items-center justify-center shadow-inner group cursor-crosshair">
+                                    <div className="aspect-video bg-[#E5E5E5] rounded-[2.5rem] relative overflow-hidden flex items-center justify-center shadow-inner group cursor-crosshair border border-white/50">
                                         {/* Map Base Pattern */}
                                         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#2D241E 0.5px, transparent 0.5px), radial-gradient(#2D241E 0.5px, #E5E5E5 0.5px)', backgroundSize: '20px 20px', backgroundPosition: '0 0, 10px 10px' }}></div>
 
@@ -478,24 +481,23 @@ const AdminOrders = () => {
                                         <div className="absolute top-1/2 left-1/4 h-1 bg-orange-500/30 w-1/2 -translate-y-1/2"></div>
 
 
-                                        <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur rounded-xl px-3 py-2 text-[10px]">
+                                        <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur rounded-xl px-3 py-2 text-[10px] shadow-sm">
                                             <p className="font-bold text-[#2D241E]">{selectedOrder.zone} Sector Map</p>
                                             <p className="text-[#897a70]">Live Feed • Active • 2 min lag</p>
                                         </div>
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <button className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-100 hover:bg-emerald-100 transition-all">Live Reroute</button>
-                                        <button onClick={() => setShowRiderModal(true)} className="flex-1 py-4 bg-[#2D241E] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#453831] transition-all">Reassign Rider</button>
+                                        <button className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm">Live Reroute</button>
+                                        <button onClick={() => setShowRiderModal(true)} className="flex-1 py-4 bg-[#2D241E] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#453831] transition-all shadow-lg shadow-[#2D241E]/20">Reassign Rider</button>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Other tabs remain similar with static mock data for now, but fully rendered */}
                             {/* Manifest Tab (Order Items) */}
                             {modalTab === 'Manifest' && (
                                 <div className="space-y-6 animate-[fadeIn_0.3s]">
-                                    <div className="p-6 bg-[#FDFBF9] border border-orange-100/50 rounded-[2.5rem]">
+                                    <div className="p-6 bg-white border border-[#2D241E]/5 rounded-[2.5rem] shadow-sm">
                                         <table className="w-full text-left">
                                             <thead>
                                                 <tr className="border-b border-gray-100">
@@ -511,7 +513,7 @@ const AdminOrders = () => {
                                                     { name: 'Jeera Rice (Half)', qty: 1, price: '₹60' },
                                                     { name: 'Gulab Jamun (2pcs)', qty: 1, price: '₹40' }
                                                 ].map((item, i) => (
-                                                    <tr key={i}>
+                                                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                                                         <td className="py-3 text-xs font-bold text-[#2D241E]">{item.name}</td>
                                                         <td className="py-3 text-xs font-bold text-[#5C4D42] text-center">x{item.qty}</td>
                                                         <td className="py-3 text-xs font-bold text-[#2D241E] text-right">{item.price}</td>
@@ -525,7 +527,7 @@ const AdminOrders = () => {
                                         </div>
                                     </div>
                                     <div className="flex justify-end">
-                                        <button onClick={handlePrintManifest} className="flex items-center gap-2 px-6 py-3 bg-[#2D241E] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                                        <button onClick={handlePrintManifest} className="flex items-center gap-2 px-6 py-3 bg-[#2D241E] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-lg shadow-[#2D241E]/20">
                                             <span className="material-symbols-outlined text-[16px]">print</span>
                                             Print KOT
                                         </button>
@@ -536,7 +538,7 @@ const AdminOrders = () => {
                             {/* Finance Tab (Cost Breakdown) */}
                             {modalTab === 'Finance' && (
                                 <div className="space-y-6 animate-[fadeIn_0.3s]">
-                                    <div className="p-6 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm">
+                                    <div className="p-6 bg-white border border-[#2D241E]/5 rounded-[2.5rem] shadow-sm">
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center text-xs">
                                                 <span className="font-bold text-[#897a70]">Item Total</span>
@@ -562,14 +564,14 @@ const AdminOrders = () => {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100">
+                                        <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 shadow-sm">
                                             <p className="text-[9px] font-black text-[#897a70] uppercase mb-1">Payment Method</p>
                                             <div className="flex items-center gap-2 text-[#2D241E] font-bold text-xs">
                                                 <span className="material-symbols-outlined text-[16px]">credit_card</span>
                                                 UPI (PhonePe)
                                             </div>
                                         </div>
-                                        <div className="p-5 bg-emerald-50 rounded-[2rem] border border-emerald-100">
+                                        <div className="p-5 bg-emerald-50 rounded-[2rem] border border-emerald-100 shadow-sm">
                                             <p className="text-[9px] font-black text-emerald-700/50 uppercase mb-1">Payment Status</p>
                                             <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
                                                 <span className="material-symbols-outlined text-[16px]">check_circle</span>
@@ -583,7 +585,7 @@ const AdminOrders = () => {
                             {/* Audit Tab (Timeline) */}
                             {modalTab === 'Audit' && (
                                 <div className="space-y-6 animate-[fadeIn_0.3s]">
-                                    <div className="relative pl-4 space-y-6 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-gray-100">
+                                    <div className="relative pl-4 space-y-6 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-gray-200/50">
                                         {[
                                             { action: 'Order Delivered', user: 'System (Rider App)', time: '1:45 PM', icon: 'check_circle', color: 'text-emerald-600' },
                                             { action: 'Rider Assigned (Vikram)', user: 'Admin (You)', time: '1:15 PM', icon: 'two_wheeler', color: 'text-blue-600' },
@@ -592,9 +594,9 @@ const AdminOrders = () => {
                                             { action: 'Payment Verified', user: 'System (Razorpay)', time: '12:45 PM', icon: 'payments', color: 'text-[#2D241E]' },
                                             { action: 'Order Placed', user: 'Customer App', time: '12:44 PM', icon: 'shopping_bag', color: 'text-gray-400' },
                                         ].map((log, i) => (
-                                            <div key={i} className="relative pl-6">
-                                                <span className={`absolute left-[-5px] top-1 bg-white ring-4 ring-white material-symbols-outlined text-[16px] ${log.color} bg-white`}>{log.icon}</span>
-                                                <p className="text-xs font-black text-[#2D241E]">{log.action}</p>
+                                            <div key={i} className="relative pl-6 group">
+                                                <span className={`absolute left-[-5px] top-1 bg-white ring-4 ring-white material-symbols-outlined text-[16px] ${log.color} bg-white shadow-sm rounded-full`}>{log.icon}</span>
+                                                <p className="text-xs font-black text-[#2D241E] group-hover:text-orange-600 transition-colors">{log.action}</p>
                                                 <p className="text-[10px] text-[#897a70] font-medium mt-0.5">by {log.user} • {log.time}</p>
                                             </div>
                                         ))}
@@ -605,7 +607,7 @@ const AdminOrders = () => {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-8 pb-10 bg-white border-t border-gray-50 flex items-center justify-end gap-10 shrink-0">
+                        <div className="relative z-10 p-8 pb-10 bg-white/80 backdrop-blur-xl border-t border-[#2D241E]/5 flex items-center justify-end gap-10 shrink-0">
                             <button onClick={() => setSelectedOrder(null)} className="text-[12px] font-black text-[#897a70] hover:text-[#2D241E] transition-colors">Close</button>
                             <button onClick={() => {
                                 toast.success('Order Record Updated');
@@ -621,8 +623,11 @@ const AdminOrders = () => {
             {selectedOrder && showRiderModal && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowRiderModal(false)}></div>
-                    <div className="bg-white rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-20 border border-white/20">
-                        <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                    <div className="bg-[#F5F2EB] rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-20 border border-white/20">
+                        {/* Texture */}
+                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+                        <div className="relative z-10 p-6 border-b border-[#2D241E]/5 bg-white/80 backdrop-blur-xl flex justify-between items-center">
                             <div>
                                 <h3 className="text-lg font-black text-[#2D241E]">Assign Rider</h3>
                                 <p className="text-[10px] font-bold text-[#897a70]">Zone: {selectedOrder.zone} • Order: {selectedOrder.id}</p>
@@ -631,15 +636,15 @@ const AdminOrders = () => {
                                 <span className="material-symbols-outlined text-[18px]">close</span>
                             </button>
                         </div>
-                        <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div className="relative z-10 p-4 space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             {availableRiders.map(rider => (
                                 <button
                                     key={rider.id}
                                     onClick={() => handleAssignRider(rider)}
-                                    className="w-full p-4 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50/50 transition-all flex items-center justify-between group"
+                                    className="w-full p-4 rounded-xl border border-white/50 bg-white/60 hover:border-orange-200 hover:bg-white/80 transition-all flex items-center justify-between group shadow-sm hover:shadow-md"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="size-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold text-xs group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors">
+                                        <div className="size-10 bg-white rounded-full flex items-center justify-center text-gray-600 font-bold text-xs group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors shadow-sm">
                                             {rider.name.charAt(0)}
                                         </div>
                                         <div className="text-left">
