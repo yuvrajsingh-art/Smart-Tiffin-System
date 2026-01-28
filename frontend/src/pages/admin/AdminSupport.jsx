@@ -1,51 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
+import { createPortal } from 'react-dom';
 
-const complaintsData = [
-    { id: 'TKT882', user: 'Rahul Sharma', issue: 'Late delivery by 40 minutes', priority: 'High', status: 'Open', date: 'Just now', kitchen: 'Spice Kitchen' },
-    { id: 'TKT881', user: 'Priya Verma', issue: 'Food quality not satisfactory', priority: 'Medium', status: 'In Review', date: '2h ago', kitchen: 'Annapurna Rasoi' },
-    { id: 'TKT880', user: 'Amit Kumar', issue: 'Wrong item delivered', priority: 'Critical', status: 'Open', date: '5h ago', kitchen: 'Annapurna Rasoi' },
-    { id: 'TKT879', user: 'Sneha Patel', issue: 'Refund for cancelled subscription', priority: 'Low', status: 'Resolved', date: '1d ago', kitchen: 'N/A' },
+// --- Mock Data Generators ---
+const USERS = ['Rahul Sharma', 'Priya Verma', 'Amit Kumar', 'Sneha Patel', 'Vikram Singh', 'Anjali Gupta'];
+const ISSUES = ['Late delivery', 'Food quality issue', 'Wrong item', 'Subscription refund', 'App crashing', 'Rider rude'];
+const KITCHENS = ['Spice Kitchen', 'Annapurna Rasoi', 'Tiffin Box HQ', 'Mom\'s Kitchen', 'Veg Delight'];
+
+const generateTicket = (idOverride) => ({
+    id: idOverride || `TKT${Math.floor(Math.random() * 9000) + 1000}`,
+    user: USERS[Math.floor(Math.random() * USERS.length)],
+    issue: ISSUES[Math.floor(Math.random() * ISSUES.length)],
+    priority: Math.random() > 0.7 ? 'Critical' : Math.random() > 0.4 ? 'High' : 'Medium',
+    status: 'New',
+    date: 'Just now',
+    kitchen: KITCHENS[Math.floor(Math.random() * KITCHENS.length)],
+    hasUnread: true,
+});
+
+const initialTickets = [
+    { id: 'TKT882', user: 'Rahul Sharma', issue: 'Late delivery by 40 minutes', priority: 'High', status: 'Open', date: '10m ago', kitchen: 'Spice Kitchen', hasUnread: true },
+    { id: 'TKT881', user: 'Priya Verma', issue: 'Food quality not satisfactory', priority: 'Medium', status: 'In Review', date: '2h ago', kitchen: 'Annapurna Rasoi', hasUnread: false },
+    { id: 'TKT880', user: 'Amit Kumar', issue: 'Wrong item delivered', priority: 'Critical', status: 'Open', date: '5h ago', kitchen: 'Annapurna Rasoi', hasUnread: true },
 ];
 
 const AdminSupport = () => {
-    const [tickets, setTickets] = useState(complaintsData);
+    const [tickets, setTickets] = useState(initialTickets);
     const [filter, setFilter] = useState('All');
     const [selectedTicket, setSelectedTicket] = useState(null);
-    const [modalTab, setModalTab] = useState('Intelligence');
+    const [showConfetti, setShowConfetti] = useState(false);
 
-    const handleAction = (type, id) => {
-        toast.success(`${type} action for ticket ${id}`, {
-            icon: type === 'Resolve' ? '✅' : '👀',
-            style: { borderRadius: '12px', background: '#2D241E', color: '#fff' }
-        });
-        if (type === 'Resolve') {
-            setTickets(tickets.map(t => t.id === id ? { ...t, status: 'Resolved' } : t));
-        }
-    };
+    // --- Live Simulation Effect ---
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (Math.random() > 0.7) { // 30% chance every check
+                const newTicket = generateTicket();
+                setTickets(prev => [newTicket, ...prev]);
+                toast.custom((t) => (
+                    <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-rose-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
+                        <div className="bg-rose-50 p-2 rounded-full"><span className="material-symbols-outlined text-rose-600">notification_important</span></div>
+                        <div>
+                            <p className="text-xs font-black text-[#2D241E]">New Ticket Incoming!</p>
+                            <p className="text-[10px] text-gray-500 font-medium">#{newTicket.id}: {newTicket.issue}</p>
+                        </div>
+                    </div>
+                ), { duration: 4000 });
+            }
+        }, 8000); // Check every 8 seconds
+        return () => clearInterval(interval);
+    }, []);
 
     const filteredTickets = filter === 'All' ? tickets : tickets.filter(t => t.status === filter);
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto min-h-full pb-8 animate-[fadeIn_0.5s]">
 
-            {/* Header */}
+            {/* Live Ticker */}
+            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-0">
+                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Support Ops Live</span>
+                </div>
+                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
+                    {[
+                        "Agent Priya resolved Ticket #TKT881 (2 mins ago)",
+                        "High load pending in 'Delivery Issues' queue",
+                        "New feedback received: 'Great resolution time!'",
+                        "System: Auto-refund processed for Order #ORD2904",
+                        "Agent Amit is now Online"
+                    ].map((item, i) => (
+                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
+                            <span className="size-1 bg-white/20 rounded-full"></span>
+                            {item}
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            {/* Header & Controls */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-black text-[#2D241E] tracking-tight flex items-center gap-2">
-                        Customer Support Desk
-                        <span className="px-2 py-0.5 bg-red-500 text-white text-[9px] font-black rounded-lg uppercase tracking-wider">Helpdesk</span>
+                        Helpdesk & Resolution
+                        <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-lg uppercase tracking-wider">Priority</span>
                     </h2>
-                    <p className="text-[#5C4D42] text-xs font-medium opacity-80 mt-0.5 italic">Managing active complaints, refunds, and platform feedback.</p>
+                    <p className="text-[#5C4D42] text-xs font-medium opacity-80 mt-0.5 font-display italic">
+                        Real-time customer issue tracking and intelligent resolution.
+                    </p>
                 </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-white/40 p-1 rounded-xl border border-white/60">
-                        {['All', 'Open', 'In Review', 'Resolved'].map(t => (
+                <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md">
+                    {/* Search Input */}
+                    <div className="relative group">
+                        <span className="absolute left-3 top-2.5 material-symbols-outlined text-[18px] text-gray-400 group-focus-within:text-[#2D241E] transition-colors">search</span>
+                        <input
+                            type="text"
+                            placeholder="Search Tickets..."
+                            className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-2.5 pl-9 w-32 focus:w-48 transition-all placeholder:text-gray-400"
+                        />
+                    </div>
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    <div className="flex gap-1">
+                        {['All', 'New', 'Open', 'Resolved'].map(t => (
                             <button
                                 key={t}
                                 onClick={() => setFilter(t)}
-                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${filter === t ? 'bg-[#2D241E] text-white' : 'text-[#897a70] hover:bg-white'}`}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all ${filter === t ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#897a70] hover:bg-white'}`}
                             >
                                 {t}
                             </button>
@@ -54,265 +116,245 @@ const AdminSupport = () => {
                 </div>
             </div>
 
-            {/* Quick Stats Grid */}
+            {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                    { label: 'Active Tickets', val: '12', color: 'text-rose-500', bg: 'bg-rose-50', icon: 'confirmation_number' },
-                    { label: 'Critical Issues', val: '03', color: 'text-red-600', bg: 'bg-red-50', icon: 'error' },
-                    { label: 'Avg Resolution', val: '4.2h', color: 'text-blue-600', bg: 'bg-blue-50', icon: 'timer' },
-                    { label: 'Resolved Today', val: '28', color: 'text-emerald-600', bg: 'bg-emerald-50', icon: 'task_alt' },
-                ].map((stat, i) => (
-                    <div key={i} className={`${stat.bg} p-5 rounded-[2rem] border border-white/60 shadow-sm flex items-center justify-between group`}>
+                    { l: 'Pending Tickets', v: tickets.filter(t => t.status !== 'Resolved').length, c: 'rose', i: 'mark_email_unread', bg: 'bg-rose-50' },
+                    { l: 'Critical Issues', v: tickets.filter(t => t.priority === 'Critical').length, c: 'red', i: 'emergency_home', bg: 'bg-white' },
+                    { l: 'Avg Response', v: '14m', c: 'blue', i: 'speed', bg: 'bg-white' },
+                    { l: 'Satisfaction', v: '4.9/5', c: 'emerald', i: 'sentiment_very_satisfied', bg: 'bg-emerald-50' },
+                ].map((s, i) => (
+                    <div key={i} className={`${s.bg} p-5 rounded-[2rem] border border-white/60 shadow-sm flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer select-none`}>
                         <div>
-                            <p className="text-[9px] font-black text-[#5C4D42]/60 uppercase tracking-widest">{stat.label}</p>
-                            <h3 className={`text-2xl font-black ${stat.color}`}>{stat.val}</h3>
+                            <p className="text-[9px] font-black text-[#5C4D42]/60 uppercase tracking-widest">{s.l}</p>
+                            <h3 className="text-2xl font-black text-[#2D241E] mt-1">{s.v}</h3>
                         </div>
-                        <span className={`material-symbols-outlined text-2xl ${stat.color} opacity-40 group-hover:opacity-100 transition-opacity`}>{stat.icon}</span>
+                        <div className={`size-12 rounded-2xl flex items-center justify-center ${s.bg === 'bg-white' ? 'bg-gray-50' : 'bg-white/50 shadow-inner'}`}>
+                            <span className={`material-symbols-outlined text-2xl text-${s.c}-500`}>{s.i}</span>
+                        </div>
                     </div>
                 ))}
             </div>
 
-            {/* Tickets Table */}
-            <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg overflow-hidden">
-                <div className="overflow-x-auto">
+            {/* Ticket List */}
+            <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg overflow-hidden min-h-[50vh] flex flex-col">
+                <div className="overflow-x-auto flex-1 custom-scrollbar">
                     <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-white/30 border-b border-gray-100">
-                                <th className="px-6 py-5 text-[10px] font-black text-[#5C4D42] uppercase tracking-wider pl-8">Inquiry / ID</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#5C4D42] uppercase tracking-wider">User & Kitchen</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#5C4D42] uppercase tracking-wider">Priority</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#5C4D42] uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#5C4D42] uppercase tracking-wider text-right pr-8">Management</th>
+                        <thead className="bg-white/50 sticky top-0 z-10 backdrop-blur-md">
+                            <tr className="border-b border-gray-100">
+                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider pl-8">Ticket ID</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">User & Issue</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Priority</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider text-right pr-8">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredTickets.map((ticket) => (
-                                <tr key={ticket.id} className="group hover:bg-white/60 transition-colors">
-                                    <td className="px-6 py-5 pl-8">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`size-1.5 rounded-full ${ticket.status === 'Resolved' ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></div>
-                                            <div>
-                                                <p className="text-xs font-black text-[#2D241E] truncate max-w-[200px]">{ticket.issue}</p>
-                                                <p className="text-[9px] font-bold text-[#897a70]">#{ticket.id} • {ticket.date}</p>
+                        <tbody className="divide-y divide-gray-100/50">
+                            {filteredTickets.length > 0 ? (
+                                filteredTickets.map((ticket) => (
+                                    <tr key={ticket.id} className={`group hover:bg-white/80 transition-all cursor-pointer ${ticket.status === 'New' ? 'bg-orange-50/30' : ''}`} onClick={() => setSelectedTicket(ticket)}>
+                                        <td className="px-6 py-4 pl-8">
+                                            <p className="text-xs font-black text-[#2D241E]">#{ticket.id}</p>
+                                            <p className="text-[9px] font-bold text-[#897a70]">{ticket.date}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-8 rounded-full bg-gradient-to-br from-orange-100 to-rose-100 border border-white shadow-sm flex items-center justify-center text-[10px] font-black text-orange-800">
+                                                    {ticket.user.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-[#2D241E] leading-tight">{ticket.issue}</p>
+                                                    <p className="text-[9px] font-bold text-[#897a70] mt-0.5 flex items-center gap-1">
+                                                        {ticket.user} • {ticket.kitchen}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <p className="text-xs font-bold text-[#2D241E]">{ticket.user}</p>
-                                        <p className="text-[9px] text-[#5C4D42] flex items-center gap-1 uppercase tracking-tighter">
-                                            <span className="material-symbols-outlined text-[12px]">store</span> {ticket.kitchen}
-                                        </p>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${ticket.priority === 'Critical' ? 'bg-red-100 text-red-600' :
-                                            ticket.priority === 'High' ? 'bg-orange-100 text-orange-600' : 'bg-blue-50 text-blue-600'
-                                            }`}>
-                                            {ticket.priority}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${ticket.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                                            }`}>
-                                            {ticket.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-right pr-8">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleAction('Resolve', ticket.id)}
-                                                className={`size-9 rounded-xl flex items-center justify-center transition-all ${ticket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-600 cursor-not-allowed opacity-50' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white'
-                                                    }`}
-                                                disabled={ticket.status === 'Resolved'}
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">done_all</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide border ${ticket.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                ticket.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'
+                                                }`}>
+                                                <span className={`size-1.5 rounded-full ${ticket.priority === 'Critical' ? 'bg-red-500 animate-pulse' : 'bg-current'}`}></span>
+                                                {ticket.priority}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${ticket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
+                                                ticket.status === 'New' ? 'bg-violet-100 text-violet-700 animate-pulse' : 'bg-amber-50 text-amber-700'
+                                                }`}>
+                                                {ticket.status}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right pr-8">
+                                            <button className="size-8 rounded-xl bg-[#2D241E] text-white flex items-center justify-center shadow-lg shadow-orange-900/10 hover:scale-110 active:scale-95 transition-all ml-auto">
+                                                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                                             </button>
-                                            <button
-                                                onClick={() => setSelectedTicket(ticket)}
-                                                className="size-9 rounded-xl bg-[#2D241E] text-white flex items-center justify-center hover:bg-orange-600 transition-all"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">visibility</span>
-                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="py-20 text-center">
+                                        <div className="flex flex-col items-center justify-center opacity-50">
+                                            <div className="size-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-4">
+                                                <span className="material-symbols-outlined text-4xl text-gray-300">inbox</span>
+                                            </div>
+                                            <p className="text-sm font-black text-[#2D241E]">All Caught Up!</p>
+                                            <p className="text-[10px] font-bold text-[#897a70] mt-1">No tickets found in this category.</p>
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* System Info Bar */}
-            <div className="p-4 bg-[#2D241E] rounded-3xl text-white flex items-center justify-between border border-white/5 relative overflow-hidden group">
-                <div className="absolute right-0 top-0 size-32 bg-rose-500/10 blur-3xl group-hover:bg-rose-500/20 transition-colors"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                    <span className="material-symbols-outlined text-rose-400">psychiatry</span>
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Pro Tip for Admin</p>
-                        <p className="text-xs font-bold leading-tight">Resolve 'Critical' tickets within 2 hours to maintain platform rating above 4.8★</p>
+            {/* Ticket DNA Modal */}
+            {selectedTicket && <TicketDNAModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />}
+        </div>
+    );
+};
+
+// --- Sub-Component: Interactive Ticket Detail Modal ---
+const TicketDNAModal = ({ ticket, onClose }) => {
+    const [messages, setMessages] = useState([
+        { id: 1, text: `Hi, I'm facing an issue: ${ticket.issue}`, sender: 'user', time: '10:30 AM' },
+        { id: 2, text: 'We are looking into it. Please wait.', sender: 'bot', time: '10:31 AM' }
+    ]);
+    const [inputText, setInputText] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const chatEndRef = useRef(null);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSend = () => {
+        if (!inputText.trim()) return;
+        const newMsg = { id: Date.now(), text: inputText, sender: 'agent', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        setMessages(prev => [...prev, newMsg]);
+        setInputText('');
+
+        // Sim Bot Reply
+        setIsTyping(true);
+        setTimeout(() => {
+            setIsTyping(false);
+            setMessages(prev => [...prev, { id: Date.now() + 1, text: 'Ticket updated in system. Customer notified.', sender: 'sys', time: 'Just now' }]);
+        }, 1500);
+    };
+
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={onClose}></div>
+            <div className="bg-white rounded-[2.5rem] w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex">
+
+                {/* Texture */}
+                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+                {/* Left: Context Panel (Glass) */}
+                <div className="w-[350px] bg-white/60 backdrop-blur-xl border-r border-gray-100 p-8 flex flex-col gap-6 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="size-14 rounded-[1.2rem] bg-[#2D241E] text-white flex items-center justify-center text-xl font-black shadow-lg shadow-orange-900/20">
+                            {ticket.user.charAt(0)}
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-[#2D241E] leading-none tracking-tight">{ticket.user}</h3>
+                            <p className="text-[10px] font-bold text-[#897a70] mt-1.5 uppercase tracking-wide">Loyal Customer</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="p-5 bg-white rounded-[1.5rem] border border-gray-100 shadow-sm">
+                            <p className="text-[9px] uppercase font-black text-gray-400 mb-1 tracking-widest">Reported Issue</p>
+                            <p className="text-sm font-bold text-[#2D241E] leading-snug">{ticket.issue}</p>
+                        </div>
+                        <div className="p-5 bg-white rounded-[1.5rem] border border-gray-100 shadow-sm">
+                            <p className="text-[9px] uppercase font-black text-gray-400 mb-1 tracking-widest">Kitchen</p>
+                            <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px] text-orange-500">storefront</span>
+                                <p className="text-sm font-bold text-[#2D241E]">{ticket.kitchen}</p>
+                            </div>
+                        </div>
+                        <div className="p-5 bg-blue-50 rounded-[1.5rem] border border-blue-100 shadow-sm">
+                            <p className="text-[9px] uppercase font-black text-blue-400 mb-1 tracking-widest">AI Insight</p>
+                            <p className="text-xs font-bold text-blue-800 leading-relaxed">User churn risk high. Recommend immediate resolution within 30 mins to retain loyalty.</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-auto space-y-3">
+                        <button className="w-full py-4 bg-[#2D241E] text-white rounded-2xl font-black text-xs hover:bg-orange-600 transition-colors shadow-lg shadow-orange-900/20 uppercase tracking-widest">Mark Resolved</button>
+                        <button className="w-full py-4 bg-white border border-gray-200 text-[#2D241E] rounded-2xl font-black text-xs hover:bg-gray-50 transition-colors uppercase tracking-widest">Escalate Case</button>
                     </div>
                 </div>
-                <button className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-[10px] font-bold transition-all relative z-10">View Policies</button>
-            </div>
-            {/* Ticket DNA Resolution Modal - [NEW] */}
-            {selectedTicket && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setSelectedTicket(null)}></div>
-                    <div className="bg-white rounded-[3rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-black/5 flex flex-col max-h-[92vh]">
 
-                        {/* Modal Header [DNA STYLE] */}
-                        <div className="p-8 pb-4 flex justify-between items-start shrink-0">
+                {/* Right: Interactive Chat */}
+                <div className="flex-1 flex flex-col bg-[#FDFBF9] relative z-10">
+                    <div className="h-20 border-b border-gray-100 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                            </span>
                             <div>
-                                <h3 className="text-2xl font-black text-[#2D241E]">Ticket DNA</h3>
-                                <p className="text-[11px] font-bold text-[#897a70] mt-1">Complaint resolution & quality assurance tunnel</p>
+                                <p className="text-xs font-black text-[#2D241E] uppercase tracking-wide">Live Conversation</p>
+                                <p className="text-[10px] font-bold text-[#897a70]">Ticket #{ticket.id} • Priority Support</p>
                             </div>
-                            <button onClick={() => setSelectedTicket(null)} className="size-8 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
-                                <span className="material-symbols-outlined text-[18px]">close</span>
+                        </div>
+                        <button onClick={onClose} className="size-10 rounded-full bg-white border border-gray-100 hover:bg-gray-50 flex items-center justify-center transition-all shadow-sm">
+                            <span className="material-symbols-outlined text-[20px] text-[#5C4D42]">close</span>
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                        {messages.map((msg) => (
+                            <div key={msg.id} className={`flex ${msg.sender === 'agent' ? 'justify-end' : msg.sender === 'sys' ? 'justify-center' : 'justify-start'}`}>
+                                {msg.sender === 'sys' ? (
+                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-4 py-1.5 rounded-full border border-gray-200">{msg.text}</span>
+                                ) : (
+                                    <div className={`max-w-[75%] p-5 rounded-[1.5rem] shadow-sm relative group ${msg.sender === 'agent' ? 'bg-[#2D241E] text-white rounded-tr-sm' : 'bg-white text-[#2D241E] rounded-tl-sm border border-gray-100'}`}>
+                                        <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                                        <p className={`text-[9px] font-black mt-2 opacity-40 ${msg.sender === 'agent' ? 'text-white' : 'text-[#2D241E]'}`}>{msg.time}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                        {isTyping && (
+                            <div className="flex items-center gap-2 text-gray-400 ml-4">
+                                <span className="size-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                                <span className="size-1.5 bg-gray-400 rounded-full animate-bounce delay-100"></span>
+                                <span className="size-1.5 bg-gray-400 rounded-full animate-bounce delay-200"></span>
+                            </div>
+                        )}
+                        <div ref={chatEndRef} />
+                    </div>
+
+                    <div className="p-6 bg-white border-t border-gray-100 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+                        {/* Quick Responses */}
+                        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+                            {['Refund Processed', 'Apologies for delay', 'Sending replacement w/ complementary item'].map(txt => (
+                                <button key={txt} onClick={() => setInputText(txt)} className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-bold text-[#5C4D42] hover:bg-[#2D241E] hover:text-white transition-colors whitespace-nowrap shadow-sm">{txt}</button>
+                            ))}
+                        </div>
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                placeholder="Type your response..."
+                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-5 text-sm font-bold text-[#2D241E] shadow-inner focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all placeholder:text-gray-400"
+                            />
+                            <button onClick={handleSend} className="size-12 bg-[#FF5722] text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 hover:scale-105 active:scale-95 transition-all">
+                                <span className="material-symbols-outlined">send</span>
                             </button>
                         </div>
-
-                        {/* Tab Navigation */}
-                        <div className="px-8 mb-4 shrink-0 overflow-x-auto no-scrollbar">
-                            <div className="flex gap-1 bg-gray-50 p-1.5 rounded-[1.5rem] border border-black/5 w-fit">
-                                {[
-                                    { id: 'Intelligence', label: 'Intelligence', icon: 'psychology' },
-                                    { id: 'Chat', label: 'Interaction', icon: 'forum' },
-                                    { id: 'Order', label: 'Order Sync', icon: 'inventory' },
-                                    { id: 'Kitchen', label: 'Kitchen Hub', icon: 'storefront' },
-                                    { id: 'Audit', label: 'Resolution', icon: 'task_alt' },
-                                ].map(t => (
-                                    <button
-                                        key={t.id}
-                                        onClick={() => setModalTab(t.id)}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-tight transition-all whitespace-nowrap ${modalTab === t.id ? 'bg-[#2D241E] text-white shadow-lg' : 'text-[#897a70] hover:bg-white hover:text-[#2D241E]'}`}
-                                    >
-                                        <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
-                                        {t.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Modal Content */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pb-4 space-y-8">
-
-                            {/* Ticket Info Card */}
-                            <div className="p-5 bg-rose-50/50 border border-rose-100 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
-                                <div className="relative">
-                                    <div className="size-20 rounded-2xl bg-[#2D241E] flex flex-col items-center justify-center text-white shadow-lg border-2 border-white">
-                                        <span className="text-[10px] font-black opacity-40">TKT</span>
-                                        <span className="text-lg font-black italic">{selectedTicket.id.replace('TKT', '')}</span>
-                                    </div>
-                                    <div className={`absolute -bottom-2 -left-2 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase border-2 border-white shadow-sm ${selectedTicket.priority === 'Critical' ? 'bg-red-500' : 'bg-orange-500'}`}>{selectedTicket.priority}</div>
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-xl font-black text-[#2D241E] tracking-tight">{selectedTicket.user}</h4>
-                                        <span className={`text-[10px] font-black px-3 py-1 rounded-lg uppercase ${selectedTicket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>{selectedTicket.status}</span>
-                                    </div>
-                                    <p className="text-sm font-bold text-[#5C4D42] mt-1 italic">"{selectedTicket.issue}"</p>
-                                </div>
-                            </div>
-
-                            {modalTab === 'Intelligence' && (
-                                <div className="space-y-6 animate-[fadeIn_0.3s]">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-5 bg-white border border-gray-100 rounded-[2rem] space-y-2">
-                                            <p className="text-[10px] font-black text-[#897a70] uppercase">Kitchen Involved</p>
-                                            <div className="flex items-center gap-2">
-                                                <div className="size-2 rounded-full bg-violet-500" />
-                                                <p className="text-xs font-black text-[#2D241E]">{selectedTicket.kitchen}</p>
-                                            </div>
-                                        </div>
-                                        <div className="p-5 bg-white border border-gray-100 rounded-[2rem] space-y-2">
-                                            <p className="text-[10px] font-black text-[#897a70] uppercase">Reported Time</p>
-                                            <p className="text-xs font-black text-[#2D241E]">{selectedTicket.date}</p>
-                                        </div>
-                                    </div>
-                                    <div className="p-6 bg-gray-50 rounded-[2.5rem] space-y-4">
-                                        <p className="text-[10px] font-black text-[#897a70] uppercase tracking-widest ml-1">AI Recommendation</p>
-                                        <div className="p-4 bg-white rounded-2xl border-l-4 border-blue-500 shadow-sm">
-                                            <p className="text-[11px] font-bold text-[#2D241E] leading-relaxed">Based on history, {selectedTicket.user} responds well to <b>Partial Refunds</b>. Kitchen '{selectedTicket.kitchen}' has had 3 similar complaints this week.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {modalTab === 'Chat' && (
-                                <div className="space-y-4 animate-[fadeIn_0.3s]">
-                                    <div className="space-y-3 px-2">
-                                        <div className="flex justify-start">
-                                            <div className="max-w-[80%] bg-gray-100 p-4 rounded-2xl rounded-tl-none">
-                                                <p className="text-xs font-bold text-[#2D241E]">Hi, my tiffin is late by 40 mins. This is the 3rd time this week.</p>
-                                                <p className="text-[8px] text-[#897a70] font-black mt-1 uppercase">Customer • 12:45 PM</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-end">
-                                            <div className="max-w-[80%] bg-[#2D241E] text-white p-4 rounded-2xl rounded-tr-none shadow-lg">
-                                                <p className="text-xs font-medium">We extremely apologize, Rahul. We are syncing with the fleet agent immediately.</p>
-                                                <p className="text-[8px] text-white/40 font-black mt-1 uppercase">Support Bot • 12:46 PM</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="relative pt-4">
-                                        <input type="text" placeholder="Type administrative response..." className="w-full bg-gray-50 border-none px-5 py-4 rounded-2xl text-xs font-bold outline-none pr-12" />
-                                        <button className="absolute right-3 top-[26px] size-8 bg-[#FF5722] text-white rounded-lg flex items-center justify-center shadow-lg"><span className="material-symbols-outlined text-[18px]">send</span></button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {modalTab === 'Order' && (
-                                <div className="space-y-4 animate-[fadeIn_0.3s]">
-                                    <div className="p-6 bg-[#2D241E] rounded-[2.5rem] text-white flex justify-between items-center">
-                                        <div>
-                                            <p className="text-[10px] font-black text-white/40 uppercase">Related Order</p>
-                                            <p className="text-2xl font-black italic mt-1">#ORD-99021</p>
-                                        </div>
-                                        <button className="px-6 py-3 bg-white text-[#2D241E] rounded-xl text-[10px] font-black uppercase">View Hub</button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="p-5 bg-gray-50 rounded-[2rem] border border-black/5">
-                                            <p className="text-[10px] font-black text-[#897a70] uppercase mb-1">Status</p>
-                                            <span className="px-2 py-1 bg-emerald-100 text-emerald-600 text-[9px] font-black rounded uppercase">Delivered</span>
-                                        </div>
-                                        <div className="p-5 bg-gray-50 rounded-[2rem] border border-black/5">
-                                            <p className="text-[10px] font-black text-[#897a70] uppercase mb-1">Delivery Time</p>
-                                            <p className="text-xs font-black text-[#2D241E]">1:15 PM (Delayed)</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {modalTab === 'Audit' && (
-                                <div className="space-y-4 animate-[fadeIn_0.3s]">
-                                    <div className="p-6 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] space-y-4 text-center">
-                                        <div className="size-16 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-sm text-emerald-600"><span className="material-symbols-outlined text-3xl">verified</span></div>
-                                        <h4 className="text-lg font-black text-emerald-900">Final Resolution Flow</h4>
-                                        <div className="flex gap-2">
-                                            <button className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-lg shadow-emerald-600/20">Full Refund</button>
-                                            <button className="flex-1 py-4 bg-white border border-emerald-200 text-emerald-600 rounded-2xl text-[10px] font-black uppercase">Credit ₹50</button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 p-2">
-                                        <p className="text-[10px] font-black text-[#897a70] uppercase">Admin Decision History</p>
-                                        <div className="text-xs font-bold text-[#2D241E] flex items-center gap-2"><span className="size-1.5 rounded-full bg-[#2D241E]" /> Ticket opened via App</div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="p-8 pb-10 bg-white border-t border-gray-50 flex items-center justify-end gap-10 shrink-0">
-                            <button onClick={() => setSelectedTicket(null)} className="text-[12px] font-black text-[#897a70] hover:text-[#2D241E] transition-colors">Close</button>
-                            <button onClick={() => {
-                                toast.success('Ticket Resolution Synced');
-                                setSelectedTicket(null);
-                            }} className="px-12 py-5 bg-[#FF5722] text-white rounded-[1.5rem] text-[12px] font-black shadow-[0_10px_25px_-5px_rgba(255,87,34,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all">Close Ticket</button>
-                        </div>
                     </div>
-                </div>,
-                document.body
-            )}
-        </div>
+                </div>
+
+            </div>
+        </div>,
+        document.body
     );
 };
 

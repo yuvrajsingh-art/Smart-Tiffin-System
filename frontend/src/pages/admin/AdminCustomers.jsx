@@ -327,7 +327,7 @@ const AdminCustomers = () => {
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-sm font-black text-[#2D241E]">{cus.name}</p>
+                                                        <p className="text-xs font-black text-[#2D241E]">{cus.name}</p>
                                                         {cus.tags.includes('VIP') && (
                                                             <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-black rounded uppercase">VIP</span>
                                                         )}
@@ -615,6 +615,8 @@ const AdminCustomers = () => {
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setEditingCustomer(null)}></div>
                         <div className="bg-white rounded-[2.5rem] w-full max-w-xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex flex-col max-h-[90vh]">
+                            {/* Texture */}
+                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                             {/* Header */}
                             <div className="p-8 pb-2 flex justify-between items-start shrink-0">
@@ -658,7 +660,7 @@ const AdminCustomers = () => {
                                                 name="name"
                                                 type="text"
                                                 defaultValue={editingCustomer.name}
-                                                className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
+                                                className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none shadow-sm"
                                             />
                                         </div>
                                         <div className="space-y-1.5">
@@ -667,7 +669,7 @@ const AdminCustomers = () => {
                                                 name="phone"
                                                 type="text"
                                                 defaultValue={editingCustomer.phone || ''}
-                                                className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
+                                                className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none shadow-sm"
                                             />
                                         </div>
                                     </div>
@@ -677,7 +679,7 @@ const AdminCustomers = () => {
                                             name="email"
                                             type="email"
                                             defaultValue={editingCustomer.email}
-                                            className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
+                                            className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none shadow-sm"
                                         />
                                     </div>
                                 </div>
@@ -693,7 +695,7 @@ const AdminCustomers = () => {
                                         <textarea
                                             name="address"
                                             defaultValue={editingCustomer.address || ''}
-                                            className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none h-24 resize-none leading-relaxed"
+                                            className="w-full bg-white border border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none h-24 resize-none leading-relaxed shadow-sm"
                                             placeholder="Enter full delivery address..."
                                         />
                                     </div>
@@ -712,7 +714,7 @@ const AdminCustomers = () => {
                                                 <select
                                                     name="status"
                                                     defaultValue={editingCustomer.status}
-                                                    className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
+                                                    className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none appearance-none cursor-pointer shadow-sm"
                                                 >
                                                     {['Active', 'Paused', 'Inactive'].map(s => <option key={s} value={s}>{s}</option>)}
                                                 </select>
@@ -725,7 +727,7 @@ const AdminCustomers = () => {
                                                 <select
                                                     name="kyc"
                                                     defaultValue={editingCustomer.kyc}
-                                                    className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 transition-all outline-none appearance-none cursor-pointer"
+                                                    className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none appearance-none cursor-pointer shadow-sm"
                                                 >
                                                     {['Verified', 'Pending', 'Not Started', 'Rejected'].map(k => <option key={k} value={k}>{k}</option>)}
                                                 </select>
@@ -780,6 +782,8 @@ const AdminCustomers = () => {
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowAddCustomerModal(false)}></div>
                         <div className="bg-white rounded-[2.5rem] w-full max-w-xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex flex-col max-h-[90vh]">
+                            {/* Texture */}
+                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                             {/* Header - Clean & White */}
                             <div className="p-8 pb-2 flex justify-between items-start shrink-0">

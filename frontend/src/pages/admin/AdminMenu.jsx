@@ -173,7 +173,7 @@ const AdminMenu = () => {
                 type="text"
                 value={menuData[id]}
                 onChange={(e) => handleInputChange(id, e.target.value)}
-                className="w-full bg-white/40 border border-white/60 rounded-xl px-4 py-2.5 text-sm font-bold text-[#201c1a] focus:bg-white focus:border-[#2D241E] focus:ring-4 focus:ring-[#2D241E]/5 outline-none transition-all shadow-sm group-hover:border-[#2D241E]/20"
+                className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-[#201c1a] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm group-hover:border-orange-200/50"
                 placeholder={placeholder}
             />
         </div>
@@ -183,18 +183,22 @@ const AdminMenu = () => {
     const LogsModal = () => {
         if (!showLogsModal) return null;
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-[fadeIn_0.2s]">
-                <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-white/50">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-black text-[#2D241E] flex items-center gap-2">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.2s]" onClick={() => setShowLogsModal(false)}></div>
+                <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl border border-white/20 relative z-10 animate-[scaleIn_0.2s] overflow-hidden">
+                    {/* Texture */}
+                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+                    <div className="flex justify-between items-center mb-6 relative z-10">
+                        <h3 className="text-xl font-black text-[#2D241E] flex items-center gap-2 tracking-tight">
                             <span className="material-symbols-outlined text-orange-500">history_edu</span>
                             System Action Logs
                         </h3>
-                        <button onClick={() => setShowLogsModal(false)} className="size-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                            <span className="material-symbols-outlined text-[20px]">close</span>
+                        <button onClick={() => setShowLogsModal(false)} className="size-9 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors">
+                            <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
                         </button>
                     </div>
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 relative z-10">
                         {[
                             { action: 'Approved Menu', kitchen: 'Spicy Treats', time: '2 mins ago', icon: 'check_circle', color: 'text-emerald-500' },
                             { action: 'Updated Settings', kitchen: 'System', time: '15 mins ago', icon: 'settings', color: 'text-blue-500' },
@@ -202,15 +206,15 @@ const AdminMenu = () => {
                             { action: 'Approved Menu', kitchen: 'Ghar ka Swad', time: '2 hours ago', icon: 'check_circle', color: 'text-emerald-500' },
                             { action: 'Bulk Approval', kitchen: '5 Kitchens', time: 'Yesterday', icon: 'done_all', color: 'text-purple-500' },
                         ].map((log, i) => (
-                            <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                <div className={`p-2 bg-white rounded-lg shadow-sm ${log.color}`}>
+                            <div key={i} className="flex items-center gap-4 p-3 bg-gray-50/50 border border-gray-100 rounded-2xl hover:bg-white hover:shadow-sm transition-all">
+                                <div className={`p-2 bg-white rounded-xl shadow-sm border border-gray-100 ${log.color}`}>
                                     <span className="material-symbols-outlined text-[18px]">{log.icon}</span>
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xs font-bold text-[#2D241E]">{log.action}</p>
-                                    <p className="text-[10px] text-[#897a70]">{log.kitchen}</p>
+                                    <p className="text-xs font-black text-[#2D241E]">{log.action}</p>
+                                    <p className="text-[10px] font-bold text-[#897a70]">{log.kitchen}</p>
                                 </div>
-                                <span className="text-[9px] font-bold text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100">{log.time}</span>
+                                <span className="text-[9px] font-bold text-[#897a70] bg-white px-2 py-1 rounded-lg border border-gray-100">{log.time}</span>
                             </div>
                         ))}
                     </div>
@@ -360,7 +364,7 @@ const AdminMenu = () => {
                                             <span className="material-symbols-outlined text-[16px] text-orange-500 animate-pulse">edit</span>
                                         )}
                                     </div>
-                                    <h3 className="font-black text-[#2D241E] text-sm">{kitchen.name}</h3>
+                                    <h3 className="font-black text-[#2D241E] text-xs">{kitchen.name}</h3>
                                     <p className="text-[10px] font-bold text-[#897a70]">{kitchen.plan}</p>
                                 </div>
                             ))}

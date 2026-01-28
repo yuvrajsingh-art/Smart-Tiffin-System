@@ -60,41 +60,55 @@ const AdminLayout = () => {
             />
 
             {/* Sidebar */}
-            <aside className={`fixed lg:static top-0 left-0 bottom-0 w-72 bg-white/50 backdrop-blur-xl border-r border-[#2D241E]/5 z-50 flex flex-col transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+            <aside className={`fixed lg:static top-0 left-0 bottom-0 w-64 bg-white/50 backdrop-blur-xl border-r border-[#2D241E]/5 z-50 flex flex-col transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 {/* Logo Area */}
-                <div className="h-24 flex items-center px-8 flex-shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="size-10 bg-[#2D241E] rounded-xl flex items-center justify-center text-orange-400 shadow-xl shadow-orange-900/10">
-                            <span className="material-symbols-outlined text-[24px]">admin_panel_settings</span>
+                <div className="h-20 flex items-center px-6 flex-shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <div className="size-8 bg-[#2D241E] rounded-lg flex items-center justify-center text-orange-400 shadow-xl shadow-orange-900/10">
+                            <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
                         </div>
                         <div>
-                            <span className="block text-lg font-black tracking-tight text-[#2D241E] leading-none">Smart Tiffin</span>
-                            <span className="text-[10px] font-bold tracking-widest uppercase text-[#5C4D42]/70 mt-1">Admin Portal</span>
+                            <span className="block text-base font-black tracking-tight text-[#2D241E] leading-none">Smart Tiffin</span>
+                            <span className="text-[9px] font-bold tracking-widest uppercase text-[#5C4D42]/70 mt-0.5">Admin Portal</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Nav Links */}
-                <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
                     {navItems.map((item) => (
-                        <SidebarItem key={item.to} {...item} active={location.pathname === item.to} />
+                        <Link
+                            key={item.to}
+                            to={item.to}
+                            className={`
+                                flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-300 group
+                                ${location.pathname === item.to
+                                    ? 'bg-[#2D241E] text-white shadow-lg shadow-[#2D241E]/20 ring-1 ring-white/10'
+                                    : 'text-[#5C4D42] font-medium hover:bg-[#2D241E]/5 hover:text-[#2D241E]'
+                                }
+                            `}
+                        >
+                            <span className={`material-symbols-outlined text-[18px] ${location.pathname === item.to ? 'text-orange-400' : 'text-[#5C4D42] group-hover:text-[#2D241E] transition-colors'}`}>{item.icon}</span>
+                            <span className="text-xs font-bold tracking-wide">{item.label}</span>
+                            {location.pathname === item.to && <span className="ml-auto w-1 h-1 rounded-full bg-orange-400 animate-pulse"></span>}
+                        </Link>
                     ))}
                 </nav>
 
                 {/* User/Logout Area */}
-                <div className="p-4 border-t border-[#2D241E]/5 bg-white/20 space-y-2">
+                <div className="p-3 border-t border-[#2D241E]/5 bg-white/20 space-y-1.5">
                     <button
                         onClick={() => setShowLogoutModal(true)}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-600/80 font-medium hover:bg-red-50 hover:text-red-600 transition-all hover:shadow-sm"
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-red-600/80 font-bold hover:bg-red-50 hover:text-red-600 transition-all hover:shadow-sm"
                     >
-                        <span className="material-symbols-outlined text-[20px]">logout</span>
-                        <span className="text-sm">Sign Out</span>
+                        <span className="material-symbols-outlined text-[18px]">logout</span>
+                        <span className="text-xs">Sign Out</span>
                     </button>
-                    <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#2D241E]/5 border border-[#2D241E]/5">
-                        <img alt="Admin" className="size-8 rounded-full border border-white shadow-sm object-cover" src="https://api.dicebear.com/7.x/avataaars/svg?seed=AdminBoss" />
+                    <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#2D241E]/5 border border-[#2D241E]/5">
+                        <img alt="Admin" className="size-7 rounded-full border border-white shadow-sm object-cover" src="https://api.dicebear.com/7.x/avataaars/svg?seed=AdminBoss" />
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-[#2D241E] truncate">Administrator</p>
-                            <p className="text-[10px] text-[#5C4D42] truncate">admin@smarttiffin.com</p>
+                            <p className="text-[11px] font-bold text-[#2D241E] truncate">Administrator</p>
+                            <p className="text-[9px] text-[#5C4D42] truncate">admin@smarttiffin.com</p>
                         </div>
                     </div>
                 </div>

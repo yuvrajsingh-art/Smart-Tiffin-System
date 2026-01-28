@@ -338,7 +338,7 @@ const AdminProviders = () => {
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-sm font-black text-[#2D241E]">{pro.name}</p>
+                                                        <p className="text-xs font-black text-[#2D241E]">{pro.name}</p>
                                                         <span className={`px-1.5 py-0.5 text-[8px] font-black rounded uppercase ${pro.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : pro.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
                                                             {pro.status}
                                                         </span>
@@ -453,6 +453,8 @@ const AdminProviders = () => {
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-sm animate-[fadeIn_0.3s]" onClick={() => setShowRequestsModal(false)}></div>
                     <div className="bg-white rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex flex-col max-h-[80vh]">
+                        {/* Texture */}
+                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                         {/* Compact Header */}
                         <div className="p-6 pb-4 flex justify-between items-center bg-[#2D241E] text-white shrink-0">
@@ -525,6 +527,8 @@ const AdminProviders = () => {
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setSelectedKitchen(null)}></div>
                     <div className="bg-white rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex flex-col max-h-[92vh]">
+                        {/* Texture */}
+                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                         {/* Modal Header */}
                         <div className="p-8 pb-4 flex justify-between items-start shrink-0">
@@ -724,6 +728,8 @@ const AdminProviders = () => {
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => { setShowRegisterModal(false); setEditingKitchen(null); }}></div>
                     <div className="bg-white rounded-[2.5rem] w-full max-w-xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex flex-col max-h-[90vh]">
+                        {/* Texture */}
+                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
                         {/* Header */}
                         <div className="p-8 pb-4 flex justify-between items-start shrink-0">
@@ -767,25 +773,25 @@ const AdminProviders = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Kitchen Name</label>
-                                            <input name="name" type="text" defaultValue={editingKitchen?.name} className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 outline-none" placeholder="e.g. Annapurna Rasoi" required />
+                                            <input name="name" type="text" defaultValue={editingKitchen?.name} className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none shadow-sm" placeholder="e.g. Annapurna Rasoi" required />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">FSSAI License No.</label>
-                                            <input name="fssai" type="text" defaultValue={editingKitchen?.fssai} className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 outline-none" placeholder="14-digit number" required />
+                                            <input name="fssai" type="text" defaultValue={editingKitchen?.fssai} className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none shadow-sm" placeholder="14-digit number" required />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-3 gap-3">
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">City</label>
-                                            <input name="city" type="text" defaultValue={editingKitchen?.city || 'Indore'} className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 outline-none" />
+                                            <input name="city" type="text" defaultValue={editingKitchen?.city || 'Indore'} className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none shadow-sm" />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Pincode</label>
-                                            <input name="pincode" type="text" defaultValue={editingKitchen?.pincode} className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 outline-none" placeholder="452001" required />
+                                            <input name="pincode" type="text" defaultValue={editingKitchen?.pincode} className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none shadow-sm" placeholder="452001" required />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black text-[#897a70] uppercase ml-3 tracking-widest">Type</label>
-                                            <select name="type" defaultValue={editingKitchen?.type} className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 outline-none appearance-none">
+                                            <select name="type" defaultValue={editingKitchen?.type} className="w-full bg-white border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 transition-all outline-none appearance-none shadow-sm">
                                                 <option>Pure Veg</option>
                                                 <option>Veg/Non-Veg</option>
                                                 <option>Diet Special</option>
