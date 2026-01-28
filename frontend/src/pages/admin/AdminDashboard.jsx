@@ -34,25 +34,28 @@ const pendingApprovals = [
     { id: 4, type: 'Plan', name: 'Home Taste', req: 'Diet Special (₹4.5k)', time: '30m' },
 ];
 
-const StatCard = ({ title, value, subtext, icon, trend, trendValue, color, delay, onClick }) => (
+const StatCard = ({ title, value, icon, trend, trendValue, color, delay, onClick }) => (
     <div
         onClick={onClick}
-        className={`bg-white/70 backdrop-blur-2xl p-4 rounded-2xl border border-white/60 shadow-md shadow-black/[0.02] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group relative overflow-hidden animate-[fadeIn_0.6s_ease-out] cursor-pointer`}
+        className="bg-white/70 backdrop-blur-2xl p-5 rounded-[2.5rem] border border-white/60 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden animate-[fadeIn_0.6s_ease-out] cursor-pointer"
         style={{ animationDelay: delay }}
     >
-        <div className={`absolute -right-6 -top-6 w-20 h-20 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-2xl ${color.replace('text-', 'bg-')}`}></div>
-        <div className="flex justify-between items-start mb-2 relative z-10">
-            <div className={`size-9 rounded-xl flex items-center justify-center shadow-md shadow-black/5 ${color} bg-current`}>
-                <span className="material-symbols-outlined text-[18px] text-white notranslate">{icon}</span>
+        <div className={`absolute -right-8 -top-8 size-24 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-700 blur-3xl ${color.replace('text-', 'bg-')}`}></div>
+        <div className="flex justify-between items-start mb-4 relative z-10">
+            <div className={`size-10 rounded-2xl flex items-center justify-center shadow-lg shadow-black/5 ${color} bg-white border border-gray-100`}>
+                <span className="material-symbols-outlined text-[20px] notranslate">{icon}</span>
             </div>
-            <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${trend === 'up' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
-                <span className="material-symbols-outlined text-[10px]">{trend === 'up' ? 'north_east' : 'south_east'}</span>
+            <div className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wider border flex items-center gap-1 shadow-sm ${trend === 'up' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                <span className="material-symbols-outlined text-[11px]">{trend === 'up' ? 'north_east' : 'south_east'}</span>
                 {trendValue}
             </div>
         </div>
         <div className="relative z-10">
-            <h3 className="text-2xl font-black text-[#1a1614] tracking-tight mb-0.5 group-hover:scale-105 transition-transform origin-left duration-300">{value}</h3>
-            <p className="text-[#897a70] text-[10px] font-semibold tracking-wide flex items-center gap-1.5 uppercase">{title}</p>
+            <h3 className="text-3xl font-bold text-[#2D241E] tracking-tight mb-1.5 group-hover:scale-105 transition-transform origin-left duration-500">{value}</h3>
+            <p className="text-[#897a70] text-xs font-bold tracking-wider flex items-center gap-2 uppercase opacity-60">
+                <span className={`size-1.5 rounded-full ${color.replace('text-', 'bg-')}`}></span>
+                {title}
+            </p>
         </div>
     </div>
 );
@@ -87,79 +90,127 @@ const AdminDashboard = () => {
                 loading: `Approving ${name}...`,
                 success: `${name} has been approved!`,
                 error: 'Process failed.',
-            }
+            },
+            { style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' } }
         );
         setApprovals(approvals.filter(a => a.id !== id));
     };
 
     const sendBroadcast = () => {
         if (!broadcastMsg) return toast.error('Message cannot be empty');
-        toast.success(`Broadcast sent to all users/providers!`, { icon: '📣' });
+        toast.success(`Broadcast sent to all users/providers!`, {
+            icon: '📣',
+            style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
+        });
         setShowBroadcast(false);
         setBroadcastMsg('');
     };
     return (
-        <div className="space-y-4 max-w-[1600px] mx-auto min-h-full pb-4">
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
+            {/* Texture Background */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
-            {/* 1. Header & Quick Alerts */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 animate-[fadeIn_0.5s]">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <div>
-                        <h2 className="text-xl font-black text-[#2D241E] tracking-tight">Super Admin Console</h2>
-                        <p className="text-[#5C4D42] text-xs font-medium opacity-80">System Overview • {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</p>
-                    </div>
-                    <div className="relative group">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">search</span>
-                        <input
-                            type="text"
-                            placeholder="Quick search user/kitchen..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleGlobalSearch}
-                            className="pl-10 pr-4 py-2 bg-white/60 border border-white/50 rounded-2xl text-[10px] font-bold outline-none focus:ring-2 focus:ring-[#2D241E]/10 w-[240px] transition-all"
-                        />
-                    </div>
+            {/* 1. Global Ticker (Top) */}
+            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
+                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Master Console</span>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-xl text-[10px] font-bold text-rose-700 animate-pulse">
-                        <span className="material-symbols-outlined text-[14px]">warning</span>
-                        2 Critical Alerts
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/60 p-1 rounded-xl border border-white/50 backdrop-blur-md shadow-sm">
-                        <button
-                            onClick={() => navigate('/admin/dashboard')}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-[#2D241E] text-white shadow-sm"
-                        >
-                            Live
-                        </button>
-                        <button
-                            onClick={() => navigate('/admin/reports')}
-                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#5C4D42] hover:bg-white/80"
-                        >
-                            Reports
-                        </button>
-                    </div>
+                <div className="flex gap-8 animate-[marquee_30s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
+                    {[
+                        "All systems operational • Server Cluster: US-WEST-2",
+                        "Real-time Intelligence Hub Active",
+                        "Security Protocols: Level 9 Verified",
+                        "Global Load: 42% • Optimized",
+                        "Database Sync: 100% Successful"
+                    ].map((item, i) => (
+                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
+                            <span className="size-1 bg-white/20 rounded-full"></span>
+                            {item}
+                        </span>
+                    ))}
                 </div>
             </div>
 
-            {/* 2. Key Metrics Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 2. Golden Header Block */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Dashboard Ops</h1>
+                        <span className="px-2 py-0.5 bg-[#2D241E] text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-black/10">MASTER_NODE</span>
+                    </div>
+                    <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-emerald-500"></span>
+                        Real-time Intelligence Hub • {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="relative group">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px] group-focus-within:text-[#2D241E] transition-colors">search</span>
+                        <input
+                            type="text"
+                            placeholder="QUICK SEARCH ENTITIES..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={handleGlobalSearch}
+                            className="pl-10 pr-4 py-3 bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl text-[10px] font-bold outline-none focus:ring-4 focus:ring-[#2D241E]/5 w-[280px] transition-all uppercase placeholder:text-gray-300 shadow-lg"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 bg-white/70 backdrop-blur-xl p-1 rounded-2xl border border-white/60 shadow-lg">
+                        <button className="px-5 py-2 rounded-xl text-[10px] font-bold bg-[#2D241E] text-white shadow-xl shadow-black/20 uppercase tracking-wider">Live View</button>
+                        <button onClick={() => navigate('/admin/reports')} className="px-5 py-2 rounded-xl text-[10px] font-bold text-[#5C4D42] hover:bg-white/80 uppercase tracking-wider transition-all">Report Hub</button>
+                    </div>
+                    <button onClick={() => setShowBroadcast(true)} className="size-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/20 hover:scale-110 active:scale-95 transition-all">
+                        <span className="material-symbols-outlined text-[20px]">campaign</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Remove the old Ticker below header */}
+            <div className="flex gap-4 overflow-hidden py-3 px-6 bg-[#2D241E] rounded-[1.5rem] shadow-2xl relative group">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+                {[
+                    { label: 'Latency', val: '14ms', icon: 'bolt', col: 'text-emerald-400' },
+                    { label: 'Ops Load', val: '2.4%', icon: 'analytics', col: 'text-blue-400' },
+                    { label: 'Buffer', val: '99.9%', icon: 'check_circle', col: 'text-indigo-400' },
+                    { label: 'Indore_Node', val: 'v2.4.0', icon: 'dns', col: 'text-orange-400' },
+                ].map((stat, i) => (
+                    <div key={i} className="flex items-center gap-2.5 shrink-0 border-r border-white/10 pr-8 last:border-0">
+                        <span className={`material-symbols-outlined text-[15px] ${stat.col}`}>{stat.icon}</span>
+                        <div>
+                            <p className="text-xs font-bold text-white/30 uppercase tracking-wider">{stat.label}</p>
+                            <p className="text-xs font-bold text-white">{stat.val}</p>
+                        </div>
+                    </div>
+                ))}
+                <div className="flex-1"></div>
+                <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-lg">
+                    <span className="size-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">2 Alert Flags</span>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard
-                    title="Total Revenue"
-                    value="₹12.4L"
+                    title="Gross Revenue"
+                    value="₹12,41,802"
                     trend="up"
-                    trendValue="18%"
-                    icon="currency_rupee"
+                    trendValue="+18.4%"
+                    icon="payments"
                     color="text-emerald-600"
                     delay="0ms"
                     onClick={() => navigate('/admin/finance')}
                 />
                 <StatCard
-                    title="Active Subs"
+                    title="Active Members"
                     value="1,842"
                     trend="up"
-                    trendValue="120 New"
-                    icon="card_membership"
+                    trendValue="+12.5%"
+                    icon="group"
                     color="text-blue-600"
                     delay="100ms"
                     onClick={() => navigate('/admin/customers')}
@@ -168,18 +219,18 @@ const AdminDashboard = () => {
                     title="Live Orders"
                     value="428"
                     trend="up"
-                    trendValue="Lunch"
-                    icon="soup_kitchen"
+                    trendValue="RUSH"
+                    icon="lunch_dining"
                     color="text-orange-500"
                     delay="200ms"
                     onClick={() => navigate('/admin/orders')}
                 />
                 <StatCard
-                    title="Providers"
-                    value="15"
+                    title="Partner Nodes"
+                    value="15/22"
                     trend="up"
-                    trendValue="2 Pending"
-                    icon="storefront"
+                    trendValue="ACTIVE"
+                    icon="hub"
                     color="text-violet-600"
                     delay="300ms"
                     onClick={() => navigate('/admin/providers')}
@@ -190,134 +241,135 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
                 {/* 3.1 Live Operations / Delivery Status (Width: 3/12) */}
-                <div className="lg:col-span-3 bg-white/70 backdrop-blur-xl p-4 rounded-[1.5rem] border border-white/60 shadow-lg flex flex-col h-[340px]">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-bold text-[#2D241E] flex items-center gap-2">
+                <div className="lg:col-span-3 bg-white/70 backdrop-blur-xl p-5 rounded-[2.5rem] border border-white/60 shadow-lg flex flex-col h-[380px] relative overflow-hidden group">
+                    <div className="absolute -top-24 -right-24 size-48 bg-orange-500/5 rounded-full blur-3xl group-hover:bg-orange-500/10 transition-colors"></div>
+                    <div className="flex items-center justify-between mb-6 relative z-10">
+                        <h3 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider flex items-center gap-2">
                             <span className="size-2 rounded-full bg-red-500 animate-pulse"></span>
-                            Live Ops
+                            Live Delivery Ops
                         </h3>
-                        <span className="text-[10px] font-bold text-[#5C4D42]/60">Lunch Rush</span>
+                        <span className="text-xs font-bold text-[#897a70] uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded-lg italic">Lunch_Pulse</span>
                     </div>
 
-                    <div className="flex-1 flex flex-col justify-center space-y-6 relative">
-                        {/* Progress Circle Visual */}
-                        <div className="relative size-32 mx-auto">
+                    <div className="flex-1 flex flex-col justify-center space-y-8 relative z-10">
+                        {/* Refined Progress Circle */}
+                        <div className="relative size-40 mx-auto">
                             <svg className="size-full rotate-[-90deg]" viewBox="0 0 36 36">
-                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E5E7EB" strokeWidth="3" />
-                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#FB923C" strokeWidth="3" strokeDasharray="75, 100" className="animate-[dash_1s_ease-out]" />
+                                <circle cx="18" cy="18" r="16" fill="transparent" stroke="#E5E7EB60" strokeWidth="2.5" />
+                                <circle cx="18" cy="18" r="16" fill="transparent" stroke="#FB923C" strokeWidth="2.5" strokeDasharray="75, 100" strokeLinecap="round" className="animate-[dash_1.5s_ease-out]" />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-2xl font-black text-[#2D241E]">75%</span>
-                                <span className="text-[9px] font-bold text-[#5C4D42] uppercase">Delivered</span>
+                                <span className="text-4xl font-bold text-[#2D241E] tracking-tight">75%</span>
+                                <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider mt-1">Completion</span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 text-center pb-2">
-                            <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-100">
-                                <p className="text-[10px] text-emerald-600 font-bold mb-0.5">Done</p>
-                                <p className="text-sm font-black text-[#2D241E]">320</p>
-                            </div>
-                            <div className="p-2 bg-orange-50 rounded-xl border border-orange-100">
-                                <p className="text-[10px] text-orange-600 font-bold mb-0.5">Route</p>
-                                <p className="text-sm font-black text-[#2D241E]">85</p>
-                            </div>
-                            <div className="p-2 bg-gray-50 rounded-xl border border-gray-100">
-                                <p className="text-[10px] text-gray-500 font-bold mb-0.5">Left</p>
-                                <p className="text-sm font-black text-[#2D241E]">23</p>
-                            </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { label: 'Settled', val: '320', col: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                { label: 'Transit', val: '85', col: 'text-orange-600', bg: 'bg-orange-50' },
+                                { label: 'Staged', val: '23', col: 'text-gray-500', bg: 'bg-gray-50' },
+                            ].map((s, i) => (
+                                <div key={i} className={`p-3 ${s.bg} rounded-2xl border border-white flex flex-col items-center justify-center shadow-sm`}>
+                                    <p className={`text-[10px] ${s.col} font-bold uppercase tracking-tight mb-1`}>{s.label}</p>
+                                    <p className="text-base font-bold text-[#2D241E]">{s.val}</p>
+                                </div>
+                            ))}
                         </div>
                         <button
                             onClick={() => navigate('/admin/orders')}
-                            className="w-full py-2 bg-[#2D241E] text-white text-[10px] font-black rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-black/5"
+                            className="w-full py-4 bg-[#2D241E] text-white text-xs font-bold rounded-2xl hover:bg-orange-600 transition-all shadow-xl shadow-black/10 uppercase tracking-wider flex items-center justify-center gap-2"
                         >
-                            View Live Tracker
+                            Open Command Tracker
+                            <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                         </button>
                     </div>
                 </div>
 
                 {/* 3.2 Financial & Growth Graph (Width: 6/12) */}
-                <div className="lg:col-span-6 bg-white/70 backdrop-blur-xl p-5 rounded-[1.5rem] border border-white/60 shadow-lg flex flex-col h-[340px]">
-                    <div className="flex justify-between items-center mb-4">
+                <div className="lg:col-span-6 bg-white/70 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/60 shadow-lg flex flex-col h-[380px] relative overflow-hidden group">
+                    <div className="absolute -bottom-24 -left-24 size-48 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors"></div>
+                    <div className="flex justify-between items-center mb-6 relative z-10">
                         <div>
-                            <h3 className="text-sm font-bold text-[#2D241E]">System Growth</h3>
-                            <p className="text-[10px] text-[#5C4D42]">Revenue vs Active Subs</p>
+                            <h3 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider italic">System Growth Matrix</h3>
+                            <p className="text-xs text-[#897a70] font-bold uppercase tracking-wider mt-0.5 opacity-80">Revenue Volatility vs Node Expansion</p>
                         </div>
                         <div className="flex items-center gap-4">
-                            <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <div className="flex bg-white/80 p-1 rounded-xl shadow-sm border border-gray-100">
                                 {['D', 'W', 'M'].map(t => (
-                                    <button key={t} className={`px-2 py-0.5 rounded text-[9px] font-bold ${t === 'W' ? 'bg-white text-[#2D241E] shadow-sm' : 'text-[#897a70]'}`}>{t}</button>
+                                    <button key={t} className={`px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider transition-all ${t === 'W' ? 'bg-[#2D241E] text-white shadow-lg shadow-black/20' : 'text-[#897a70] hover:text-[#2D241E]'}`}>{t}</button>
                                 ))}
-                            </div>
-                            <div className="flex gap-2">
-                                <span className="size-2 rounded-full bg-orange-500"></span> <span className="text-[10px] font-bold">Rev</span>
-                                <span className="size-2 rounded-full bg-blue-500"></span> <span className="text-[10px] font-bold">Users</span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex-1 w-full min-h-0 -ml-2">
+                    <div className="flex-1 w-full min-h-0 relative z-10">
+                        <div className="absolute top-0 right-0 flex gap-4 pr-4">
+                            <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-orange-500 shadow-lg"></span><span className="text-xs font-bold uppercase tracking-wider text-[#5C4D42]">Revenue</span></div>
+                            <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-blue-500 shadow-lg"></span><span className="text-xs font-bold uppercase tracking-wider text-[#5C4D42]">Subs</span></div>
+                        </div>
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={salesData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                            <AreaChart data={salesData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#FB923C" stopOpacity={0.2} />
+                                        <stop offset="5%" stopColor="#FB923C" stopOpacity={0.4} />
                                         <stop offset="95%" stopColor="#FB923C" stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
+                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
                                         <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB60" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 9 }} dy={5} />
-                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 9 }} width={30} />
-                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 9 }} width={30} />
+                                <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#E5E7EB" opacity={0.5} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#897a70', fontSize: 9, fontWeight: 900 }} dy={10} />
+                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#897a70', fontSize: 9, fontWeight: 900 }} width={40} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#1a1614', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '10px', padding: '8px' }}
-                                    cursor={{ strokeDasharray: '4 4' }}
+                                    contentStyle={{ backgroundColor: '#2D241E', borderRadius: '16px', border: 'none', color: '#fff', fontSize: '9px', fontWeight: '900', padding: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                                    cursor={{ stroke: '#2D241E', strokeWidth: 1, strokeDasharray: '4 4' }}
                                 />
-                                <Area yAxisId="left" type="monotone" dataKey="sales" stroke="#FB923C" strokeWidth={2} fill="url(#colorRev)" />
-                                <Area yAxisId="right" type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={2} fill="url(#colorUsers)" />
+                                <Area yAxisId="left" type="monotone" dataKey="sales" stroke="#FB923C" strokeWidth={3} fill="url(#colorRev)" />
+                                <Area yAxisId="left" type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={3} fill="url(#colorUsers)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* 3.3 Approvals & Alerts (Width: 3/12) */}
-                <div className="lg:col-span-3 bg-white/70 backdrop-blur-xl p-4 rounded-[1.5rem] border border-white/60 shadow-lg flex flex-col h-[340px]">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-bold text-[#2D241E]">Action Needed</h3>
-                        <span className="flex items-center justify-center bg-red-100 text-red-600 font-bold text-[10px] px-2 py-0.5 rounded-full">3</span>
+                <div className="lg:col-span-3 bg-white/70 backdrop-blur-xl p-5 rounded-[2.5rem] border border-white/60 shadow-lg flex flex-col h-[380px] relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 size-full bg-[#F5F2EB]/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <div className="flex items-center justify-between mb-6 relative z-10">
+                        <h3 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Approval Queue</h3>
+                        <span className="flex items-center justify-center bg-rose-500 text-white font-bold text-xs px-2 py-0.5 rounded-lg shadow-lg shadow-rose-500/20">{approvals.length}</span>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-                        <div className="space-y-3">
-                            {/* Approvals */}
-                            <div className="text-[10px] font-bold text-[#5C4D42]/60 uppercase tracking-wider mb-2">Pending Approvals</div>
+                    <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar relative z-10">
+                        <div className="space-y-4">
                             {approvals.length === 0 ? (
-                                <div className="text-center py-8 opacity-40">
-                                    <span className="material-symbols-outlined text-4xl mb-2">check_circle</span>
-                                    <p className="text-[10px] font-bold">All clear!</p>
+                                <div className="text-center py-16">
+                                    <div className="size-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+                                        <span className="material-symbols-outlined text-emerald-500 text-3xl">done_all</span>
+                                    </div>
+                                    <p className="text-xs font-bold text-[#2D241E] uppercase tracking-wider italic opacity-40">All Requests Synced</p>
                                 </div>
                             ) : approvals.map((item) => (
-                                <div key={item.id} className="p-2.5 bg-white/50 rounded-xl border border-white/40 hover:bg-white transition-all cursor-pointer group">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-white ${item.type === 'Provider' ? 'bg-violet-500' :
-                                                item.type === 'Menu' ? 'bg-orange-500' :
-                                                    item.type === 'Plan' ? 'bg-indigo-500' :
-                                                        'bg-red-500'
+                                <div key={item.id} className="p-3.5 bg-white border border-gray-100 rounded-2xl hover:border-orange-200 hover:shadow-md transition-all group/card cursor-pointer">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg text-white shadow-sm uppercase tracking-wider ${item.type === 'Provider' ? 'bg-violet-500' :
+                                            item.type === 'Menu' ? 'bg-orange-500' :
+                                                item.type === 'Plan' ? 'bg-indigo-500' :
+                                                    'bg-rose-500'
                                             }`}>{item.type}</span>
-                                        <span className="text-[9px] text-[#5C4D42]">{item.time} ago</span>
+                                        <span className="text-[10px] font-bold text-[#897a70] uppercase italic">{item.time}</span>
                                     </div>
-                                    <p className="text-xs font-bold text-[#2D241E] leading-tight">{item.name}</p>
-                                    <p className="text-[10px] text-[#5C4D42]">{item.req}</p>
-                                    <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <p className="text-sm font-bold text-[#2D241E] leading-tight mb-1">{item.name}</p>
+                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{item.req}</p>
+                                    <div className="flex gap-2 mt-4 opacity-0 group-hover/card:opacity-100 transition-all translate-y-2 group-hover/card:translate-y-0">
                                         <button
                                             onClick={() => handleApprove(item.id, item.name)}
-                                            className="flex-1 py-1 bg-[#2D241E] text-white text-[9px] font-bold rounded hover:bg-emerald-600 transition-colors"
+                                            className="flex-1 py-2 bg-[#2D241E] text-white text-[10px] font-bold rounded-xl hover:bg-emerald-600 transition-all uppercase tracking-wider"
                                         >
                                             Approve
                                         </button>
-                                        <button className="px-2 py-1 bg-gray-200 text-[#5C4D42] text-[9px] font-bold rounded">View</button>
+                                        <button className="px-4 py-2 bg-gray-50 border border-gray-100 text-[#5C4D42] text-[10px] font-bold rounded-xl uppercase tracking-wider">Detail</button>
                                     </div>
                                 </div>
                             ))}
@@ -326,208 +378,221 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Platform Health Monitor - [NEW] */}
-            <div className="bg-[#2D241E] p-4 rounded-3xl text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl border border-white/5 relative overflow-hidden group">
-                <div className="absolute right-0 top-0 size-40 bg-orange-400/5 blur-[80px] group-hover:bg-orange-400/10 transition-colors"></div>
-                <div className="flex items-center gap-4 relative z-10">
-                    <div className="size-10 bg-white/10 rounded-2xl flex items-center justify-center text-emerald-400 ring-4 ring-emerald-400/10">
-                        <span className="material-symbols-outlined text-[20px]">sensors</span>
+            {/* Platform Health Monitor */}
+            <div className="bg-[#2D241E] p-6 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl border border-white/5 relative overflow-hidden group mx-0.5">
+                <div className="absolute right-0 top-0 size-64 bg-orange-400/5 blur-[100px] group-hover:bg-orange-400/10 transition-colors duration-1000"></div>
+                <div className="flex items-center gap-6 relative z-10">
+                    <div className="size-12 bg-white/5 rounded-2xl flex items-center justify-center text-emerald-400 ring-4 ring-emerald-400/10 shadow-lg">
+                        <span className="material-symbols-outlined text-[24px]">sensors</span>
                     </div>
                     <div>
-                        <h4 className="text-sm font-black italic tracking-tight">Platform System Health</h4>
-                        <p className="text-[10px] text-white/50 font-medium">All APIs & Delivery Logistics responding within 120ms.</p>
+                        <h4 className="text-sm font-bold italic tracking-tight uppercase">Platform Integrity Monitor</h4>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-0.5">Global Cluster Status: <span className="text-emerald-400">NOMINAL_OPTIMAL</span></p>
                     </div>
                 </div>
-                <div className="flex items-center gap-6 relative z-10">
+                <div className="flex items-center gap-8 relative z-10 pr-2">
                     <div className="text-center">
-                        <p className="text-[9px] font-black text-white/30 uppercase mb-0.5">DB Latency</p>
-                        <p className="text-xs font-black">12ms</p>
+                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Response</p>
+                        <p className="text-sm font-bold italic">14ms</p>
                     </div>
-                    <div className="w-px h-8 bg-white/10"></div>
+                    <div className="w-px h-10 bg-white/10"></div>
                     <div className="text-center">
-                        <p className="text-[9px] font-black text-white/30 uppercase mb-0.5">Load Balance</p>
-                        <p className="text-xs font-black">2.4%</p>
+                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Traffic</p>
+                        <p className="text-sm font-bold italic">Async_Safe</p>
                     </div>
                     <button
                         onClick={() => setShowLogs(true)}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-[10px] font-bold transition-all"
+                        className="px-6 py-3 bg-white/5 hover:bg-white/10 hover:shadow-2xl border border-white/10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 group/btn"
                     >
-                        View Activity Logs
+                        Master Logs
+                        <span className="material-symbols-outlined text-[16px] group-hover/btn:translate-x-1 transition-transform">terminal</span>
                     </button>
                 </div>
             </div>
 
-            {/* 4. Recent Registrations & Menu Status (Grid) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Registrations */}
-                <div className="bg-white/70 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-md">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-sm font-bold text-[#2D241E]">Recent Signups</h3>
-                        <button onClick={() => navigate('/admin/customers')} className="text-[10px] font-bold text-blue-600 hover:underline">View All</button>
+            {/* 4. Secondary Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {/* Recent Registrations */}
+                <div className="bg-white/70 backdrop-blur-xl p-5 rounded-[2.5rem] border border-white/60 shadow-lg relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 size-32 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors"></div>
+                    <div className="flex justify-between items-center mb-5 relative z-10">
+                        <h3 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Terminal Signups</h3>
+                        <button onClick={() => navigate('/admin/customers')} className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider">Global Index</button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-4 relative z-10">
                         {recentSignups.map((user) => (
                             <div
                                 key={user.id}
                                 onClick={() => navigate(`/admin/customers?id=${user.id}`)}
-                                className="flex items-center gap-3 p-1.5 hover:bg-white/80 rounded-xl cursor-pointer transition-all"
+                                className="flex items-center gap-4 p-2 bg-white/40 border border-white/40 rounded-2xl cursor-pointer hover:bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
-                                <div className="size-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-white flex items-center justify-center text-xs font-bold text-[#5C4D42]">
+                                <div className="size-10 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-white/60 flex items-center justify-center text-xs font-bold text-indigo-600 shadow-sm">
                                     {user.name.charAt(0)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-[#2D241E] truncate">{user.name}</p>
-                                    <p className="text-[10px] text-[#5C4D42] truncate">{user.plan}</p>
+                                    <p className="text-sm font-bold text-[#2D241E] truncate italic">{user.name}</p>
+                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{user.plan}</p>
                                 </div>
-                                <span className={`size-2 rounded-full ${user.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className={`size-2 rounded-full ${user.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'} shadow-lg`}></span>
+                                    <p className="text-[10px] font-bold text-[#897a70] uppercase">{user.date.split(' ')[0]}m</p>
+                                </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Today's Menu Preview */}
-                <div className="bg-white/70 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-md">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-sm font-bold text-[#2D241E]">Today's Menu</h3>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Published</span>
+                {/* Today's Menu Monitor */}
+                <div className="bg-white/70 backdrop-blur-xl p-5 rounded-[2.5rem] border border-white/60 shadow-lg relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 size-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
+                    <div className="flex justify-between items-center mb-5 relative z-10">
+                        <h3 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Global Menu State</h3>
+                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider italic shadow-sm">Distributed_Live</span>
                     </div>
-                    <div className="flex gap-2 mb-2">
-                        <div className="flex-1 p-2 bg-orange-50 rounded-xl border border-orange-100 text-center">
-                            <span className="material-symbols-outlined text-[16px] text-orange-600 mb-1">wb_sunny</span>
-                            <p className="text-[10px] font-bold text-[#2D241E]">Rajma Chawal</p>
-                            <p className="text-[9px] text-[#5C4D42]">Lunch</p>
+                    <div className="flex gap-4 mb-3 relative z-10">
+                        <div className="flex-1 p-4 bg-orange-50/50 rounded-[1.5rem] border border-orange-100/50 text-center hover:bg-orange-50 hover:shadow-lg transition-all cursor-default">
+                            <span className="material-symbols-outlined text-[20px] text-orange-600 mb-2">sunny</span>
+                            <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight">Rajma Chawal</p>
+                            <p className="text-xs font-bold text-[#897a70] uppercase tracking-wider mt-0.5">Lunch Cycle</p>
                         </div>
-                        <div className="flex-1 p-2 bg-indigo-50 rounded-xl border border-indigo-100 text-center">
-                            <span className="material-symbols-outlined text-[16px] text-indigo-600 mb-1">dark_mode</span>
-                            <p className="text-[10px] font-bold text-[#2D241E]">Paneer Roti</p>
-                            <p className="text-[9px] text-[#5C4D42]">Dinner</p>
+                        <div className="flex-1 p-4 bg-indigo-50/50 rounded-[1.5rem] border border-indigo-100/50 text-center hover:bg-indigo-50 hover:shadow-lg transition-all cursor-default">
+                            <span className="material-symbols-outlined text-[20px] text-indigo-600 mb-2">nightlight</span>
+                            <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight">Shahi Paneer</p>
+                            <p className="text-xs font-bold text-[#897a70] uppercase tracking-wider mt-0.5">Dinner Cycle</p>
                         </div>
                     </div>
+                    <button onClick={() => navigate('/admin/menu')} className="w-full py-3 mt-1 bg-white/60 border border-white/40 text-xs font-bold text-[#5C4D42] rounded-xl hover:bg-white hover:text-[#2D241E] uppercase tracking-wider transition-all shadow-sm">Access Menu Protocol</button>
                 </div>
 
-                {/* Quick Shortcuts */}
-                <div className="grid grid-cols-2 gap-2">
-                    <button
-                        onClick={() => navigate('/admin/plans')}
-                        className="bg-[#2D241E] text-white rounded-xl p-3 flex flex-col items-center justify-center gap-1 hover:bg-[#453831] transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                        <span className="text-[10px] font-bold">New Plan</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/admin/customers')}
-                        className="bg-white text-[#2D241E] border border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 hover:border-orange-500 hover:text-orange-600 transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">group_add</span>
-                        <span className="text-[10px] font-bold">Add User</span>
-                    </button>
-                    <button
-                        onClick={() => setShowBroadcast(true)}
-                        className="bg-white text-[#2D241E] border border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 hover:border-blue-500 hover:text-blue-600 transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">campaign</span>
-                        <span className="text-[10px] font-bold">Broadcast</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/admin/settings')}
-                        className="bg-white text-[#2D241E] border border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 hover:border-red-500 hover:text-red-600 transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">settings</span>
-                        <span className="text-[10px] font-bold">Settings</span>
-                    </button>
+                {/* Operations Control */}
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { label: 'New Master Plan', icon: 'auto_awesome', path: '/admin/plans', col: 'bg-[#2D241E]', text: 'text-white' },
+                        { label: 'Register Cluster', icon: 'person_add', path: '/admin/customers', col: 'bg-white', text: 'text-[#2D241E]' },
+                        { label: 'Node Settings', icon: 'manufacturing', path: '/admin/settings', col: 'bg-white', text: 'text-[#2D241E]' },
+                        { label: 'Financial Vault', icon: 'token', path: '/admin/finance', col: 'bg-white', text: 'text-[#2D241E]' },
+                    ].map((btn, i) => (
+                        <button
+                            key={i}
+                            onClick={() => navigate(btn.path)}
+                            className={`${btn.col} ${btn.text} rounded-[1.5rem] p-4 flex flex-col items-center justify-center gap-2 border border-black/5 hover:scale-[1.05] active:scale-[0.95] transition-all shadow-xl hover:shadow-2xl relative overflow-hidden group`}
+                        >
+                            <div className="absolute -top-4 -right-4 size-10 bg-white/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <span className="material-symbols-outlined text-[22px]">{btn.icon}</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-center">{btn.label}</span>
+                        </button>
+                    ))}
                 </div>
+            </div>
 
-                {/* Broadcast Modal - [POLISHED] */}
-                {showBroadcast && createPortal(
+            {/* Broadcast Modal - Cream Upgrade */}
+            {
+                showBroadcast && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowBroadcast(false)}></div>
-                        <div className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20">
+                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-lg overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5">
+                            {/* Static Texture Overlay */}
+                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#2D241E 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
 
-                            {/* Header */}
-                            <div className="p-8 pb-2 flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-2xl font-black text-[#2D241E] tracking-tight">Global Broadcast</h3>
-                                    <p className="text-[11px] font-bold text-[#897a70] mt-1">System-wide alert protocol</p>
-                                </div>
-                                <button onClick={() => setShowBroadcast(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
-                                    <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
-                                </button>
-                            </div>
-
-                            <div className="p-8 space-y-6">
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center px-1">
-                                        <label className="text-[10px] font-black text-[#2D241E] uppercase tracking-widest">Message Content</label>
-                                        <span className="text-[9px] font-bold text-gray-400">{broadcastMsg.length}/140</span>
-                                    </div>
-                                    <textarea
-                                        placeholder="Type your announcement here..."
-                                        value={broadcastMsg}
-                                        onChange={(e) => setBroadcastMsg(e.target.value)}
-                                        className="w-full h-32 bg-gray-50/50 border border-gray-100 rounded-2xl p-5 text-sm font-bold text-[#2D241E] focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/10 outline-none resize-none transition-all placeholder:text-gray-300"
-                                    />
-                                </div>
-
-                                <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-start gap-3">
-                                    <span className="material-symbols-outlined text-blue-600 text-[18px] mt-0.5">info</span>
+                            <div className="p-10 relative z-10">
+                                <div className="flex justify-between items-start mb-8">
                                     <div>
-                                        <p className="text-[11px] font-black text-blue-800">Target Audience: All Users</p>
-                                        <p className="text-[10px] font-bold text-blue-600/80 leading-tight mt-0.5">This will trigger push notifications for 1,248 active users and 15 providers.</p>
+                                        <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">GLOBAL BROADCAST</h3>
+                                        <p className="text-xs font-bold text-orange-500 uppercase tracking-wider mt-1">Multi-Channel Propagation</p>
                                     </div>
+                                    <button onClick={() => setShowBroadcast(false)} className="size-10 rounded-2xl bg-white flex items-center justify-center shadow-lg hover:rotate-90 transition-all duration-500">
+                                        <span className="material-symbols-outlined text-[20px] text-[#2D241E]">close</span>
+                                    </button>
                                 </div>
 
-                                <div className="flex gap-4 pt-2">
-                                    <button onClick={() => setShowBroadcast(false)} className="flex-1 py-4 rounded-2xl text-xs font-black text-[#897a70] hover:bg-gray-50 transition-all uppercase tracking-widest">Discard</button>
-                                    <button onClick={sendBroadcast} className="flex-[2] py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-black shadow-[0_10px_25px_-5px_rgba(45,36,30,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(45,36,30,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined text-[18px]">campaign</span>
-                                        Push Broadcast
-                                    </button>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center ml-2">
+                                            <label className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Protocol Message</label>
+                                            <span className="px-2 py-0.5 bg-white rounded-md text-[10px] font-bold text-[#897a70] shadow-sm">{broadcastMsg.length}/140</span>
+                                        </div>
+                                        <textarea
+                                            placeholder="INPUT STRATEGIC ANNOUNCEMENT..."
+                                            value={broadcastMsg}
+                                            onChange={(e) => setBroadcastMsg(e.target.value)}
+                                            className="w-full h-36 bg-white border-2 border-transparent focus:border-orange-500/20 rounded-[2.5rem] p-6 text-xs font-bold text-[#2D241E] shadow-inner outline-none resize-none transition-all placeholder:text-gray-200 uppercase"
+                                        />
+                                    </div>
+
+                                    <div className="p-5 bg-[#2D241E] rounded-[2.5rem] flex items-start gap-4 shadow-2xl relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 size-20 bg-blue-500/10 rounded-full blur-2xl"></div>
+                                        <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-blue-400">
+                                            <span className="material-symbols-outlined text-[20px]">hub</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-white uppercase tracking-wider">Global Broadcast Propagation</p>
+                                            <p className="text-[10px] font-bold text-white/40 leading-snug mt-1 uppercase">Target: 1,248 Nodes (Customers) + 15 Master Nodes (Providers)</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 pt-4">
+                                        <button onClick={() => setShowBroadcast(false)} className="py-4 rounded-2xl text-xs font-bold text-[#897a70] uppercase tracking-wider hover:bg-white transition-all">Abort Protocol</button>
+                                        <button onClick={sendBroadcast} className="py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-bold uppercase tracking-wider shadow-2xl hover:bg-orange-600 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 group">
+                                            Push Update
+                                            <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">send</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>,
                     document.body
-                )}
+                )
+            }
 
-                {/* Activity Logs Modal - [POLISHED] */}
-                {showLogs && createPortal(
+            {/* System Logs Modal - Cream Upgrade */}
+            {
+                showLogs && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowLogs(false)}></div>
-                        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20">
+                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5">
+                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#2D241E 1px, transparent 1px)`, backgroundSize: '15px 15px' }}></div>
 
-                            <div className="p-8 pb-2 flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-2xl font-black text-[#2D241E] tracking-tight">System Logs</h3>
-                                    <p className="text-[11px] font-bold text-[#897a70] mt-1">Real-time audit trail monitoring</p>
+                            <div className="p-10 relative z-10">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">NODE ACTIVITY MONITOR</h3>
+                                        <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mt-1">Real-time Cryptic Audit Trail</p>
+                                    </div>
+                                    <button onClick={() => setShowLogs(false)} className="size-10 rounded-2xl bg-white flex items-center justify-center shadow-lg hover:rotate-90 transition-all duration-500">
+                                        <span className="material-symbols-outlined text-[20px] text-[#2D241E]">close</span>
+                                    </button>
                                 </div>
-                                <button onClick={() => setShowLogs(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
-                                    <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
-                                </button>
-                            </div>
 
-                            <div className="p-8 space-y-6">
-                                <div className="max-h-[360px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                <div className="space-y-4 max-h-[420px] overflow-y-auto pr-3 custom-scrollbar">
                                     {activityLogs.map((log, i) => (
-                                        <div key={i} className="flex items-center gap-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-white hover:border-gray-200 hover:shadow-sm transition-all cursor-default group">
-                                            <div className={`size-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center ${log.color} shadow-sm group-hover:scale-110 transition-transform`}>
+                                        <div key={i} className="flex items-center gap-5 p-4 bg-white/60 border border-white rounded-[1.5rem] hover:bg-white hover:shadow-xl hover:scale-[1.01] transition-all cursor-default group">
+                                            <div className={`size-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center ${log.color} shadow-sm group-hover:bg-[#2D241E] group-hover:text-white transition-all duration-500`}>
                                                 <span className="material-symbols-outlined text-[20px]">{log.icon}</span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-[11px] font-black text-[#2D241E]">{log.event}</p>
-                                                <p className="text-[9px] font-bold text-[#897a70] uppercase mt-0.5">{log.time}</p>
+                                                <p className="text-xs font-bold text-[#2D241E] uppercase tracking-tight italic">{log.event}</p>
+                                                <p className="text-[10px] font-bold text-[#897a70] uppercase opacity-60 mt-0.5 flex items-center gap-2">
+                                                    <span className="size-1 rounded-full bg-gray-300"></span>
+                                                    {log.time}
+                                                </p>
                                             </div>
-                                            <span className="material-symbols-outlined text-gray-300 text-[18px]">verified_user</span>
+                                            <span className="material-symbols-outlined text-gray-200 text-[20px] group-hover:text-emerald-500 transition-colors">verified</span>
                                         </div>
                                     ))}
                                 </div>
-                                <button className="w-full py-4 border-2 border-dashed border-gray-200 rounded-[1.5rem] text-[10px] font-black text-[#897a70] uppercase tracking-widest hover:border-[#2D241E]/20 hover:text-[#2D241E] hover:bg-gray-50 transition-all">Download Full Audit Report (PDF)</button>
+
+                                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
+                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-wider italic">Live Feed Connected • Cluster_01</p>
+                                    <button className="px-6 py-3 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xl hover:bg-indigo-600 transition-all">Extract PDF Journal</button>
+                                </div>
                             </div>
                         </div>
                     </div>,
                     document.body
-                )}
-            </div>
-        </div>
+                )
+            }
+        </div >
     );
 };
 

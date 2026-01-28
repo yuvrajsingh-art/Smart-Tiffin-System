@@ -40,7 +40,7 @@ const AdminSupport = () => {
                     <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-rose-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
                         <div className="bg-rose-50 p-2 rounded-full"><span className="material-symbols-outlined text-rose-600">notification_important</span></div>
                         <div>
-                            <p className="text-xs font-black text-[#2D241E]">New Ticket Incoming!</p>
+                            <p className="text-xs font-bold text-[#2D241E]">New Ticket Incoming!</p>
                             <p className="text-[10px] text-gray-500 font-medium">#{newTicket.id}: {newTicket.issue}</p>
                         </div>
                     </div>
@@ -53,24 +53,26 @@ const AdminSupport = () => {
     const filteredTickets = filter === 'All' ? tickets : tickets.filter(t => t.status === filter);
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-full pb-8 animate-[fadeIn_0.5s]">
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
+            {/* Texture Background */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
-            {/* Live Ticker */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-0">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2">
+            {/* 1. Global Ticker (Top) */}
+            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
+                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
                     <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                     </span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Support Ops Live</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Support Pulse</span>
                 </div>
                 <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
                     {[
-                        "Agent Priya resolved Ticket #TKT881 (2 mins ago)",
-                        "High load pending in 'Delivery Issues' queue",
-                        "New feedback received: 'Great resolution time!'",
-                        "System: Auto-refund processed for Order #ORD2904",
-                        "Agent Amit is now Online"
+                        "System: Average response time at 14m",
+                        "New Ticket: Customer 'Rahul' reported delivery delay",
+                        "Resolved: 85 tickets closed in last 24h",
+                        "Critical Alert: Payment failure reported by 2 users",
+                        "Feedback: 4.9/5 CSAT score for today's shifts"
                     ].map((item, i) => (
                         <span key={i} className="text-[10px] font-bold flex items-center gap-2">
                             <span className="size-1 bg-white/20 rounded-full"></span>
@@ -80,19 +82,20 @@ const AdminSupport = () => {
                 </div>
             </div>
 
-            {/* Header & Controls */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-black text-[#2D241E] tracking-tight flex items-center gap-2">
-                        Helpdesk & Resolution
-                        <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-lg uppercase tracking-wider">Priority</span>
-                    </h2>
-                    <p className="text-[#5C4D42] text-xs font-medium opacity-80 mt-0.5 font-display italic">
-                        Real-time customer issue tracking and intelligent resolution.
+            {/* 2. Golden Header Block */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Support Center</h1>
+                        <span className="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-blue-500/10">LIVE_OPS</span>
+                    </div>
+                    <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                        Real-time Customer Issue Tracking & Resolution
                     </p>
                 </div>
-                <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md">
-                    {/* Search Input */}
+
+                <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md relative z-10">
                     <div className="relative group">
                         <span className="absolute left-3 top-2.5 material-symbols-outlined text-[18px] text-gray-400 group-focus-within:text-[#2D241E] transition-colors">search</span>
                         <input
@@ -107,7 +110,7 @@ const AdminSupport = () => {
                             <button
                                 key={t}
                                 onClick={() => setFilter(t)}
-                                className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all ${filter === t ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#897a70] hover:bg-white'}`}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${filter === t ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#897a70] hover:bg-white'}`}
                             >
                                 {t}
                             </button>
@@ -124,10 +127,10 @@ const AdminSupport = () => {
                     { l: 'Avg Response', v: '14m', c: 'blue', i: 'speed', bg: 'bg-white' },
                     { l: 'Satisfaction', v: '4.9/5', c: 'emerald', i: 'sentiment_very_satisfied', bg: 'bg-emerald-50' },
                 ].map((s, i) => (
-                    <div key={i} className={`${s.bg} p-5 rounded-[2rem] border border-white/60 shadow-sm flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer select-none`}>
+                    <div key={i} className={`${s.bg} p-5 rounded-[2.5rem] border border-white/60 shadow-sm flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer select-none`}>
                         <div>
-                            <p className="text-[9px] font-black text-[#5C4D42]/60 uppercase tracking-widest">{s.l}</p>
-                            <h3 className="text-2xl font-black text-[#2D241E] mt-1">{s.v}</h3>
+                            <p className="text-xs font-bold text-[#5C4D42]/60 uppercase tracking-wider">{s.l}</p>
+                            <h3 className="text-2xl font-bold text-[#2D241E] mt-1">{s.v}</h3>
                         </div>
                         <div className={`size-12 rounded-2xl flex items-center justify-center ${s.bg === 'bg-white' ? 'bg-gray-50' : 'bg-white/50 shadow-inner'}`}>
                             <span className={`material-symbols-outlined text-2xl text-${s.c}-500`}>{s.i}</span>
@@ -142,11 +145,11 @@ const AdminSupport = () => {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-white/50 sticky top-0 z-10 backdrop-blur-md">
                             <tr className="border-b border-gray-100">
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider pl-8">Ticket ID</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">User & Issue</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Priority</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-[#897a70] uppercase tracking-wider text-right pr-8">Action</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider pl-8">Ticket ID</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">User & Issue</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Priority</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider text-right pr-8">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100/50">
@@ -154,24 +157,24 @@ const AdminSupport = () => {
                                 filteredTickets.map((ticket) => (
                                     <tr key={ticket.id} className={`group hover:bg-white/80 transition-all cursor-pointer ${ticket.status === 'New' ? 'bg-orange-50/30' : ''}`} onClick={() => setSelectedTicket(ticket)}>
                                         <td className="px-6 py-4 pl-8">
-                                            <p className="text-xs font-black text-[#2D241E]">#{ticket.id}</p>
-                                            <p className="text-[9px] font-bold text-[#897a70]">{ticket.date}</p>
+                                            <p className="text-sm font-bold text-[#2D241E]">#{ticket.id}</p>
+                                            <p className="text-xs font-bold text-[#897a70]">{ticket.date}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-full bg-gradient-to-br from-orange-100 to-rose-100 border border-white shadow-sm flex items-center justify-center text-[10px] font-black text-orange-800">
+                                                <div className="size-8 rounded-full bg-gradient-to-br from-orange-100 to-rose-100 border border-white shadow-sm flex items-center justify-center text-[11px] font-bold text-orange-800">
                                                     {ticket.user.charAt(0)}
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-[#2D241E] leading-tight">{ticket.issue}</p>
-                                                    <p className="text-[9px] font-bold text-[#897a70] mt-0.5 flex items-center gap-1">
+                                                    <p className="text-[10px] font-bold text-[#897a70] mt-0.5 flex items-center gap-1">
                                                         {ticket.user} • {ticket.kitchen}
                                                     </p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide border ${ticket.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' :
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${ticket.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' :
                                                 ticket.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'
                                                 }`}>
                                                 <span className={`size-1.5 rounded-full ${ticket.priority === 'Critical' ? 'bg-red-500 animate-pulse' : 'bg-current'}`}></span>
@@ -179,7 +182,7 @@ const AdminSupport = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${ticket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
+                                            <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${ticket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
                                                 ticket.status === 'New' ? 'bg-violet-100 text-violet-700 animate-pulse' : 'bg-amber-50 text-amber-700'
                                                 }`}>
                                                 {ticket.status}
@@ -196,10 +199,10 @@ const AdminSupport = () => {
                                 <tr>
                                     <td colSpan="5" className="py-20 text-center">
                                         <div className="flex flex-col items-center justify-center opacity-50">
-                                            <div className="size-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-4">
+                                            <div className="size-20 bg-gray-50 rounded-[2.5rem] flex items-center justify-center mb-4">
                                                 <span className="material-symbols-outlined text-4xl text-gray-300">inbox</span>
                                             </div>
-                                            <p className="text-sm font-black text-[#2D241E]">All Caught Up!</p>
+                                            <p className="text-base font-bold text-[#2D241E]">All Caught Up!</p>
                                             <p className="text-[10px] font-bold text-[#897a70] mt-1">No tickets found in this category.</p>
                                         </div>
                                     </td>
@@ -247,7 +250,7 @@ const TicketDNAModal = ({ ticket, onClose }) => {
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={onClose}></div>
-            <div className="bg-white rounded-[2.5rem] w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20 flex">
+            <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-5xl h-[85vh] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex">
 
                 {/* Texture */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
@@ -255,36 +258,36 @@ const TicketDNAModal = ({ ticket, onClose }) => {
                 {/* Left: Context Panel (Glass) */}
                 <div className="w-[350px] bg-white/60 backdrop-blur-xl border-r border-gray-100 p-8 flex flex-col gap-6 relative z-10">
                     <div className="flex items-center gap-4">
-                        <div className="size-14 rounded-[1.2rem] bg-[#2D241E] text-white flex items-center justify-center text-xl font-black shadow-lg shadow-orange-900/20">
+                        <div className="size-14 rounded-[1.2rem] bg-[#2D241E] text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-orange-900/20">
                             {ticket.user.charAt(0)}
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-[#2D241E] leading-none tracking-tight">{ticket.user}</h3>
+                            <h3 className="text-xl font-bold text-[#2D241E] leading-none tracking-tight">{ticket.user}</h3>
                             <p className="text-[10px] font-bold text-[#897a70] mt-1.5 uppercase tracking-wide">Loyal Customer</p>
                         </div>
                     </div>
 
                     <div className="space-y-4">
                         <div className="p-5 bg-white rounded-[1.5rem] border border-gray-100 shadow-sm">
-                            <p className="text-[9px] uppercase font-black text-gray-400 mb-1 tracking-widest">Reported Issue</p>
+                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-wider">Reported Issue</p>
                             <p className="text-sm font-bold text-[#2D241E] leading-snug">{ticket.issue}</p>
                         </div>
                         <div className="p-5 bg-white rounded-[1.5rem] border border-gray-100 shadow-sm">
-                            <p className="text-[9px] uppercase font-black text-gray-400 mb-1 tracking-widest">Kitchen</p>
+                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-wider">Kitchen</p>
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-[18px] text-orange-500">storefront</span>
                                 <p className="text-sm font-bold text-[#2D241E]">{ticket.kitchen}</p>
                             </div>
                         </div>
                         <div className="p-5 bg-blue-50 rounded-[1.5rem] border border-blue-100 shadow-sm">
-                            <p className="text-[9px] uppercase font-black text-blue-400 mb-1 tracking-widest">AI Insight</p>
+                            <p className="text-[10px] uppercase font-bold text-blue-400 mb-1 tracking-wider">AI Insight</p>
                             <p className="text-xs font-bold text-blue-800 leading-relaxed">User churn risk high. Recommend immediate resolution within 30 mins to retain loyalty.</p>
                         </div>
                     </div>
 
                     <div className="mt-auto space-y-3">
-                        <button className="w-full py-4 bg-[#2D241E] text-white rounded-2xl font-black text-xs hover:bg-orange-600 transition-colors shadow-lg shadow-orange-900/20 uppercase tracking-widest">Mark Resolved</button>
-                        <button className="w-full py-4 bg-white border border-gray-200 text-[#2D241E] rounded-2xl font-black text-xs hover:bg-gray-50 transition-colors uppercase tracking-widest">Escalate Case</button>
+                        <button className="w-full py-4 bg-[#2D241E] text-white rounded-2xl font-bold text-xs hover:bg-orange-600 transition-colors shadow-lg shadow-orange-900/20 uppercase tracking-wider">Mark Resolved</button>
+                        <button className="w-full py-4 bg-white border border-gray-200 text-[#2D241E] rounded-2xl font-bold text-xs hover:bg-gray-50 transition-colors uppercase tracking-wider">Escalate Case</button>
                     </div>
                 </div>
 
@@ -297,7 +300,7 @@ const TicketDNAModal = ({ ticket, onClose }) => {
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                             </span>
                             <div>
-                                <p className="text-xs font-black text-[#2D241E] uppercase tracking-wide">Live Conversation</p>
+                                <p className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Live Conversation</p>
                                 <p className="text-[10px] font-bold text-[#897a70]">Ticket #{ticket.id} • Priority Support</p>
                             </div>
                         </div>
@@ -314,7 +317,7 @@ const TicketDNAModal = ({ ticket, onClose }) => {
                                 ) : (
                                     <div className={`max-w-[75%] p-5 rounded-[1.5rem] shadow-sm relative group ${msg.sender === 'agent' ? 'bg-[#2D241E] text-white rounded-tr-sm' : 'bg-white text-[#2D241E] rounded-tl-sm border border-gray-100'}`}>
                                         <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
-                                        <p className={`text-[9px] font-black mt-2 opacity-40 ${msg.sender === 'agent' ? 'text-white' : 'text-[#2D241E]'}`}>{msg.time}</p>
+                                        <p className={`text-[10px] font-bold mt-2 opacity-40 ${msg.sender === 'agent' ? 'text-white' : 'text-[#2D241E]'}`}>{msg.time}</p>
                                     </div>
                                 )}
                             </div>

@@ -90,16 +90,18 @@ const AdminPlans = () => {
     };
 
     return (
-        <div className="space-y-4 max-w-[1600px] mx-auto min-h-full pb-6 animate-[fadeIn_0.5s]">
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
+            {/* Texture Background */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
-            {/* Live Ticker - Matching AdminCustomers */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-0">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2">
+            {/* 1. Global Ticker (Top) */}
+            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
+                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
                     <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
                     </span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-400">Franchise Live</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-orange-400">Franchise Pulse</span>
                 </div>
                 <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
                     {[
@@ -117,413 +119,409 @@ const AdminPlans = () => {
                 </div>
             </div>
 
-
-            {/* 1. Header & Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-black text-[#2D241E] tracking-tight flex items-center gap-2">
-                        Meal Plan Franchise
-                        <span className={`px-2 py-0.5 text-white text-[9px] font-black rounded-lg uppercase tracking-wider ${activeView === 'Platform' ? 'bg-orange-500' : 'bg-blue-500'}`}>
-                            {activeView === 'Platform' ? 'Catalog' : 'Proposals'}
-                        </span>
-                    </h2>
-                    <p className="text-[#5C4D42] text-xs font-medium opacity-80 mt-0.5">
-                        {activeView === 'Platform'
-                            ? "Manage standard plans and monitor kitchen adoption."
-                            : "Review and approve custom pricing proposals."}
+            {/* 2. Golden Header Block */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Franchise Plans</h1>
+                        <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-orange-500/10">CATALOG_LIVE</span>
+                    </div>
+                    <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                        Standard Meal Plan Catalog & Kitchen Pricing Management
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 relative z-10">
                     <div className="flex bg-white/60 p-1 rounded-xl border border-white/50 backdrop-blur-md shadow-sm">
-                        <button
-                            onClick={() => setActiveView('Platform')}
-                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'Platform' ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#897a70] hover:bg-white'}`}
-                        >
-                            Standard Plans
-                        </button>
-                        <button
-                            onClick={() => setActiveView('Proposed')}
-                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all relative ${activeView === 'Proposed' ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#897a70] hover:bg-white'}`}
-                        >
-                            Kitchen Proposals
-                            <span className="absolute -top-1 -right-1 size-3.5 bg-rose-500 text-white text-[8px] flex items-center justify-center rounded-full border border-white">
-                                {proposedPlans.length}
-                            </span>
-                        </button>
+                        {['Platform', 'Proposed'].map(v => (
+                            <button
+                                key={v}
+                                onClick={() => setActiveView(v)}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeView === v ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#897a70] hover:text-[#2D241E]'}`}
+                            >
+                                {v}
+                            </button>
+                        ))}
                     </div>
-
-                    {activeView === 'Platform' && (
-                        <button
-                            onClick={() => { setEditingPlan(null); setShowModal(true); }}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#2D241E] text-white rounded-xl text-[10px] font-bold hover:bg-[#453831] shadow-lg shadow-[#2D241E]/10 transition-all"
-                        >
-                            <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                            New Standard Plan
-                        </button>
-                    )}
+                    <button
+                        onClick={() => { setEditingPlan(null); setShowModal(true); }}
+                        className="px-5 py-2.5 bg-[#2D241E] text-white rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all hover:bg-[#453831] flex items-center gap-2 shadow-xl shadow-black/10 scale-105 active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                        Launch New Plan
+                    </button>
                 </div>
             </div>
+
 
 
             {/* 2. Executive Stats (Optional context for Plans) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                    { label: 'Active Subscriptions', val: '2,845', sub: '+124 this week', icon: 'loyalty', color: 'text-orange-600', bg: 'bg-orange-50' },
-                    { label: 'Franchise Kitchens', val: '42', sub: '98% Coverage', icon: 'storefront', color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Avg Order Value', val: '₹3,200', sub: 'Per Month', icon: 'payments', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                    { label: 'Pending Proposals', val: proposedPlans.length.toString(), sub: 'Needs Review', icon: 'rate_review', color: 'text-rose-500', bg: 'bg-rose-50' },
-                ].map((s, i) => (
-                    <div key={i} className="bg-white/70 backdrop-blur-xl p-5 rounded-[2rem] border border-white/60 shadow-sm group hover:shadow-md transition-all">
-                        <div className="flex justify-between items-start mb-2">
-                            <div className={`size-10 ${s.bg} ${s.color} rounded-xl flex items-center justify-center`}>
-                                <span className="material-symbols-outlined text-[20px]">{s.icon}</span>
+            < div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" >
+                {
+                    [
+                        { label: 'Active Subscriptions', val: '2,845', sub: '+124 this week', icon: 'loyalty', color: 'text-orange-600', bg: 'bg-orange-50' },
+                        { label: 'Franchise Kitchens', val: '42', sub: '98% Coverage', icon: 'storefront', color: 'text-blue-600', bg: 'bg-blue-50' },
+                        { label: 'Avg Order Value', val: '₹3,200', sub: 'Per Month', icon: 'payments', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                        { label: 'Pending Proposals', val: proposedPlans.length.toString(), sub: 'Needs Review', icon: 'rate_review', color: 'text-rose-500', bg: 'bg-rose-50' },
+                    ].map((s, i) => (
+                        <div key={i} className="bg-white/70 backdrop-blur-xl p-5 rounded-[2rem] border border-white/60 shadow-lg group hover:shadow-xl transition-all">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className={`size-10 ${s.bg} ${s.color} rounded-xl flex items-center justify-center`}>
+                                    <span className="material-symbols-outlined text-[20px]">{s.icon}</span>
+                                </div>
+                                <span className="text-xs font-bold text-[#897a70] uppercase tracking-wider leading-none mt-1">{s.label}</span>
                             </div>
-                            <span className="text-[9px] font-black text-[#897a70] uppercase tracking-widest leading-none mt-1">{s.label}</span>
+                            <h3 className="text-2xl font-bold text-[#2D241E] tracking-tighter mt-4">{s.val}</h3>
+                            <p className="text-[10px] font-bold text-[#897a70] mt-1">{s.sub}</p>
                         </div>
-                        <h3 className="text-2xl font-black text-[#2D241E] tracking-tighter mt-4">{s.val}</h3>
-                        <p className="text-[10px] font-bold text-[#897a70] mt-1">{s.sub}</p>
-                    </div>
-                ))}
-            </div>
+                    ))
+                }
+            </div >
 
 
             {/* View: Standard Platform Plans */}
-            {activeView === 'Platform' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {plans.map(plan => (
-                        <div key={plan.id} className="group relative flex flex-col h-full bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-sm hover:shadow-xl transition-all duration-300">
+            {
+                activeView === 'Platform' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {plans.map(plan => (
+                            <div key={plan.id} className="group relative flex flex-col h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg hover:shadow-2xl transition-all duration-300">
 
-                            {/* Card Header */}
-                            <div className={`h-32 bg-gradient-to-br ${plan.color} relative p-5 flex flex-col justify-between shrink-0 rounded-t-[2rem] overflow-hidden`}>
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+                                {/* Card Header */}
+                                <div className={`h-32 bg-gradient-to-br ${plan.color} relative p-5 flex flex-col justify-between shrink-0 rounded-t-[2rem] overflow-hidden`}>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
 
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <span className="px-2 py-0.5 bg-black/20 backdrop-blur-md rounded-lg text-[9px] font-black text-white/90 uppercase tracking-wider border border-white/10">{plan.badge}</span>
-                                    <div className="size-7 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-white text-[14px]">restaurant</span>
+                                    <div className="relative z-10 flex justify-between items-start">
+                                        <span className="px-2 py-0.5 bg-black/20 backdrop-blur-md rounded-lg text-[10px] font-bold text-white/90 uppercase tracking-wider border border-white/10">{plan.badge}</span>
+                                        <div className="size-7 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-white text-[14px]">restaurant</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="relative z-10 text-white">
-                                    <h3 className="text-lg font-black tracking-tight leading-none drop-shadow-md">{plan.name}</h3>
-                                    <p className="text-[9px] font-medium opacity-90 mt-1 flex items-center gap-1">
-                                        <span className="size-1 rounded-full bg-white"></span>
-                                        {plan.type} Series
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Card Body */}
-                            <div className="p-5 flex-1 flex flex-col">
-                                <div className="flex items-end gap-1 mb-4">
-                                    <span className="text-2xl font-black text-[#2D241E] tracking-tighter">₹{plan.price}</span>
-                                    <span className="text-[10px] font-bold text-[#897a70] mb-1.5">/{plan.period === 'Monthly' ? 'mo' : 'wk'}</span>
-                                </div>
-
-                                <div className="space-y-4 mb-6 flex-1">
-                                    <div className="p-3 bg-[#F9F6F3] rounded-xl border border-[#2D241E]/5">
-                                        <p className="text-[10px] font-medium text-[#5C4D42] leading-relaxed line-clamp-3">
-                                            {plan.description}
+                                    <div className="relative z-10 text-white">
+                                        <h3 className="text-lg font-bold tracking-tight leading-none drop-shadow-md">{plan.name}</h3>
+                                        <p className="text-[10px] font-medium opacity-90 mt-1 flex items-center gap-1">
+                                            <span className="size-1 rounded-full bg-white"></span>
+                                            {plan.type} Series
                                         </p>
                                     </div>
+                                </div>
 
-                                    {/* Linked Kitchens Summary */}
-                                    <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                                        <div className="flex -space-x-1.5">
-                                            {[1, 2, 3].map(i => (
-                                                <div key={i} className="size-5 rounded-full bg-white border border-gray-50 flex items-center justify-center text-[7px] font-bold text-gray-500">K{i}</div>
-                                            ))}
-                                            <div className="size-5 rounded-full bg-[#2D241E] border border-white flex items-center justify-center text-[7px] font-bold text-white">+5</div>
+                                {/* Card Body */}
+                                <div className="p-5 flex-1 flex flex-col">
+                                    <div className="flex items-end gap-1 mb-4">
+                                        <span className="text-2xl font-bold text-[#2D241E] tracking-tighter">₹{plan.price}</span>
+                                        <span className="text-[10px] font-bold text-[#897a70] mb-1.5">/{plan.period === 'Monthly' ? 'mo' : 'wk'}</span>
+                                    </div>
+
+                                    <div className="space-y-4 mb-6 flex-1">
+                                        <div className="p-3 bg-[#F9F6F3] rounded-xl border border-[#2D241E]/5">
+                                            <p className="text-[10px] font-medium text-[#5C4D42] leading-relaxed line-clamp-3">
+                                                {plan.description}
+                                            </p>
                                         </div>
+
+                                        {/* Linked Kitchens Summary */}
+                                        <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                                            <div className="flex -space-x-1.5">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className="size-5 rounded-full bg-white border border-gray-50 flex items-center justify-center text-[10px] font-bold text-gray-500">K{i}</div>
+                                                ))}
+                                                <div className="size-5 rounded-full bg-[#2D241E] border border-white flex items-center justify-center text-[10px] font-bold text-white">+5</div>
+                                            </div>
+                                            <button
+                                                onClick={() => setViewKitchens(plan)}
+                                                className="text-xs font-bold text-orange-600 hover:text-orange-700 uppercase tracking-wider"
+                                            >
+                                                View Kitchens
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-2 mt-auto">
                                         <button
-                                            onClick={() => setViewKitchens(plan)}
-                                            className="text-[9px] font-black text-orange-600 hover:text-orange-700 uppercase tracking-wider"
+                                            onClick={() => { setEditingPlan(plan); setShowModal(true); }}
+                                            className="flex-1 py-2.5 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#453831] transition-all shadow-lg active:scale-95"
                                         >
-                                            View Kitchens
+                                            Edit Standard
                                         </button>
                                     </div>
                                 </div>
-
-                                {/* Actions */}
-                                <div className="flex items-center gap-2 mt-auto">
-                                    <button
-                                        onClick={() => { setEditingPlan(plan); setShowModal(true); }}
-                                        className="flex-1 py-2.5 bg-[#2D241E] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#453831] transition-all shadow-lg active:scale-95"
-                                    >
-                                        Edit Standard
-                                    </button>
-                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
 
-                    {/* Add New Card Placeholder */}
-                    <button
-                        onClick={() => { setEditingPlan(null); setShowModal(true); }}
-                        className="group relative flex flex-col h-full min-h-[300px] rounded-[2rem] border-2 border-dashed border-[#2D241E]/10 hover:border-orange-400 hover:bg-orange-50/10 transition-all duration-300 items-center justify-center gap-3 p-8"
-                    >
-                        <div className="size-14 bg-white rounded-full shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-gray-100">
-                            <span className="material-symbols-outlined text-2xl text-orange-500">add</span>
-                        </div>
-                        <div className="text-center">
-                            <h3 className="text-sm font-black text-[#2D241E]">Create New Plan</h3>
-                            <p className="text-[10px] font-medium text-[#897a70]">Define a standard product</p>
-                        </div>
-                    </button>
-                </div>
-            ) : (
-                /* View: Kitchen Proposals */
-                <div className="bg-white/70 backdrop-blur-xl rounded-[1.75rem] border border-white/60 shadow-lg overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <div>
-                            <h3 className="text-lg font-black text-[#2D241E]">Pending Proposals</h3>
-                            <p className="text-[10px] text-[#897a70] font-bold mt-1">Kitchens requesting to sell Standard Plans at custom prices.</p>
-                        </div>
-                        <div className="flex gap-2">
-                            {proposedPlans.filter(p => { const v = getVariance(p.standardPrice, p.proposedPrice); return v.val > 15 || v.val < -15; }).length > 0 && (
-                                <div className="px-2 py-0.5 bg-rose-50 rounded-lg border border-rose-100 flex items-center gap-1.5 animate-pulse">
-                                    <span className="relative flex h-1.5 w-1.5">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
-                                    </span>
-                                    <span className="text-[9px] font-bold text-rose-600">High Variance Detected</span>
-                                </div>
-                            )}
-                        </div>
+                        {/* Add New Card Placeholder */}
+                        <button
+                            onClick={() => { setEditingPlan(null); setShowModal(true); }}
+                            className="group relative flex flex-col h-full min-h-[300px] rounded-[2rem] border-2 border-dashed border-[#2D241E]/10 hover:border-orange-400 hover:bg-orange-50/10 transition-all duration-300 items-center justify-center gap-3 p-8"
+                        >
+                            <div className="size-14 bg-white rounded-full shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-gray-100">
+                                <span className="material-symbols-outlined text-2xl text-orange-500">add</span>
+                            </div>
+                            <div className="text-center">
+                                <h3 className="text-sm font-bold text-[#2D241E]">Create New Plan</h3>
+                                <p className="text-[10px] font-medium text-[#897a70]">Define a standard product</p>
+                            </div>
+                        </button>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b border-gray-50 bg-white/50">
-                                    <th className="px-6 py-4 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Kitchen</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Target Plan</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Standard Price</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Proposed Price</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-[#897a70] uppercase tracking-widest">Variance</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-[#897a70] uppercase tracking-widest text-right">Decision</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {proposedPlans.length > 0 ? (
-                                    proposedPlans.map(prop => {
-                                        const variance = getVariance(prop.standardPrice, prop.proposedPrice);
-                                        return (
-                                            <tr key={prop.id} className="group hover:bg-white/60 transition-all">
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-[10px]">{prop.kitchen.charAt(0)}</div>
-                                                        <div>
-                                                            <p className="text-xs font-black text-[#2D241E]">{prop.kitchen}</p>
-                                                            <p className="text-[9px] font-bold text-[#897a70]">{prop.date}</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-xs font-bold text-[#5C4D42]">{prop.basePlan}</p>
-                                                    <span className={`text-[8px] font-bold uppercase ${prop.type === 'Veg' ? 'text-emerald-600' : 'text-rose-600'}`}>{prop.type}</span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-xs font-bold text-gray-400">₹{prop.standardPrice}</p>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-sm font-black text-[#2D241E]">₹{prop.proposedPrice}</p>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black ${variance.color}`}>
-                                                        {variance.label}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => handleApproveProposal(prop.id)} className="size-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/15" title="Approve">
-                                                            <span className="material-symbols-outlined text-[14px]">check</span>
-                                                        </button>
-                                                        <button onClick={() => handleRejectProposal(prop.id)} className="size-7 rounded-lg bg-white border border-gray-200 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-all" title="Reject">
-                                                            <span className="material-symbols-outlined text-[14px]">close</span>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                ) : (
-                                    <tr>
-                                        <td colSpan="6" className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center justify-center opacity-60">
-                                                <div className="size-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                                                    <span className="material-symbols-outlined text-3xl text-gray-300">inbox</span>
-                                                </div>
-                                                <p className="text-xs font-black text-[#2D241E]">All Proposals Reviewed</p>
-                                                <p className="text-[10px] font-bold text-[#897a70] mt-0.5">Kitchens are operating within standard pricing.</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {/* Linked Kitchens Modal - [POLISHED] */}
-            {viewKitchens && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setViewKitchens(null)}></div>
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 animate-[scaleIn_0.3s] border border-white/20">
-                        <div className="p-8 pb-4 flex justify-between items-start shrink-0">
+                ) : (
+                    /* View: Kitchen Proposals */
+                    <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                             <div>
-                                <h3 className="text-2xl font-black text-[#2D241E] flex items-center gap-2">
-                                    Linked Kitchens
-                                    <span className="px-2 py-0.5 bg-[#2D241E] text-white text-[10px] rounded-lg uppercase tracking-wider">
-                                        {viewKitchens.name}
-                                    </span>
-                                </h3>
-                                <p className="text-[11px] font-bold text-[#897a70] mt-1">Providers currently offering this standard plan</p>
+                                <h3 className="text-lg font-bold text-[#2D241E]">Pending Proposals</h3>
+                                <p className="text-[10px] text-[#897a70] font-bold mt-1">Kitchens requesting to sell Standard Plans at custom prices.</p>
                             </div>
-                            <button onClick={() => setViewKitchens(null)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
-                                <span className="material-symbols-outlined text-[18px]">close</span>
-                            </button>
+                            <div className="flex gap-2">
+                                {proposedPlans.filter(p => { const v = getVariance(p.standardPrice, p.proposedPrice); return v.val > 15 || v.val < -15; }).length > 0 && (
+                                    <div className="px-2 py-0.5 bg-rose-50 rounded-lg border border-rose-100 flex items-center gap-1.5 animate-pulse">
+                                        <span className="relative flex h-1.5 w-1.5">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+                                        </span>
+                                        <span className="text-xs font-bold text-rose-600">High Variance Detected</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-
-                        <div className="p-8 pt-0 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead>
-                                    <tr className="border-b border-gray-100">
-                                        <th className="pb-4 text-[10px] font-black text-[#897a70] uppercase">Kitchen Name</th>
-                                        <th className="pb-4 text-[10px] font-black text-[#897a70] uppercase">Selling Price</th>
-                                        <th className="pb-4 text-[10px] font-black text-[#897a70] uppercase">Rating</th>
-                                        <th className="pb-4 text-[10px] font-black text-[#897a70] uppercase">Status</th>
-                                        <th className="pb-4 text-[10px] font-black text-[#897a70] uppercase text-right">Action</th>
+                                    <tr className="border-b border-gray-50 bg-white/50">
+                                        <th className="px-6 py-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Kitchen</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Target Plan</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Standard Price</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Proposed Price</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Variance</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider text-right">Decision</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {(linkedKitchensMock[viewKitchens.id] || []).map((k, i) => (
-                                        <tr key={i} className="hover:bg-gray-50/50">
-                                            <td className="py-4 font-bold text-[#2D241E] text-xs">{k.name}</td>
-                                            <td className="py-4 font-bold text-[#5C4D42] text-xs">₹{k.price}</td>
-                                            <td className="py-4">
-                                                <span className="flex items-center gap-1 text-xs font-bold text-amber-500">
-                                                    <span className="material-symbols-outlined text-[14px] fill-current">star</span>
-                                                    {k.rating}
-                                                </span>
-                                            </td>
-                                            <td className="py-4">
-                                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${k.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                                                    {k.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 text-right">
-                                                <button className="text-[9px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wider bg-rose-50 px-2 py-1 rounded-lg">Unlink</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {!(linkedKitchensMock[viewKitchens.id]) && (
+                                    {proposedPlans.length > 0 ? (
+                                        proposedPlans.map(prop => {
+                                            const variance = getVariance(prop.standardPrice, prop.proposedPrice);
+                                            return (
+                                                <tr key={prop.id} className="group hover:bg-white/60 transition-all">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="size-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-[10px]">{prop.kitchen.charAt(0)}</div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-[#2D241E]">{prop.kitchen}</p>
+                                                                <p className="text-xs font-bold text-[#897a70]">{prop.date}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-xs font-bold text-[#5C4D42]">{prop.basePlan}</p>
+                                                        <span className={`text-[10px] font-bold uppercase ${prop.type === 'Veg' ? 'text-emerald-600' : 'text-rose-600'}`}>{prop.type}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-xs font-bold text-gray-400">₹{prop.standardPrice}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm font-bold text-[#2D241E]">₹{prop.proposedPrice}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${variance.color}`}>
+                                                            {variance.label}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button onClick={() => handleApproveProposal(prop.id)} className="size-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/15" title="Approve">
+                                                                <span className="material-symbols-outlined text-[14px]">check</span>
+                                                            </button>
+                                                            <button onClick={() => handleRejectProposal(prop.id)} className="size-7 rounded-lg bg-white border border-gray-200 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-all" title="Reject">
+                                                                <span className="material-symbols-outlined text-[14px]">close</span>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
                                         <tr>
-                                            <td colSpan="5" className="py-8 text-center text-xs font-bold text-gray-400">No kitchens currently linked to this plan.</td>
+                                            <td colSpan="6" className="px-6 py-12 text-center">
+                                                <div className="flex flex-col items-center justify-center opacity-60">
+                                                    <div className="size-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                                                        <span className="material-symbols-outlined text-3xl text-gray-300">inbox</span>
+                                                    </div>
+                                                    <p className="text-xs font-bold text-[#2D241E]">All Proposals Reviewed</p>
+                                                    <p className="text-[10px] font-bold text-[#897a70] mt-0.5">Kitchens are operating within standard pricing.</p>
+                                                </div>
+                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                )
+            }
+
+            {/* Linked Kitchens Modal - [POLISHED] */}
+            {
+                viewKitchens && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setViewKitchens(null)}></div>
+                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] relative z-10 animate-[scaleIn_0.3s] border-[12px] border-white ring-1 ring-black/5">
+                            <div className="p-8 pb-4 flex justify-between items-start shrink-0">
+                                <div>
+                                    <h3 className="text-2xl font-bold text-[#2D241E] flex items-center gap-2">
+                                        Linked Kitchens
+                                        <span className="px-2 py-0.5 bg-[#2D241E] text-white text-[11px] font-bold rounded-lg uppercase tracking-wider">
+                                            {viewKitchens.name}
+                                        </span>
+                                    </h3>
+                                    <p className="text-[11px] font-bold text-[#897a70] mt-1">Providers currently offering this standard plan</p>
+                                </div>
+                                <button onClick={() => setViewKitchens(null)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            </div>
+
+                            <div className="p-8 pt-0 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="border-b border-gray-100">
+                                            <th className="pb-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Kitchen Name</th>
+                                            <th className="pb-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Selling Price</th>
+                                            <th className="pb-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Rating</th>
+                                            <th className="pb-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Status</th>
+                                            <th className="pb-4 text-[11px] font-bold text-[#897a70] uppercase tracking-wider text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {(linkedKitchensMock[viewKitchens.id] || []).map((k, i) => (
+                                            <tr key={i} className="hover:bg-gray-50/50">
+                                                <td className="py-4 font-bold text-[#2D241E] text-xs">{k.name}</td>
+                                                <td className="py-4 font-bold text-[#5C4D42] text-xs">₹{k.price}</td>
+                                                <td className="py-4">
+                                                    <span className="flex items-center gap-1 text-xs font-bold text-amber-500">
+                                                        <span className="material-symbols-outlined text-[14px] fill-current">star</span>
+                                                        {k.rating}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4">
+                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${k.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                        {k.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 text-right">
+                                                    <button className="text-xs font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wider bg-rose-50 px-2 py-1 rounded-lg">Unlink</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {!(linkedKitchensMock[viewKitchens.id]) && (
+                                            <tr>
+                                                <td colSpan="5" className="py-8 text-center text-xs font-bold text-gray-400">No kitchens currently linked to this plan.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            }
 
             {/* Create/Edit Modal (Standard Platform Plan) - [POLISHED] */}
-            {showModal && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowModal(false)}></div>
-                    <div className="bg-[#F5F2EB] rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-white/20">
-                        {/* Texture */}
-                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+            {
+                showModal && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowModal(false)}></div>
+                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-lg overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5">
+                            {/* Texture */}
+                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-                        <div className="relative p-8 pb-4 bg-white/80 backdrop-blur-xl border-b border-[#2D241E]/5 flex justify-between items-center z-10">
-                            <div>
-                                <h3 className="text-xl font-black text-[#2D241E] tracking-tight">{editingPlan ? 'Edit Standard Plan' : 'Define New Standard'}</h3>
-                                <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-widest mt-1">Platform Franchise Catalog</p>
-                            </div>
-                            <button onClick={() => setShowModal(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
-                                <span className="material-symbols-outlined text-[18px]">close</span>
-                            </button>
-                        </div>
-
-                        <form ref={formRef} onSubmit={handleSave} className="relative p-8 space-y-5 z-10">
-                            {/* Card Preview (Mini) */}
-                            <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                                <span className={`size-12 rounded-xl bg-gradient-to-br ${editingPlan?.color || 'from-emerald-400 to-emerald-600'}`}></span>
+                            <div className="relative p-8 pb-4 bg-white/80 backdrop-blur-xl border-b border-[#2D241E]/5 flex justify-between items-center z-10">
                                 <div>
-                                    <p className="text-[9px] font-bold text-[#897a70] uppercase tracking-widest">Visual Preview</p>
-                                    <p className="text-xs font-black text-[#2D241E]">Theme will appear on the card header.</p>
+                                    <h3 className="text-xl font-bold text-[#2D241E] tracking-tight">{editingPlan ? 'Edit Standard Plan' : 'Define New Standard'}</h3>
+                                    <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-1">Platform Franchise Catalog</p>
                                 </div>
+                                <button onClick={() => setShowModal(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                </button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Plan Name</label>
-                                    <input name="name" defaultValue={editingPlan?.name} placeholder="e.g. Gold Thali" className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm" required />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Diet Type</label>
-                                    <div className="relative">
-                                        <select name="type" defaultValue={editingPlan?.type || 'Veg'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
-                                            <option value="Veg">Pure Veg</option>
-                                            <option value="Non-Veg">Non-Veg</option>
-                                            <option value="Diet">Diet/Keto</option>
-                                        </select>
-                                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[16px]">expand_more</span>
+                            <form ref={formRef} onSubmit={handleSave} className="relative p-8 space-y-5 z-10">
+                                {/* Card Preview (Mini) */}
+                                <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                                    <span className={`size-12 rounded-xl bg-gradient-to-br ${editingPlan?.color || 'from-emerald-400 to-emerald-600'}`}></span>
+                                    <div>
+                                        <p className="text-xs font-bold text-[#897a70] uppercase tracking-wider">Visual Preview</p>
+                                        <p className="text-xs font-bold text-[#2D241E]">Theme will appear on the card header.</p>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Standard Price (₹)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2D241E] font-black text-xs">₹</span>
-                                        <input name="price" type="number" defaultValue={editingPlan?.price} placeholder="3000" className="w-full bg-white border border-gray-200 pl-8 pr-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm" required />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Plan Name</label>
+                                        <input name="name" defaultValue={editingPlan?.name} placeholder="e.g. Gold Thali" className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm" required />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Diet Type</label>
+                                        <div className="relative">
+                                            <select name="type" defaultValue={editingPlan?.type || 'Veg'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
+                                                <option value="Veg">Pure Veg</option>
+                                                <option value="Non-Veg">Non-Veg</option>
+                                                <option value="Diet">Diet/Keto</option>
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[16px]">expand_more</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Billing Cycle</label>
-                                    <div className="relative">
-                                        <select name="period" defaultValue={editingPlan?.period || 'Monthly'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
-                                            <option value="Monthly">Monthly</option>
-                                            <option value="Weekly">Weekly</option>
-                                            <option value="Trial">Trial (3 Days)</option>
-                                        </select>
-                                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[16px]">event_repeat</span>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Standard Price (₹)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2D241E] font-bold text-xs">₹</span>
+                                            <input name="price" type="number" defaultValue={editingPlan?.price} placeholder="3000" className="w-full bg-white border border-gray-200 pl-8 pr-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm" required />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Billing Cycle</label>
+                                        <div className="relative">
+                                            <select name="period" defaultValue={editingPlan?.period || 'Monthly'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
+                                                <option value="Monthly">Monthly</option>
+                                                <option value="Weekly">Weekly</option>
+                                                <option value="Trial">Trial (3 Days)</option>
+                                            </select>
+                                            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-[16px]">event_repeat</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Inclusions (Mandatory)</label>
-                                <textarea name="desc" defaultValue={editingPlan?.description} placeholder="e.g. 4 Roti, Rice, Dal..." className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none h-20 resize-none shadow-sm" />
-                            </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Inclusions (Mandatory)</label>
+                                    <textarea name="desc" defaultValue={editingPlan?.description} placeholder="e.g. 4 Roti, Rice, Dal..." className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none h-20 resize-none shadow-sm" />
+                                </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-[9px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Theme Gradient</label>
-                                <select name="color" defaultValue={editingPlan?.color || 'from-emerald-400 to-emerald-600'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
-                                    <option value="from-emerald-400 to-emerald-600">Emerald Green (Veg)</option>
-                                    <option value="from-[#2D241E] to-[#453831]">Obsidian (Premium)</option>
-                                    <option value="from-rose-500 to-rose-700">Rose Red (Non-Veg)</option>
-                                    <option value="from-violet-500 to-violet-700">Violet (Diet)</option>
-                                    <option value="from-amber-400 to-amber-600">Amber (Budget)</option>
-                                    <option value="from-blue-500 to-blue-700">Blue (Special)</option>
-                                </select>
-                            </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Theme Gradient</label>
+                                    <select name="color" defaultValue={editingPlan?.color || 'from-emerald-400 to-emerald-600'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
+                                        <option value="from-emerald-400 to-emerald-600">Emerald Green (Veg)</option>
+                                        <option value="from-[#2D241E] to-[#453831]">Obsidian (Premium)</option>
+                                        <option value="from-rose-500 to-rose-700">Rose Red (Non-Veg)</option>
+                                        <option value="from-violet-500 to-violet-700">Violet (Diet)</option>
+                                        <option value="from-amber-400 to-amber-600">Amber (Budget)</option>
+                                        <option value="from-blue-500 to-blue-700">Blue (Special)</option>
+                                    </select>
+                                </div>
 
-                            <button type="submit" className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest hover:bg-[#453831] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-[#2D241E]/20 mt-2">
-                                {editingPlan ? 'Save Standard Plan' : 'Publish Franchise Plan'}
-                            </button>
-                        </form>
-                    </div>
-                </div>,
-                document.body
-            )}
-        </div>
+                                <button type="submit" className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-bold uppercase tracking-wider hover:bg-[#453831] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-[#2D241E]/20 mt-2">
+                                    {editingPlan ? 'Save Standard Plan' : 'Publish Franchise Plan'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            }
+        </div >
     );
 };
 
