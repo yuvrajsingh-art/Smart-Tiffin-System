@@ -1,347 +1,804 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
 
 const AdminSettings = () => {
-    const [activeSection, setActiveSection] = useState('MenuRules');
+    // --- Initial State (Loaded from localStorage or Defaults) ---
+    const getInitialSettings = () => {
+        const saved = localStorage.getItem('smart_tiffin_admin_settings');
+        if (saved) return JSON.parse(saved);
+        return {
+            // Menu Logic
+            isDailyMandatory: true,
+            dailyCutoffTime: '10:30',
+            allowSameDayEdit: false,
+            isWeeklyMandatory: true,
+            maxDishesPerTiffin: 6,
+            jainMandatory: true,
 
-    // Mock Settings State
-    const [settings, setSettings] = useState({
-        isDailyMandatory: true,
-        dailyCutoffTime: '10:00',
-        allowSameDayEdit: false,
-        isWeeklyMandatory: false,
-        advancePublishDays: 3,
-        allowRepeats: false,
-        maintenanceMode: false,
-        globalFreeze: false
-    });
+            // Financials
+            baseCommission: 15,
+            premiumCommission: 12,
+            gstRate: 5,
+            minPayoutThreshold: 2000,
 
-    const handleToggle = (key) => {
-        setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+            // System
+            appName: 'Smart Tiffin System',
+            appVersion: '2.4.0-rev4',
+            maintenanceMode: false,
+            cacheHealth: 98.2,
+
+            // Notifications
+            notifCustomerSMS: true,
+            notifCustomerPush: true,
+            notifProviderEmail: true,
+            notifProviderPush: true,
+            notifAdminUrgent: true,
+
+            // Security
+            globalFreeze: false,
+            twoFactorEnabled: true,
+            ipLockdown: false,
+
+            // --- ALL NEW SETTINGS ---
+            // Customer Policies
+            cancellationFee: 50,
+            refundSlab6h: 100,
+            refundSlab2h: 50,
+            autoWalletRefund: true,
+
+            // Compliance
+            fssaiMandatory: true,
+            gstProofRequired: false,
+            aadharVerifiedOnly: true,
+
+            // Integrations
+            smsProvider: 'Twilio',
+            mapsApiKey: 'AIzaSyA...L4',
+            smtpHost: 'smtp.sendgrid.net',
+
+            // Localization
+            currencyCode: 'INR',
+            timezone: 'Asia/Kolkata',
+            defaultLang: 'Hinglish'
+        };
     };
 
-    const handleChange = (key, value) => {
-        setSettings(prev => ({ ...prev, [key]: value }));
+    const [settings, setSettings] = useState(getInitialSettings());
+    const [activeSection, setActiveSection] = useState('MenuRules');
+    const [isPurging, setIsPurging] = useState(false);
+    const [purgeProgress, setPurgeProgress] = useState(0);
+    const [auditLogs, setAuditLogs] = useState([
+        { id: 1, action: 'SYSTEM_BOOT', detail: 'Settings Engine Initialized', time: 'Just now', type: 'system' },
+        { id: 2, action: 'SYNC_COMPLETE', detail: 'Nodes initialized with v2.4.0', time: '5m ago', type: 'system' },
+    ]);
+
+    // Save to localStorage whenever settings change
+    useEffect(() => {
+        localStorage.setItem('smart_tiffin_admin_settings', JSON.stringify(settings));
+    }, [settings]);
+
+    // --- Helper Functions ---
+    const handleToggle = (key) => {
+        setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+        addLog('POLICY_CHANGE', `Toggled ${key} status`, 'user');
+    };
+
+    const handleChange = (key, val) => {
+        setSettings(prev => ({ ...prev, [key]: val }));
+    };
+
+    const addLog = (action, detail, type = 'user') => {
+        const newLog = {
+            id: Date.now(),
+            action,
+            detail,
+            time: 'Just now',
+            user: type === 'user' ? 'SuperAdmin' : undefined,
+            type
+        };
+        setAuditLogs(prev => [newLog, ...prev.slice(0, 4)]);
+    };
+
+    const runPurgeCache = () => {
+        setIsPurging(true);
+        setPurgeProgress(0);
+        const interval = setInterval(() => {
+            setPurgeProgress(prev => {
+                if (prev >= 100) {
+                    clearInterval(interval);
+                    setIsPurging(false);
+                    setSettings(s => ({ ...s, cacheHealth: 100 }));
+                    toast.success('System Cache Purged Successfully', {
+                        style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
+                    });
+                    addLog('CACHE_PURGE', 'Cleaned 4.2GB stagnant nodes', 'system');
+                    return 100;
+                }
+                return prev + 10;
+            });
+        }, 150);
     };
 
     const handleSave = () => {
-        toast.success('System Rules Updated!', {
-            icon: '👑',
-            style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
-        });
+        toast.promise(
+            new Promise(resolve => setTimeout(resolve, 1000)),
+            {
+                loading: 'Syncing Rules to Distributed Nodes...',
+                success: 'All Nodes Synchronized!',
+                error: 'Node Sync Failed',
+            },
+            {
+                style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
+            }
+        );
+        addLog('MASTER_SYNC', 'Global configuration push successful', 'user');
     };
 
-    const handleEmergencyFreeze = () => {
-        if (window.confirm("⚠️ EMERGENCY: Are you sure you want to FREEZE all menu updates system-wide? Providers won't be able to edit anything.")) {
-            handleToggle('globalFreeze');
-            toast.error(settings.globalFreeze ? "System Unfrozen" : "SYSTEM FROZEN", {
-                icon: settings.globalFreeze ? '🔓' : '❄️',
-                duration: 4000
-            });
-        }
-    };
-
+    // --- Navigation Config ---
     const sections = [
-        { id: 'MenuRules', icon: 'restaurant_menu', label: 'Menu Rules Engine' },
-        { id: 'System', icon: 'settings_suggest', label: 'System Config' },
-        { id: 'Profile', icon: 'person', label: 'Super Admin' },
-        { id: 'Security', icon: 'shield_lock', label: 'Security & Logs' },
+        { id: 'MenuRules', icon: 'terminal', label: 'Tiffin Logic' },
+        { id: 'Financials', icon: 'payments', label: 'Financial Rules' },
+        { id: 'CustPolicy', icon: 'person_search', label: 'Customer Policies' },
+        { id: 'Gatekeeper', icon: 'gavel', label: 'Compliance' },
+        { id: 'Notifications', icon: 'notifications_active', label: 'Alert Engine' },
+        { id: 'Systems', icon: 'dns', label: 'Core Config' },
+        { id: 'Integrations', icon: 'api', label: 'Integrations' },
+        { id: 'Security', icon: 'security', label: 'Security & Logs' },
+        { id: 'Locales', icon: 'language', label: 'Localization' },
+        { id: 'Profile', icon: 'id_card', label: 'Root Profile' },
     ];
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-full pb-8 animate-[fadeIn_0.5s]">
+        <div className="max-w-[1600px] mx-auto min-h-screen pb-20 animate-slide-up">
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-black text-[#2D241E] tracking-tight flex items-center gap-2">
-                        Control Center
-                        <span className="px-2 py-0.5 bg-[#2D241E] text-white text-[9px] font-black rounded-lg uppercase tracking-wider">Super Admin</span>
-                    </h2>
-                    <p className="text-[#5C4D42] text-xs font-medium opacity-80 mt-0.5 italic">Define the "Rules of the Game" for all providers.</p>
-                </div>
-
-                <div className="flex gap-3">
-                    <button
-                        onClick={handleEmergencyFreeze}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${settings.globalFreeze
-                            ? 'bg-blue-600 text-white animate-pulse shadow-lg shadow-blue-500/30'
-                            : 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100'
-                            }`}
-                    >
-                        <span className="material-symbols-outlined text-[16px]">{settings.globalFreeze ? 'ac_unit' : 'lock_person'}</span>
-                        {settings.globalFreeze ? 'System Frozen' : 'Emergency Freeze'}
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-[#2D241E] text-white rounded-2xl text-[11px] font-black hover:bg-[#453831] shadow-xl shadow-[#2D241E]/10 transition-all uppercase tracking-widest"
-                    >
-                        <span className="material-symbols-outlined text-[16px]">save</span>
-                        Save Rules
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                {/* 1. Sidebar Tabs (Left) */}
-                <div className="lg:col-span-3 space-y-2">
-                    {sections.map(s => (
+            {/* 1. Header & System Ticker */}
+            <div className="flex flex-col mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 className="text-xl font-black text-[#2D241E] italic flex items-center gap-3">
+                            Settings Command Center
+                            <span className="px-2 py-0.5 bg-[#2D241E] text-white text-[8px] font-black rounded-md uppercase tracking-[0.2em] non-italic">Root Access</span>
+                        </h1>
+                        <p className="text-[9px] font-bold text-[#897a70] uppercase tracking-widest mt-0.5">Global protocols for Providers & Customers • Control Level 9</p>
+                    </div>
+                    <div className="flex gap-2">
                         <button
-                            key={s.id}
-                            onClick={() => setActiveSection(s.id)}
-                            className={`w-full flex items-center gap-4 px-6 py-4 rounded-[1.75rem] transition-all duration-300 group ${activeSection === s.id
-                                ? 'bg-white text-[#2D241E] shadow-lg shadow-black/5 font-black translate-x-2'
-                                : 'text-[#897a70] hover:bg-white/40 font-bold'
-                                }`}
+                            onClick={() => handleToggle('maintenanceMode')}
+                            className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${settings.maintenanceMode ? 'bg-rose-500 text-white animate-pulse' : 'bg-white border border-gray-100 text-[#5C4D42] hover:bg-gray-50'}`}
                         >
-                            <span className={`material-symbols-outlined text-[20px] transition-colors ${activeSection === s.id ? 'text-orange-500' : 'group-hover:text-[#2D241E]'}`}>{s.icon}</span>
-                            <span className="text-xs uppercase tracking-widest">{s.label}</span>
+                            {settings.maintenanceMode ? 'Maintenance ON' : 'Maintenance Mode'}
                         </button>
-                    ))}
-
-                    <div className="mt-8 p-6 bg-[#2D241E] rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl">
-                        <div className="absolute top-0 right-0 size-16 bg-white/5 rounded-full blur-2xl"></div>
-                        <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">System Health</p>
-                        <h4 className="text-lg font-black italic">All Systems Go</h4>
-                        <p className="text-[9px] text-emerald-400 font-bold mt-2 flex items-center gap-1">
-                            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Operational
-                        </p>
+                        <button onClick={handleSave} className="px-6 py-2 bg-[#2D241E] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl shadow-black/20 hover:scale-105 transition-all">Execute Sync</button>
                     </div>
                 </div>
 
-                {/* 2. Content Area (Right) */}
-                <div className="lg:col-span-9 bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-8 border border-white/60 shadow-lg min-h-[600px] relative overflow-hidden">
+                {/* Live Ticker */}
+                <div className="flex gap-4 overflow-hidden py-2.5 px-6 bg-[#2D241E] rounded-2xl shadow-2xl relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+                    {[
+                        { label: 'Latency', val: '22ms', icon: 'speed', col: 'text-emerald-400' },
+                        { label: 'Cache Health', val: `${settings.cacheHealth}%`, icon: 'database', col: 'text-blue-400' },
+                        { label: 'Active Admins', val: '04', icon: 'shield_person', col: 'text-indigo-400' },
+                        { label: 'Version', val: settings.appVersion, icon: 'code', col: 'text-orange-400' },
+                    ].map((stat, i) => (
+                        <div key={i} className="flex items-center gap-2 shrink-0 border-r border-white/10 pr-6 last:border-0">
+                            <span className={`material-symbols-outlined text-[13px] ${stat.col}`}>{stat.icon}</span>
+                            <span className="text-[8.5px] font-black text-white/40 uppercase tracking-widest">{stat.label}:</span>
+                            <span className="text-[9px] font-black text-white italic">{stat.val}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
-                    {/* Decorative Background */}
-                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-orange-50/50 to-transparent pointer-events-none rounded-tr-[2.5rem]"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start relative z-10">
 
+                {/* 2. Side Navigation */}
+                <div className="lg:col-span-3 space-y-3">
+                    <div className="bg-white/40 backdrop-blur-md p-1.5 rounded-[2rem] border border-white/60">
+                        {sections.map(s => (
+                            <button
+                                key={s.id}
+                                onClick={() => setActiveSection(s.id)}
+                                className={`w-full flex items-center justify-between px-5 py-3.5 rounded-[1.25rem] transition-all duration-500 group ${activeSection === s.id
+                                    ? 'bg-[#2D241E] text-white shadow-2xl shadow-black/20 translate-x-1'
+                                    : 'text-[#897a70] hover:bg-white/60'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className={`material-symbols-outlined text-[17px] ${activeSection === s.id ? 'text-orange-400' : ''}`}>{s.icon}</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest">{s.label}</span>
+                                </div>
+                                {activeSection === s.id && <span className="size-1 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]"></span>}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="bg-[#2D241E] p-5 rounded-[2rem] text-white shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 size-20 bg-emerald-500/10 rounded-full blur-2xl"></div>
+                        <h4 className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-3">System Hub</h4>
+                        <div className="flex items-center gap-3">
+                            <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="text-[11px] font-black italic">Indore Cluster Live</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Settings Modules */}
+                <div className="lg:col-span-9 bg-[#F5F2EB]/40 backdrop-blur-xl rounded-[2.5rem] p-8 border border-white/60 shadow-lg min-h-[600px] relative overflow-hidden">
+
+                    {/* Texture Overlay */}
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2d241e 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+
+                    {/* Decorative Gradient */}
+                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-bl from-orange-50/50 to-transparent pointer-events-none"></div>
+
+                    {/* Module: Tiffin Logic */}
                     {activeSection === 'MenuRules' && (
-                        <div className="space-y-8 animate-[fadeIn_0.3s] relative z-10">
-
-                            {/* Daily Menu Logic */}
-                            <div className="bg-white/60 rounded-[2rem] p-6 border border-white/50 shadow-sm">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-orange-100/50 rounded-xl text-orange-600">
-                                        <span className="material-symbols-outlined">today</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-[#2D241E] uppercase tracking-wider">Daily Menu Logic</h3>
-                                        <p className="text-[10px] text-[#897a70] font-bold">Rules for "Today's Special"</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white/60">
-                                        <div>
-                                            <p className="text-xs font-black text-[#2D241E]">Mandatory Daily Menu</p>
-                                            <p className="text-[9px] text-[#897a70] mt-1">Providers MUST publish daily.</p>
-                                        </div>
-                                        <button onClick={() => handleToggle('isDailyMandatory')} className={`relative w-11 h-6 rounded-full transition-colors ${settings.isDailyMandatory ? 'bg-[#2D241E]' : 'bg-gray-200'}`}>
-                                            <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${settings.isDailyMandatory ? 'translate-x-5' : ''}`} />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white/60">
-                                        <div>
-                                            <p className="text-xs font-black text-[#2D241E]">Cut-off Time</p>
-                                            <p className="text-[9px] text-[#897a70] mt-1">Freezes edits after this time.</p>
-                                        </div>
-                                        <input
-                                            type="time"
-                                            value={settings.dailyCutoffTime}
-                                            onChange={(e) => handleChange('dailyCutoffTime', e.target.value)}
-                                            className="bg-white border text-center border-gray-200 text-[#2D241E] text-xs font-black rounded-xl px-2 py-1 outline-none focus:border-orange-500"
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white/60">
-                                        <div>
-                                            <p className="text-xs font-black text-[#2D241E]">Allow Same-Day Edits</p>
-                                            <p className="text-[9px] text-[#897a70] mt-1">Can chefs change dishes last min?</p>
-                                        </div>
-                                        <button onClick={() => handleToggle('allowSameDayEdit')} className={`relative w-11 h-6 rounded-full transition-colors ${settings.allowSameDayEdit ? 'bg-[#2D241E]' : 'bg-gray-200'}`}>
-                                            <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${settings.allowSameDayEdit ? 'translate-x-5' : ''}`} />
-                                        </button>
-                                    </div>
-                                </div>
+                        <div className="space-y-6 animate-[fadeIn_0.3s] relative z-10">
+                            <div className="mb-2">
+                                <h3 className="text-[13px] font-black text-[#2D241E] uppercase tracking-widest italic">Tiffin Protocol Rules</h3>
+                                <p className="text-[9px] text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Configure core operational constraints for providers.</p>
                             </div>
 
-                            {/* Weekly / Long-term Logic */}
-                            <div className="bg-white/60 rounded-[2rem] p-6 border border-white/50 shadow-sm">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-indigo-100/50 rounded-xl text-indigo-600">
-                                        <span className="material-symbols-outlined">date_range</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-[#2D241E] uppercase tracking-wider">Weekly Planning</h3>
-                                        <p className="text-[10px] text-[#897a70] font-bold">Advance Scheduling Rules</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white/60">
-                                        <div>
-                                            <p className="text-xs font-black text-[#2D241E]">Weekly Plan Mandatory</p>
-                                            <p className="text-[9px] text-[#897a70] mt-1">Force 7-day menu structure.</p>
-                                        </div>
-                                        <button onClick={() => handleToggle('isWeeklyMandatory')} className={`relative w-11 h-6 rounded-full transition-colors ${settings.isWeeklyMandatory ? 'bg-[#2D241E]' : 'bg-gray-200'}`}>
-                                            <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${settings.isWeeklyMandatory ? 'translate-x-5' : ''}`} />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white/60">
-                                        <div>
-                                            <p className="text-xs font-black text-[#2D241E]">Advance Publish Days</p>
-                                            <p className="text-[9px] text-[#897a70] mt-1">Days before start of week.</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => handleChange('advancePublishDays', Math.max(1, settings.advancePublishDays - 1))} className="size-6 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">-</button>
-                                            <span className="text-sm font-black text-[#2D241E] w-4 text-center">{settings.advancePublishDays}</span>
-                                            <button onClick={() => handleChange('advancePublishDays', settings.advancePublishDays + 1)} className="size-6 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">+</button>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-white/60">
-                                        <div>
-                                            <p className="text-xs font-black text-[#2D241E]">Allow Item Repeats</p>
-                                            <p className="text-[9px] text-[#897a70] mt-1">Same sabzi within 3 days?</p>
-                                        </div>
-                                        <button onClick={() => handleToggle('allowRepeats')} className={`relative w-11 h-6 rounded-full transition-colors ${settings.allowRepeats ? 'bg-[#2D241E]' : 'bg-gray-200'}`}>
-                                            <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${settings.allowRepeats ? 'translate-x-5' : ''}`} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeSection === 'Profile' && (
-                        <div className="space-y-8 animate-[fadeIn_0.3s]">
-                            <div className="flex items-center gap-6">
-                                <div className="size-24 rounded-[2rem] bg-[#F5F2EB] border-2 border-white shadow-inner flex items-center justify-center relative group">
-                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=AdminBoss" alt="Admin" className="size-20 rounded-[1.5rem]" />
-                                    <button className="absolute -bottom-2 -right-2 size-8 bg-[#2D241E] text-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                        <span className="material-symbols-outlined text-[16px]">edit</span>
-                                    </button>
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-[#2D241E]">Super Administrator</h3>
-                                    <p className="text-xs font-bold text-[#897a70]">System Owner • Root Access</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-[#897a70] uppercase ml-2 tracking-widest">Full Name</label>
-                                    <input type="text" defaultValue="Admin Boss" className="w-full bg-gray-50/50 border-none px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white transition-all outline-none" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-[#897a70] uppercase ml-2 tracking-widest">Email Address</label>
-                                    <input type="email" defaultValue="admin@smarttiffin.com" className="w-full bg-gray-50/50 border-none px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white transition-all outline-none" />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeSection === 'System' && (
-                        <div className="space-y-6 animate-[fadeIn_0.3s]">
-                            <h3 className="text-lg font-black text-[#2D241E] mb-6">Global Configurations</h3>
-
-                            <div className="p-6 bg-gray-50/50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs font-black text-[#2D241E]">Maintenance Mode</p>
-                                    <p className="text-[10px] text-[#897a70] font-medium mt-0.5">Pause all customer orders temporarily.</p>
-                                </div>
-                                <button onClick={() => handleToggle('maintenanceMode')} className={`relative w-11 h-6 rounded-full transition-colors ${settings.maintenanceMode ? 'bg-[#2D241E]' : 'bg-gray-200'}`}>
-                                    <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${settings.maintenanceMode ? 'translate-x-5' : ''}`} />
-                                </button>
-                            </div>
-
-                            <div className="pt-6 border-t border-gray-100">
-                                <label className="text-[10px] font-black text-[#897a70] uppercase ml-2 mb-3 block tracking-widest">Currency Locale</label>
-                                <select className="w-full bg-white border-2 border-gray-100 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#2D241E] outline-none focus:border-[#2D241E]/10">
-                                    <option>INR (₹) - India</option>
-                                    <option>USD ($) - International</option>
-                                </select>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeSection === 'Security' && (
-                        <div className="space-y-8 animate-[fadeIn_0.3s]">
-
-                            {/* Security Health Status */}
-                            <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100 flex items-center gap-6">
-                                <div className="size-16 bg-white rounded-2xl flex items-center justify-center shadow-sm text-emerald-600">
-                                    <span className="material-symbols-outlined text-3xl">shield_lock</span>
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-black text-[#2D241E]">System Fortress Active</h3>
-                                    <p className="text-xs font-medium text-[#5C4D42] mt-1">2FA Enabled • IP Whitelisting Active • Encrypted Logs</p>
-                                </div>
-                                <button className="ml-auto px-6 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all">
-                                    Run Security Audit
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                                {/* Active Sessions */}
-                                <div className="space-y-4">
-                                    <h4 className="text-sm font-black text-[#2D241E] flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-gray-400">devices</span> Active Sessions
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm space-y-5">
+                                    <h4 className="text-[10px] font-black text-[#2D241E] uppercase flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[17px] text-orange-500">timer</span> Publishing Timeline
                                     </h4>
                                     <div className="space-y-3">
-                                        <div className="p-4 bg-white border border-gray-100 rounded-2xl flex items-center gap-4 shadow-sm relative overflow-hidden">
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
-                                            <span className="material-symbols-outlined text-2xl text-[#2D241E]">laptop_mac</span>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-center">
-                                                    <p className="text-xs font-black text-[#2D241E]">Windows PC (Chrome)</p>
-                                                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">Current</span>
+                                        {[
+                                            { label: 'Daily Sync Mandatory', desc: 'Forces a 24h refresh cycle.', key: 'isDailyMandatory' },
+                                            { label: 'Allow Same-Day Edit', desc: 'Permit updates during live slots.', key: 'allowSameDayEdit' },
+                                        ].map((rule) => (
+                                            <div key={rule.key} className="flex justify-between items-center bg-white/80 p-3.5 rounded-2xl border border-white/20">
+                                                <div className="flex-1 pr-3">
+                                                    <p className="text-[9px] font-black uppercase tracking-tighter">{rule.label}</p>
+                                                    <p className="text-[8px] text-[#897a70] font-bold mt-0.5">{rule.desc}</p>
                                                 </div>
-                                                <p className="text-[10px] text-[#897a70] mt-0.5">Mumbai, India • 192.168.1.1</p>
+                                                <button onClick={() => handleToggle(rule.key)} className={`w-8 h-4 rounded-full relative transition-all ${settings[rule.key] ? 'bg-orange-500' : 'bg-gray-200'}`}>
+                                                    <div className={`absolute top-0.5 size-3 rounded-full bg-white transition-all ${settings[rule.key] ? 'right-0.5' : 'left-0.5'}`}></div>
+                                                </button>
                                             </div>
-                                        </div>
-                                        <div className="p-4 bg-gray-50 border border-gray-100/50 rounded-2xl flex items-center gap-4 opacity-70">
-                                            <span className="material-symbols-outlined text-2xl text-gray-400">smartphone</span>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-center">
-                                                    <p className="text-xs font-black text-gray-600">iPhone 14 Pro</p>
-                                                    <button className="text-[9px] font-bold text-rose-500 hover:underline uppercase">Revoke</button>
-                                                </div>
-                                                <p className="text-[10px] text-[#897a70] mt-0.5">Pune, India • Last active 2h ago</p>
+                                        ))}
+                                        <div className="flex justify-between items-center bg-white/80 p-3.5 rounded-2xl border border-white/20">
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase tracking-tighter">Cut-off Threshold</p>
+                                                <p className="text-[8px] text-[#897a70] font-bold mt-0.5">Order freeze time.</p>
                                             </div>
+                                            <input
+                                                type="time"
+                                                value={settings.dailyCutoffTime}
+                                                onChange={(e) => handleChange('dailyCutoffTime', e.target.value)}
+                                                className="bg-gray-100/50 border-none rounded-lg text-[10px] font-black p-1.5 outline-none w-20 text-center focus:bg-white"
+                                            />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Audit Logs */}
-                                <div className="space-y-4">
-                                    <h4 className="text-sm font-black text-[#2D241E] flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-gray-400">history_edu</span> Recent Admin Actions
+                                <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm space-y-5">
+                                    <h4 className="text-[10px] font-black text-[#2D241E] uppercase flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[17px] text-indigo-500">restaurant</span> Meal Constraints
                                     </h4>
-                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center bg-white/80 p-3.5 rounded-2xl border border-white/20">
+                                            <div className="flex-1 pr-3">
+                                                <p className="text-[9px] font-black uppercase tracking-tighter">Max Dishes Per Meal</p>
+                                                <p className="text-[8px] text-[#897a70] font-bold mt-0.5">Global item limit.</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleChange('maxDishesPerTiffin', Math.max(1, settings.maxDishesPerTiffin - 1))} className="size-6 bg-gray-100/50 rounded-lg flex items-center justify-center hover:bg-gray-200 text-[10px]">-</button>
+                                                <span className="text-[10px] font-black w-4 text-center">{settings.maxDishesPerTiffin}</span>
+                                                <button onClick={() => handleChange('maxDishesPerTiffin', settings.maxDishesPerTiffin + 1)} className="size-6 bg-gray-100/50 rounded-lg flex items-center justify-center hover:bg-gray-200 text-[10px]">+</button>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-white/80 p-3.5 rounded-2xl border border-white/20">
+                                            <div className="flex-1 pr-3">
+                                                <p className="text-[9px] font-black uppercase tracking-tighter">Jain Tag Mandatory</p>
+                                                <p className="text-[8px] text-[#897a70] font-bold mt-0.5">Forces "Jain" option tagging.</p>
+                                            </div>
+                                            <button onClick={() => handleToggle('jainMandatory')} className={`w-8 h-4 rounded-full relative transition-all ${settings.jainMandatory ? 'bg-indigo-500' : 'bg-gray-200'}`}>
+                                                <div className={`absolute top-0.5 size-3 rounded-full bg-white transition-all ${settings.jainMandatory ? 'right-0.5' : 'left-0.5'}`}></div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Module: Customer Policies */}
+                    {activeSection === 'CustPolicy' && (
+                        <div className="space-y-6 animate-[fadeIn_0.3s] relative z-10">
+                            <div className="mb-2">
+                                <h3 className="text-[13px] font-black text-[#2D241E] uppercase tracking-widest italic">Customer Service Protocols</h3>
+                                <p className="text-[9px] text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Define cancellation windows and refund behaviors.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm space-y-5">
+                                    <h4 className="text-[10px] font-black text-[#2D241E] uppercase flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[17px] text-rose-500">cancel</span> Cancellation Rules
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center bg-white/80 p-3.5 rounded-2xl border border-white/20">
+                                            <div className="flex-1 pr-3">
+                                                <p className="text-[9px] font-black uppercase tracking-tighter">Fixed Cancellation Fee</p>
+                                                <p className="text-[8px] text-[#897a70] font-bold mt-0.5">₹ charged for late cancels.</p>
+                                            </div>
+                                            <input
+                                                type="number"
+                                                value={settings.cancellationFee}
+                                                onChange={(e) => handleChange('cancellationFee', e.target.value)}
+                                                className="w-16 bg-gray-100/50 border-none rounded-lg text-[10px] font-black p-2 text-center outline-none"
+                                            />
+                                        </div>
+                                        <div className="flex justify-between items-center bg-[#2D241E] p-3.5 rounded-2xl text-white">
+                                            <div className="flex-1 pr-3">
+                                                <p className="text-[9px] font-black uppercase tracking-tighter">Auto-Wallet Refund</p>
+                                                <p className="text-[8px] text-white/40 font-bold mt-0.5">Instant credit to customer wallet.</p>
+                                            </div>
+                                            <button onClick={() => handleToggle('autoWalletRefund')} className={`w-8 h-4 rounded-full relative transition-all ${settings.autoWalletRefund ? 'bg-orange-500' : 'bg-white/10'}`}>
+                                                <div className={`absolute top-0.5 size-3 rounded-full bg-white transition-all ${settings.autoWalletRefund ? 'right-0.5' : 'left-0.5'}`}></div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm space-y-5">
+                                    <h4 className="text-[10px] font-black text-[#2D241E] uppercase flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[17px] text-indigo-500">account_balance_wallet</span> Refund Slabs
+                                    </h4>
+                                    <div className="space-y-3">
                                         {[
-                                            { action: 'Updated Menu Rules', detail: 'Changed daily cutoff to 10:30 AM', time: '10 mins ago', user: 'Admin' },
-                                            { action: 'Refund Processed', detail: 'Authorized ₹450 to Rahul S.', time: '1h ago', user: 'FinanceBot' },
-                                            { action: 'Kitchen Freeze', detail: 'Temporarily suspended "Spice Hub"', time: '3h ago', user: 'SuperAdmin' },
-                                            { action: 'System Backup', detail: 'Automated database snapshot', time: '5h ago', user: 'System' },
-                                        ].map((log, i) => (
-                                            <div key={i} className="flex gap-3 items-start pb-3 border-b border-gray-50 last:border-0">
-                                                <div className="size-2 rounded-full bg-[#2D241E] mt-1.5 shrink-0" />
-                                                <div>
-                                                    <p className="text-[11px] font-black text-[#2D241E]">{log.action}</p>
-                                                    <p className="text-[10px] text-[#897a70] font-medium leading-tight">{log.detail}</p>
-                                                    <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">{log.time} • {log.user}</p>
+                                            { label: '>6h Before Meal', desc: '% Refund for early notice', key: 'refundSlab6h' },
+                                            { label: '2h - 6h Before', desc: '% Refund for short notice', key: 'refundSlab2h' },
+                                        ].map((slab) => (
+                                            <div key={slab.key} className="flex justify-between items-center bg-white/80 p-3.5 rounded-2xl border border-white/20">
+                                                <div className="flex-1 pr-3">
+                                                    <p className="text-[9px] font-black uppercase tracking-tighter">{slab.label}</p>
+                                                    <p className="text-[8px] text-[#897a70] font-bold mt-0.5">{slab.desc}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-gray-100/50 p-1 rounded-lg">
+                                                    <input
+                                                        type="number"
+                                                        value={settings[slab.key]}
+                                                        onChange={(e) => handleChange(slab.key, e.target.value)}
+                                                        className="w-10 bg-transparent border-none text-[10px] font-black p-1 text-center outline-none"
+                                                    />
+                                                    <span className="text-[10px] font-black pr-1">%</span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     )}
 
+                    {/* Module: Gatekeeper (Compliance) */}
+                    {activeSection === 'Gatekeeper' && (
+                        <div className="space-y-6 animate-[fadeIn_0.3s] relative z-10">
+                            <div className="mb-2">
+                                <h3 className="text-[13px] font-black text-[#2D241E] uppercase tracking-widest italic">Compliance Gatekeeper</h3>
+                                <p className="text-[9px] text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Set onboarding requirements for new providers.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                {[
+                                    { label: 'FSSAI License', desc: 'Mandatory file upload', key: 'fssaiMandatory', icon: 'license' },
+                                    { label: 'GST Certificate', desc: 'Proof for tax invoices', key: 'gstProofRequired', icon: 'receipt' },
+                                    { label: 'Aadhar/KYC', desc: 'Identity verification', key: 'aadharVerifiedOnly', icon: 'fingerprint' },
+                                ].map((item) => (
+                                    <div key={item.key} className="bg-white/60 p-5 rounded-[2rem] border border-white/50 shadow-sm flex flex-col gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="size-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                                                <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+                                            </div>
+                                            <h4 className="text-[10px] font-black uppercase tracking-tight">{item.label}</h4>
+                                        </div>
+                                        <p className="text-[8px] text-[#897a70] font-bold uppercase leading-tight">{item.desc}</p>
+                                        <button
+                                            onClick={() => handleToggle(item.key)}
+                                            className={`w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${settings[item.key] ? 'bg-[#2D241E] text-white' : 'bg-gray-100 text-[#897a70]'}`}
+                                        >
+                                            {settings[item.key] ? 'Enforced' : 'Optional'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Module: Financials */}
+                    {activeSection === 'Financials' && (
+                        <div className="space-y-6 animate-[fadeIn_0.3s]">
+                            <div className="mb-2">
+                                <h3 className="text-[13px] font-black text-[#2D241E] uppercase tracking-widest italic">Monetization Engine</h3>
+                                <p className="text-[9px] text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Configure global commission tiers and tax compliance.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="p-6 bg-[#2D241E] rounded-[2rem] text-white shadow-2xl relative overflow-hidden group border border-white/10">
+                                    <div className="absolute -top-10 -right-10 size-32 bg-orange-500/10 rounded-full blur-3xl"></div>
+                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-5">Platform Commission</h4>
+                                    <div className="space-y-5">
+                                        {[
+                                            { label: 'Standard Tier', val: settings.baseCommission, key: 'baseCommission', col: 'text-orange-400', accent: 'accent-orange-500' },
+                                            { label: 'Premium Tier', val: settings.premiumCommission, key: 'premiumCommission', col: 'text-indigo-400', accent: 'accent-indigo-500' },
+                                        ].map((tier) => (
+                                            <div key={tier.key} className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-black italic">
+                                                    <span className="uppercase tracking-tight">{tier.label}</span>
+                                                    <span className={tier.col}>{tier.val}%</span>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min="0" max="30"
+                                                    value={tier.val}
+                                                    onChange={(e) => handleChange(tier.key, parseInt(e.target.value))}
+                                                    className={`w-full h-1 bg-white/10 rounded-full appearance-none ${tier.accent} cursor-pointer`}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm">
+                                        <p className="text-[9px] font-black text-[#2D241E] uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[16px] text-emerald-600">receipt_long</span> Compliance Matrix
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { label: 'GST Rate (%)', val: settings.gstRate, key: 'gstRate' },
+                                                { label: 'Min Payout (₹)', val: settings.minPayoutThreshold, key: 'minPayoutThreshold' },
+                                            ].map((field) => (
+                                                <div key={field.key} className="space-y-1.5">
+                                                    <label className="text-[8px] font-black text-[#897a70] uppercase ml-1">{field.label}</label>
+                                                    <input
+                                                        type="number"
+                                                        value={field.val}
+                                                        onChange={(e) => handleChange(field.key, e.target.value)}
+                                                        className="w-full bg-white/80 border border-white/40 p-2.5 rounded-xl text-[10px] font-black focus:ring-1 focus:ring-emerald-500 outline-none shadow-sm"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="p-5 bg-emerald-50 border border-emerald-100/50 rounded-[1.5rem] flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-emerald-600 text-xl">verified</span>
+                                        <p className="text-[8.5px] font-medium text-emerald-700 italic leading-snug">
+                                            "Platform fee adjustments trigger an automated node sync across all active provider clusters."
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Module: Alert Engine */}
+                    {activeSection === 'Notifications' && (
+                        <div className="space-y-6 animate-[fadeIn_0.3s]">
+                            <div className="mb-2">
+                                <h3 className="text-[13px] font-black text-[#2D241E] uppercase tracking-widest italic">Notification Gateway</h3>
+                                <p className="text-[9px] text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Configure master triggers for multi-channel alerts.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                {[
+                                    {
+                                        title: 'Customer Alerts', toggles: [
+                                            { label: 'Order SMS', key: 'notifCustomerSMS' },
+                                            { label: 'Push Hub', key: 'notifCustomerPush' }
+                                        ], color: 'bg-indigo-500'
+                                    },
+                                    {
+                                        title: 'Provider Sync', toggles: [
+                                            { label: 'Email Report', key: 'notifProviderEmail' },
+                                            { label: 'Instant Push', key: 'notifProviderPush' }
+                                        ], color: 'bg-orange-500'
+                                    },
+                                    {
+                                        title: 'Admin Logic', toggles: [
+                                            { label: 'Urgent System', key: 'notifAdminUrgent' }
+                                        ], color: 'bg-[#2D241E]'
+                                    },
+                                ].map((hub, i) => (
+                                    <div key={i} className="bg-white/60 p-5 rounded-[2rem] border border-white/50 shadow-sm flex flex-col gap-5">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className={`size-2.5 rounded-full ${hub.color} shadow-lg shadow-black/5`}></div>
+                                            <h4 className="text-[10px] font-black uppercase tracking-tight">{hub.title}</h4>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {hub.toggles.map((t) => (
+                                                <div key={t.key} className="flex justify-between items-center bg-[#FDFCF9] p-3 rounded-2xl border border-gray-100/30">
+                                                    <span className="text-[9px] font-bold uppercase text-[#5C4D42] tracking-tighter">{t.label}</span>
+                                                    <button onClick={() => handleToggle(t.key)} className={`w-8 h-4 rounded-full relative transition-all ${settings[t.key] ? hub.color : 'bg-gray-200'}`}>
+                                                        <div className={`absolute top-0.5 size-3 rounded-full bg-white transition-all ${settings[t.key] ? 'right-0.5' : 'left-0.5'}`}></div>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Module: Core Config */}
+                    {activeSection === 'Systems' && (
+                        <div className="space-y-6 animate-[fadeIn_0.3s]">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="space-y-5">
+                                    <h3 className="text-[13px] font-black italic uppercase tracking-widest text-[#2D241E]">Branding Identity</h3>
+                                    <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm space-y-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Platform Name</label>
+                                            <input
+                                                type="text"
+                                                value={settings.appName}
+                                                onChange={(e) => handleChange('appName', e.target.value)}
+                                                className="w-full bg-white/80 border border-white/40 p-3 rounded-xl text-[10px] font-black shadow-inner focus:border-orange-200 outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-[#897a70] uppercase ml-1 tracking-widest">Node Build ID</label>
+                                            <div className="w-full bg-gray-100/50 p-3 rounded-xl text-[9px] font-black text-gray-400 flex justify-between items-center cursor-not-allowed uppercase">
+                                                <span>{settings.appVersion}</span>
+                                                <span className="material-symbols-outlined text-[14px]">lock</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <h3 className="text-[13px] font-black italic uppercase tracking-widest text-[#2D241E]">Telemetry Hub</h3>
+                                    <div className="p-6 bg-[#2D241E] rounded-[2rem] border border-white/10 shadow-lg flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 size-20 bg-orange-500/5 rounded-full blur-2xl"></div>
+                                        <p className="text-[8px] font-black text-white/40 uppercase mb-4 tracking-[0.2em]">Distributed Cache Index</p>
+                                        <div className="size-24 rounded-full border-2 border-white/5 flex flex-col items-center justify-center relative">
+                                            <svg className="absolute inset-0 size-full -rotate-90">
+                                                <circle cx="48" cy="48" r="44" fill="transparent" stroke="#F59E0B" strokeWidth="4" strokeDasharray="276.4" strokeDashoffset={276.4 * (1 - settings.cacheHealth / 100)} className="transition-all duration-1000" />
+                                            </svg>
+                                            <span className="text-xl font-black text-white italic leading-none">{settings.cacheHealth}%</span>
+                                            <span className="text-[7px] font-black text-emerald-400 mt-1 uppercase tracking-widest">Optimal</span>
+                                        </div>
+                                        <button
+                                            onClick={runPurgeCache}
+                                            disabled={isPurging}
+                                            className={`mt-6 px-6 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${isPurging ? 'bg-orange-500 text-white animate-pulse' : 'bg-white/10 text-white border border-white/10 hover:bg-orange-500 hover:border-orange-500 shadow-xl'}`}
+                                        >
+                                            {isPurging ? `SYNCING ${purgeProgress}%` : 'Purge All Clusters'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Module: Integrations */}
+                    {activeSection === 'Integrations' && (
+                        <div className="space-y-6 animate-[fadeIn_0.3s] relative z-10">
+                            <div className="mb-2">
+                                <h3 className="text-[13px] font-black text-[#2D241E] uppercase tracking-widest italic">External Synapses</h3>
+                                <p className="text-[9px] text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Configure API keys and 3rd-party service connections.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="p-6 bg-[#2D241E] rounded-[2rem] text-white shadow-2xl space-y-5 border border-white/10">
+                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-2 italic">Communications API</h4>
+                                    <div className="space-y-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-white/30 uppercase tracking-widest">SMS Service Provider</label>
+                                            <select
+                                                value={settings.smsProvider}
+                                                onChange={(e) => handleChange('smsProvider', e.target.value)}
+                                                className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-[10px] font-black text-white outline-none"
+                                            >
+                                                <option value="Twilio">Twilio (Indore_Zone_2)</option>
+                                                <option value="AWS_SNS">AWS SNS (Global_Master)</option>
+                                                <option value="Firebase">Firebase Cloud (Native)</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[8px] font-black text-white/30 uppercase tracking-widest">Maps Runtime Key</label>
+                                            <div className="relative group">
+                                                <input
+                                                    type="password"
+                                                    value={settings.mapsApiKey}
+                                                    onChange={(e) => handleChange('mapsApiKey', e.target.value)}
+                                                    className="w-full bg-white/5 border border-white/10 p-3 pr-10 rounded-xl text-[10px] font-black text-orange-400 outline-none"
+                                                />
+                                                <span className="material-symbols-outlined absolute right-3 top-2.5 text-[16px] text-white/20 cursor-pointer hover:text-white/60">visibility_off</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm space-y-5">
+                                    <h4 className="text-[10px] font-black text-[#2D241E] uppercase flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[17px] text-emerald-600">mail</span> SMTP Gateway
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                                            <p className="text-[8px] font-black text-[#897a70] uppercase tracking-widest mb-1">Primary SMTP Host</p>
+                                            <p className="text-[10px] font-black text-[#2D241E] italic">smtp.sendgrid.net:587</p>
+                                        </div>
+                                        <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">Test Connection</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Module: Localization */}
+                    {activeSection === 'Locales' && (
+                        <div className="space-y-6 animate-[fadeIn_0.3s] relative z-10">
+                            <div className="mb-2">
+                                <h3 className="text-[13px] font-black text-[#2D241E] uppercase tracking-widest italic">Regional Matrix</h3>
+                                <p className="text-[9px] text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Configure currency, timezone, and language protocols.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="p-6 bg-white/60 border border-white/50 rounded-[2rem] shadow-sm space-y-4">
+                                    {[
+                                        { label: 'System Currency', val: 'INR (₹)', key: 'currencyCode', icon: 'currency_rupee' },
+                                        { label: 'Operational Timezone', val: 'Asia/Kolkata (GMT+5:30)', key: 'timezone', icon: 'schedule' },
+                                    ].map((locale) => (
+                                        <div key={locale.key} className="flex justify-between items-center bg-white border border-white/40 p-3.5 rounded-2xl shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <span className="material-symbols-outlined text-[18px] text-[#897a70]">{locale.icon}</span>
+                                                <p className="text-[9px] font-black uppercase tracking-tight text-[#897a70]">{locale.label}</p>
+                                            </div>
+                                            <span className="text-[10px] font-black text-[#2D241E] italic">{locale.val}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="p-6 bg-[#2D241E] rounded-[2rem] text-white shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 size-20 bg-indigo-500/10 rounded-full blur-2xl"></div>
+                                    <h4 className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Default Interface Language</h4>
+                                    <div className="flex gap-2">
+                                        {['English', 'Hindi', 'Hinglish'].map(lang => (
+                                            <button
+                                                key={lang}
+                                                onClick={() => handleChange('defaultLang', lang)}
+                                                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${settings.defaultLang === lang ? 'bg-orange-500 text-white shadow-lg' : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'}`}
+                                            >
+                                                {lang}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {/* Module: Security */}
+                    {activeSection === 'Security' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                            <div className="lg:col-span-8 space-y-6 animate-[fadeIn_0.3s]">
+                                <div className="p-6 bg-rose-50/50 border border-rose-100 rounded-[2.5rem] relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 size-32 bg-rose-500/5 rounded-full blur-3xl group-hover:bg-rose-500/10 transition-colors"></div>
+                                    <div className="flex justify-between items-center relative z-10">
+                                        <div className="max-w-[70%]">
+                                            <h3 className="text-base font-black text-rose-600 italic mb-1 tracking-tighter uppercase">Protocol Zero</h3>
+                                            <p className="text-[9px] font-bold text-rose-500/80 leading-relaxed uppercase tracking-tight">
+                                                Instant platform-wide lockdown. Blocks all provider ingress and egress operations.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleToggle('globalFreeze')}
+                                            className={`px-6 py-3 rounded-2xl text-[9px] font-black shadow-xl tracking-widest transition-all ${settings.globalFreeze ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white animate-pulse'}`}
+                                        >
+                                            {settings.globalFreeze ? 'DEACTIVATE' : 'LOCKDOWN'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h4 className="text-[9px] font-black text-[#2D241E] uppercase flex items-center gap-2 italic ml-1 tracking-widest">Audit Terminal Ledger</h4>
+                                    <div className="space-y-2">
+                                        {auditLogs.map((log) => (
+                                            <div key={log.id} className="p-3 bg-white/60 border border-white/40 rounded-xl flex items-center justify-between hover:border-gray-200 transition-all group">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`size-1.5 rounded-full ${log.type === 'system' ? 'bg-emerald-500' : 'bg-indigo-500'} shadow-sm`}></span>
+                                                    <div>
+                                                        <p className="text-[8.5px] font-black uppercase tracking-tight text-[#2D241E]">{log.action}</p>
+                                                        <p className="text-[8px] text-[#897a70] font-bold uppercase tracking-tighter">{log.detail}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[7.5px] font-black text-gray-300 uppercase">{log.time}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="lg:col-span-4 h-full">
+                                <div className="p-6 bg-[#2D241E] rounded-[2.5rem] text-white flex flex-col h-full shadow-2xl relative overflow-hidden border border-white/10">
+                                    <div className="absolute top-0 right-0 size-32 bg-indigo-500/5 rounded-full blur-3xl"></div>
+                                    <h3 className="text-[9px] font-black italic tracking-widest uppercase text-white/30 mb-6">Fortress Layer</h3>
+                                    <div className="space-y-4 flex-1">
+                                        {[
+                                            { label: '2FA Protocols', key: 'twoFactorEnabled', icon: 'verified_user' },
+                                            { label: 'IP Geofence', key: 'ipLockdown', icon: 'lan' }
+                                        ].map((sec) => (
+                                            <div key={sec.key} className="flex justify-between items-center p-3.5 bg-white/5 rounded-2xl border border-white/5">
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className="material-symbols-outlined text-[16px] text-white/40">{sec.icon}</span>
+                                                    <span className="text-[9px] font-black uppercase tracking-tighter">{sec.label}</span>
+                                                </div>
+                                                <button onClick={() => handleToggle(sec.key)} className={`w-7 h-3.5 rounded-full relative transition-all ${settings[sec.key] ? 'bg-emerald-500' : 'bg-white/10'}`}>
+                                                    <div className={`absolute top-0.5 size-2.5 rounded-full bg-white transition-all ${settings[sec.key] ? 'right-0.5' : 'left-0.5'}`}></div>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button className="w-full py-4 mt-6 bg-white/5 hover:bg-white/10 border border-white/5 text-[8px] font-black rounded-xl transition-all tracking-widest uppercase">SSH Terminal Access</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Module: Profile */}
+                    {activeSection === 'Profile' && (
+                        <div className="max-w-3xl mx-auto py-8 space-y-8 animate-[fadeIn_0.3s]">
+                            <div className="flex items-center gap-8 bg-white/40 p-8 rounded-[3rem] border border-white/60 shadow-inner">
+                                <div className="size-32 rounded-[2.5rem] bg-[#F5F2EB] border-4 border-white shadow-xl flex items-center justify-center relative group overflow-hidden">
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=AdminBoss" alt="Admin" className="size-24 rounded-2xl group-hover:scale-110 transition-transform duration-700" />
+                                    <div className="absolute inset-0 bg-[#2D241E]/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                        <span className="material-symbols-outlined text-white text-2xl">edit</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-black text-[#2D241E] italic tracking-tighter">Super Admin</h2>
+                                    <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.4em] mt-1 ml-0.5">Grand Overlord • Root v2.4</p>
+                                    <div className="flex gap-4 mt-6">
+                                        <div className="px-5 py-2 bg-[#2D241E] text-white rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">Indore_Master_Node</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                {[
+                                    { label: 'Cluster Role', val: 'System Owner • Root' },
+                                    { label: 'Authorization Code', val: 'ST-9922-ROOT' },
+                                    { label: 'Secure Email', val: 'admin@smarttiffin.com' },
+                                    { label: 'Uptime (Master)', val: '142 Days Continuous' }
+                                ].map((field, i) => (
+                                    <div key={i} className="space-y-1.5 group">
+                                        <label className="text-[8px] font-black text-[#897a70] uppercase ml-2 tracking-widest group-hover:text-orange-500 transition-colors">{field.label}</label>
+                                        <input type="text" readOnly value={field.val} className="w-full bg-white/80 border border-white/40 p-4 rounded-xl text-[10px] font-black text-[#2D241E] shadow-sm outline-none" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
+
+            {/* --- Maintenance Protocol Overlay --- */}
+            {
+                settings.maintenanceMode && (
+                    <div className="fixed inset-0 z-[100] bg-[#2D241E]/30 backdrop-blur-3xl flex items-center justify-center p-8 pointer-events-none">
+                        <div className="p-16 bg-[#F5F2EB] rounded-[5rem] border-[12px] border-white text-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] max-w-2xl relative overflow-hidden pointer-events-auto">
+                            <div className="absolute top-0 inset-x-0 h-3 bg-rose-600 animate-pulse"></div>
+                            <span className="material-symbols-outlined text-[120px] text-rose-600 mb-8 animate-bounce">settings_slow_motion_video</span>
+                            <h2 className="text-5xl font-black text-[#2D241E] italic tracking-tighter mb-4">SYSTEM IN STASIS</h2>
+                            <p className="text-sm font-medium text-[#5C4D42] leading-relaxed mb-12 max-w-md mx-auto">
+                                The platform is currently locked in <span className="font-black text-rose-600 italic">ADMIN STASIS</span>. All external API traffic is blocked. Service will resume once maintenance is terminated.
+                            </p>
+                            <button
+                                onClick={() => handleToggle('maintenanceMode')}
+                                className="px-12 py-5 bg-[#2D241E] text-white rounded-[2.5rem] text-[11px] font-black uppercase tracking-widest shadow-2xl hover:bg-emerald-600 transition-all hover:scale-105 active:scale-95"
+                            >
+                                Terminate Protocol
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
