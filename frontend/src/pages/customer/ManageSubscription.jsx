@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { useSubscription } from '../../context/SubscriptionContext';
+import PaymentModal from '../../components/common/PaymentModal';
 
 const ManageSubscription = () => {
     const { hasActiveSubscription } = useSubscription();
@@ -11,8 +12,10 @@ const ManageSubscription = () => {
 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [successData, setSuccessData] = useState({ title: '', sub: '' });
+    const [upgradeAmount, setUpgradeAmount] = useState(0);
 
     const toggleDay = (day) => {
         if (selectedDays.includes(day)) {
@@ -29,14 +32,20 @@ const ManageSubscription = () => {
             sub: 'Your refund has been initiated and will reach your wallet in 5-7 days.'
         });
         setShowSuccessModal(true);
-        // Redirect logic would go here after a delay or user action
     };
 
-    const handleUpgradeSuccess = () => {
+    const initiateUpgradePayment = (amount) => {
+        setUpgradeAmount(amount);
         setShowUpgradeModal(false);
+        setShowPaymentModal(true);
+    };
+
+    const handlePaymentSuccess = (details) => {
+        console.log("Payment Success:", details);
+        setShowPaymentModal(false); // Close payment modal
         setSuccessData({
             title: 'Plan Upgraded!',
-            sub: 'You have successfully upgraded to the Premium Non-Veg plan.'
+            sub: `Successfully upgraded to Premium Non-Veg using ${details.method}.`
         });
         setShowSuccessModal(true);
     };
@@ -61,7 +70,7 @@ const ManageSubscription = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
+        <div className="w-full pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
 
             {/* Background Blobs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
@@ -74,7 +83,7 @@ const ManageSubscription = () => {
                 <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit transition-colors">
                     <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
                 </Link>
-                <h1 className="text-2xl font-black text-[#2D241E]">Manage Subscription</h1>
+                <h1 className="text-xl font-black text-[#2D241E]">Manage Subscription</h1>
             </div>
 
             {/* Main Layout: Medium Compact Mode */}
@@ -309,7 +318,7 @@ const ManageSubscription = () => {
                                 </div>
 
                                 {/* Action Button */}
-                                <button onClick={handleUpgradeSuccess} className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] font-bold text-sm shadow-xl shadow-gray-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group relative overflow-hidden">
+                                <button onClick={() => initiateUpgradePayment(4000)} className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] font-bold text-sm shadow-xl shadow-gray-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group relative overflow-hidden">
                                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                     Pay Balance & Upgrade
                                 </button>
@@ -318,6 +327,16 @@ const ManageSubscription = () => {
                     </div>,
                     document.body
                 )}
+
+                {/* Payment Modal */}
+                <PaymentModal
+                    isOpen={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    amount={upgradeAmount}
+                    onSuccess={handlePaymentSuccess}
+                    title="Pay for Upgrade"
+                />
+
                 {/* Success Modal */}
                 {showSuccessModal && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">

@@ -47,8 +47,12 @@ function Login() {
 
         // [MODIFIED] Simple Admin Check
         if (formData.email === 'admin@smarttiffin.com') {
+            localStorage.setItem('userRole', 'admin');
+            localStorage.removeItem('impersonationMode'); // Ensure no stale impersonation
             navigate('/admin/dashboard');
         } else {
+            localStorage.setItem('userRole', 'customer');
+            localStorage.removeItem('impersonationMode'); // Ensure no stale impersonation
             navigate('/customer/dashboard');
         }
     };

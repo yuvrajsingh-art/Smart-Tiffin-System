@@ -20,6 +20,7 @@ import TrackDelivery from './pages/customer/Track';
 import ManageSubscription from './pages/customer/ManageSubscription'
 import Feedback from './pages/customer/Feedback'
 import History from './pages/customer/History'
+import Wallet from './pages/customer/Wallet';
 import FindMess from './pages/discovery/FindMess'
 import MessDetails from './pages/discovery/MessDetails'
 import SubscriptionCheckout from './pages/discovery/SubscriptionCheckout'
@@ -66,6 +67,7 @@ function App() {
             <Route path="menu" element={<Menu />} />
             <Route path="track" element={<TrackDelivery />} />
             <Route path="manage-subscription" element={<ManageSubscription />} />
+            <Route path="wallet" element={<Wallet />} />
             <Route path="feedback" element={<Feedback />} />
             <Route path="history" element={<History />} />
             <Route path="profile" element={<Profile />} />
