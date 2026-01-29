@@ -3,6 +3,7 @@ const User = require("../models/user.model");
 
 
 // ================= AUTH CHECK =================
+
 exports.protect = async (req, res, next) => {
   let token;
 

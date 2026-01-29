@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import authService from '../../services/authService.js';
 
 function Login() {
     const navigate = useNavigate();
@@ -34,19 +33,27 @@ function Login() {
 
         setIsLoading(true);
 
-        try {
-            const result = await authService.login(formData);
-            
-            if (result.success) {
-                toast.success('Welcome back!');
-                navigate('/customer/dashboard');
-            } else {
-                toast.error(result.error || 'Login failed');
-            }
-        } catch (error) {
-            toast.error('Network error. Please try again.');
-        } finally {
-            setIsLoading(false);
+        // Simulate API
+        const loginPromise = new Promise(resolve => setTimeout(resolve, 1500));
+
+        await toast.promise(loginPromise, {
+            loading: 'Logging in...',
+            success: 'Welcome back!',
+            error: 'Login failed',
+        });
+
+        setIsLoading(false);
+        console.log("Logged in with:", formData);
+
+        // [MODIFIED] Simple Admin Check
+        if (formData.email === 'admin@smarttiffin.com') {
+            localStorage.setItem('userRole', 'admin');
+            localStorage.removeItem('impersonationMode'); // Ensure no stale impersonation
+            navigate('/admin/dashboard');
+        } else {
+            localStorage.setItem('userRole', 'customer');
+            localStorage.removeItem('impersonationMode'); // Ensure no stale impersonation
+            navigate('/customer/dashboard');
         }
     };
 

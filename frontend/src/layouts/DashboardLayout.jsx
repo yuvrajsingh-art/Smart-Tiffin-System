@@ -2,20 +2,19 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSubscription } from '../context/SubscriptionContext';
-
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
         className={`
-            flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all duration-300 group
+            flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition-all duration-300 group
             ${active
                 ? 'bg-orange-100/60 text-primary font-semibold shadow-sm ring-1 ring-primary/10'
                 : 'text-[#5C4D42] font-medium hover:bg-white/60 hover:text-primary hover:shadow-sm'
             }
         `}
     >
-        <span className={`material-symbols-outlined text-[20px] ${active ? '' : 'text-[#5C4D42] group-hover:text-primary transition-colors'}`}>{icon}</span>
-        <span className="text-sm">{label}</span>
+        <span className={`material-symbols-outlined text-[18px] ${active ? '' : 'text-[#5C4D42] group-hover:text-primary transition-colors'}`}>{icon}</span>
+        <span className="text-xs font-bold tracking-wide">{label}</span>
     </Link>
 );
 
@@ -33,7 +32,7 @@ const DashboardLayout = () => {
     const navItems = [
         { icon: 'dashboard', label: 'Dashboard', to: '/customer/dashboard', public: true },
         { icon: 'search', label: 'Find Mess', to: '/customer/find-mess', public: true }, // Always visible
-        { icon: 'account_balance_wallet', label: 'Wallet', to: '/customer/wallet', public: false },
+        { icon: 'account_balance_wallet', label: 'My Wallet', to: '/customer/wallet', public: true },
         { icon: 'restaurant_menu', label: "Today's Menu", to: '/customer/menu', public: false },
         { icon: 'local_shipping', label: 'Track Order', to: '/customer/track', public: false },
         { icon: 'pause_circle', label: 'Manage Subscription', to: '/customer/manage-subscription', public: false },
@@ -44,7 +43,7 @@ const DashboardLayout = () => {
     const visibleNavItems = navItems.filter(item => item.public || isSubscribed);
 
     const handleLogout = () => {
-        localStorage.clear();
+        localStorage.clear(); // Clears everything including impersonationMode
         navigate('/');
     };
 
@@ -64,15 +63,15 @@ const DashboardLayout = () => {
             />
 
             {/* Mobile Sidebar (Slide-in) */}
-            <div className={`fixed top-0 left-0 bottom-0 w-72 bg-white/90 backdrop-blur-2xl border-r border-orange-100 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className={`fixed top-0 left-0 bottom-0 w-64 bg-white/90 backdrop-blur-2xl border-r border-orange-100 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logic same as desktop but simpler structure for mobile if needed, or re-use styling */}
-                <div className="h-20 flex items-center gap-3 px-8 border-b border-orange-100/50">
-                    <div className="size-9 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
+                <div className="h-20 flex items-center gap-3 px-6 border-b border-orange-100/50">
+                    <div className="size-8 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                    <span className="text-base font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
-                <nav className="p-4 space-y-2">
+                <nav className="p-3 space-y-1">
                     {visibleNavItems.map((item) => (
                         <div key={item.to} onClick={() => setIsMobileMenuOpen(false)}>
                             <SidebarItem {...item} active={location.pathname === item.to} />
@@ -83,32 +82,32 @@ const DashboardLayout = () => {
 
 
             {/* Desktop Sidebar (Glass) */}
-            <aside className="hidden lg:flex w-72 h-full glass-sidebar flex-col flex-shrink-0 z-50 relative transition-all duration-300">
-                <div className="h-20 flex items-center gap-3 px-8 flex-shrink-0">
-                    <div className="size-9 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[20px]">lunch_dining</span>
+            <aside className="hidden lg:flex w-64 h-full glass-sidebar flex-col flex-shrink-0 z-50 relative transition-all duration-300">
+                <div className="h-20 flex items-center gap-3 px-6 flex-shrink-0">
+                    <div className="size-8 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                    <span className="text-base font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
                 </div>
 
-                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+                <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
                     {visibleNavItems.map((item) => (
                         <SidebarItem key={item.to} {...item} active={location.pathname === item.to} />
                     ))}
                     <div className="my-4 h-px bg-orange-100 w-full"></div>
                 </nav>
 
-                <div className="p-4 border-t border-orange-100/50 space-y-1.5 bg-white/30">
-                    <Link to="/customer/profile" className="flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[#5C4D42] font-medium hover:bg-white/80 hover:text-primary transition-all group">
-                        <span className="material-symbols-outlined text-[20px]">person</span>
-                        <span className="text-sm">Profile</span>
+                <div className="p-3 border-t border-orange-100/50 space-y-1 bg-white/30">
+                    <Link to="/customer/profile" className="flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-[#5C4D42] font-medium hover:bg-white/80 hover:text-primary transition-all group">
+                        <span className="material-symbols-outlined text-[18px]">person</span>
+                        <span className="text-xs font-bold tracking-wide">Profile</span>
                     </Link>
                     <button
                         onClick={() => setShowLogoutModal(true)}
-                        className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-red-500 font-medium hover:bg-red-50 hover:text-red-600 transition-all"
+                        className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-red-500 font-medium hover:bg-red-50 hover:text-red-600 transition-all"
                     >
-                        <span className="material-symbols-outlined text-[20px]">logout</span>
-                        <span className="text-sm">Logout</span>
+                        <span className="material-symbols-outlined text-[18px]">logout</span>
+                        <span className="text-xs font-bold tracking-wide">Logout</span>
                     </button>
                 </div>
             </aside>
@@ -116,7 +115,7 @@ const DashboardLayout = () => {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
                 {/* Glass Header */}
-                <header className="h-24 glass-header px-8 flex items-center justify-between flex-shrink-0 z-40">
+                <header className="h-20 glass-header px-8 flex items-center justify-between flex-shrink-0 z-40">
                     <div className="flex items-center gap-4 lg:hidden">
                         <button onClick={() => setIsMobileMenuOpen(true)} className="size-10 rounded-full bg-white/60 flex items-center justify-center text-[#5C4D42]">
                             <span className="material-symbols-outlined">menu</span>
@@ -151,8 +150,10 @@ const DashboardLayout = () => {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scrollbar">
-                    <Outlet />
+                <div className="flex-1 overflow-y-auto p-4 lg:p-6 custom-scrollbar">
+                    <div className="max-w-5xl mx-auto w-full">
+                        <Outlet />
+                    </div>
                 </div>
             </main>
 
