@@ -44,7 +44,13 @@ function Login() {
 
         setIsLoading(false);
         console.log("Logged in with:", formData);
-        navigate('/customer/dashboard');
+
+        // [MODIFIED] Simple Admin Check
+        if (formData.email === 'admin@smarttiffin.com') {
+            navigate('/admin/dashboard');
+        } else {
+            navigate('/customer/dashboard');
+        }
     };
 
     return (
