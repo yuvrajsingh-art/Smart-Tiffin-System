@@ -28,8 +28,11 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showLogs, setShowLogs] = useState(false);
+    const [showSearchModal, setShowSearchModal] = useState(false); // New
+    const [searchResults, setSearchResults] = useState(null); // New
     const [searchQuery, setSearchQuery] = useState('');
     const [broadcastMsg, setBroadcastMsg] = useState('');
+    const [isSending, setIsSending] = useState(false);
     const [approvals, setApprovals] = useState([]);
     const [systemHealth, setSystemHealth] = useState('Stable');
     const [loading, setLoading] = useState(true);
@@ -73,10 +76,20 @@ const AdminDashboard = () => {
 
 
 
-    const handleGlobalSearch = (e) => {
+    const handleGlobalSearch = async (e) => {
         if (e.key === 'Enter' && searchQuery) {
-            toast(`Searching for "${searchQuery}"...`, { icon: '🔍' });
-            navigate(`/admin/customers?search=${searchQuery}`);
+            if (searchQuery.length < 2) return toast.error("Type at least 2 characters");
+            const toastId = toast.loading(`Searching for "${searchQuery}"...`);
+            try {
+                const { data } = await axios.get(`/api/admin/search?query=${searchQuery}`);
+                if (data.success) {
+                    setSearchResults(data.data);
+                    setShowSearchModal(true);
+                    toast.dismiss(toastId);
+                }
+            } catch (error) {
+                toast.error("Search failed", { id: toastId });
+            }
         }
     };
 
@@ -99,6 +112,7 @@ const AdminDashboard = () => {
     const sendBroadcast = async () => {
         if (!broadcastMsg) return toast.error('Message cannot be empty');
 
+        setIsSending(true);
         try {
             const { data } = await axios.post('/api/admin/broadcast', { message: broadcastMsg });
             if (data.success) {
@@ -111,6 +125,8 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             toast.error("Failed to send broadcast");
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -538,56 +554,67 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Broadcast Modal - Cream Upgrade */}
+            {/* Broadcast Modal - Clean Upgrade */}
             {
                 showBroadcast && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowBroadcast(false)}></div>
-                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-lg overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5">
-                            {/* Static Texture Overlay */}
-                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(#2D241E 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
-
-                            <div className="p-10 relative z-10">
-                                <div className="flex justify-between items-start mb-8">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.3s]" onClick={() => setShowBroadcast(false)}></div>
+                        <div className="bg-white rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border border-gray-100 ring-1 ring-black/5">
+                            <div className="p-8 relative z-10">
+                                <div className="flex justify-between items-center mb-6">
                                     <div>
-                                        <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">Broadcast Message</h3>
-                                        <p className="text-xs font-bold text-orange-500 uppercase tracking-wider mt-1">Send to everyone</p>
+                                        <h3 className="text-xl font-bold text-gray-900 tracking-tight">Broadcast Message</h3>
+                                        <p className="text-sm font-medium text-gray-500 mt-0.5">Reach all users instantly</p>
                                     </div>
-                                    <button onClick={() => setShowBroadcast(false)} className="size-10 rounded-2xl bg-white flex items-center justify-center shadow-lg hover:rotate-90 transition-all duration-500">
-                                        <span className="material-symbols-outlined text-[20px] text-[#2D241E]">close</span>
+                                    <button onClick={() => setShowBroadcast(false)} className="size-9 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-900 flex items-center justify-center transition-all">
+                                        <span className="material-symbols-outlined text-[20px]">close</span>
                                     </button>
                                 </div>
 
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <div className="flex justify-between items-center ml-2">
-                                            <label className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Your Message</label>
-                                            <span className="px-2 py-0.5 bg-white rounded-md text-[10px] font-bold text-[#897a70] shadow-sm">{broadcastMsg.length}/140</span>
+                                        <div className="flex justify-between items-center px-1">
+                                            <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Message Content</label>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${broadcastMsg.length > 130 ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-500'}`}>
+                                                {broadcastMsg.length}/140
+                                            </span>
                                         </div>
                                         <textarea
-                                            placeholder="Type your announcement here..."
+                                            placeholder="Write your announcement..."
                                             value={broadcastMsg}
                                             onChange={(e) => setBroadcastMsg(e.target.value)}
-                                            className="w-full h-36 bg-white border-2 border-transparent focus:border-orange-500/20 rounded-[2.5rem] p-6 text-xs font-bold text-[#2D241E] shadow-inner outline-none resize-none transition-all placeholder:text-gray-200 uppercase"
+                                            className="w-full h-32 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-2xl p-4 text-sm font-medium text-gray-900 outline-none resize-none transition-all placeholder:text-gray-400"
                                         />
                                     </div>
 
-                                    <div className="p-5 bg-[#2D241E] rounded-[2.5rem] flex items-start gap-4 shadow-2xl relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 size-20 bg-blue-500/10 rounded-full blur-2xl"></div>
-                                        <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-blue-400">
+                                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100/50 rounded-2xl flex items-center gap-4">
+                                        <div className="size-10 rounded-xl bg-white flex items-center justify-center text-blue-600 shadow-sm shrink-0">
                                             <span className="material-symbols-outlined text-[20px]">hub</span>
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-white uppercase tracking-wider">Sending To</p>
-                                            <p className="text-[10px] font-bold text-white/40 leading-snug mt-1 uppercase">All Customers + All Kitchen Providers</p>
+                                            <p className="text-xs font-bold text-blue-900 uppercase tracking-wide">Global Reach</p>
+                                            <p className="text-xs font-medium text-blue-700/70 mt-0.5">Message will be sent to all Customers & Providers</p>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 pt-4">
-                                        <button onClick={() => setShowBroadcast(false)} className="py-4 rounded-2xl text-xs font-bold text-[#897a70] uppercase tracking-wider hover:bg-white transition-all">Cancel</button>
-                                        <button onClick={sendBroadcast} className="py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-bold uppercase tracking-wider shadow-2xl hover:bg-orange-600 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 group">
-                                            Send Now
-                                            <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">send</span>
+                                    <div className="grid grid-cols-2 gap-3 pt-2">
+                                        <button onClick={() => setShowBroadcast(false)} className="py-3 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all">Cancel</button>
+                                        <button
+                                            onClick={sendBroadcast}
+                                            disabled={isSending || !broadcastMsg.trim()}
+                                            className="py-3 bg-gray-900 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-black hover:transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+                                        >
+                                            {isSending ? (
+                                                <>
+                                                    <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                                    <span>Sending...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>Send Broadcast</span>
+                                                    <span className="material-symbols-outlined text-[18px]">send</span>
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -644,6 +671,103 @@ const AdminDashboard = () => {
                                     <p className="text-xs font-bold text-[#897a70] uppercase tracking-wider italic">Live Feed Connected • Cluster_01</p>
                                     <button className="px-6 py-3 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xl hover:bg-indigo-600 transition-all">Extract PDF Journal</button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            }
+
+            {/* Global Search Results Modal */}
+            {
+                showSearchModal && searchResults && createPortal(
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowSearchModal(false)}></div>
+                        <div className="bg-[#F5F2EB] rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-[scaleIn_0.3s] relative z-10 border-[8px] border-white/50">
+
+                            <div className="p-8 pb-4 border-b border-gray-100 flex justify-between items-center bg-white">
+                                <div>
+                                    <h3 className="text-xl font-bold text-[#2D241E]">Search Results</h3>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Query: "{searchQuery}"</p>
+                                </div>
+                                <button onClick={() => setShowSearchModal(false)} className="size-10 rounded-xl bg-gray-50 hover:bg-rose-50 hover:text-rose-500 flex items-center justify-center transition-all">
+                                    <span className="material-symbols-outlined text-[20px]">close</span>
+                                </button>
+                            </div>
+
+                            <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar space-y-8">
+
+                                {/* 1. Users Section */}
+                                {searchResults.users.length > 0 && (
+                                    <div>
+                                        <h4 className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-4 border-b border-indigo-100 pb-2">Users ({searchResults.users.length})</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {searchResults.users.map(u => (
+                                                <div key={u._id} onClick={() => navigate(`/admin/customers?search=${u.email}`)} className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-lg cursor-pointer transition-all group">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`size-10 rounded-full flex items-center justify-center text-white text-xs font-bold ${u.role === 'provider' ? 'bg-violet-500' : 'bg-blue-500'}`}>
+                                                            {u.fullName[0]}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-[#2D241E] group-hover:text-indigo-600 transition-colors">{u.fullName}</p>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase">{u.role} • {u.status}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 2. Providers Section */}
+                                {searchResults.providerProfiles.length > 0 && (
+                                    <div>
+                                        <h4 className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-4 border-b border-orange-100 pb-2">Kitchens ({searchResults.providerProfiles.length})</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {searchResults.providerProfiles.map(p => (
+                                                <div key={p._id} onClick={() => navigate(`/admin/providers?search=${p.messName}`)} className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-orange-200 hover:shadow-lg cursor-pointer transition-all flex justify-between items-center group">
+                                                    <div>
+                                                        <p className="text-sm font-bold text-[#2D241E] group-hover:text-orange-600 transition-colors">{p.messName}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Owner: {p.fullName}</p>
+                                                    </div>
+                                                    <span className="material-symbols-outlined text-orange-400">restaurant</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 3. Orders Section */}
+                                {searchResults.orders.length > 0 && (
+                                    <div>
+                                        <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-4 border-b border-emerald-100 pb-2">Orders ({searchResults.orders.length})</h4>
+                                        <div className="space-y-2">
+                                            {searchResults.orders.map(o => (
+                                                <div key={o._id} onClick={() => navigate(`/admin/orders?id=${o._id}`)} className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-lg cursor-pointer transition-all flex items-center justify-between group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="size-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                                            <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-[#2D241E] group-hover:text-emerald-700">Order #{o._id.slice(-6).toUpperCase()}</p>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase">Customer: {o.customer?.fullName || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-lg">{o.status}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Empty State */}
+                                {searchResults.users.length === 0 && searchResults.orders.length === 0 && searchResults.providerProfiles.length === 0 && (
+                                    <div className="text-center py-12 opacity-50">
+                                        <span className="material-symbols-outlined text-6xl text-gray-300 mb-4 block">travel_explore</span>
+                                        <p className="text-sm font-bold text-[#2D241E] uppercase">No Matches Found</p>
+                                        <p className="text-xs text-gray-400 font-bold mt-1">Try searching keywords like "John", "Tiffin", or Order IDs</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>,

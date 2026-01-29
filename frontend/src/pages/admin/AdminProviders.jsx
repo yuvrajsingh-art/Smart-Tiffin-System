@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 
@@ -29,7 +30,8 @@ const AdminProviders = () => {
         fetchProviders();
     }, []);
 
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchParams] = useSearchParams();
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [filter, setFilter] = useState('All');
     const [selectedKitchen, setSelectedKitchen] = useState(null); // For DNA Modal
     const [showRegisterModal, setShowRegisterModal] = useState(false); // For Add Modal

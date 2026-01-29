@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 
@@ -15,13 +16,31 @@ const AdminCustomers = () => {
     const formRef = React.useRef(null);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [customers, setCustomers] = useState(initialCustomersData);
+    const [customers, setCustomers] = useState([]);
     const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [filter, setFilter] = useState('All');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [editingCustomer, setEditingCustomer] = useState(null);
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    const fetchCustomers = async () => {
+        try {
+            const { data } = await axios.get('/api/admin/customers');
+            if (data.success) {
+                setCustomers(data.data);
+            }
+        } catch (error) {
+            toast.error("Failed to load customers");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCustomers();
+    }, []);
 
     const handleAddNewCustomer = (e) => {
         try {
@@ -96,11 +115,13 @@ const AdminCustomers = () => {
         }, 1000);
     };
 
-    const filteredCustomers = customers.filter(cus => {
-        const matchesSearch = cus.name.toLowerCase().includes(searchQuery.toLowerCase()) || cus.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredCustomers = Array.isArray(customers) ? customers.filter(cus => {
+        const name = cus.name || '';
+        const id = cus.id || '';
+        const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) || id.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter = filter === 'All' || cus.status === filter;
         return matchesSearch && matchesFilter;
-    });
+    }) : [];
 
     const handleUpdateCustomer = (e) => {
         try {

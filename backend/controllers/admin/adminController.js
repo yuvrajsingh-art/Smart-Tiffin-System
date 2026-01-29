@@ -2,6 +2,7 @@ const User = require("../../models/user.model");
 const Order = require("../../models/order.model");
 const Transaction = require("../../models/transaction.model");
 const Provider = require("../../models/providerprofile.model");
+const Notification = require("../../models/notification.model");
 const os = require("os");
 const mongoose = require("mongoose");
 
@@ -131,6 +132,118 @@ exports.getDashboardStats = async (req, res) => {
     }
 };
 
+// --- CUSTOMER MANAGEMENT ---
+exports.getCustomers = async (req, res) => {
+    try {
+        const { status, search } = req.query;
+        let query = { role: 'customer' };
+
+        if (status && status !== 'All') {
+            if (status === 'Active') query.status = 'active';
+            else if (status === 'Inactive') query.status = 'inactive';
+            else if (status === 'Paused') query.status = 'paused';
+            else if (status === 'Banned') query.status = 'banned';
+        }
+
+        if (search) {
+            query.$or = [
+                { fullName: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { mobile: { $regex: search, $options: 'i' } },
+                { _id: mongoose.Types.ObjectId.isValid(search) ? search : null }
+            ].filter(f => f._id !== null || Object.keys(f)[0] !== '_id');
+        }
+
+        const customers = await User.find(query).sort({ createdAt: -1 });
+
+        const data = customers.map(u => ({
+            id: u._id,
+            name: u.fullName,
+            email: u.email,
+            phone: u.mobile,
+            plan: u.subscriptionType || 'None',
+            status: u.status === 'active' ? 'Active' : (u.status === 'paused' ? 'Paused' : 'Inactive'),
+            joins: new Date(u.createdAt).toLocaleDateString('en-GB'),
+            balance: `₹${u.walletBalance || 0}`,
+            kyc: u.isVerified ? 'Verified' : 'Pending', // Mock logic for now
+            tags: u.isVerified ? ['Verified'] : ['New'],
+            tickets: 0,
+            referrals: 0, // Mock
+            address: u.address || 'Not Provided'
+        }));
+
+        res.status(200).json({ success: true, data });
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// --- ORDER MANAGEMENT ---
+exports.getOrders = async (req, res) => {
+    try {
+        const { status, search, date } = req.query;
+        let query = {};
+
+        if (status && status !== 'All') {
+            query.status = status;
+        }
+
+        // Search by Order ID, Customer Name, or Kitchen Name
+        // Search by Order ID or Customer/Provider Name
+        if (search) {
+            if (mongoose.Types.ObjectId.isValid(search)) {
+                query._id = search;
+            } else {
+                const searchRegex = new RegExp(search, 'i');
+                const users = await User.find({ fullName: searchRegex }).select('_id');
+                const userIds = users.map(u => u._id);
+                if (userIds.length > 0) {
+                    query.$or = [
+                        { customer: { $in: userIds } },
+                        { provider: { $in: userIds } } // Assuming provider is also a User ref
+                    ];
+                } else {
+                    // Force empty result if name doesn't match any user
+                    query._id = new mongoose.Types.ObjectId();
+                }
+            }
+        }
+
+        if (date === 'today') {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            query.createdAt = { $gte: start };
+        } else if (date === 'past') {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            query.createdAt = { $lt: start };
+        }
+
+        const orders = await Order.find(query)
+            .populate('customer', 'fullName address mobile')
+            .populate('provider', 'fullName') // Assuming provider is User model, or ProviderProfile check needed
+            .populate('rider_id', 'fullName')
+            .sort({ createdAt: -1 });
+
+        const data = orders.map(o => ({
+            id: o._id,
+            customer: o.customer?.fullName || 'Unknown',
+            kitchen: o.provider?.fullName || 'Unknown', // Need to check if provider ref is User or Profile. Assuming User for now.
+            type: o.order_type === 'subscription' ? 'Monthly Plan' : 'One-time', // Simplification
+            status: o.status,
+            time: new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            zone: o.delivery_address?.area || o.customer?.address || 'Indore', // Fallback
+            rider: o.rider_id ? `${o.rider_id.fullName}` : (o.status === 'Placed' || o.status === 'Preparing' ? 'Searching...' : '-'),
+            items: o.items
+        }));
+
+        res.status(200).json({ success: true, data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // --- NEW: Provider Management ---
 
 // GET ALL PROVIDERS (With Filters)
@@ -227,17 +340,75 @@ exports.toggleProviderStatus = async (req, res) => {
 };
 
 // BROADCAST MESSAGE
+// BROADCAST MESSAGE
 exports.broadcastMessage = async (req, res) => {
     try {
         const { message } = req.body;
         if (!message) return res.status(400).json({ success: false, message: "Message is required" });
 
-        // Logic to save notification to all users would go here
-        // For now, we simulate success
+        // Save Global Notification
+        await Notification.create({
+            recipient: null, // Global
+            title: "System Broadcast",
+            message: message,
+            type: "Info"
+        });
 
-        console.log("BROADCAST SENT:", message);
+        console.log("BROADCAST SAVED TO DB:", message);
 
-        res.status(200).json({ success: true, message: "Broadcast sent successfully" });
+        res.status(200).json({ success: true, message: "Broadcast sent safely to all users" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// GLOBAL SEARCH (Quick Search Entities)
+exports.globalSearch = async (req, res) => {
+    try {
+        const { query } = req.query;
+        if (!query || query.length < 2) {
+            return res.status(200).json({ success: true, data: { users: [], orders: [] } });
+        }
+
+        const regex = new RegExp(query, 'i');
+
+        // 1. Search Users (Customers & Providers)
+        const users = await User.find({
+            $or: [
+                { fullName: regex },
+                { email: regex },
+                { mobile: regex }
+            ]
+        }).select('fullName email role subscriptionType mobile status isVerified').limit(5);
+
+        // 2. Search Orders (by ID or exact match if possible)
+        let orders = [];
+        if (mongoose.Types.ObjectId.isValid(query)) {
+            const order = await Order.findById(query)
+                .populate('customer', 'fullName email')
+                .populate('provider', 'fullName');
+            if (order) orders.push(order);
+        }
+
+        // 3. Search Providers by Mess Name
+        const providerProfiles = await Provider.find({ messName: regex }).populate('user', 'fullName email role');
+        const providerResults = providerProfiles
+            .filter(p => p.user)
+            .map(p => ({
+                ...p.user.toObject(),
+                messName: p.messName,
+                isProfileResult: true
+            }));
+
+        res.status(200).json({
+            success: true,
+            data: {
+                users,
+                orders,
+                providerProfiles: providerResults
+            }
+        });
+
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

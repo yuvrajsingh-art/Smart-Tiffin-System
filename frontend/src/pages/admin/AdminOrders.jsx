@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 
@@ -26,26 +28,42 @@ const availableRiders = [
 
 const AdminOrders = () => {
     // -- State Management --
+    // -- State Management --
+    const [searchParams] = useSearchParams();
     const [viewMode, setViewMode] = useState('Today'); // 'Today' | 'Past'
-    const [orders, setOrders] = useState(generateTodayOrders());
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
-    const [searchQuery, setSearchQuery] = useState(''); // [NEW] Search State
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('id') || ''); // [NEW] Search State
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalTab, setModalTab] = useState('Intelligence');
     const [showRiderModal, setShowRiderModal] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
 
     // -- Effects --
-    useEffect(() => {
-        // Switch data based on view mode
-        if (viewMode === 'Today') {
-            setOrders(generateTodayOrders());
-        } else {
-            setOrders(generatePastOrders());
+    const fetchOrders = async () => {
+        setLoading(true);
+        try {
+            const { data } = await axios.get(`/api/admin/orders`, {
+                params: {
+                    date: viewMode.toLowerCase(),
+                    search: searchQuery
+                }
+            });
+            if (data.success) {
+                setOrders(data.data);
+            }
+        } catch (error) {
+            toast.error("Failed to load orders");
+        } finally {
+            setLoading(false);
         }
-        setFilter('All'); // Reset filter on view switch
-        setSearchQuery(''); // Reset search on view switch
-    }, [viewMode]);
+    };
+
+    useEffect(() => {
+        fetchOrders();
+        setFilter('All');
+    }, [viewMode, searchQuery]);
 
     // -- Handlers --
     const handleCallCustomer = (order) => {

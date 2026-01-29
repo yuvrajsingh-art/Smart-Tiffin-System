@@ -5,7 +5,10 @@ const {
     getProviders,
     verifyProvider,
     toggleProviderStatus,
-    broadcastMessage
+    broadcastMessage,
+    globalSearch,
+    getCustomers,
+    getOrders
 } = require("../controllers/admin/adminController");
 
 
@@ -21,4 +24,14 @@ router.put("/providers/:id/status", protect, authorizeRoles("admin"), toggleProv
 
 // Broadcast
 router.post("/broadcast", protect, authorizeRoles("admin"), broadcastMessage);
+
+// Global Search
+router.get("/search", protect, authorizeRoles("admin"), globalSearch);
+
+// Customer Management
+router.get("/customers", protect, authorizeRoles("admin"), getCustomers);
+
+// Order Management
+router.get("/orders", protect, authorizeRoles("admin"), getOrders);
+
 module.exports = router;
