@@ -54,7 +54,7 @@ exports.registerCustomer = async (req, res) => {
     }
 
     const user = await User.create(userData);
-    const token = genToken(user._id);
+    const token = genToken(user);
 
     res.status(201).json({
       message: "Customer registered successfully",
@@ -109,10 +109,10 @@ exports.providerCustomer = async (req, res) => {
     }
 
     const user = await User.create(userData);
-    const token = genToken(user._id);
+    const token = genToken(user);
 
     res.status(201).json({
-      message: "Customer registered successfully",
+      message: "Provider registered successfully",
       token,
       user
     });
@@ -153,7 +153,7 @@ exports.loginUser = async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
+        name: user.fullName,
         role: user.role,
       },
     });
@@ -163,37 +163,59 @@ exports.loginUser = async (req, res) => {
 };
 
 
+// ================= GET PROFILE =================
+exports.getProfile = async (req, res) => {
+  try {
+    // req.user 'protect' middleware se aa rahi hai
+    if (!req.user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      user: {
+        id: req.user._id,
+        name: req.user.fullName,
+        role: req.user.role,
+        email: req.user.email
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 
 exports.signOut = async (req, res) => {
-    try {
-        res.clearCookie("token");
-        return res.status(200).json({ message: "sign out successfully" });
-    } catch (error) {
-        return res.status(500).json(`sign out error ${error}`)
-    }
+  try {
+    res.clearCookie("token");
+    return res.status(200).json({ message: "sign out successfully" });
+  } catch (error) {
+    return res.status(500).json(`sign out error ${error}`)
+  }
 }
 
 
 exports.googleAuth = async (req, res) => {
-   try {
-    const {fullName,email,mobile,role}=req.body
-    let user =await User.findOne({email})
+  try {
+    const { fullName, email, mobile, role } = req.body
+    let user = await User.findOne({ email })
     if (!user) {
-       user=await User.create({
-        fullName,email,mobile,role
-       })   
+      user = await User.create({
+        fullName, email, mobile, role
+      })
     }
     const token = await genToken(user._id)
-        res.cookie("token",token,{
-            secure:false,
-            sameSite:"strict",
-            maxAge:7*24*60*60*1000,
-            httpOnly:true
-        })
-        
-        return res.status(200).json(user)
+    res.cookie("token", token, {
+      secure: false,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true
+    })
 
-   } catch (error) {
+    return res.status(200).json(user)
+
+  } catch (error) {
     return res.status(500).json(`googleAuth error ${error}`)
-   } 
+  }
 }
