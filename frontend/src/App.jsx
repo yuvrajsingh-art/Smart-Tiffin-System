@@ -11,7 +11,8 @@ import Register from './pages/auth/Register'
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout'
-import AdminLayout from './layouts/AdminLayout' // [NEW]
+import AdminLayout from './layouts/AdminLayout'
+import ProviderLayout from './layouts/ProviderLayout'
 
 // Pages - Customer
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -20,6 +21,7 @@ import TrackDelivery from './pages/customer/Track';
 import ManageSubscription from './pages/customer/ManageSubscription'
 import Feedback from './pages/customer/Feedback'
 import History from './pages/customer/History'
+import Wallet from './pages/customer/Wallet';
 import FindMess from './pages/discovery/FindMess'
 import MessDetails from './pages/discovery/MessDetails'
 import SubscriptionCheckout from './pages/discovery/SubscriptionCheckout'
@@ -27,7 +29,10 @@ import Profile from './pages/customer/Profile'
 import Notifications from './pages/customer/Notifications'
 
 // Pages - Provider
-import ProviderDashboard from './pages/provider/ProviderDashboard'; // Note: Updated import path case to match convention if needed
+import ProviderDashboard from './pages/provider/ProviderDashboard';
+import ManageMenu from './pages/provider/ManageMenu';
+import OrderManagement from './pages/provider/OrderManagement';
+import ProviderProfile from './pages/provider/ProviderProfile';
 
 // Pages - Admin
 import AdminDashboard from './pages/admin/AdminDashboard'; // [NEW]
@@ -66,6 +71,7 @@ function App() {
             <Route path="menu" element={<Menu />} />
             <Route path="track" element={<TrackDelivery />} />
             <Route path="manage-subscription" element={<ManageSubscription />} />
+            <Route path="wallet" element={<Wallet />} />
             <Route path="feedback" element={<Feedback />} />
             <Route path="history" element={<History />} />
             <Route path="profile" element={<Profile />} />
@@ -73,7 +79,12 @@ function App() {
           </Route>
 
           {/* Provider Routes - To be integrated with Layout later */}
-          <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+          <Route path="/provider" element={<ProviderLayout />}>
+            <Route path="dashboard" element={<ProviderDashboard />} />
+            <Route path="menu" element={<ManageMenu />} />
+            <Route path="orders" element={<OrderManagement />} />
+            <Route path="profile" element={<ProviderProfile />} />
+          </Route>
 
           {/* Admin Routes - [NEW] */}
           <Route path="/admin" element={<AdminLayout />}>

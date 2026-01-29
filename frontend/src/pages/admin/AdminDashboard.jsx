@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { createPortal } from 'react-dom';
+import AdminStatCard from '../../components/admin/AdminStatCard';
 
 // --- Data Constants ---
 const salesData = [
@@ -34,31 +35,7 @@ const pendingApprovals = [
     { id: 4, type: 'Plan', name: 'Home Taste', req: 'Diet Special (₹4.5k)', time: '30m' },
 ];
 
-const StatCard = ({ title, value, icon, trend, trendValue, color, delay, onClick }) => (
-    <div
-        onClick={onClick}
-        className="bg-white/70 backdrop-blur-2xl p-5 rounded-[2.5rem] border border-white/60 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden animate-[fadeIn_0.6s_ease-out] cursor-pointer"
-        style={{ animationDelay: delay }}
-    >
-        <div className={`absolute -right-8 -top-8 size-24 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-700 blur-3xl ${color.replace('text-', 'bg-')}`}></div>
-        <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`size-10 rounded-2xl flex items-center justify-center shadow-lg shadow-black/5 ${color} bg-white border border-gray-100`}>
-                <span className="material-symbols-outlined text-[20px] notranslate">{icon}</span>
-            </div>
-            <div className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wider border flex items-center gap-1 shadow-sm ${trend === 'up' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
-                <span className="material-symbols-outlined text-[11px]">{trend === 'up' ? 'north_east' : 'south_east'}</span>
-                {trendValue}
-            </div>
-        </div>
-        <div className="relative z-10">
-            <h3 className="text-3xl font-bold text-[#2D241E] tracking-tight mb-1.5 group-hover:scale-105 transition-transform origin-left duration-500">{value}</h3>
-            <p className="text-[#897a70] text-xs font-bold tracking-wider flex items-center gap-2 uppercase opacity-60">
-                <span className={`size-1.5 rounded-full ${color.replace('text-', 'bg-')}`}></span>
-                {title}
-            </p>
-        </div>
-    </div>
-);
+
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -195,7 +172,7 @@ const AdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <StatCard
+                <AdminStatCard
                     title="Gross Revenue"
                     value="₹12,41,802"
                     trend="up"
@@ -205,7 +182,7 @@ const AdminDashboard = () => {
                     delay="0ms"
                     onClick={() => navigate('/admin/finance')}
                 />
-                <StatCard
+                <AdminStatCard
                     title="Active Members"
                     value="1,842"
                     trend="up"
@@ -215,7 +192,7 @@ const AdminDashboard = () => {
                     delay="100ms"
                     onClick={() => navigate('/admin/customers')}
                 />
-                <StatCard
+                <AdminStatCard
                     title="Live Orders"
                     value="428"
                     trend="up"
@@ -225,7 +202,7 @@ const AdminDashboard = () => {
                     delay="200ms"
                     onClick={() => navigate('/admin/orders')}
                 />
-                <StatCard
+                <AdminStatCard
                     title="Partner Nodes"
                     value="15/22"
                     trend="up"

@@ -9,20 +9,23 @@
   --color-primary-dark: #e04112;
   --color-text-main: #2D241E;
   --color-text-muted: #5C4D42;
-  --color-bg-warm: #FFFBF5;
+  --color-bg-warm: #FFFEFD;
+  /* Lighter Warm White */
 
-  --color-glass-border: rgba(255, 255, 255, 0.6);
-  --color-glass-bg: rgba(255, 255, 255, 0.5);
+  --color-glass-border: rgba(45, 36, 30, 0.08);
+  /* Subtle dark border for contrast */
+  --color-glass-bg: rgba(255, 255, 255, 0.8);
+  /* More opaque white */
 
   /* Mapping for existing components */
   --color-secondary: #2D241E;
-  --color-background-warm: #FFFBF5;
+  --color-background-warm: #FFFEFD;
 }
 
 /* Base Styles */
 body {
   font-family: 'Manrope', sans-serif;
-  background-color: #FFFBF5;
+  background-color: #FFFEFD;
   /* Unified Warm Background */
   color: var(--color-text-main);
   overflow-x: hidden;
@@ -31,15 +34,15 @@ body {
 /* --- THEME UTILITIES --- */
 
 .bg-main {
-  background-color: #FFFBF5;
+  background-color: #FFFEFD;
 }
 
 .mesh-gradient {
-  background-color: #FFFBF5;
+  background-color: #FFFEFD;
   background-image:
-    radial-gradient(at 0% 0%, hsla(25, 100%, 92%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(35, 100%, 94%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(20, 100%, 90%, 1) 0, transparent 50%);
+    radial-gradient(at 0% 0%, hsla(25, 100%, 96%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(35, 100%, 97%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(20, 100%, 96%, 1) 0, transparent 50%);
 }
 
 /* Ambient Blobs - Unified for all pages */
@@ -48,7 +51,8 @@ body {
   border-radius: 50%;
   filter: blur(80px);
   z-index: -1;
-  opacity: 0.6;
+  opacity: 0.3;
+  /* Reduced opacity for lighter feel */
   animation: float 10s infinite ease-in-out;
 }
 
