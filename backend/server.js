@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cors = require("cors");
 const connectDB = require("./config/db");
 
 dotenv.config();
@@ -7,7 +8,11 @@ connectDB(); // 👈 DB CONNECT HERE
 
 const app = express();
 
-
+// CORS middleware
+app.use(cors({
+  origin: 'http://localhost:5173', // Vite dev server
+  credentials: true
+}));
 
 app.use(express.json());
 
@@ -23,19 +28,23 @@ app.listen(PORT, () => {
 
 
 const authRoutes = require("./routes/authRoutes");
-const testRoutes = require("./routes/testRoutes");
-const tiffinRoutes = require("./routes/tiffinRoutes");
-const SubscriptionRoutes = require("./routes/subscriptionRoutes");
-const menuRoutes= require("./routes/providerMenuRoutes");
-const customerMenuRoutes = require("./routes/customerMenuRoutes");
-const deliveryRoutes = require("./routes/deliveryRoutes")
-const providerprofileRoutes = require("./routes/providerprofileRoutes")
+const providerOnboardingRoutes = require("./routes/provider/providerOnboarding.routes")
+const providerMenuRoutes = require("./routes/provider/providerMenuRoutes")
+const providerDeshbordRoutes = require("./routes/provider/providerDeshbordRoutes")
+const kdsRoutes = require("./routes/provider/kdsRoutes")
+const subscriptionRoutes = require("./routes/provider/subscriptionRoutes")
+const walletRoutes = require("./routes/provider/walletRoutes")
+const reviewTriageRoutes = require("./routes/provider/reviewTriageRoutes")
+const storeProfileRoutes = require("./routes/provider/storeProfileRoutes")
 
-app.use("/api/tiffins", tiffinRoutes);
+
+app.use("/api/provider-onboarding", providerOnboardingRoutes);
+app.use("/api/provider-menus", providerMenuRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/test", testRoutes);
-app.use("/api/subscriptions", SubscriptionRoutes);
-app.use("/api/provider-menus", menuRoutes);
-app.use("/api/customer-menus", customerMenuRoutes);
-app.use("/api/deliveriestatus", deliveryRoutes)
-app.use("/api/providerprofiles", providerprofileRoutes)
+app.use("/api/provider-deshbord", providerDeshbordRoutes)
+app.use("/api/provider-kds", kdsRoutes)
+app.use("/api/provider-subscription", subscriptionRoutes)
+app.use("/api/provider-wallet", walletRoutes)
+app.use("/api/provider-reviews", reviewTriageRoutes)
+app.use("/api/provider-store", storeProfileRoutes)
+
