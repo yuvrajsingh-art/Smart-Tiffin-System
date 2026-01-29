@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSubscription } from '../../context/SubscriptionContext';
+import BackgroundBlobs from '../../components/common/BackgroundBlobs';
+import PageHeader from '../../components/common/PageHeader';
 import { Link } from 'react-router-dom';
 
 const Track = () => {
@@ -39,25 +41,18 @@ const Track = () => {
         <div className="w-full mx-auto space-y-6 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
 
             {/* Background Blobs (Standardized) */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
-                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
-            </div>
+            <BackgroundBlobs />
 
-            {/* Header */}
-            <div className="flex items-center justify-between relative z-10">
-                <div>
-                    <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 mb-2 transition-colors">
-                        <span className="material-symbols-outlined text-lg">arrow_back</span> Back
-                    </Link>
-                    <h2 className="text-xl font-black text-[#2D241E] tracking-tight">Track Order</h2>
-                    <p className="text-xs font-bold text-[#5C4D42] opacity-60 uppercase tracking-widest mt-1">Lunch • Today</p>
-                </div>
-                <div className="glass-panel px-4 py-2 rounded-xl shadow-sm border border-white/60">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Order ID</span>
-                    <span className="font-bold text-[#2D241E] text-xs">#ORD-2891</span>
-                </div>
-            </div>
+            <PageHeader
+                title="Live Tracking"
+                backText="Back"
+                rightElement={
+                    <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-2 animate-pulse">
+                        <span className="size-2 bg-green-600 rounded-full"></span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Order Active</span>
+                    </div>
+                }
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

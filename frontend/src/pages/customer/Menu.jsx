@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import PaymentModal from '../../components/common/PaymentModal';
+import BackgroundBlobs from '../../components/common/BackgroundBlobs';
+import PageHeader from '../../components/common/PageHeader';
 
 const Menu = () => {
     // Current Day Only
@@ -86,23 +88,14 @@ const Menu = () => {
         <div className="w-full pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
 
             {/* Background Blobs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
-                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
-            </div>
+            <BackgroundBlobs />
 
             {/* Header */}
-            <div className="mb-2 pt-4">
-                <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 mb-2 transition-colors">
-                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back
-                </Link>
-                <div>
-                    <h1 className="text-xl font-black text-[#2D241E] leading-tight">Today's Menu</h1>
-                    <p className="text-xs font-bold text-[#5C4D42] opacity-60 uppercase tracking-widest">
-                        {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="Today's Menu"
+                subtitle={new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+                backText="Back"
+            />
 
             {/* Timeline Layout */}
             <div className="relative mt-8">

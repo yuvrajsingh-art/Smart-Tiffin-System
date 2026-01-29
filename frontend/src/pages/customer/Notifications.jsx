@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useSubscription } from '../../context/SubscriptionContext';
+import BackgroundBlobs from '../../components/common/BackgroundBlobs';
+import PageHeader from '../../components/common/PageHeader';
 
 const Notifications = () => {
     const { hasActiveSubscription } = useSubscription();
@@ -84,23 +85,17 @@ const Notifications = () => {
         <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
 
             {/* Background Blobs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
-                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
-            </div>
+            <BackgroundBlobs />
 
             {/* Header */}
-            <div className="flex flex-col gap-1 mb-8 pt-4">
-                <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit transition-colors">
-                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
-                </Link>
-                <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-black text-[#2D241E]">Notifications</h1>
+            <PageHeader
+                title="Notifications"
+                rightElement={
                     <button className="text-xs font-black text-primary hover:underline uppercase tracking-widest">
                         Mark all as read
                     </button>
-                </div>
-            </div>
+                }
+            />
 
             {/* Stats Cards Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
@@ -130,9 +125,9 @@ const Notifications = () => {
                         {item.unread && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary"></div>}
 
                         <div className={`size-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm shrink-0 ${item.type === 'success' ? 'bg-green-50 text-green-600' :
-                                item.type === 'wallet' ? 'bg-blue-50 text-blue-600' :
-                                    item.type === 'upgrade' ? 'bg-orange-50 text-primary' :
-                                        'bg-gray-50 text-gray-500'
+                            item.type === 'wallet' ? 'bg-blue-50 text-blue-600' :
+                                item.type === 'upgrade' ? 'bg-orange-50 text-primary' :
+                                    'bg-gray-50 text-gray-500'
                             }`}>
                             <span className="material-symbols-outlined">{item.icon}</span>
                         </div>

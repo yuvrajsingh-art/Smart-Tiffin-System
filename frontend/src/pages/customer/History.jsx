@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { Link } from 'react-router-dom';
+import BackgroundBlobs from '../../components/common/BackgroundBlobs';
+import PageHeader from '../../components/common/PageHeader';
 
 const History = () => {
     const { hasActiveSubscription } = useSubscription();
@@ -75,18 +77,10 @@ const History = () => {
         <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
 
             {/* Background Blobs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
-                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
-            </div>
+            <BackgroundBlobs />
 
             {/* Header */}
-            <div className="flex flex-col gap-1 mb-8 pt-4">
-                <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit transition-colors">
-                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
-                </Link>
-                <h1 className="text-3xl font-bold text-[#2D241E]">Activity History</h1>
-            </div>
+            <PageHeader title="Activity History" />
 
             {/* Navigation Tabs (Glass) */}
             <div className="flex p-1.5 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl mb-8 max-w-md">

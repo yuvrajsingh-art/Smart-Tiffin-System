@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PaymentModal from '../../components/common/PaymentModal';
+import BackgroundBlobs from '../../components/common/BackgroundBlobs';
+import PageHeader from '../../components/common/PageHeader';
 
 const Wallet = () => {
     const [balance, setBalance] = useState(2450);
@@ -25,18 +27,10 @@ const Wallet = () => {
     return (
         <div className="w-full pb-20 animate-[fadeIn_0.5s_ease-out] relative">
             {/* Background Blobs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
-                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
-            </div>
+            <BackgroundBlobs />
 
             {/* Header */}
-            <div className="flex flex-col gap-1 mb-8 pt-4">
-                <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit transition-colors">
-                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
-                </Link>
-                <h1 className="text-xl font-black text-[#2D241E]">My Wallet</h1>
-            </div>
+            <PageHeader title="My Wallet" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
