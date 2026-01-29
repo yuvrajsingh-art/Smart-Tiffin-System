@@ -432,13 +432,13 @@ const AdminDashboard = () => {
                         <span className="material-symbols-outlined text-[24px]">sensors</span>
                     </div>
                     <div>
-                        <h4 className="text-sm font-bold italic tracking-tight uppercase">Platform Integrity Monitor</h4>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-0.5">Global Cluster Status: <span className="text-emerald-400">NOMINAL_OPTIMAL</span></p>
+                        <h4 className="text-sm font-bold italic tracking-tight uppercase">System Health</h4>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-0.5">Live Status: <span className="text-emerald-400">Stable</span></p>
                     </div>
                 </div>
                 <div className="flex items-center gap-8 relative z-10 pr-2">
                     <div className="text-center">
-                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Response</p>
+                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Speed</p>
                         <p className="text-sm font-bold italic">14ms</p>
                     </div>
                     <div className="w-px h-10 bg-white/10"></div>
@@ -450,8 +450,8 @@ const AdminDashboard = () => {
                         onClick={() => setShowLogs(true)}
                         className="px-6 py-3 bg-white/5 hover:bg-white/10 hover:shadow-2xl border border-white/10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 group/btn"
                     >
-                        Master Logs
-                        <span className="material-symbols-outlined text-[16px] group-hover/btn:translate-x-1 transition-transform">terminal</span>
+                        View Logs
+                        <span className="material-symbols-outlined text-[16px] group-hover/btn:translate-x-1 transition-transform">list_alt</span>
                     </button>
                 </div>
             </div>
@@ -550,8 +550,8 @@ const AdminDashboard = () => {
                             <div className="p-10 relative z-10">
                                 <div className="flex justify-between items-start mb-8">
                                     <div>
-                                        <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">GLOBAL BROADCAST</h3>
-                                        <p className="text-xs font-bold text-orange-500 uppercase tracking-wider mt-1">Multi-Channel Propagation</p>
+                                        <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">Broadcast Message</h3>
+                                        <p className="text-xs font-bold text-orange-500 uppercase tracking-wider mt-1">Send to everyone</p>
                                     </div>
                                     <button onClick={() => setShowBroadcast(false)} className="size-10 rounded-2xl bg-white flex items-center justify-center shadow-lg hover:rotate-90 transition-all duration-500">
                                         <span className="material-symbols-outlined text-[20px] text-[#2D241E]">close</span>
@@ -561,11 +561,11 @@ const AdminDashboard = () => {
                                 <div className="space-y-6">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center ml-2">
-                                            <label className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Protocol Message</label>
+                                            <label className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Your Message</label>
                                             <span className="px-2 py-0.5 bg-white rounded-md text-[10px] font-bold text-[#897a70] shadow-sm">{broadcastMsg.length}/140</span>
                                         </div>
                                         <textarea
-                                            placeholder="INPUT STRATEGIC ANNOUNCEMENT..."
+                                            placeholder="Type your announcement here..."
                                             value={broadcastMsg}
                                             onChange={(e) => setBroadcastMsg(e.target.value)}
                                             className="w-full h-36 bg-white border-2 border-transparent focus:border-orange-500/20 rounded-[2.5rem] p-6 text-xs font-bold text-[#2D241E] shadow-inner outline-none resize-none transition-all placeholder:text-gray-200 uppercase"
@@ -578,15 +578,15 @@ const AdminDashboard = () => {
                                             <span className="material-symbols-outlined text-[20px]">hub</span>
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-white uppercase tracking-wider">Global Broadcast Propagation</p>
-                                            <p className="text-[10px] font-bold text-white/40 leading-snug mt-1 uppercase">Target: 1,248 Nodes (Customers) + 15 Master Nodes (Providers)</p>
+                                            <p className="text-xs font-bold text-white uppercase tracking-wider">Sending To</p>
+                                            <p className="text-[10px] font-bold text-white/40 leading-snug mt-1 uppercase">All Customers + All Kitchen Providers</p>
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4 pt-4">
-                                        <button onClick={() => setShowBroadcast(false)} className="py-4 rounded-2xl text-xs font-bold text-[#897a70] uppercase tracking-wider hover:bg-white transition-all">Abort Protocol</button>
+                                        <button onClick={() => setShowBroadcast(false)} className="py-4 rounded-2xl text-xs font-bold text-[#897a70] uppercase tracking-wider hover:bg-white transition-all">Cancel</button>
                                         <button onClick={sendBroadcast} className="py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-bold uppercase tracking-wider shadow-2xl hover:bg-orange-600 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 group">
-                                            Push Update
+                                            Send Now
                                             <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">send</span>
                                         </button>
                                     </div>
@@ -609,8 +609,8 @@ const AdminDashboard = () => {
                             <div className="p-10 relative z-10">
                                 <div className="flex justify-between items-start mb-8">
                                     <div>
-                                        <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">NODE ACTIVITY MONITOR</h3>
-                                        <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mt-1">Real-time Cryptic Audit Trail</p>
+                                        <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">System Activity</h3>
+                                        <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mt-1">Live Updates & Events</p>
                                     </div>
                                     <button onClick={() => setShowLogs(false)} className="size-10 rounded-2xl bg-white flex items-center justify-center shadow-lg hover:rotate-90 transition-all duration-500">
                                         <span className="material-symbols-outlined text-[20px] text-[#2D241E]">close</span>
