@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import Input from "../../components/ui/Input";
-import Button from "../../components/ui/Button";
+import toast from 'react-hot-toast';
+import authService from '../../services/authService.js';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -90,11 +90,19 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-        console.log("Payload:", formData);
-        setTimeout(() => {
-            alert(`Welcome ${formData.name}!`);
-            navigate('/customer/dashboard');
-        }, 1000);
+        
+        try {
+            const result = await authService.register(formData);
+            
+            if (result.success) {
+                toast.success(`Welcome ${formData.name}!`);
+                navigate('/login');
+            } else {
+                toast.error(result.error || 'Registration failed');
+            }
+        } catch (error) {
+            toast.error('Network error. Please try again.');
+        }
     };
 
     const handleAllowLocation = async () => {

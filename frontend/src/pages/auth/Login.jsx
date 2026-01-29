@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import authService from '../../services/authService.js';
 
 function Login() {
     const navigate = useNavigate();
@@ -33,18 +34,20 @@ function Login() {
 
         setIsLoading(true);
 
-        // Simulate API
-        const loginPromise = new Promise(resolve => setTimeout(resolve, 1500));
-
-        await toast.promise(loginPromise, {
-            loading: 'Logging in...',
-            success: 'Welcome back!',
-            error: 'Login failed',
-        });
-
-        setIsLoading(false);
-        console.log("Logged in with:", formData);
-        navigate('/customer/dashboard');
+        try {
+            const result = await authService.login(formData);
+            
+            if (result.success) {
+                toast.success('Welcome back!');
+                navigate('/customer/dashboard');
+            } else {
+                toast.error(result.error || 'Login failed');
+            }
+        } catch (error) {
+            toast.error('Network error. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

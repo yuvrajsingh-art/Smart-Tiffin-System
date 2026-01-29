@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
+import menuService from '../../services/menuService.js';
 
 const Menu = () => {
     // Current Day Only
@@ -11,6 +12,28 @@ const Menu = () => {
 
     const [guestCounts, setGuestCounts] = useState({ lunch: 0, dinner: 0 });
     const [pausedMeals, setPausedMeals] = useState({ lunch: false, dinner: false });
+    const [menuData, setMenuData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch menu data from backend
+    useEffect(() => {
+        const fetchMenus = async () => {
+            try {
+                const result = await menuService.getCustomerMenus();
+                if (result.success) {
+                    setMenuData(result.data);
+                } else {
+                    console.error('Failed to fetch menus:', result.error);
+                }
+            } catch (error) {
+                console.error('Error fetching menus:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMenus();
+    }, []);
 
     // Preferences State
     const [showPrefModal, setShowPrefModal] = useState(false);
@@ -60,7 +83,8 @@ const Menu = () => {
         alert(`Preferences saved for ${activeMealType}! 🌶️`);
     };
 
-    const menuData = {
+    // Default menu data (fallback)
+    const defaultMenuData = {
         'Mon': { lunch: { title: 'Paneer Butter Masala', items: '3 Rotis, Jeera Rice, Dal Fry, Salad', cal: 650, img: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200' }, dinner: { title: 'Aloo Gobi Dry', items: '3 Rotis, Dal Tadka, Rice', cal: 500, img: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=200' } },
         'Tue': { lunch: { title: 'Veg Kofta Curry', items: '3 Rotis, Steam Rice, Curd', cal: 620, img: 'https://images.unsplash.com/photo-1585937421612-70a008356f36?q=80&w=200' }, dinner: { title: 'Sev Bhaji (Spicy)', items: '2 Bhakri/Rotis, Thecha, Rice', cal: 550, img: 'https://images.unsplash.com/photo-1606491956091-76c9efdd336f?q=80&w=200' } },
         'Wed': { lunch: { title: 'Rajma Chawal Special', items: 'Jeera Rice, Fryums, Pickle', cal: 700, img: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200' }, dinner: { title: 'Mix Veg Handi', items: '3 Rotis, Dal Fry, Rice', cal: 480, img: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?q=80&w=200' } },
@@ -70,7 +94,18 @@ const Menu = () => {
         'Sun': { lunch: { title: 'Sunday Special Biryani', items: 'Veg Hyderabadi Biryani, Raita', cal: 750, img: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=200' }, dinner: { title: 'Light Khichdi Kadhi', items: 'Roasted Papad, Pickle', cal: 400, img: 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200' } },
     };
 
-    const currentMenu = menuData[selectedDay] || menuData['Mon']; // Fallback
+    const currentMenu = (menuData && menuData[selectedDay]) || defaultMenuData[selectedDay] || defaultMenuData['Mon'];
+
+    if (loading) {
+        return (
+            <div className="max-w-7xl mx-auto pb-20 px-4 flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-500 font-medium">Loading menu...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
