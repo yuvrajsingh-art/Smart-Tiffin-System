@@ -1,19 +1,33 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 
 const AdminProviders = () => {
     const formRef = useRef(null);
     // Mock Data
-    const [providers, setProviders] = useState([
-        { id: 'KIT001', name: 'Annapurna Rasoi', owner: 'Mrs. Sharma', phone: '9876543210', email: 'annapurna@gmail.com', location: 'Indore, Sector 7', capacity: 500, currentLoad: 200, rating: 4.8, status: 'Active', joins: '01 Jan 2024', earnings: '₹1.2L', fssai: '21458796325874', type: 'Pure Veg' },
-        { id: 'KIT002', name: 'Spice Route', owner: 'Vicky Kaushal', phone: '9988776655', email: 'spice@route.com', location: 'Indore, Vijay Nagar', capacity: 300, currentLoad: 150, rating: 4.5, status: 'Active', joins: '05 Jan 2024', earnings: '₹85K', fssai: '22558877441122', type: 'Veg/Non-Veg' },
-        { id: 'KIT003', name: 'Home Taste', owner: 'Suman Lata', phone: '8877665544', email: 'suman@hometaste.com', location: 'Indore, Rajwada', capacity: 100, currentLoad: 80, rating: 4.9, status: 'Active', joins: '10 Jan 2024', earnings: '₹42K', fssai: '23669988552233', type: 'Pure Veg' },
-        { id: 'KIT004', name: 'Healthy Bites', owner: 'Dr. Rahul', phone: '7766554433', email: 'doc@healthy.com', location: 'Indore, Annapurna', capacity: 200, currentLoad: 0, rating: 0, status: 'Pending', joins: '25 Jan 2024', earnings: '₹0', fssai: '24770099663344', type: 'Diet' },
-        { id: 'KIT005', name: 'Tasty Tiffin', owner: 'Rajesh Kumar', phone: '9822334455', email: 'rajesh@tasty.com', location: 'Indore, Saket', capacity: 150, currentLoad: 0, rating: 0, status: 'Pending', joins: '26 Jan 2024', earnings: '₹0', fssai: '25881100774455', type: 'Pure Veg' },
-        { id: 'KIT006', name: "Mom's Magic", owner: 'Sunita Devi', phone: '9122334455', email: 'mom@magic.com', location: 'Indore, LIG', capacity: 80, currentLoad: 0, rating: 0, status: 'Pending', joins: '27 Jan 2024', earnings: '₹0', fssai: '26992211885566', type: 'Pure Veg' },
-        { id: 'KIT007', name: 'The Diet Hub', owner: 'Amit Verma', phone: '9222334455', email: 'amit@diethub.com', location: 'Indore, Palasia', capacity: 250, currentLoad: 0, rating: 0, status: 'Pending', joins: '27 Jan 2024', earnings: '₹0', fssai: '27003322996677', type: 'Diet Special' },
-    ]);
+    // Data State
+    const [providers, setProviders] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch Providers
+    const fetchProviders = async () => {
+        try {
+            const { data } = await axios.get('/api/admin/providers');
+            if (data.success) {
+                setProviders(data.data);
+            }
+        } catch (error) {
+            console.error("Error fetching providers:", error);
+            toast.error("Failed to load providers");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProviders();
+    }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filter, setFilter] = useState('All');
@@ -38,41 +52,54 @@ const AdminProviders = () => {
         });
     };
 
-    const handleApproveRequest = (id, name) => {
-        setProviders(prev => prev.map(p => p.id === id ? {
-            ...p,
-            status: 'Active',
-            currentLoad: 0,
-            rating: 0,
-            earnings: '₹0',
-            commission: p.commission || '10%',
-            hours: p.hours || '8AM - 10PM'
-        } : p));
-
-        toast.success(`${name} Approved! Now live on the platform.`, {
-            icon: '🚀',
-            style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-        });
-
-        if (pendingRequests.length <= 1) setShowRequestsModal(false);
+    const handleApproveRequest = async (id, name) => {
+        try {
+            const { data } = await axios.put(`/api/admin/providers/${id}/verify`);
+            if (data.success) {
+                toast.success(`${name} Approved! Now live on the platform.`, {
+                    icon: '🚀',
+                    style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+                });
+                fetchProviders(); // Refresh list
+                if (pendingRequests.length <= 1) setShowRequestsModal(false);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Approval Failed");
+        }
     };
 
-    const handleRejectRequest = (id, name) => {
-        setProviders(prev => prev.filter(p => p.id !== id));
-        toast.error(`${name}'s application has been rejected.`, {
-            icon: '❌',
-            style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-        });
-        if (pendingRequests.length <= 1) setShowRequestsModal(false);
+    const handleRejectRequest = async (id, name) => {
+        if (!window.confirm(`Reject application for ${name}?`)) return;
+        try {
+            // Using Status Toggle to ban/suspend as rejection for now
+            const { data } = await axios.put(`/api/admin/providers/${id}/status`);
+            if (data.success) {
+                toast.error(`${name}'s application has been rejected.`, {
+                    icon: '❌',
+                    style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+                });
+                fetchProviders();
+                if (pendingRequests.length <= 1) setShowRequestsModal(false);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Action Failed");
+        }
     };
 
-    const handleToggleStatus = (id, currentStatus) => {
-        const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
-        setProviders(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
-        toast.success(`Kitchen status changed to ${newStatus}`, {
-            icon: newStatus === 'Active' ? '✅' : '🚫',
-            style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-        });
+    const handleToggleStatus = async (id, currentStatus) => {
+        try {
+            const { data } = await axios.put(`/api/admin/providers/${id}/status`);
+            if (data.success) {
+                const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
+                toast.success(`Kitchen status changed to ${newStatus}`, {
+                    icon: newStatus === 'Active' ? '✅' : '🚫',
+                    style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+                });
+                fetchProviders();
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Status Change Failed");
+        }
     };
 
     const handleDelete = (id, name) => {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -6,34 +7,20 @@ import { createPortal } from 'react-dom';
 import AdminStatCard from '../../components/admin/AdminStatCard';
 
 // --- Data Constants ---
-const salesData = [
-    { name: 'Mon', sales: 4200, orders: 120 },
-    { name: 'Tue', sales: 3000, orders: 98 },
-    { name: 'Wed', sales: 5000, orders: 154 },
-    { name: 'Thu', sales: 2780, orders: 88 },
-    { name: 'Fri', sales: 6890, orders: 201 },
-    { name: 'Sat', sales: 8390, orders: 245 },
-    { name: 'Sun', sales: 3490, orders: 105 },
-];
-
-const customerTypeData = [
-    { name: 'Active', value: 842, color: '#10B981' },
-    { name: 'Inactive', value: 120, color: '#9CA3AF' },
-    { name: 'Paused', value: 54, color: '#F59E0B' },
-];
-
-const recentSignups = [
-    { id: 1, name: 'Rahul Sharma', plan: 'Monthly Veg', date: '2 mins ago', status: 'active' },
-    { id: 2, name: 'Priya Verma', plan: 'Weekly Non-Veg', date: '15 mins ago', status: 'pending' },
-    { id: 3, name: 'Amit Kumar', plan: 'Trial', date: '1 hour ago', status: 'active' },
-];
-
-const pendingApprovals = [
-    { id: 1, type: 'Provider', name: 'Spice Kitchen', req: 'Join Request', time: '2h' },
-    { id: 2, type: 'Complaint', name: 'Order #2991', req: 'Late Delivery', time: '5h' },
-    { id: 3, type: 'Menu', name: 'Annapurna Rasoi', req: 'Lunch (Jan 28)', time: '1h' },
-    { id: 4, type: 'Plan', name: 'Home Taste', req: 'Diet Special (₹4.5k)', time: '30m' },
-];
+// --- Data Constants ---
+// Empty initial states to prevent flicker
+const initialStats = {
+    grossRevenue: 0,
+    totalCustomers: 0,
+    liveOrders: 0,
+    salesGrowth: [],
+    recentSignups: [],
+    pendingApprovals: [],
+    deliveryMetrics: { settled: 0, transit: 0, staged: 0, completionRate: 0 },
+    activityLogs: [],
+    systemHealth: { nodeStatus: "Nominal", latency: "0ms", activeConnections: 0, lastBackup: "Never", cpuLoad: "0%" },
+    marquee: ["Initializing System..."]
+};
 
 
 
@@ -43,15 +30,48 @@ const AdminDashboard = () => {
     const [showLogs, setShowLogs] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [broadcastMsg, setBroadcastMsg] = useState('');
-    const [approvals, setApprovals] = useState(pendingApprovals);
+    const [approvals, setApprovals] = useState([]);
     const [systemHealth, setSystemHealth] = useState('Stable');
+    const [loading, setLoading] = useState(true);
 
-    const activityLogs = [
-        { time: '10:42 AM', event: 'New Kitchen Registered: Spice Kitchen', icon: 'storefront', color: 'text-violet-500' },
-        { time: '09:15 AM', event: 'Payout Processed: ₹42,500 (Annapurna Rasoi)', icon: 'payments', color: 'text-emerald-500' },
-        { time: '08:30 AM', event: 'System Maintenance Completed', icon: 'settings_suggest', color: 'text-blue-500' },
-        { time: '07:45 AM', event: 'Critical: Database Latency Spike (Indore Zone)', icon: 'error_outline', color: 'text-red-500' },
-    ];
+    // 🔹 Real-time Stats State
+    const [stats, setStats] = useState(initialStats);
+
+    // 🔹 Fetch Stats from Backend
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const { data } = await axios.get('/api/admin/stats');
+                if (data.success) {
+                    setStats({
+                        ...data.data,
+                        salesGrowth: data.data.salesGrowth.map(d => ({
+                            name: d._id.slice(5).replace('-', '/'), // "2024-01-30" -> "01/30"
+                            sales: d.sales,
+                            orders: d.orders
+                        }))
+                    });
+                    // Approval queue state sync
+                    setApprovals(data.data.pendingApprovals.map(apr => ({
+                        id: apr._id,
+                        type: 'Provider',
+                        name: apr.fullName,
+                        req: 'Join Request',
+                        time: new Date(apr.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        email: apr.email
+                    })));
+                }
+            } catch (error) {
+                console.error("Error fetching stats:", error);
+                // Optionally set error state here
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
+
 
     const handleGlobalSearch = (e) => {
         if (e.key === 'Enter' && searchQuery) {
@@ -60,55 +80,103 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleApprove = (id, name) => {
-        toast.promise(
-            new Promise(resolve => setTimeout(resolve, 1500)),
-            {
-                loading: `Approving ${name}...`,
-                success: `${name} has been approved!`,
-                error: 'Process failed.',
-            },
-            { style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' } }
-        );
-        setApprovals(approvals.filter(a => a.id !== id));
+    const handleApprove = async (id, name) => {
+        const toastId = toast.loading(`Approving ${name}...`, { style: { background: '#2D241E', color: '#fff', fontSize: '10px' } });
+        try {
+            const { data } = await axios.put(`/api/admin/providers/${id}/verify`);
+            if (data.success) {
+                toast.success(`${name} has been approved!`, {
+                    id: toastId,
+                    style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
+                });
+                setApprovals(approvals.filter(a => a.id !== id));
+            }
+        } catch (error) {
+            toast.error("Approval failed", { id: toastId });
+        }
     };
 
-    const sendBroadcast = () => {
+    const sendBroadcast = async () => {
         if (!broadcastMsg) return toast.error('Message cannot be empty');
-        toast.success(`Broadcast sent to all users/providers!`, {
-            icon: '📣',
-            style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
-        });
-        setShowBroadcast(false);
-        setBroadcastMsg('');
+
+        try {
+            const { data } = await axios.post('/api/admin/broadcast', { message: broadcastMsg });
+            if (data.success) {
+                toast.success(`Broadcast sent to all users/providers!`, {
+                    icon: '📣',
+                    style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
+                });
+                setShowBroadcast(false);
+                setBroadcastMsg('');
+            }
+        } catch (error) {
+            toast.error("Failed to send broadcast");
+        }
     };
+
+    const marqueeStyles = `
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 40s linear infinite;
+        }
+        .pause:hover .animate-marquee {
+            animation-play-state: paused;
+        }
+    `;
+
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
+            <style>{marqueeStyles}</style>
             {/* Texture Background */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
-            {/* 1. Global Ticker (Top) */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Master Console</span>
+            {/* 1. Global Ticker (Master Console) */}
+            <div className="w-full bg-[#241C16]/95 backdrop-blur-md text-white overflow-hidden py-2 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex items-center gap-4 px-5 relative z-20 border border-white/5 group">
+                {/* Status Indicator */}
+                <div className="flex items-center gap-3 shrink-0 z-10 bg-[#241C16] pr-4 border-r border-white/10 relative">
+                    <div className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400/50 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"></span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 leading-none">Console</span>
+                        <span className="text-[11px] font-bold text-white tracking-tight">MASTER_NODE</span>
+                    </div>
                 </div>
-                <div className="flex gap-8 animate-[marquee_30s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "All systems operational • Server Cluster: US-WEST-2",
-                        "Real-time Intelligence Hub Active",
-                        "Security Protocols: Level 9 Verified",
-                        "Global Load: 42% • Optimized",
-                        "Database Sync: 100% Successful"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
+
+                {/* Live Marquee */}
+                <div className="flex-1 overflow-hidden pause">
+                    <div className="flex gap-12 animate-marquee whitespace-nowrap opacity-90 transition-opacity">
+                        {(stats.marquee && stats.marquee.length > 0 ? stats.marquee : [
+                            "System Cluster: IND-WEST-1 Operational",
+                            "Security Level: RED-WOLF Verified",
+                            "Network Latency: Optimal",
+                            "Database Integrity: 100% Guaranteed"
+                        ]).map((item, i) => (
+                            <span key={i} className="text-[10px] font-bold flex items-center gap-3 text-white/80 hover:text-white transition-colors cursor-default">
+                                <span className="material-symbols-outlined text-[14px] text-orange-500/50">token</span>
+                                {item}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                {/* System Monitors (Right Side) */}
+                <div className="hidden lg:flex items-center gap-6 pl-4 border-l border-white/10 bg-[#241C16]">
+                    <div className="flex flex-col items-end">
+                        <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">Latency</span>
+                        <span className="text-[11px] font-bold text-emerald-400 italic">{stats.systemHealth.latency || '14ms'}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">Load</span>
+                        <span className="text-[11px] font-bold text-blue-400 italic">{stats.systemHealth.cpuLoad || '2.4%'}</span>
+                    </div>
+                    <button className="size-8 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all hover:scale-105 active:scale-95">
+                        <span className="material-symbols-outlined text-[16px] text-orange-500">settings_input_antenna</span>
+                    </button>
                 </div>
             </div>
 
@@ -174,7 +242,7 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <AdminStatCard
                     title="Gross Revenue"
-                    value="₹12,41,802"
+                    value={`₹${(stats.grossRevenue || 0).toLocaleString()}`}
                     trend="up"
                     trendValue="+18.4%"
                     icon="payments"
@@ -184,7 +252,7 @@ const AdminDashboard = () => {
                 />
                 <AdminStatCard
                     title="Active Members"
-                    value="1,842"
+                    value={stats.totalCustomers || 0}
                     trend="up"
                     trendValue="+12.5%"
                     icon="group"
@@ -194,7 +262,7 @@ const AdminDashboard = () => {
                 />
                 <AdminStatCard
                     title="Live Orders"
-                    value="428"
+                    value={stats.liveOrders || 0}
                     trend="up"
                     trendValue="RUSH"
                     icon="lunch_dining"
@@ -204,7 +272,7 @@ const AdminDashboard = () => {
                 />
                 <AdminStatCard
                     title="Partner Nodes"
-                    value="15/22"
+                    value={`${stats.totalProviders || 0} Nodes`}
                     trend="up"
                     trendValue="ACTIVE"
                     icon="hub"
@@ -233,19 +301,19 @@ const AdminDashboard = () => {
                         <div className="relative size-40 mx-auto">
                             <svg className="size-full rotate-[-90deg]" viewBox="0 0 36 36">
                                 <circle cx="18" cy="18" r="16" fill="transparent" stroke="#E5E7EB60" strokeWidth="2.5" />
-                                <circle cx="18" cy="18" r="16" fill="transparent" stroke="#FB923C" strokeWidth="2.5" strokeDasharray="75, 100" strokeLinecap="round" className="animate-[dash_1.5s_ease-out]" />
+                                <circle cx="18" cy="18" r="16" fill="transparent" stroke="#FB923C" strokeWidth="2.5" strokeDasharray={`${stats.deliveryMetrics.completionRate}, 100`} strokeLinecap="round" className="animate-[dash_1.5s_ease-out]" />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-4xl font-bold text-[#2D241E] tracking-tight">75%</span>
+                                <span className="text-4xl font-bold text-[#2D241E] tracking-tight">{stats.deliveryMetrics.completionRate}%</span>
                                 <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider mt-1">Completion</span>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-3">
                             {[
-                                { label: 'Settled', val: '320', col: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                { label: 'Transit', val: '85', col: 'text-orange-600', bg: 'bg-orange-50' },
-                                { label: 'Staged', val: '23', col: 'text-gray-500', bg: 'bg-gray-50' },
+                                { label: 'Settled', val: stats.deliveryMetrics.settled, col: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                { label: 'Transit', val: stats.deliveryMetrics.transit, col: 'text-orange-600', bg: 'bg-orange-50' },
+                                { label: 'Staged', val: stats.deliveryMetrics.staged, col: 'text-gray-500', bg: 'bg-gray-50' },
                             ].map((s, i) => (
                                 <div key={i} className={`p-3 ${s.bg} rounded-2xl border border-white flex flex-col items-center justify-center shadow-sm`}>
                                     <p className={`text-[10px] ${s.col} font-bold uppercase tracking-tight mb-1`}>{s.label}</p>
@@ -285,7 +353,8 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-blue-500 shadow-lg"></span><span className="text-xs font-bold uppercase tracking-wider text-[#5C4D42]">Subs</span></div>
                         </div>
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={salesData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+
+                            <AreaChart data={stats.salesGrowth} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#FB923C" stopOpacity={0.4} />
@@ -396,23 +465,30 @@ const AdminDashboard = () => {
                         <h3 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Terminal Signups</h3>
                         <button onClick={() => navigate('/admin/customers')} className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider">Global Index</button>
                     </div>
-                    <div className="space-y-4 relative z-10">
-                        {recentSignups.map((user) => (
+                    <div className="space-y-4 relative z-10 min-h-[200px]">
+                        {stats.recentSignups.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full opacity-50 py-10">
+                                <span className="material-symbols-outlined text-4xl mb-2 text-[#2D241E]">person_off</span>
+                                <p className="text-xs font-bold uppercase text-[#897a70]">No Recent Scans</p>
+                            </div>
+                        ) : stats.recentSignups.map((user) => (
                             <div
-                                key={user.id}
-                                onClick={() => navigate(`/admin/customers?id=${user.id}`)}
+                                key={user._id || user.id}
+                                onClick={() => navigate(`/admin/customers?id=${user._id || user.id}`)}
                                 className="flex items-center gap-4 p-2 bg-white/40 border border-white/40 rounded-2xl cursor-pointer hover:bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 <div className="size-10 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-white/60 flex items-center justify-center text-xs font-bold text-indigo-600 shadow-sm">
-                                    {user.name.charAt(0)}
+                                    {(user.fullName || user.name || 'User').charAt(0)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-[#2D241E] truncate italic">{user.name}</p>
-                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{user.plan}</p>
+                                    <p className="text-sm font-bold text-[#2D241E] truncate italic">{user.fullName || user.name || 'Unknown User'}</p>
+                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{user.email || user.plan || 'No Details'}</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
                                     <span className={`size-2 rounded-full ${user.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'} shadow-lg`}></span>
-                                    <p className="text-[10px] font-bold text-[#897a70] uppercase">{user.date.split(' ')[0]}m</p>
+                                    <p className="text-[10px] font-bold text-[#897a70] uppercase">
+                                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : (user.date ? user.date.split(' ')[0] + 'm' : 'Now')}
+                                    </p>
                                 </div>
                             </div>
                         ))}
@@ -542,7 +618,12 @@ const AdminDashboard = () => {
                                 </div>
 
                                 <div className="space-y-4 max-h-[420px] overflow-y-auto pr-3 custom-scrollbar">
-                                    {activityLogs.map((log, i) => (
+                                    {stats.activityLogs.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-48 opacity-50">
+                                            <span className="material-symbols-outlined text-4xl mb-2 text-[#2D241E]">history_toggle_off</span>
+                                            <p className="text-xs font-bold uppercase text-[#897a70]">No Recent Activity</p>
+                                        </div>
+                                    ) : stats.activityLogs.map((log, i) => (
                                         <div key={i} className="flex items-center gap-5 p-4 bg-white/60 border border-white rounded-[1.5rem] hover:bg-white hover:shadow-xl hover:scale-[1.01] transition-all cursor-default group">
                                             <div className={`size-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center ${log.color} shadow-sm group-hover:bg-[#2D241E] group-hover:text-white transition-all duration-500`}>
                                                 <span className="material-symbols-outlined text-[20px]">{log.icon}</span>
@@ -551,7 +632,7 @@ const AdminDashboard = () => {
                                                 <p className="text-xs font-bold text-[#2D241E] uppercase tracking-tight italic">{log.event}</p>
                                                 <p className="text-[10px] font-bold text-[#897a70] uppercase opacity-60 mt-0.5 flex items-center gap-2">
                                                     <span className="size-1 rounded-full bg-gray-300"></span>
-                                                    {log.time}
+                                                    {new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
                                             <span className="material-symbols-outlined text-gray-200 text-[20px] group-hover:text-emerald-500 transition-colors">verified</span>
