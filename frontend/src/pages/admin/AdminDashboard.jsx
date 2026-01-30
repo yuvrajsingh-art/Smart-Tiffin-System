@@ -344,8 +344,8 @@ const AdminDashboard = () => {
                                             }`}>{item.type}</span>
                                         <span className="text-[10px] font-bold text-[#897a70] uppercase italic">{item.time}</span>
                                     </div>
-                                    <p className="text-sm font-bold text-[#2D241E] leading-tight mb-1">{item.name}</p>
-                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{item.req}</p>
+                                    <p className="text-sm font-bold text-[#2D241E] leading-tight mb-1">{(typeof item.name === 'string' ? item.name : 'Unknown')}</p>
+                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{(typeof item.req === 'string' ? item.req : 'Request')}</p>
                                     <div className="flex gap-2 mt-4 opacity-0 group-hover/card:opacity-100 transition-all translate-y-2 group-hover/card:translate-y-0">
                                         <button
                                             onClick={() => handleApprove(item.id, item.name)}
@@ -419,8 +419,8 @@ const AdminDashboard = () => {
                                     {(user.fullName || user.name || 'User').charAt(0)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-[#2D241E] truncate italic">{user.fullName || user.name || 'Unknown User'}</p>
-                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{user.email || user.plan || 'No Details'}</p>
+                                    <p className="text-sm font-bold text-[#2D241E] truncate italic">{(typeof (user.fullName || user.name) === 'string' ? (user.fullName || user.name) : 'Unknown User')}</p>
+                                    <p className="text-xs font-bold text-[#897a70] uppercase tracking-tight">{user.email || (typeof user.plan === 'string' ? user.plan : '') || 'No Details'}</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
                                     <span className={`size-2 rounded-full ${user.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'} shadow-lg`}></span>
@@ -443,14 +443,14 @@ const AdminDashboard = () => {
                     <div className="flex gap-4 mb-3 relative z-10">
                         <div className="flex-1 p-4 bg-orange-50/50 rounded-[1.5rem] border border-orange-100/50 text-center hover:bg-orange-50 hover:shadow-lg transition-all cursor-default relative overflow-hidden">
                             <span className="material-symbols-outlined text-[20px] text-orange-600 mb-2">sunny</span>
-                            <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight truncate px-1">{stats.menu?.lunch?.dish || 'No Menu'}</p>
-                            <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-0.5">{stats.menu?.lunch?.type || '-'} • Lunch</p>
+                            <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight truncate px-1">{(typeof stats.menu?.lunch?.dish === 'string' ? stats.menu.lunch.dish : 'No Menu')}</p>
+                            <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-0.5">{(typeof stats.menu?.lunch?.type === 'string' ? stats.menu.lunch.type : '-') || '-'} • Lunch</p>
                             {!stats.menu?.lunch?.dish && <div className="absolute inset-0 bg-gray-50/80 flex items-center justify-center font-bold text-xs text-gray-400">Not Set</div>}
                         </div>
                         <div className="flex-1 p-4 bg-indigo-50/50 rounded-[1.5rem] border border-indigo-100/50 text-center hover:bg-indigo-50 hover:shadow-lg transition-all cursor-default relative overflow-hidden">
                             <span className="material-symbols-outlined text-[20px] text-indigo-600 mb-2">nightlight</span>
-                            <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight truncate px-1">{stats.menu?.dinner?.dish || 'No Menu'}</p>
-                            <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-0.5">{stats.menu?.dinner?.type || '-'} • Dinner</p>
+                            <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight truncate px-1">{(typeof stats.menu?.dinner?.dish === 'string' ? stats.menu.dinner.dish : 'No Menu')}</p>
+                            <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-0.5">{(typeof stats.menu?.dinner?.type === 'string' ? stats.menu.dinner.type : '-') || '-'} • Dinner</p>
                             {!stats.menu?.dinner?.dish && <div className="absolute inset-0 bg-gray-50/80 flex items-center justify-center font-bold text-xs text-gray-400">Not Set</div>}
                         </div>
                     </div>
@@ -579,7 +579,7 @@ const AdminDashboard = () => {
                                             <span className="material-symbols-outlined text-[18px]">{log.icon}</span>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[11px] font-bold text-gray-800 uppercase tracking-tight truncate">{log.event}</p>
+                                            <p className="text-[11px] font-bold text-gray-800 uppercase tracking-tight truncate">{(typeof log.event === 'string' ? log.event : 'System Event')}</p>
                                             <p className="text-[10px] text-gray-500 mt-0.5">
                                                 {new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} • System Node 01
                                             </p>
@@ -631,8 +631,8 @@ const AdminDashboard = () => {
                                                             {u.fullName[0]}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-[#2D241E] group-hover:text-indigo-600 transition-colors">{u.fullName}</p>
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase">{u.role} • {u.status}</p>
+                                                            <p className="text-sm font-bold text-[#2D241E] group-hover:text-indigo-600 transition-colors">{(typeof u.fullName === 'string' ? u.fullName : 'User')}</p>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase">{(typeof u.role === 'string' ? u.role : 'Role')} • {(typeof u.status === 'string' ? u.status : 'Status')}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -649,8 +649,8 @@ const AdminDashboard = () => {
                                             {searchResults.providerProfiles.map(p => (
                                                 <div key={p._id} onClick={() => navigate(`/admin/providers?search=${p.messName}`)} className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-orange-200 hover:shadow-lg cursor-pointer transition-all flex justify-between items-center group">
                                                     <div>
-                                                        <p className="text-sm font-bold text-[#2D241E] group-hover:text-orange-600 transition-colors">{p.messName}</p>
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Owner: {p.fullName}</p>
+                                                        <p className="text-sm font-bold text-[#2D241E] group-hover:text-orange-600 transition-colors">{(typeof p.messName === 'string' ? p.messName : 'Kitchen')}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Owner: {(typeof p.fullName === 'string' ? p.fullName : 'Unknown')}</p>
                                                     </div>
                                                     <span className="material-symbols-outlined text-orange-400">restaurant</span>
                                                 </div>
