@@ -1,19 +1,20 @@
-import ProviderSidebar from "../../components/ui/Provider/ProviderSidebar";
-import ProviderHeader from "../../components/ui/Provider/Dashboard/ProviderHeader";
-import ProviderStatsCard from "../../components/ui/Provider/Dashboard/ProviderStatsCard";
-import ProviderOrdersTable from "../../components/ui/Provider/Dashboard/ProviderOrdersTable";
-import { FaUtensils, FaUsers, FaTruck, FaRupeeSign } from 'react-icons/fa';
+import React from 'react';
+import ActiveCustomerList from '../../components/ui/Provider/Active Customer/ActiveCustomerList';
+import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
+import ProviderHeader from '../../components/ui/Provider/Dashboard/ProviderHeader';
 
-function ActiveCustomer() {
-    return (
-        <div className="flex h-screen bg-gray-50">
-            <ProviderSidebar />
-            
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <ProviderHeader />
-               
-            </div>
+const ActiveCustomers = () => {
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <ProviderSidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <ProviderHeader />
+        <div className="flex-1 overflow-y-auto">
+          <ActiveCustomerList />
         </div>
-    );
-}
-export default ActiveCustomer
+      </div>
+    </div>
+  );
+};
+
+export default ActiveCustomers;

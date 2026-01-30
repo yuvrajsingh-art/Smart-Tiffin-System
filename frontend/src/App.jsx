@@ -108,7 +108,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ManageMenu />
+      <ActiveCustomer />
     </BrowserRouter>
   )
 }
