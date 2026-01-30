@@ -35,7 +35,22 @@ const AdminCustomers = () => {
         try {
             const { data } = await axios.get('/api/admin/customers');
             if (data.success) {
-                setCustomers(data.data);
+                const transformed = data.data.map(c => ({
+                    ...c,
+                    id: c._id,
+                    name: c.fullName || 'Unknown',
+                    status: c.status?.charAt(0).toUpperCase() + c.status?.slice(1) || 'Active',
+                    plan: 'Standard',
+                    phone: c.mobile || 'N/A',
+                    balance: `₹${c.walletBalance || 0}`,
+                    kyc: c.isVerified ? 'Verified' : 'Pending',
+                    joins: new Date(c.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    tags: ['User'],
+                    tickets: 0,
+                    referrals: 0,
+                    address: c.address || (typeof c.location === 'object' ? c.location?.address : 'No Address')
+                }));
+                setCustomers(transformed);
                 if (data.stats) {
                     setStats(data.stats);
                 }

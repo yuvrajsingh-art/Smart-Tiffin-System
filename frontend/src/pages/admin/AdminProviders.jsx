@@ -16,7 +16,26 @@ const AdminProviders = () => {
         try {
             const { data } = await axios.get('/api/admin/providers');
             if (data.success && Array.isArray(data.data)) {
-                setProviders(data.data);
+                const transformed = data.data.map(p => ({
+                    ...p,
+                    id: p._id,
+                    name: p.profile?.messName || p.fullName || 'Unknown',
+                    owner: p.fullName || 'Unknown',
+                    location: p.profile?.location?.address || p.address || 'Address Not Set',
+                    status: p.isVerified ? (p.status === 'active' ? 'Active' : 'Suspended') : 'Pending',
+                    type: p.profile?.legalStatus || 'Standard',
+                    phone: p.profile?.phone || p.mobile || 'N/A',
+                    pincode: p.profile?.location?.pincode || '',
+                    city: p.profile?.location?.city || '',
+                    fssai: p.profile?.fssaiNumber || 'N/A',
+                    accNo: p.profile?.bankDetails?.accountNumber || 'N/A',
+                    ifsc: p.profile?.bankDetails?.ifscCode || 'N/A',
+                    commission: `${p.profile?.commission_rate || 15}%`,
+                    hours: '8AM - 10PM',
+                    capacity: 50,
+                    currentLoad: 0
+                }));
+                setProviders(transformed);
             }
         } catch (error) {
             console.error("Error fetching providers:", error);
