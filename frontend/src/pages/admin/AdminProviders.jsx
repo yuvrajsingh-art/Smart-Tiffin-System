@@ -15,7 +15,7 @@ const AdminProviders = () => {
     const fetchProviders = async () => {
         try {
             const { data } = await axios.get('/api/admin/providers');
-            if (data.success) {
+            if (data.success && Array.isArray(data.data)) {
                 setProviders(data.data);
             }
         } catch (error) {
@@ -33,15 +33,15 @@ const AdminProviders = () => {
     const [searchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [filter, setFilter] = useState('All');
-    const [selectedKitchen, setSelectedKitchen] = useState(null); // For DNA Modal
+    const [selectedKitchen, setSelectedKitchen] = useState(null); // For Profile Modal
     const [showRegisterModal, setShowRegisterModal] = useState(false); // For Add Modal
     const [editingKitchen, setEditingKitchen] = useState(null); // For Edit Modal
     const [showRequestsModal, setShowRequestsModal] = useState(false); // For Requests Modal
 
     // Derived Data
-    const filteredProviders = providers.filter(pro => {
-        const matchesSearch = pro.name.toLowerCase().includes(searchQuery.toLowerCase()) || pro.id.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filter === 'All' || pro.status === filter;
+    const filteredProviders = (providers || []).filter(pro => {
+        const matchesSearch = (pro?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || (pro?.id?.toString()?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+        const matchesFilter = filter === 'All' || pro?.status === filter;
         return matchesSearch && matchesFilter;
     });
 
@@ -237,35 +237,10 @@ const AdminProviders = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
-            {/* Texture Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
 
-            {/* 1. Global Ticker (Top) */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Network Pulse</span>
-                </div>
-                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "All Systems Operational: 99.9% Uptime",
-                        "New Provider: 'Tasty Tiffin' join request pending",
-                        "Capacity Alert: 3 Kitchens at 90% load",
-                        "Audit: FSSAI compliance verified for 12 partners"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
+            {/* Header Block */}
 
-            {/* 2. Golden Header Block */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
@@ -274,7 +249,7 @@ const AdminProviders = () => {
                     </div>
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Operational Scale & Kitchen Management
+                        Manage & Monitor All Kitchens
                     </p>
                 </div>
 
@@ -291,7 +266,7 @@ const AdminProviders = () => {
                         className="px-5 py-2.5 bg-[#2D241E] text-white rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all hover:bg-[#453831] flex items-center gap-2 shadow-xl shadow-black/10 scale-105 active:scale-95"
                     >
                         <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                        Onboard Partner
+                        Add Kitchen
                     </button>
                 </div>
             </div>
@@ -315,10 +290,10 @@ const AdminProviders = () => {
                         </div>
                     ))
                 }
-            </div >
+            </div>
 
             {/* Filter & Search */}
-            < div className="flex flex-col lg:flex-row items-center gap-4" >
+            <div className="flex flex-col lg:flex-row items-center gap-4">
                 <div className="flex-1 w-full bg-white/70 backdrop-blur-xl p-4 rounded-[2rem] border border-white/60 shadow-lg flex flex-col sm:flex-row items-center gap-3">
                     <div className="relative flex-1 w-full">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">search</span>
@@ -342,10 +317,10 @@ const AdminProviders = () => {
                         ))}
                     </div>
                 </div>
-            </div >
+            </div>
 
             {/* Providers Table */}
-            < div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg overflow-hidden" >
+            <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
@@ -363,7 +338,7 @@ const AdminProviders = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="size-12 rounded-[1rem] bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold shadow-sm overflow-hidden">
-                                                    {pro.name.charAt(0)}
+                                                    {(pro?.name || 'K').charAt(0)}
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
@@ -441,7 +416,7 @@ const AdminProviders = () => {
                                                         <button
                                                             onClick={() => setSelectedKitchen(pro)}
                                                             className="size-8 rounded-xl bg-[#2D241E] text-white flex items-center justify-center hover:bg-violet-600 transition-all shadow-lg shadow-black/10"
-                                                            title="View Kitchen DNA"
+                                                            title="View Kitchen Profile"
                                                         >
                                                             <span className="material-symbols-outlined text-[18px]">visibility</span>
                                                         </button>
@@ -473,79 +448,61 @@ const AdminProviders = () => {
                         </tbody>
                     </table>
                 </div>
-            </div >
+            </div>
 
             {/* --- MODALS --- */}
 
-            {/* 1. Requests Review Modal - [COMPACT & STREAMLINED] */}
+            {/* 1. Join Requests Modal */}
             {
                 showRequestsModal && createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowRequestsModal(false)}></div>
-                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-md overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex flex-col max-h-[80vh]">
-                            {/* Texture */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRequestsModal(false)}></div>
+                        <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
 
                             {/* Compact Header */}
-                            <div className="p-6 pb-4 flex justify-between items-center bg-[#2D241E] text-white shrink-0">
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-orange-400 text-[18px]">verified</span>
+                                    <div className="size-9 bg-orange-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-orange-500 text-[18px]">verified</span>
                                     </div>
-                                    <h3 className="text-lg font-bold tracking-tight">Join Requests</h3>
+                                    <div>
+                                        <h3 className="text-base font-bold text-gray-800">Join Requests</h3>
+                                        <p className="text-xs text-gray-500">{pendingRequests.length} pending</p>
+                                    </div>
                                 </div>
-                                <button onClick={() => setShowRequestsModal(false)} className="size-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all">
-                                    <span className="material-symbols-outlined text-[18px] text-white">close</span>
+                                <button onClick={() => setShowRequestsModal(false)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
                                 </button>
                             </div>
 
-                            {/* Streamlined List */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar p-1 space-y-1 bg-gray-50/50">
+                            {/* List */}
+                            <div className="flex-1 overflow-y-auto">
                                 {pendingRequests.length > 0 ? (
                                     pendingRequests.map(req => (
-                                        <div key={req.id} className="bg-white p-4 flex items-center gap-4 transition-all hover:bg-orange-50/30 border-b border-gray-100 last:border-0">
-
-                                            {/* Avatar */}
-                                            <div className="size-11 rounded-xl bg-orange-100 flex items-center justify-center text-lg font-bold text-orange-600 shrink-0">
-                                                {req.name.charAt(0)}
+                                        <div key={req.id} className="p-4 flex items-center gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                            <div className="size-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-bold">
+                                                {(req?.name || 'K').charAt(0)}
                                             </div>
-
-                                            {/* Simplified Info */}
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="text-sm font-bold text-[#2D241E] truncate leading-none">{req.name}</h4>
-                                                <p className="text-[11px] font-bold text-[#897a70] mt-1.5 truncate">by {req.owner} • {req.type}</p>
+                                                <h4 className="text-sm font-semibold text-gray-800 truncate">{req.name}</h4>
+                                                <p className="text-xs text-gray-500 truncate">by {req.owner} • {req.type}</p>
                                             </div>
-
-                                            {/* Compact Actions */}
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <button
-                                                    onClick={() => handleApproveRequest(req.id, req.name)}
-                                                    className="size-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all"
-                                                    title="Approve"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">check</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <button onClick={() => handleApproveRequest(req.id, req.name)} className="size-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all">
+                                                    <span className="material-symbols-outlined text-[16px]">check</span>
                                                 </button>
-                                                <button
-                                                    onClick={() => handleRejectRequest(req.id, req.name)}
-                                                    className="size-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
-                                                    title="Reject"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                                <button onClick={() => handleRejectRequest(req.id, req.name)} className="size-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all">
+                                                    <span className="material-symbols-outlined text-[16px]">close</span>
                                                 </button>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center py-12 text-center opacity-60">
+                                    <div className="flex flex-col items-center justify-center py-16 text-center">
                                         <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">inbox</span>
-                                        <p className="text-xs font-bold text-[#2D241E]">No pending requests</p>
+                                        <p className="text-sm font-medium text-gray-500">No pending requests</p>
                                     </div>
                                 )}
-                            </div>
-
-                            {/* Sticky Bottom Summary */}
-                            <div className="p-3 bg-white border-t border-gray-100 flex justify-center">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{pendingRequests.length} Pending Actions</span>
                             </div>
                         </div>
                     </div>,
@@ -553,33 +510,31 @@ const AdminProviders = () => {
                 )
             }
 
-            {/* 2. Kitchen DNA Modal */}
+            {/* 2. Kitchen Profile Modal */}
             {
                 selectedKitchen && createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setSelectedKitchen(null)}></div>
-                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-3xl overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex flex-col max-h-[92vh]">
-                            {/* Texture */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedKitchen(null)}></div>
+                        <div className="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]">
 
-                            {/* Modal Header */}
-                            <div className="p-8 pb-4 flex justify-between items-start shrink-0">
+                            {/* Compact Header */}
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">Kitchen DNA</h3>
-                                    <p className="text-xs font-bold text-[#897a70] mt-1">Operational ID: {selectedKitchen.id}</p>
+                                    <h3 className="text-base font-bold text-gray-800">Kitchen Profile</h3>
+                                    <p className="text-xs text-gray-500">ID: {selectedKitchen.id}</p>
                                 </div>
-                                <button onClick={() => setSelectedKitchen(null)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
-                                    <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
+                                <button onClick={() => setSelectedKitchen(null)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
                                 </button>
                             </div>
 
                             {/* Modal Content */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pb-8 space-y-6">
+                            <div className="flex-1 overflow-y-auto p-5 space-y-4">
 
                                 {/* Profile Card */}
                                 <div className="p-5 bg-[#FDFBF9] border border-orange-100/50 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
                                     <div className="size-20 rounded-2xl bg-orange-100 flex items-center justify-center text-3xl font-bold text-orange-600 shadow-inner">
-                                        {selectedKitchen.name.charAt(0)}
+                                        {(selectedKitchen?.name || 'K').charAt(0)}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex items-center justify-between">
@@ -756,35 +711,33 @@ const AdminProviders = () => {
                 )
             }
 
-            {/* 3. Register/Edit Kitchen Modal - [POLISHED & COMPREHENSIVE] */}
+            {/* 3. Register/Edit Kitchen Modal */}
             {
                 (showRegisterModal || editingKitchen) && createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => { setShowRegisterModal(false); setEditingKitchen(null); }}></div>
-                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-xl overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex flex-col max-h-[90vh]">
-                            {/* Texture */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setShowRegisterModal(false); setEditingKitchen(null); }}></div>
+                        <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[88vh]">
 
-                            {/* Header */}
-                            <div className="p-8 pb-4 flex justify-between items-start shrink-0">
+                            {/* Compact Header */}
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-2xl font-bold text-[#2D241E] tracking-tight">{editingKitchen ? 'Edit Kitchen' : 'Onboard Partner'}</h3>
-                                    <p className="text-xs font-bold text-[#897a70] mt-1">Kitchen Identity & Compliance Setup</p>
+                                    <h3 className="text-base font-bold text-gray-800">{editingKitchen ? 'Edit Kitchen' : 'Add Kitchen'}</h3>
+                                    <p className="text-xs text-gray-500">Kitchen details & compliance</p>
                                 </div>
-                                <button onClick={() => { setShowRegisterModal(false); setEditingKitchen(null); }} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
-                                    <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
+                                <button onClick={() => { setShowRegisterModal(false); setEditingKitchen(null); }} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
                                 </button>
                             </div>
 
-                            {/* Form Body - Manual Submit for maximum reliability */}
-                            <div className="p-8 pt-0 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                                <form ref={formRef} className="space-y-6">
+                            {/* Form Body */}
+                            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+                                <form ref={formRef} className="space-y-4">
 
                                     {/* Profile Preview (only for Edit) */}
                                     {editingKitchen && (
                                         <div className="p-4 bg-[#FDFBF9] border border-orange-100/50 rounded-[20px] flex items-center gap-4 mb-2">
                                             <div className="size-14 rounded-xl bg-orange-100 flex items-center justify-center text-xl font-bold text-orange-600 shadow-inner">
-                                                {editingKitchen.name.charAt(0)}
+                                                {(editingKitchen?.name || 'K').charAt(0)}
                                             </div>
                                             <div>
                                                 <h4 className="text-lg font-bold text-[#2D241E] leading-tight">{editingKitchen.name}</h4>
@@ -973,7 +926,7 @@ const AdminProviders = () => {
                     document.body
                 )
             }
-        </div >
+        </div>
     );
 };
 

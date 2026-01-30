@@ -110,6 +110,45 @@ const seedData = async () => {
         await Order.insertMany(orders);
         console.log("Orders Seeded (Delivery Ops) ✅");
 
+        // 5. Create Menus (For Dashboard Monitor)
+        const Menu = require("./models/menu.model");
+        const today = new Date();
+        today.setHours(10, 0, 0, 0); // Morning
+
+        const menus = [
+            {
+                provider: savedProviders[0]._id,
+                menuDate: today,
+                mealType: "lunch",
+                name: "Special Punjabi Thali",
+                price: 120,
+                category: "Thali",
+                type: "Veg",
+                mainDish: "Paneer Butter Masala",
+                sabjiDry: "Mix Veg",
+                dal: "Dal Makhani",
+                rice: "Jeera Rice",
+                bread: { type: "Butter Naan", count: 2 }
+            },
+            {
+                provider: savedProviders[0]._id,
+                menuDate: today,
+                mealType: "dinner",
+                name: "Light Dinner Combo",
+                price: 90,
+                category: "Combo",
+                type: "Veg",
+                mainDish: "Sev Tamatar",
+                sabjiDry: "Aloo Jeera",
+                dal: "Dal Fry",
+                rice: "Steamed Rice",
+                bread: { type: "Tawa Roti", count: 4 }
+            }
+        ];
+
+        await Menu.insertMany(menus);
+        console.log("Menus Seeded (Dashboard Real Data) ✅");
+
         console.log("\n🚀 DB POPULATED! Dashboard ab real lagega.");
         process.exit();
     } catch (err) {

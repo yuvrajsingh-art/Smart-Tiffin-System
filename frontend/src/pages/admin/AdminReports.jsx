@@ -46,7 +46,7 @@ const transactionHistory = [
 
 const AdminReports = () => {
     const [activeTab, setActiveTab] = useState('Overview');
-    const [showReportEngine, setShowReportEngine] = useState(false);
+    const [showReportEngine, setShowReportEngine] = useState(false); // Reporting System
     const [genConfig, setGenConfig] = useState({ range: 'Last 30 Days', metric: 'Summary' });
     const [isGenerating, setIsGenerating] = useState(false);
 
@@ -67,12 +67,12 @@ const AdminReports = () => {
 
     const handleGenerate = () => {
         setIsGenerating(true);
-        setGenLogs(["Initializing Neural Core...", "Establishing secure bridge to Indore Cluster...", "Fetching transactional delta (JSON)..."]);
+        setGenLogs(["Initializing Intelligence Hub...", "Establishing secure bridge to Regional Data...", "Fetching transactional updates (JSON)..."]);
 
         const possibleLogs = [
             "Normalizing unit economics for Q1...",
             "Merging retention curves...",
-            "Analyzing kitchen latencies (Indore Zone)...",
+            "Analyzing kitchen latencies (Regional Hub)...",
             "Calculating churn coefficients...",
             "Optimizing resource allocation vectors...",
             "Finalizing executive summary..."
@@ -123,11 +123,11 @@ const AdminReports = () => {
         setIsAuditing(true);
         setAuditStep(1);
 
-        toast('Audit Initialized: Scanning Network Nodes', { icon: '🔍', style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
+        toast('Audit Initialized: Scanning System Servers', { icon: '🔍', style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
 
         setTimeout(() => {
             setAuditStep(2);
-            toast('Compliance Check: Pedigree Validation', { icon: '🛡️', style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
+            toast('Compliance Check: Data Validation', { icon: '🛡️', style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
 
             setTimeout(() => {
                 setAuditStep(3);
@@ -183,7 +183,7 @@ const AdminReports = () => {
             msg = `Dialing secure line to ${label.replace('Contacting ', '').replace('Reach Out ', '')}...`;
             icon = 'call';
         } else if (label.includes('Matrix')) {
-            msg = `Generating sales-vs-satisfaction matrix for ${label.replace('View Matrix for ', '')}...`;
+            msg = `Generating sales-vs-satisfaction analytics for ${label.replace('View Matrix for ', '')}...`;
             icon = 'grid_view';
         } else if (label.includes('Report') || label.includes('Export')) {
             msg = "Exporting granular dataset to CSV/PDF...";
@@ -204,41 +204,15 @@ const AdminReports = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
-            {/* Texture Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
 
-            {/* 1. Global Ticker (Top) */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Insights Pulse</span>
-                </div>
-                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "All Systems Operational: 99.9% Uptime",
-                        "New Insight: Customer 'Rahul' ordered 5x this month",
-                        "Kitchen Alert: 'Spice Route' trending +25% in orders",
-                        "System: Data warehouse sync complete",
-                        "Prediction: Weekend demand expected to rise by 30%"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
 
             {/* 2. Golden Header Block */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Analytics & Intelligence</h1>
-                        <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-orange-500/10">ULTIMATE_PORTAL</span>
+                        <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-orange-500/10">Reporting Hub</span>
                     </div>
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -681,45 +655,49 @@ const AdminReports = () => {
             {/* AI Report Engine Modal */}
             {
                 showReportEngine && createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => !isGenerating && setShowReportEngine(false)}></div>
-                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-xl overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex flex-col">
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !isGenerating && setShowReportEngine(false)}></div>
+                        <div className="bg-white rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
 
-                            {/* Texture */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-                            {/* Modal Header */}
-                            <div className="p-8 pb-4 bg-white/80 backdrop-blur-xl border-b border-[#2D241E]/5 flex justify-between items-start shrink-0 relative z-10">
-                                <div>
-                                    <h3 className="text-2xl font-bold text-[#2D241E] italic">Digital Insights Engine</h3>
-                                    <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-1">Configure Analysis Parameters</p>
+                            {/* Compact Header */}
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 bg-orange-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-orange-500 text-[18px]">auto_awesome</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-bold text-gray-800">Digital Insights Engine</h3>
+                                        <p className="text-xs text-gray-500">Configure AI analysis parameters</p>
+                                    </div>
                                 </div>
-                                <button onClick={() => setShowReportEngine(false)} disabled={isGenerating} className="size-8 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all disabled:opacity-50"><span className="material-symbols-outlined text-[18px]">close</span></button>
+                                <button onClick={() => setShowReportEngine(false)} disabled={isGenerating} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-50">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                </button>
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-8 relative z-10">
+                            <div className="p-6 overflow-y-auto">
                                 {/* Loading State during Generation */}
                                 {isGenerating ? (
-                                    <div className="py-12 flex flex-col items-center justify-center space-y-6">
+                                    <div className="py-10 flex flex-col items-center justify-center space-y-6">
                                         <div className="size-20 relative">
-                                            <div className="absolute inset-0 border-4 border-[#2D241E]/10 rounded-full"></div>
-                                            <div className="absolute inset-0 border-4 border-[#2D241E] border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
+                                            <div className="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-[#2D241E] animate-pulse">analytics</span>
+                                                <span className="material-symbols-outlined text-orange-500 animate-pulse text-3xl">analytics</span>
                                             </div>
                                         </div>
-                                        <div className="text-center space-y-2">
-                                            <h4 className="text-lg font-bold text-[#2D241E] italic">Neural Inference in Progress</h4>
-                                            <p className="text-xs font-bold text-[#897a70] uppercase tracking-wider">Processing {genConfig.metric} pipeline</p>
+                                        <div className="text-center">
+                                            <h4 className="text-base font-bold text-gray-800">Analyzing Market Patterns</h4>
+                                            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Neural Inference in progress...</p>
                                         </div>
 
                                         {/* Streaming Terminal Logs */}
-                                        <div className="w-full bg-[#2D241E] rounded-2xl p-4 font-mono text-[10px] text-emerald-400/90 space-y-1 shadow-inner max-w-sm mx-auto">
+                                        <div className="w-full bg-gray-900 rounded-xl p-4 font-mono text-[10px] text-emerald-400 space-y-1 shadow-inner">
                                             {genLogs.map((log, idx) => (
-                                                <div key={idx} className="flex gap-2">
-                                                    <span className="opacity-50">[{new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
-                                                    <span className="animate-[fadeIn_0.2s]">{log}</span>
+                                                <div key={idx} className="flex gap-2 opacity-80">
+                                                    <span className="opacity-40">[{new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
+                                                    <span>{log}</span>
                                                 </div>
                                             ))}
                                             <div className="w-1.5 h-3 bg-emerald-400 animate-pulse inline-block ml-1"></div>
@@ -728,13 +706,13 @@ const AdminReports = () => {
                                 ) : (
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-[#897a70] uppercase ml-3 tracking-wider">Timeframe</label>
-                                            <div className="grid grid-cols-3 gap-3">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Timeframe</label>
+                                            <div className="grid grid-cols-3 gap-2">
                                                 {['Last 7 Days', 'Last 30 Days', 'Quarterly'].map(r => (
                                                     <button
                                                         key={r}
                                                         onClick={() => setGenConfig({ ...genConfig, range: r })}
-                                                        className={`py-3 rounded-xl text-xs font-bold transition-all ${genConfig.range === r ? 'bg-[#2D241E] text-white shadow-lg shadow-black/20' : 'bg-white text-[#5C4D42] border border-transparent hover:border-gray-200'}`}
+                                                        className={`py-2.5 rounded-xl text-xs font-bold transition-all ${genConfig.range === r ? 'bg-gray-900 text-white shadow-lg shadow-black/10' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                                                     >
                                                         {r}
                                                     </button>
@@ -742,9 +720,9 @@ const AdminReports = () => {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-bold text-[#897a70] uppercase ml-3 tracking-wider">Target Metrics</label>
-                                            <div className="space-y-3">
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Target Metrics</label>
+                                            <div className="space-y-2">
                                                 {[
                                                     { id: 'Summary', label: 'Executive Financial Summary', icon: 'finance' },
                                                     { id: 'Kitchen', label: 'Detailed Kitchen Performance', icon: 'soup_kitchen' },
@@ -753,11 +731,11 @@ const AdminReports = () => {
                                                     <div
                                                         key={m.id}
                                                         onClick={() => setGenConfig({ ...genConfig, metric: m.id })}
-                                                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${genConfig.metric === m.id ? 'border-[#2D241E] bg-[#2D241E]/5 shadow-inner' : 'border-white bg-white/50 hover:bg-white'}`}
+                                                        className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${genConfig.metric === m.id ? 'border-gray-900 bg-gray-900/[0.02]' : 'border-gray-50 bg-gray-50 hover:bg-gray-100'}`}
                                                     >
-                                                        <div className="flex items-center gap-4">
-                                                            <span className={`material-symbols-outlined ${genConfig.metric === m.id ? 'text-[#2D241E]' : 'text-gray-400'}`}>{m.icon}</span>
-                                                            <span className={`text-[11px] font-bold uppercase tracking-tight ${genConfig.metric === m.id ? 'text-[#2D241E]' : 'text-[#897a70]'}`}>{m.label}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={`material-symbols-outlined text-[20px] ${genConfig.metric === m.id ? 'text-gray-900' : 'text-gray-400'}`}>{m.icon}</span>
+                                                            <span className={`text-xs font-bold ${genConfig.metric === m.id ? 'text-gray-900' : 'text-gray-500'}`}>{m.label}</span>
                                                         </div>
                                                         {genConfig.metric === m.id && <span className="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>}
                                                     </div>
@@ -768,9 +746,9 @@ const AdminReports = () => {
                                 )}
 
                                 {!isGenerating && (
-                                    <div className="flex gap-3 mt-8 pt-4 border-t border-[#2D241E]/5">
-                                        <button onClick={() => setShowReportEngine(false)} className="flex-1 py-4 bg-white text-[#5C4D42] rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-50 border border-gray-200 transition-all">Discard View</button>
-                                        <button onClick={handleGenerate} className="flex-1 py-4 bg-[#2D241E] text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg hover:bg-orange-600 transition-all">Compile Report</button>
+                                    <div className="flex gap-2 mt-6 pt-4 border-t border-gray-100">
+                                        <button onClick={() => setShowReportEngine(false)} className="flex-1 py-3 bg-white text-gray-400 rounded-xl text-xs font-bold uppercase tracking-widest hover:text-gray-600">Discard</button>
+                                        <button onClick={handleGenerate} className="flex-[2] py-3 bg-gray-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all">Compile Report</button>
                                     </div>
                                 )}
                             </div>
@@ -780,45 +758,42 @@ const AdminReports = () => {
                 )
             }
 
-            {/* Metric Drilldown Modal - [NEW] */}
+            {/* Metric Drilldown Modal */}
             {
                 showDrilldown && createPortal(
-                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/85 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowDrilldown(false)}></div>
-                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex flex-col">
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDrilldown(false)}></div>
+                        <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl relative z-10 flex flex-col">
 
-                            {/* Texture */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-                            {/* Modal Header */}
-                            <div className="p-4 bg-white/60 backdrop-blur-xl border-b border-[#2D241E]/5 flex justify-between items-center shrink-0 relative z-10">
+                            {/* Compact Header */}
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-xl bg-[#2D241E] flex items-center justify-center text-white shadow-lg">
-                                        <span className="material-symbols-outlined text-[20px]">
+                                    <div className="size-9 bg-gray-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-gray-600 text-[20px]">
                                             {selectedMetric === 'EBITDA' ? 'payments' :
                                                 selectedMetric === 'Avg Delivery' ? 'local_shipping' :
                                                     selectedMetric === 'Churn Rate' ? 'person_remove' : 'star'}
                                         </span>
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-[#2D241E] italic tracking-tight">{selectedMetric} Drilldown</h3>
-                                        <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider">In-depth cluster analysis • Indore Zone</p>
+                                        <h3 className="text-base font-bold text-gray-800">{selectedMetric} Drilldown</h3>
+                                        <p className="text-xs text-gray-400">In-depth cluster analysis • Indore Zone</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowDrilldown(false)} className="size-8 rounded-full bg-white border border-gray-100 flex items-center justify-center hover:bg-gray-100 transition-all shadow-sm">
-                                    <span className="material-symbols-outlined text-[18px] text-[#2D241E]">close</span>
+                                <button onClick={() => setShowDrilldown(false)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
                                 </button>
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-5 overflow-y-auto relative z-10 custom-scrollbar">
+                            <div className="p-6 overflow-y-auto relative z-10 custom-scrollbar">
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                                     {/* Chart Area */}
                                     <div className="lg:col-span-8 space-y-6">
-                                        <div className="bg-white/80 p-6 rounded-[2rem] border border-white shadow-sm h-[320px] flex flex-col">
-                                            <div className="flex justify-between items-start mb-6">
-                                                <h4 className="text-[11px] font-bold text-[#2D241E] uppercase tracking-wider">{selectedMetric} Variance (Last 30 Days)</h4>
+                                        <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 h-[340px] flex flex-col">
+                                            <div className="flex justify-between items-center mb-6 px-1">
+                                                <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{selectedMetric} Variance (Last 30 Days)</h4>
                                                 <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">Healthy</span>
                                             </div>
                                             <div className="flex-1 w-full min-h-0">
@@ -861,29 +836,29 @@ const AdminReports = () => {
                                         </div>
 
                                         {/* Data Table Section */}
-                                        <div className="bg-white/50 rounded-[1.5rem] border border-white/60 overflow-hidden shadow-inner">
+                                        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="bg-[#2D241E]/5 border-b border-[#2D241E]/5">
-                                                        <th className="px-4 py-2 text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Dimension</th>
-                                                        <th className="px-4 py-2 text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Current Value</th>
-                                                        <th className="px-4 py-2 text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Growth Delta</th>
-                                                        <th className="px-4 py-2 text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Status</th>
+                                                    <tr className="bg-gray-50 border-b border-gray-100">
+                                                        <th className="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dimension</th>
+                                                        <th className="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Value</th>
+                                                        <th className="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Growth</th>
+                                                        <th className="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Status</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-[#2D241E]/5">
+                                                <tbody className="divide-y divide-gray-50">
                                                     {[
                                                         { dim: 'Direct Sales', val: '42%', delta: '+12%', status: 'Optimum' },
                                                         { dim: 'Subs Renewals', val: '38%', delta: '+5%', status: 'Stable' },
                                                         { dim: 'Referral Flow', val: '15%', delta: '-2%', status: 'Caution' },
                                                         { dim: 'Corporate Bulk', val: '5%', delta: '+22%', status: 'High Growth' },
                                                     ].map((row, i) => (
-                                                        <tr key={i} className="hover:bg-white transition-colors">
-                                                            <td className="px-4 py-2 text-[11px] font-bold text-[#2D241E] uppercase">{row.dim}</td>
-                                                            <td className="px-4 py-2 text-[11px] font-semibold text-[#5C4D42]">{row.val}</td>
+                                                        <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                                            <td className="px-4 py-2 text-[11px] font-bold text-gray-700 uppercase">{row.dim}</td>
+                                                            <td className="px-4 py-2 text-[11px] font-semibold text-gray-600">{row.val}</td>
                                                             <td className={`px-4 py-2 text-[11px] font-bold ${row.delta.startsWith('+') ? 'text-emerald-600' : 'text-rose-500'}`}>{row.delta}</td>
-                                                            <td className="px-4 py-2">
-                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-tight ${row.status === 'Caution' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                            <td className="px-4 py-2 text-right">
+                                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter ${row.status === 'Caution' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
                                                                     {row.status}
                                                                 </span>
                                                             </td>
@@ -894,15 +869,15 @@ const AdminReports = () => {
                                         </div>
 
                                         {/* Action Shortcuts */}
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-3 gap-2">
                                             {[
-                                                { label: 'Export Dataset', icon: 'database', col: 'text-blue-600', bg: 'bg-blue-50/50' },
-                                                { label: 'Rule Override', icon: 'gavel', col: 'text-amber-600', bg: 'bg-amber-50/50' },
-                                                { label: 'Simulate Fix', icon: 'bolt', col: 'text-emerald-600', bg: 'bg-emerald-50/50' },
+                                                { label: 'Export Data', icon: 'database', col: 'text-blue-600', bg: 'bg-blue-50' },
+                                                { label: 'Rule Editor', icon: 'gavel', col: 'text-amber-600', bg: 'bg-amber-50' },
+                                                { label: 'Simulate fix', icon: 'bolt', col: 'text-emerald-600', bg: 'bg-emerald-50' },
                                             ].map((act, i) => (
-                                                <button key={i} onClick={() => handleAction(act.label)} className={`p-3 rounded-xl ${act.bg} border border-white/50 hover:border-white transition-all flex flex-col items-center gap-1.5 group shadow-sm`}>
+                                                <button key={i} onClick={() => handleAction(act.label)} className={`p-2.5 rounded-xl ${act.bg} border border-transparent hover:border-gray-200 transition-all flex flex-col items-center gap-1 group`}>
                                                     <span className={`material-symbols-outlined text-[18px] ${act.col} group-hover:scale-110 transition-transform`}>{act.icon}</span>
-                                                    <span className="text-[10px] font-bold text-[#2D241E] uppercase tracking-tight">{act.label}</span>
+                                                    <span className="text-[10px] font-bold text-gray-700 uppercase tracking-tighter">{act.label}</span>
                                                 </button>
                                             ))}
                                         </div>

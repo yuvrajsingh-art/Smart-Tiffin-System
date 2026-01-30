@@ -183,38 +183,41 @@ const AdminMenu = () => {
     const LogsModal = () => {
         if (!showLogsModal) return null;
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.2s]" onClick={() => setShowLogsModal(false)}></div>
-                <div className="bg-[#F5F2EB] rounded-[3rem] p-8 w-full max-w-lg shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 overflow-hidden">
-                    {/* Texture */}
-                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLogsModal(false)}></div>
+                <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
 
-                    <div className="flex justify-between items-center mb-6 relative z-10">
-                        <h3 className="text-xl font-bold text-[#2D241E] flex items-center gap-2 tracking-tight">
-                            <span className="material-symbols-outlined text-orange-500">history_edu</span>
-                            System Action Logs
-                        </h3>
-                        <button onClick={() => setShowLogsModal(false)} className="size-9 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors">
-                            <span className="material-symbols-outlined text-[18px] text-[#5C4D42]">close</span>
+                    {/* Compact Header */}
+                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="size-9 bg-gray-100 rounded-xl flex items-center justify-center">
+                                <span className="material-symbols-outlined text-gray-600 text-[18px]">history_edu</span>
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-gray-800">System Activity</h3>
+                                <p className="text-xs text-gray-400">Recent menu management actions</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setShowLogsModal(false)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+                            <span className="material-symbols-outlined text-[18px]">close</span>
                         </button>
                     </div>
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 relative z-10">
+                    <div className="p-4 overflow-y-auto space-y-2">
                         {[
-                            { action: 'Approved Menu', kitchen: 'Spicy Treats', time: '2 mins ago', icon: 'check_circle', color: 'text-emerald-500' },
-                            { action: 'Updated Settings', kitchen: 'System', time: '15 mins ago', icon: 'settings', color: 'text-blue-500' },
-                            { action: 'Rejected Menu', kitchen: 'Healthy Bites', time: '1 hour ago', icon: 'cancel', color: 'text-rose-500' },
-                            { action: 'Approved Menu', kitchen: 'Ghar ka Swad', time: '2 hours ago', icon: 'check_circle', color: 'text-emerald-500' },
-                            { action: 'Bulk Approval', kitchen: '5 Kitchens', time: 'Yesterday', icon: 'done_all', color: 'text-purple-500' },
+                            { action: 'Approved Menu', kitchen: 'Spicy Treats', time: '2m ago', icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                            { action: 'Updated Settings', kitchen: 'System', time: '15m ago', icon: 'settings', color: 'text-blue-500', bg: 'bg-blue-50' },
+                            { action: 'Rejected Menu', kitchen: 'Healthy Bites', time: '1h ago', icon: 'cancel', color: 'text-rose-500', bg: 'bg-rose-50' },
+                            { action: 'Approved Menu', kitchen: 'Ghar ka Swad', time: '2h ago', icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-50' },
                         ].map((log, i) => (
-                            <div key={i} className="flex items-center gap-4 p-3 bg-gray-50/50 border border-gray-100 rounded-2xl hover:bg-white hover:shadow-sm transition-all">
-                                <div className={`p-2 bg-white rounded-xl shadow-sm border border-gray-100 ${log.color}`}>
+                            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200">
+                                <div className={`size-8 rounded-lg ${log.bg} ${log.color} flex items-center justify-center`}>
                                     <span className="material-symbols-outlined text-[18px]">{log.icon}</span>
                                 </div>
-                                <div className="flex-1">
-                                    <p className="text-xs font-bold text-[#201c1a]">{log.action}</p>
-                                    <p className="text-[11px] font-bold text-[#897a70]">{log.kitchen}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-gray-800 truncate">{log.action}</p>
+                                    <p className="text-[10px] text-gray-400 truncate">{log.kitchen}</p>
                                 </div>
-                                <span className="text-[10px] font-bold text-[#897a70] bg-white px-2 py-1 rounded-lg border border-gray-100">{log.time}</span>
+                                <span className="text-[9px] font-bold text-gray-400 uppercase">{log.time}</span>
                             </div>
                         ))}
                     </div>
@@ -262,41 +265,14 @@ const AdminMenu = () => {
 
     // --- MAIN RENDER ---
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
-            {/* Texture Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
-
-            {/* 1. Global Ticker (Top) */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-orange-400">Quality Pulse</span>
-                </div>
-                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "Menu Audit: 12 new items pending verification",
-                        "Kitchen Alert: 'Spice Route' menu updated (Winter Special)",
-                        "Approval Queue: 85% cleared for tomorrow",
-                        "Regulation: FSSAI verification required for 2 items",
-                        "System: Auto-flagged 1 menu for non-compliant description"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
 
             {/* 2. Golden Header Block */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Menu Management</h1>
-                        <span className="px-2 py-0.5 bg-[#2D241E] text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-black/10">CONSOLE_LIVE</span>
+                        <span className="px-2 py-0.5 bg-[#2D241E] text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-black/10">Management Console</span>
                     </div>
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-orange-500 animate-pulse"></span>
@@ -461,12 +437,12 @@ const AdminMenu = () => {
                                 </div>
                             </div>
 
-                            {/* Section 3: Nutritional DNA */}
+                            {/* Nutritional Profile */}
                             <div className="p-6 bg-[#FDFBF9] rounded-[2rem] border border-orange-100/50 space-y-4 animate-[fadeIn_0.5s]">
                                 <div className="flex justify-between items-center">
                                     <h3 className="text-[11px] font-bold text-[#2D241E] flex items-center gap-2 uppercase tracking-wider">
                                         <span className="material-symbols-outlined text-[16px] text-emerald-600">monitor_heart</span>
-                                        Nutritional DNA
+                                        Nutritional Profile
                                     </h3>
                                     <span className="text-[11px] font-bold text-orange-400 bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100 uppercase tracking-wider">AI Verified</span>
                                 </div>

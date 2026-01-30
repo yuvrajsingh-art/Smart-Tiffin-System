@@ -1,9 +1,30 @@
+/**
+ * =============================================================================
+ * AUTHENTICATION CONTROLLER
+ * =============================================================================
+ * Handles user authentication operations:
+ * - Customer registration
+ * - Provider registration
+ * - User login
+ * - Profile management
+ * - Google OAuth
+ * - Session management (signout)
+ * =============================================================================
+ */
+
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
 
-// ================= TOKEN GENERATOR =================
+/**
+ * Generate JWT token for authenticated user
+ * @param {Object} user - User document from database
+ * @returns {String} JWT token valid for 7 days
+ */
 const genToken = (user) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -12,30 +33,34 @@ const genToken = (user) => {
   );
 };
 
-// ================= REGISTER =================
+// =============================================================================
+// REGISTRATION
+// =============================================================================
+
+/**
+ * Register a new customer
+ * Required fields: fullName, email, password, mobile
+ * Optional fields: address, latitude, longitude
+ */
 exports.registerCustomer = async (req, res) => {
   try {
-    const {
-      fullName,
-      email,
-      password,
-      mobile,
-      address,
-      latitude,
-      longitude
-    } = req.body;
+    const { fullName, email, password, mobile, address, latitude, longitude } = req.body;
 
+    // Validate required fields
     if (!fullName || !email || !password || !mobile) {
       return res.status(400).json({ message: "All required fields missing" });
     }
 
+    // Check if user already exists
     const userExist = await User.findOne({ email });
     if (userExist) {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Prepare user data
     const userData = {
       fullName,
       email,
@@ -45,7 +70,7 @@ exports.registerCustomer = async (req, res) => {
       address
     };
 
-    // 🔹 Location store only if frontend sends it
+    // Add location if provided
     if (latitude && longitude) {
       userData.location = {
         type: "Point",
@@ -53,6 +78,7 @@ exports.registerCustomer = async (req, res) => {
       };
     }
 
+    // Create user
     const user = await User.create(userData);
     const token = genToken(user);
 
@@ -63,34 +89,35 @@ exports.registerCustomer = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("Register Customer Error:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
 
-
+/**
+ * Register a new provider (kitchen/tiffin service)
+ * Required fields: fullName, email, password, mobile
+ * Optional fields: address, latitude, longitude
+ */
 exports.providerCustomer = async (req, res) => {
   try {
-    const {
-      fullName,
-      email,
-      password,
-      mobile,
-      address,
-      latitude,
-      longitude
-    } = req.body;
+    const { fullName, email, password, mobile, address, latitude, longitude } = req.body;
 
+    // Validate required fields
     if (!fullName || !email || !password || !mobile) {
       return res.status(400).json({ message: "All required fields missing" });
     }
 
+    // Check if user already exists
     const userExist = await User.findOne({ email });
     if (userExist) {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Prepare user data
     const userData = {
       fullName,
       email,
@@ -100,7 +127,7 @@ exports.providerCustomer = async (req, res) => {
       address
     };
 
-    // 🔹 Location store only if frontend sends it
+    // Add location if provided
     if (latitude && longitude) {
       userData.location = {
         type: "Point",
@@ -108,6 +135,7 @@ exports.providerCustomer = async (req, res) => {
       };
     }
 
+    // Create user
     const user = await User.create(userData);
     const token = genToken(user);
 
@@ -118,30 +146,37 @@ exports.providerCustomer = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("Register Provider Error:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
 
+// =============================================================================
+// LOGIN
+// =============================================================================
 
-
-// ================= LOGIN =================
+/**
+ * Login user (all roles - customer, provider, admin)
+ * Required fields: email, password
+ * Returns: token, user info
+ */
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Check user exists
+    // Check user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // 2. Match password
+    // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // 3. Generate token
+    // Generate token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -154,19 +189,27 @@ exports.loginUser = async (req, res) => {
       user: {
         id: user._id,
         name: user.fullName,
-        role: user.role,
-      },
+        role: user.role
+      }
     });
+
   } catch (error) {
+    console.error("Login Error:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
 
+// =============================================================================
+// PROFILE
+// =============================================================================
 
-// ================= GET PROFILE =================
+/**
+ * Get current user's profile
+ * Requires: Valid JWT token (handled by protect middleware)
+ */
 exports.getProfile = async (req, res) => {
   try {
-    // req.user 'protect' middleware se aa rahi hai
+    // req.user is set by protect middleware
     if (!req.user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -179,43 +222,63 @@ exports.getProfile = async (req, res) => {
         email: req.user.email
       }
     });
+
   } catch (error) {
+    console.error("Get Profile Error:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
 
+// =============================================================================
+// SESSION MANAGEMENT
+// =============================================================================
 
-
+/**
+ * Sign out user (clear cookie)
+ */
 exports.signOut = async (req, res) => {
   try {
     res.clearCookie("token");
-    return res.status(200).json({ message: "sign out successfully" });
+    return res.status(200).json({ message: "Sign out successfully" });
   } catch (error) {
-    return res.status(500).json(`sign out error ${error}`)
+    console.error("Sign Out Error:", error.message);
+    return res.status(500).json({ message: error.message });
   }
-}
+};
 
+// =============================================================================
+// GOOGLE OAUTH
+// =============================================================================
 
+/**
+ * Handle Google OAuth login/registration
+ * Creates user if doesn't exist, otherwise logs them in
+ */
 exports.googleAuth = async (req, res) => {
   try {
-    const { fullName, email, mobile, role } = req.body
-    let user = await User.findOne({ email })
+    const { fullName, email, mobile, role } = req.body;
+
+    // Find or create user
+    let user = await User.findOne({ email });
     if (!user) {
-      user = await User.create({
-        fullName, email, mobile, role
-      })
+      user = await User.create({ fullName, email, mobile, role });
     }
-    const token = await genToken(user._id)
+
+    // Generate token
+    const token = genToken(user);
+
+    // Set cookie
     res.cookie("token", token, {
       secure: false,
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true
-    })
+    });
 
-    return res.status(200).json(user)
+    return res.status(200).json(user);
 
   } catch (error) {
-    return res.status(500).json(`googleAuth error ${error}`)
+    console.error("Google Auth Error:", error.message);
+    return res.status(500).json({ message: error.message });
   }
-}
+};

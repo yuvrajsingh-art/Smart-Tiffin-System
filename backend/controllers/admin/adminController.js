@@ -1,29 +1,54 @@
+/**
+ * =============================================================================
+ * ADMIN CONTROLLER
+ * =============================================================================
+ * This controller handles all admin-related operations including:
+ * - Dashboard statistics
+ * - Customer management (CRUD)
+ * - Order management
+ * - Provider management
+ * - Finance/Payout management
+ * - Global search
+ * - Broadcast messaging
+ * =============================================================================
+ */
+
 const User = require("../../models/user.model");
 const Order = require("../../models/order.model");
 const Transaction = require("../../models/transaction.model");
 const Provider = require("../../models/providerprofile.model");
 const Notification = require("../../models/notification.model");
-const os = require("os");
+const Menu = require("../../models/menu.model");
 const mongoose = require("mongoose");
 
-// GET DASHBOARD STATS (FULL COMPREHENSIVE)
+// =============================================================================
+// DASHBOARD STATS
+// =============================================================================
+
+/**
+ * Get comprehensive dashboard statistics
+ * Returns: revenue, customer count, order count, charts data, activity logs
+ */
 exports.getDashboardStats = async (req, res) => {
     try {
-        // 1. Basic Counts
+        // ----- 1. Basic Counts -----
         const totalCustomers = await User.countDocuments({ role: 'customer' });
         const totalProviders = await User.countDocuments({ role: 'provider' });
+
+        // Count orders that are currently active (not delivered/cancelled)
         const liveOrders = await Order.countDocuments({
             status: { $in: ["Placed", "Accepted", "Preparing", "Ready", "Out for Delivery"] }
         });
 
-        // 2. Revenue Aggregation
+        // ----- 2. Revenue Calculation -----
+        // Sum all successful transactions
         const revenueData = await Transaction.aggregate([
             { $match: { status: 'Success' } },
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
         const grossRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
 
-        // 3. Sales Growth (Last 7 Days)
+        // ----- 3. Sales Growth (Last 7 Days Chart Data) -----
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -44,33 +69,36 @@ exports.getDashboardStats = async (req, res) => {
             { $sort: { "_id": 1 } }
         ]);
 
-        // 4. Recent Signups (Last 5)
-        const recentSignupsList = await User.find({ role: 'customer' })
+        // ----- 4. Recent Signups (Last 5 customers) -----
+        const recentSignups = await User.find({ role: 'customer' })
             .select('fullName email createdAt status')
             .sort({ createdAt: -1 })
             .limit(5);
 
-        // 5. Pending Approvals (Providers)
-        const pendingApprovalsList = await User.find({
+        // ----- 5. Pending Approvals (Unverified providers) -----
+        const pendingApprovals = await User.find({
             role: 'provider',
             isVerified: false
         }).limit(5);
 
-        // 6. Delivery Metrics (Pulse)
+        // ----- 6. Delivery Metrics -----
         const settled = await Order.countDocuments({ status: "Delivered" });
         const transit = await Order.countDocuments({ status: "Out for Delivery" });
         const staged = await Order.countDocuments({ status: "Ready" });
 
         // Calculate completion percentage
-        const totalProcessedToday = settled + transit + staged;
-        const completionRate = totalProcessedToday > 0
-            ? Math.round((settled / totalProcessedToday) * 100)
+        const totalProcessed = settled + transit + staged;
+        const completionRate = totalProcessed > 0
+            ? Math.round((settled / totalProcessed) * 100)
             : 0;
 
-        // 7. Activity Logs (Merged Events)
+        // ----- 7. Activity Logs (Recent events) -----
         const latestUsers = await User.find().sort({ createdAt: -1 }).limit(3);
-        const latestTransactions = await Transaction.find({ status: 'Success' }).sort({ createdAt: -1 }).limit(3);
+        const latestTransactions = await Transaction.find({ status: 'Success' })
+            .sort({ createdAt: -1 })
+            .limit(3);
 
+        // Combine and sort by time
         const activityLogs = [
             ...latestUsers.map(u => ({
                 time: u.createdAt,
@@ -86,179 +114,72 @@ exports.getDashboardStats = async (req, res) => {
             }))
         ].sort((a, b) => b.time - a.time).slice(0, 5);
 
+        // ----- 8. Today's Menu -----
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
 
-        const uptimeSeconds = process.uptime();
-        const uptimeFormat = new Date(uptimeSeconds * 1000).toISOString().substr(11, 8);
-        const cpuLoad = os.loadavg()[0].toFixed(1); // 1-minute load avg
-        const totalMem = (os.totalmem() / (1024 * 1024 * 1024)).toFixed(1);
-        const freeMem = (os.freemem() / (1024 * 1024 * 1024)).toFixed(1);
+        const lunchMenu = await Menu.findOne({
+            menuDate: { $gte: startOfDay, $lte: endOfDay },
+            mealType: 'lunch'
+        }).select('mainDish type');
 
-        // Dynamic Marquee Messages
-        const marqueeMessages = [
-            `Server Online: ${uptimeFormat} • RAM Free: ${freeMem}GB`,
-            `Database: Connected • Active Connections: ${mongoose.connection.base.connections.length || 1} • Speed: ${Math.floor(Math.random() * 20 + 10)}ms`,
-            `Platform Stats: ${totalCustomers} Customers • ${totalProviders} Kitchens • ${liveOrders} Active Orders`,
-            `System Status: Healthy • Load: ${cpuLoad}% • Location: Indore`
-        ];
+        const dinnerMenu = await Menu.findOne({
+            menuDate: { $gte: startOfDay, $lte: endOfDay },
+            mealType: 'dinner'
+        }).select('mainDish type');
 
-        if (recentSignupsList.length > 0) {
-            marqueeMessages.push(`Newest Member: ${recentSignupsList[0].fullName} joined ${new Date(recentSignupsList[0].createdAt).toLocaleTimeString()}`);
-        }
+        const menu = {
+            lunch: lunchMenu
+                ? { dish: lunchMenu.mainDish, type: lunchMenu.type }
+                : { dish: "Not Set", type: "N/A" },
+            dinner: dinnerMenu
+                ? { dish: dinnerMenu.mainDish, type: dinnerMenu.type }
+                : { dish: "Not Set", type: "N/A" }
+        };
 
+        // ----- Send Response -----
         res.status(200).json({
             success: true,
             data: {
                 grossRevenue,
                 totalCustomers,
-                liveOrders,
                 totalProviders,
+                liveOrders,
                 salesGrowth,
-                recentSignups: recentSignupsList,
-                pendingApprovals: pendingApprovalsList,
+                recentSignups,
+                pendingApprovals,
                 deliveryMetrics: { settled, transit, staged, completionRate },
                 activityLogs,
-                systemHealth: {
-                    nodeStatus: "Online",
-                    latency: `${Math.floor(Math.random() * 20 + 5)}ms`,
-                    activeConnections: mongoose.connection.base.connections.length || 1,
-                    lastBackup: "Auto-Daily",
-                    cpuLoad: `${((1 - (os.freemem() / os.totalmem())) * 100).toFixed(1)}%`,
-                },
-                marquee: marqueeMessages
+                menu
             }
         });
     } catch (error) {
+        console.error("Dashboard Stats Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// --- CUSTOMER MANAGEMENT ---
+// =============================================================================
+// CUSTOMER MANAGEMENT
+// =============================================================================
+
+/**
+ * Get all customers with optional filters
+ * Query params: status, search
+ */
 exports.getCustomers = async (req, res) => {
     try {
         const { status, search } = req.query;
         let query = { role: 'customer' };
 
+        // Apply status filter
         if (status && status !== 'All') {
-            if (status === 'Active') query.status = 'active';
-            else if (status === 'Inactive') query.status = 'inactive';
-            else if (status === 'Paused') query.status = 'paused';
-            else if (status === 'Banned') query.status = 'banned';
+            query.status = status.toLowerCase();
         }
 
-        if (search) {
-            query.$or = [
-                { fullName: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
-                { mobile: { $regex: search, $options: 'i' } },
-                { _id: mongoose.Types.ObjectId.isValid(search) ? search : null }
-            ].filter(f => f._id !== null || Object.keys(f)[0] !== '_id');
-        }
-
-        const customers = await User.find(query).sort({ createdAt: -1 });
-
-        const data = customers.map(u => ({
-            id: u._id,
-            name: u.fullName,
-            email: u.email,
-            phone: u.mobile,
-            plan: u.subscriptionType || 'None',
-            status: u.status === 'active' ? 'Active' : (u.status === 'paused' ? 'Paused' : 'Inactive'),
-            joins: new Date(u.createdAt).toLocaleDateString('en-GB'),
-            balance: `₹${u.walletBalance || 0}`,
-            kyc: u.isVerified ? 'Verified' : 'Pending', // Mock logic for now
-            tags: u.isVerified ? ['Verified'] : ['New'],
-            tickets: 0,
-            referrals: 0, // Mock
-            address: u.address || 'Not Provided'
-        }));
-
-        res.status(200).json({ success: true, data });
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// --- ORDER MANAGEMENT ---
-exports.getOrders = async (req, res) => {
-    try {
-        const { status, search, date } = req.query;
-        let query = {};
-
-        if (status && status !== 'All') {
-            query.status = status;
-        }
-
-        // Search by Order ID, Customer Name, or Kitchen Name
-        // Search by Order ID or Customer/Provider Name
-        if (search) {
-            if (mongoose.Types.ObjectId.isValid(search)) {
-                query._id = search;
-            } else {
-                const searchRegex = new RegExp(search, 'i');
-                const users = await User.find({ fullName: searchRegex }).select('_id');
-                const userIds = users.map(u => u._id);
-                if (userIds.length > 0) {
-                    query.$or = [
-                        { customer: { $in: userIds } },
-                        { provider: { $in: userIds } } // Assuming provider is also a User ref
-                    ];
-                } else {
-                    // Force empty result if name doesn't match any user
-                    query._id = new mongoose.Types.ObjectId();
-                }
-            }
-        }
-
-        if (date === 'today') {
-            const start = new Date();
-            start.setHours(0, 0, 0, 0);
-            query.createdAt = { $gte: start };
-        } else if (date === 'past') {
-            const start = new Date();
-            start.setHours(0, 0, 0, 0);
-            query.createdAt = { $lt: start };
-        }
-
-        const orders = await Order.find(query)
-            .populate('customer', 'fullName address mobile')
-            .populate('provider', 'fullName') // Assuming provider is User model, or ProviderProfile check needed
-            .populate('rider_id', 'fullName')
-            .sort({ createdAt: -1 });
-
-        const data = orders.map(o => ({
-            id: o._id,
-            customer: o.customer?.fullName || 'Unknown',
-            kitchen: o.provider?.fullName || 'Unknown', // Need to check if provider ref is User or Profile. Assuming User for now.
-            type: o.order_type === 'subscription' ? 'Monthly Plan' : 'One-time', // Simplification
-            status: o.status,
-            time: new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            zone: o.delivery_address?.area || o.customer?.address || 'Indore', // Fallback
-            rider: o.rider_id ? `${o.rider_id.fullName}` : (o.status === 'Placed' || o.status === 'Preparing' ? 'Searching...' : '-'),
-            items: o.items
-        }));
-
-        res.status(200).json({ success: true, data });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-// --- NEW: Provider Management ---
-
-// GET ALL PROVIDERS (With Filters)
-exports.getProviders = async (req, res) => {
-    try {
-        const { status, search } = req.query;
-
-        let query = { role: 'provider' };
-
-        if (status && status !== 'All') {
-            if (status === 'Pending') query.isVerified = false;
-            else if (status === 'Active') { query.isVerified = true; query.status = 'active'; }
-            else if (status === 'Suspended') query.status = 'banned';
-        }
-
+        // Apply search filter (name, email, phone)
         if (search) {
             query.$or = [
                 { fullName: { $regex: search, $options: 'i' } },
@@ -267,149 +188,412 @@ exports.getProviders = async (req, res) => {
             ];
         }
 
-        // Fetch Users first
-        const users = await User.find(query).sort({ createdAt: -1 });
+        const customers = await User.find(query).sort({ createdAt: -1 });
 
-        // Populate with Provider Profile details manually or via populate if setup (doing manual for safety)
-        const providers = await Promise.all(users.map(async (user) => {
-            const profile = await Provider.findOne({ user: user._id });
-            const totalEarnings = await Transaction.aggregate([
-                { $match: { payeeId: user._id, status: 'Success' } }, // Assuming payeeId stores user/provider ID
-                { $group: { _id: null, total: { $sum: "$amount" } } }
-            ]);
+        // Calculate stats for the page
+        const totalCustomers = await User.countDocuments({ role: 'customer' });
+        const activeCustomers = await User.countDocuments({ role: 'customer', status: 'active' });
 
-            return {
-                id: user._id, // Using user ID as key
-                name: user.fullName,
-                owner: profile?.ownerName || user.fullName,
-                phone: user.mobile,
-                email: user.email,
-                location: profile?.location?.city || user.address || 'Indore',
-                capacity: 500, // Mock for now, or add to model
-                currentLoad: 0, // Mock
-                rating: profile?.rating || 0,
-                status: user.status === 'banned' ? 'Suspended' : (user.isVerified ? 'Active' : 'Pending'),
-                joins: user.createdAt,
-                earnings: totalEarnings[0]?.total || 0,
-                fssai: profile?.fssaiNumber || 'N/A',
-                type: 'Veg/Non-Veg' // Mock or from profile
-            };
-        }));
+        // Get total wallet balance
+        const balanceData = await User.aggregate([
+            { $match: { role: 'customer' } },
+            { $group: { _id: null, total: { $sum: { $ifNull: ["$walletBalance", 0] } } } }
+        ]);
+        const totalBalance = balanceData.length > 0 ? balanceData[0].total : 0;
 
-        res.status(200).json({ success: true, data: providers });
+        // Count new customers today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const newToday = await User.countDocuments({
+            role: 'customer',
+            createdAt: { $gte: today }
+        });
 
+        res.status(200).json({
+            success: true,
+            data: customers,
+            stats: {
+                totalCustomers,
+                activeCustomers,
+                totalBalance,
+                newToday
+            }
+        });
     } catch (error) {
+        console.error("Get Customers Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// VERIFY PROVIDER (Approve)
+// =============================================================================
+// ORDER MANAGEMENT
+// =============================================================================
+
+/**
+ * Get all orders with optional filters
+ * Query params: date (today/past), search
+ */
+exports.getOrders = async (req, res) => {
+    try {
+        const { date, search } = req.query;
+        let query = {};
+
+        // Filter by date
+        if (date === 'today') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            query.createdAt = { $gte: today };
+        } else if (date === 'past') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            query.createdAt = { $lt: today };
+        }
+
+        // Search by order ID
+        if (search) {
+            query.$or = [
+                { _id: mongoose.Types.ObjectId.isValid(search) ? search : null }
+            ].filter(f => f._id !== null);
+        }
+
+        const orders = await Order.find(query)
+            .populate('customer', 'fullName mobile address')
+            .populate('provider', 'businessName')
+            .sort({ createdAt: -1 });
+
+        // Format orders for frontend
+        const formattedOrders = orders.map(order => ({
+            id: order._id.toString().slice(-6).toUpperCase(),
+            customer: order.customer?.fullName || 'Unknown',
+            kitchen: order.provider?.businessName || 'Unknown',
+            type: order.planType || 'Single Order',
+            status: order.status,
+            time: order.deliveredAt
+                ? new Date(order.deliveredAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+                : 'Pending',
+            zone: order.customer?.address?.area || 'Unknown',
+            rider: order.deliveryPerson || 'Not Assigned'
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: formattedOrders
+        });
+    } catch (error) {
+        console.error("Get Orders Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// PROVIDER MANAGEMENT
+// =============================================================================
+
+/**
+ * Get all providers with optional filters
+ * Query params: status, search
+ */
+exports.getProviders = async (req, res) => {
+    try {
+        const { status, search } = req.query;
+        let query = { role: 'provider' };
+
+        // Apply status filter
+        if (status && status !== 'All') {
+            if (status === 'Active') query.isVerified = true;
+            else if (status === 'Pending') query.isVerified = false;
+        }
+
+        // Apply search filter
+        if (search) {
+            query.$or = [
+                { fullName: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const providers = await User.find(query).sort({ createdAt: -1 });
+
+        // Get provider profiles for extra details
+        const providerIds = providers.map(p => p._id);
+        const profiles = await Provider.find({ owner: { $in: providerIds } });
+
+        // Merge profile data with user data
+        const mergedData = providers.map(provider => {
+            const profile = profiles.find(p => p.owner.toString() === provider._id.toString());
+            return {
+                ...provider.toObject(),
+                profile: profile || null
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            data: mergedData
+        });
+    } catch (error) {
+        console.error("Get Providers Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Verify/Approve a provider
+ */
 exports.verifyProvider = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findById(id);
-        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-        user.isVerified = true;
-        user.status = 'active';
-        await user.save();
+        const provider = await User.findByIdAndUpdate(
+            id,
+            { isVerified: true },
+            { new: true }
+        );
 
-        // Also update Provider Profile status
-        await Provider.findOneAndUpdate({ user: id }, { legalStatus: 'verified' });
+        if (!provider) {
+            return res.status(404).json({ success: false, message: "Provider not found" });
+        }
 
-        res.status(200).json({ success: true, message: "Provider approved successfully" });
+        res.status(200).json({
+            success: true,
+            message: "Provider verified successfully",
+            data: provider
+        });
     } catch (error) {
+        console.error("Verify Provider Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// TOGGLE PROVIDER STATUS (Suspend/Activate)
+/**
+ * Toggle provider status (suspend/activate)
+ */
 exports.toggleProviderStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findById(id);
-        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        const provider = await User.findById(id);
 
-        user.status = user.status === 'active' ? 'banned' : 'active';
-        await user.save();
+        if (!provider) {
+            return res.status(404).json({ success: false, message: "Provider not found" });
+        }
 
-        res.status(200).json({ success: true, message: `Provider ${user.status === 'active' ? 'activated' : 'suspended'}` });
+        // Toggle status
+        provider.status = provider.status === 'active' ? 'suspended' : 'active';
+        await provider.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Provider ${provider.status === 'active' ? 'activated' : 'suspended'}`,
+            data: provider
+        });
     } catch (error) {
+        console.error("Toggle Provider Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
+// =============================================================================
 // BROADCAST MESSAGE
-// BROADCAST MESSAGE
+// =============================================================================
+
+/**
+ * Send a broadcast notification to all users
+ */
 exports.broadcastMessage = async (req, res) => {
     try {
         const { message } = req.body;
-        if (!message) return res.status(400).json({ success: false, message: "Message is required" });
 
-        // Save Global Notification
-        await Notification.create({
-            recipient: null, // Global
-            title: "System Broadcast",
+        if (!message) {
+            return res.status(400).json({ success: false, message: "Message is required" });
+        }
+
+        // Get all users
+        const users = await User.find({});
+
+        // Create notification for each user
+        const notifications = users.map(user => ({
+            user: user._id,
+            type: 'broadcast',
             message: message,
-            type: "Info"
+            isRead: false
+        }));
+
+        await Notification.insertMany(notifications);
+
+        res.status(200).json({
+            success: true,
+            message: `Broadcast sent to ${users.length} users`
         });
-
-        console.log("BROADCAST SAVED TO DB:", message);
-
-        res.status(200).json({ success: true, message: "Broadcast sent safely to all users" });
     } catch (error) {
+        console.error("Broadcast Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// GLOBAL SEARCH (Quick Search Entities)
+// =============================================================================
+// GLOBAL SEARCH
+// =============================================================================
+
+/**
+ * Search across customers, providers, and orders
+ */
 exports.globalSearch = async (req, res) => {
     try {
         const { query } = req.query;
+
         if (!query || query.length < 2) {
-            return res.status(200).json({ success: true, data: { users: [], orders: [] } });
+            return res.status(400).json({
+                success: false,
+                message: "Search query must be at least 2 characters"
+            });
         }
 
-        const regex = new RegExp(query, 'i');
-
-        // 1. Search Users (Customers & Providers)
-        const users = await User.find({
+        // Search customers
+        const customers = await User.find({
+            role: 'customer',
             $or: [
-                { fullName: regex },
-                { email: regex },
-                { mobile: regex }
+                { fullName: { $regex: query, $options: 'i' } },
+                { email: { $regex: query, $options: 'i' } }
             ]
-        }).select('fullName email role subscriptionType mobile status isVerified').limit(5);
+        }).limit(5);
 
-        // 2. Search Orders (by ID or exact match if possible)
+        // Search providers
+        const providers = await User.find({
+            role: 'provider',
+            $or: [
+                { fullName: { $regex: query, $options: 'i' } },
+                { email: { $regex: query, $options: 'i' } }
+            ]
+        }).limit(5);
+
+        // Search orders by ID
         let orders = [];
         if (mongoose.Types.ObjectId.isValid(query)) {
-            const order = await Order.findById(query)
-                .populate('customer', 'fullName email')
-                .populate('provider', 'fullName');
-            if (order) orders.push(order);
+            orders = await Order.find({ _id: query }).limit(5);
         }
-
-        // 3. Search Providers by Mess Name
-        const providerProfiles = await Provider.find({ messName: regex }).populate('user', 'fullName email role');
-        const providerResults = providerProfiles
-            .filter(p => p.user)
-            .map(p => ({
-                ...p.user.toObject(),
-                messName: p.messName,
-                isProfileResult: true
-            }));
 
         res.status(200).json({
             success: true,
             data: {
-                users,
+                customers,
+                providers,
                 orders,
-                providerProfiles: providerResults
+                totalResults: customers.length + providers.length + orders.length
             }
         });
-
     } catch (error) {
+        console.error("Global Search Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// FINANCE MANAGEMENT
+// =============================================================================
+
+/**
+ * Get finance statistics
+ */
+exports.getFinanceStats = async (req, res) => {
+    try {
+        // Total revenue
+        const revenueData = await Transaction.aggregate([
+            { $match: { status: 'Success' } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+        const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+        // Pending payouts (sum of unpaid provider earnings)
+        const pendingPayouts = await Provider.aggregate([
+            { $group: { _id: null, total: { $sum: { $ifNull: ["$pendingBalance", 0] } } } }
+        ]);
+        const pendingTotal = pendingPayouts.length > 0 ? pendingPayouts[0].total : 0;
+
+        // Transaction count this month
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const monthlyTransactions = await Transaction.countDocuments({
+            createdAt: { $gte: startOfMonth }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalRevenue,
+                pendingPayouts: pendingTotal,
+                monthlyTransactions,
+                platformFees: Math.round(totalRevenue * 0.15) // 15% platform fee
+            }
+        });
+    } catch (error) {
+        console.error("Finance Stats Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Get pending payouts list
+ */
+exports.getPayouts = async (req, res) => {
+    try {
+        const providers = await Provider.find({
+            pendingBalance: { $gt: 0 }
+        }).populate('owner', 'fullName email');
+
+        const payouts = providers.map(p => ({
+            id: p._id,
+            name: p.owner?.fullName || p.businessName,
+            email: p.owner?.email,
+            amount: p.pendingBalance,
+            status: 'Pending'
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: payouts
+        });
+    } catch (error) {
+        console.error("Get Payouts Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Process a payout to provider
+ */
+exports.processPayout = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const provider = await Provider.findById(id);
+        if (!provider) {
+            return res.status(404).json({ success: false, message: "Provider not found" });
+        }
+
+        const amount = provider.pendingBalance;
+
+        // Clear pending balance
+        provider.pendingBalance = 0;
+        provider.lastPayout = new Date();
+        await provider.save();
+
+        // Create transaction record
+        await Transaction.create({
+            type: 'payout',
+            amount: amount,
+            status: 'Success',
+            provider: provider._id,
+            description: `Payout to ${provider.businessName}`
+        });
+
+        res.status(200).json({
+            success: true,
+            message: `Payout of ₹${amount} processed successfully`
+        });
+    } catch (error) {
+        console.error("Process Payout Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };

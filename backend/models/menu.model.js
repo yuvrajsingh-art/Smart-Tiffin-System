@@ -126,4 +126,4 @@ menuSchema.index(
 );
 
 
-exports.Menu = mongoose.model("Menu", menuSchema);
+module.exports = mongoose.model("Menu", menuSchema);

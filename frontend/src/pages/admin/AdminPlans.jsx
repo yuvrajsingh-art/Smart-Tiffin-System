@@ -90,41 +90,15 @@ const AdminPlans = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
-            {/* Texture Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
 
-            {/* 1. Global Ticker (Top) */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-orange-400">Franchise Pulse</span>
-                </div>
-                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "Mom's Kitchen adopted 'Student Budget' plan",
-                        "High Price Variance detected: Fit Foods (+25%)",
-                        "New 'Winter Special' proposal from Royal Tiffins",
-                        "Premium Thali subscriptions up by 15%",
-                        "System: Auto-rejected 2 price-gouging proposals"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
+            {/* Header Block */}
 
-            {/* 2. Golden Header Block */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Franchise Plans</h1>
-                        <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-orange-500/10">CATALOG_LIVE</span>
+                        <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-orange-500/10">Active Catalog</span>
                     </div>
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-orange-500 animate-pulse"></span>
@@ -305,7 +279,7 @@ const AdminPlans = () => {
                                                 <tr key={prop.id} className="group hover:bg-white/60 transition-all">
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="size-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-[10px]">{prop.kitchen.charAt(0)}</div>
+                                                            <div className="size-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-[10px]">{(prop?.kitchen || 'K').charAt(0)}</div>
                                                             <div>
                                                                 <p className="text-xs font-bold text-[#2D241E]">{prop.kitchen}</p>
                                                                 <p className="text-xs font-bold text-[#897a70]">{prop.date}</p>
@@ -430,41 +404,45 @@ const AdminPlans = () => {
             {/* Create/Edit Modal (Standard Platform Plan) - [POLISHED] */}
             {
                 showModal && createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setShowModal(false)}></div>
-                        <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-lg overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5">
-                            {/* Texture */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
+                        <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
 
-                            <div className="relative p-8 pb-4 bg-white/80 backdrop-blur-xl border-b border-[#2D241E]/5 flex justify-between items-center z-10">
-                                <div>
-                                    <h3 className="text-xl font-bold text-[#2D241E] tracking-tight">{editingPlan ? 'Edit Standard Plan' : 'Define New Standard'}</h3>
-                                    <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-1">Platform Franchise Catalog</p>
+                            {/* Compact Header */}
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 bg-orange-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-orange-500 text-[18px]">verified</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-bold text-gray-800">{editingPlan ? 'Edit Standard Plan' : 'Define New Standard'}</h3>
+                                        <p className="text-xs text-gray-400">Platform Franchise Catalog</p>
+                                    </div>
                                 </div>
-                                <button onClick={() => setShowModal(false)} className="size-9 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                                <button onClick={() => setShowModal(false)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
                                     <span className="material-symbols-outlined text-[18px]">close</span>
                                 </button>
                             </div>
 
-                            <form ref={formRef} onSubmit={handleSave} className="relative p-8 space-y-5 z-10">
+                            <form ref={formRef} onSubmit={handleSave} className="flex-1 overflow-y-auto p-5 space-y-4">
                                 {/* Card Preview (Mini) */}
-                                <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                                    <span className={`size-12 rounded-xl bg-gradient-to-br ${editingPlan?.color || 'from-emerald-400 to-emerald-600'}`}></span>
+                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <span className={`size-10 rounded-lg bg-gradient-to-br ${editingPlan?.color || 'from-emerald-400 to-emerald-600'}`}></span>
                                     <div>
-                                        <p className="text-xs font-bold text-[#897a70] uppercase tracking-wider">Visual Preview</p>
-                                        <p className="text-xs font-bold text-[#2D241E]">Theme will appear on the card header.</p>
+                                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Visual Preview</p>
+                                        <p className="text-[11px] text-gray-600">This theme will be used for the card header.</p>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Plan Name</label>
-                                        <input name="name" defaultValue={editingPlan?.name} placeholder="e.g. Gold Thali" className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm" required />
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Plan Name</label>
+                                        <input name="name" defaultValue={editingPlan?.name} placeholder="e.g. Gold Thali" className="w-full bg-gray-50 border border-gray-100 px-4 py-2.5 rounded-xl text-xs focus:bg-white focus:border-orange-500 outline-none transition-all" required />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Diet Type</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Diet Type</label>
                                         <div className="relative">
-                                            <select name="type" defaultValue={editingPlan?.type || 'Veg'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
+                                            <select name="type" defaultValue={editingPlan?.type || 'Veg'} className="w-full bg-gray-50 border border-gray-100 px-4 py-2.5 rounded-xl text-xs focus:bg-white focus:border-orange-500 outline-none appearance-none cursor-pointer">
                                                 <option value="Veg">Pure Veg</option>
                                                 <option value="Non-Veg">Non-Veg</option>
                                                 <option value="Diet">Diet/Keto</option>
@@ -474,18 +452,18 @@ const AdminPlans = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Standard Price (₹)</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Price (₹)</label>
                                         <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2D241E] font-bold text-xs">₹</span>
-                                            <input name="price" type="number" defaultValue={editingPlan?.price} placeholder="3000" className="w-full bg-white border border-gray-200 pl-8 pr-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm" required />
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₹</span>
+                                            <input name="price" type="number" defaultValue={editingPlan?.price} placeholder="3000" className="w-full bg-gray-50 border border-gray-100 pl-8 pr-4 py-2.5 rounded-xl text-xs focus:bg-white focus:border-orange-500 outline-none transition-all" required />
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Billing Cycle</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Billing Cycle</label>
                                         <div className="relative">
-                                            <select name="period" defaultValue={editingPlan?.period || 'Monthly'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
+                                            <select name="period" defaultValue={editingPlan?.period || 'Monthly'} className="w-full bg-gray-50 border border-gray-100 px-4 py-2.5 rounded-xl text-xs focus:bg-white focus:border-orange-500 outline-none appearance-none cursor-pointer">
                                                 <option value="Monthly">Monthly</option>
                                                 <option value="Weekly">Weekly</option>
                                                 <option value="Trial">Trial (3 Days)</option>
@@ -496,15 +474,15 @@ const AdminPlans = () => {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Inclusions (Mandatory)</label>
-                                    <textarea name="desc" defaultValue={editingPlan?.description} placeholder="e.g. 4 Roti, Rice, Dal..." className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none h-20 resize-none shadow-sm" />
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Inclusions</label>
+                                    <textarea name="desc" defaultValue={editingPlan?.description} placeholder="e.g. 4 Roti, Rice, Dal..." className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-xs focus:bg-white focus:border-orange-500 outline-none h-20 resize-none transition-all" />
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-[#897a70] uppercase ml-1 tracking-wider">Theme Gradient</label>
-                                    <select name="color" defaultValue={editingPlan?.color || 'from-emerald-400 to-emerald-600'} className="w-full bg-white border border-gray-200 px-4 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:border-orange-400 focus:ring-4 focus:ring-orange-500/5 outline-none appearance-none shadow-sm cursor-pointer">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Theme Color</label>
+                                    <select name="color" defaultValue={editingPlan?.color || 'from-emerald-400 to-emerald-600'} className="w-full bg-gray-50 border border-gray-100 px-4 py-2.5 rounded-xl text-xs focus:bg-white focus:border-orange-500 outline-none appearance-none cursor-pointer">
                                         <option value="from-emerald-400 to-emerald-600">Emerald Green (Veg)</option>
-                                        <option value="from-[#2D241E] to-[#453831]">Obsidian (Premium)</option>
+                                        <option value="from-gray-800 to-black">Obsidian (Premium)</option>
                                         <option value="from-rose-500 to-rose-700">Rose Red (Non-Veg)</option>
                                         <option value="from-violet-500 to-violet-700">Violet (Diet)</option>
                                         <option value="from-amber-400 to-amber-600">Amber (Budget)</option>
@@ -512,9 +490,12 @@ const AdminPlans = () => {
                                     </select>
                                 </div>
 
-                                <button type="submit" className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] text-xs font-bold uppercase tracking-wider hover:bg-[#453831] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-[#2D241E]/20 mt-2">
-                                    {editingPlan ? 'Save Standard Plan' : 'Publish Franchise Plan'}
-                                </button>
+                                <div className="flex gap-2 pt-2">
+                                    <button onClick={() => setShowModal(false)} className="flex-1 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-gray-600">Cancel</button>
+                                    <button type="submit" className="flex-[2] py-3 bg-gray-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all">
+                                        {editingPlan ? 'Save Plan' : 'Publish Plan'}
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>,
