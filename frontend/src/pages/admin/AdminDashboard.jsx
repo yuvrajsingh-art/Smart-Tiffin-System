@@ -18,7 +18,8 @@ const initialStats = {
     pendingApprovals: [],
     deliveryMetrics: { settled: 0, transit: 0, staged: 0, completionRate: 0 },
     activityLogs: [],
-    menu: { lunch: { dish: '--', type: '--' }, dinner: { dish: '--', type: '--' } }
+    menu: { lunch: { dish: '--', type: '--' }, dinner: { dish: '--', type: '--' } },
+    systemHealth: { status: 'Stable', node: 'Primary', traffic: 'Normal' }
 };
 
 
@@ -46,16 +47,17 @@ const AdminDashboard = () => {
             try {
                 const { data } = await axios.get('/api/admin/stats');
                 if (data.success) {
-                    setStats({
+                    setStats(prev => ({
+                        ...prev,
                         ...data.data,
-                        salesGrowth: data.data.salesGrowth.map(d => ({
-                            name: d._id.slice(5).replace('-', '/'), // "2024-01-30" -> "01/30"
+                        salesGrowth: (data.data.salesGrowth || []).map(d => ({
+                            name: d._id.slice(5).replace('-', '/'),
                             sales: d.sales,
                             orders: d.orders
                         }))
-                    });
+                    }));
                     // Approval queue state sync
-                    setApprovals(data.data.pendingApprovals.map(apr => ({
+                    setApprovals((data.data.pendingApprovals || []).map(apr => ({
                         id: apr._id,
                         type: 'Provider',
                         name: apr.fullName,
@@ -369,18 +371,18 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                         <h4 className="text-sm font-bold italic tracking-tight uppercase">System Status</h4>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-0.5">Live Status: <span className="text-emerald-400">{stats.systemHealth.nodeStatus || 'Online'}</span></p>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-0.5">Live Status: <span className="text-emerald-400">{stats.systemHealth?.nodeStatus || 'Online'}</span></p>
                     </div>
                 </div>
                 <div className="flex items-center gap-8 relative z-10 pr-2">
                     <div className="text-center">
                         <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Ping</p>
-                        <p className="text-sm font-bold italic">{stats.systemHealth.latency || '0ms'}</p>
+                        <p className="text-sm font-bold italic">{stats.systemHealth?.latency || '0ms'}</p>
                     </div>
                     <div className="w-px h-10 bg-white/10"></div>
                     <div className="text-center">
                         <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Traffic</p>
-                        <p className="text-sm font-bold italic">{stats.systemHealth.traffic || 'Normal'}</p>
+                        <p className="text-sm font-bold italic">{stats.systemHealth?.traffic || 'Normal'}</p>
                     </div>
                     <button
                         onClick={() => setShowLogs(true)}
