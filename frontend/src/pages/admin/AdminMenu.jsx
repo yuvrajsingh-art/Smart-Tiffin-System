@@ -8,7 +8,14 @@ import SkeletonLoader from '../../components/common/SkeletonLoader';
 // Mock Data Removed
 const initialKitchens = [];
 const emptyMenu = {
-    main: '', side: '', dal: '', rice: '', bread: '', dessert: '', calories: '', protein: ''
+    mainDish: '',
+    sabjiDry: '',
+    dal: '',
+    rice: '',
+    breadType: '',
+    breadCount: 4,
+    mealType: 'lunch',
+    type: 'Veg'
 };
 // Removed mockMenus
 
@@ -65,9 +72,16 @@ const AdminMenu = () => {
     // Update form when selection changes
     useEffect(() => {
         if (activeKitchen) {
-            // Mapping real model fields to UI fields if needed
-            const kitchenId = activeKitchen._id || activeKitchen.id;
-            setMenuData(activeKitchen.menuItems || emptyMenu);
+            setMenuData({
+                mainDish: activeKitchen.mainDish || '',
+                sabjiDry: activeKitchen.sabjiDry || '',
+                dal: activeKitchen.dal || '',
+                rice: activeKitchen.rice || '',
+                breadType: activeKitchen.bread?.type || '',
+                breadCount: activeKitchen.bread?.count || 4,
+                mealType: activeKitchen.mealType || 'lunch',
+                type: activeKitchen.type || 'Veg'
+            });
             setIsDirty({});
         }
     }, [selectedKitchenId, activeKitchen]);
@@ -79,9 +93,9 @@ const AdminMenu = () => {
 
 
     const completionPercentage = (() => {
-        const total = 8; // Total fields
-        const filled = Object.values(menuData).filter(val => val !== '').length;
-        return Math.round((filled / total) * 100);
+        const requiredFields = ['mainDish', 'sabjiDry', 'dal', 'rice', 'breadType', 'breadCount'];
+        const filled = requiredFields.filter(field => menuData[field] && menuData[field] !== '').length;
+        return Math.round((filled / requiredFields.length) * 100);
     })();
 
     const removeFromQueue = (id) => {
@@ -118,7 +132,7 @@ const AdminMenu = () => {
             setIsProcessing(false);
 
             if (res.data.success) {
-                removeFromQueue(activeKitchen.id);
+                removeFromQueue(menuId);
                 setLiveMenuCount(prev => prev + 1);
                 toast.success("Menu Approved & Live!", {
                     icon: '✅',
@@ -152,7 +166,7 @@ const AdminMenu = () => {
             setIsProcessing(false);
 
             if (res.data.success) {
-                removeFromQueue(activeKitchen.id);
+                removeFromQueue(menuId);
                 toast.error("Menu Rejected", {
                     style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
                 });
@@ -245,13 +259,11 @@ const AdminMenu = () => {
                         Great job, admin! You've reviewed all pending menus for today. Time to relax or manage other tasks.
                     </p>
                     <button
-                        onClick={() => {
-                            setKitchenQueue(initialKitchens);
-                            setSelectedKitchenId(initialKitchens[0].id);
-                        }}
-                        className="px-8 py-3 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-black transition-all shadow-lg hover:shadow-black/20 hover:scale-105 active:scale-95"
+                        onClick={fetchPendingMenus}
+                        className="px-8 py-3 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-black transition-all shadow-lg hover:shadow-black/20 hover:scale-105 active:scale-95 flex items-center gap-2 mx-auto"
                     >
-                        Review Again (Demo)
+                        <span className="material-symbols-outlined text-[18px]">refresh</span>
+                        Check for Updates
                     </button>
                     <div className="mt-8 pt-8 border-t border-[#2D241E]/10 flex justify-center gap-8">
                         <div className="text-center">
@@ -360,27 +372,32 @@ const AdminMenu = () => {
                         <div className="overflow-y-auto custom-scrollbar p-2 space-y-2">
                             {loading ? (
                                 <SkeletonLoader type="card" count={4} className="mb-2 !p-4 !rounded-[1.5rem]" />
-                            ) : kitchenQueue.map(kitchen => (
-                                <div
-                                    key={kitchen.id}
-                                    onClick={() => setSelectedKitchenId(kitchen.id)}
-                                    className={`p-4 rounded-[1.5rem] cursor-pointer transition-all border group ${activeKitchen?.id === kitchen.id
-                                        ? 'bg-white shadow-lg border-white/60 scale-[1.02] ring-1 ring-[#2D241E]/5'
-                                        : 'bg-white/40 border-transparent hover:bg-white hover:shadow-sm'
-                                        }`}
-                                >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className="bg-[#2D241E]/5 text-[#2D241E] text-[10px] font-bold px-2 py-1 rounded-lg">
-                                            {kitchen.time}
-                                        </span>
-                                        {activeKitchen?.id === kitchen.id && (
-                                            <span className="material-symbols-outlined text-[16px] text-orange-500 animate-pulse">edit</span>
-                                        )}
-                                    </div>
-                                    <h3 className="font-bold text-[#2D241E] text-xs">{kitchen.name}</h3>
-                                    <p className="text-[10px] font-bold text-[#897a70]">{kitchen.plan}</p>
-                                </div>
-                            ))}
+                            ) : (
+                                kitchenQueue.map(menu => {
+                                    const kitchenId = menu._id || menu.id;
+                                    return (
+                                        <div
+                                            key={kitchenId}
+                                            onClick={() => setSelectedKitchenId(kitchenId)}
+                                            className={`p-4 rounded-[1.5rem] cursor-pointer transition-all border group ${selectedKitchenId === kitchenId
+                                                ? 'bg-white shadow-lg border-white/60 scale-[1.02] ring-1 ring-[#2D241E]/5'
+                                                : 'bg-white/40 border-transparent hover:bg-white hover:shadow-sm'
+                                                }`}
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="bg-[#2D241E]/5 text-[#2D241E] text-[10px] font-bold px-2 py-1 rounded-lg">
+                                                    {new Date(menu.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {selectedKitchenId === kitchenId && (
+                                                    <span className="material-symbols-outlined text-[16px] text-orange-500 animate-pulse">edit</span>
+                                                )}
+                                            </div>
+                                            <h3 className="font-bold text-[#2D241E] text-xs">{menu.provider?.fullName || 'Unknown Kitchen'}</h3>
+                                            <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider">{menu.mealType || 'Lunch'}</p>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>
@@ -395,9 +412,9 @@ const AdminMenu = () => {
                                 <span className="material-symbols-outlined notranslate">lunch_dining</span>
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-[#2D241E] tracking-tight">{activeKitchen?.name}</h2>
+                                <h2 className="text-xl font-bold text-[#2D241E] tracking-tight">{activeKitchen?.provider?.fullName || 'Select Kitchen'}</h2>
                                 <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider">
-                                    Editing Daily Menu • ID: {activeKitchen?.id}
+                                    Reviewing {activeKitchen?.mealType} Menu • ID: {activeKitchen?._id}
                                 </p>
                             </div>
                         </div>
@@ -425,7 +442,7 @@ const AdminMenu = () => {
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="md:col-span-2">
-                                        {renderInput("Main Dish (Sabzi/Gravy)", "soup_kitchen", "main", "e.g. Paneer Butter Masala")}
+                                        {renderInput("Main Dish (Sabzi/Gravy)", "soup_kitchen", "mainDish", "e.g. Paneer Butter Masala")}
                                     </div>
                                     {renderInput("Rice / Pulao", "rice_bowl", "rice", "e.g. Jeera Rice")}
                                     {renderInput("Dal / Curry", "set_meal", "dal", "e.g. Dal Tadka")}
@@ -436,27 +453,39 @@ const AdminMenu = () => {
                             <div className="space-y-4 animate-[fadeIn_0.4s]">
                                 <h3 className="text-[11px] font-bold text-[#2D241E] flex items-center gap-2 uppercase tracking-wider opacity-80">
                                     <span className="material-symbols-outlined text-[16px] text-orange-500">bakery_dining</span>
-                                    Sides & Sweetness
+                                    Sides & Breads
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {renderInput("Breads (Roti/Naan)", "breakfast_dining", "bread", "e.g. 4 Butter Tawa Roti")}
-                                    {renderInput("Side Dish (Dry Veg)", "tapas", "side", "e.g. Aloo Jeera")}
-                                    {renderInput("Dessert / Sweet", "icecream", "dessert", "e.g. Gulab Jamun (1pc)")}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {renderInput("Dry Sabji / Side Dish", "tapas", "sabjiDry", "e.g. Aloo Jeera")}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {renderInput("Bread Type", "breakfast_dining", "breadType", "e.g. Butter Roti")}
+                                        {renderInput("Count", "format_list_numbered", "breadCount", "4")}
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Nutritional Profile */}
+                            {/* Metadata Profile */}
                             <div className="p-6 bg-[#FDFBF9] rounded-[2rem] border border-orange-100/50 space-y-4 animate-[fadeIn_0.5s]">
                                 <div className="flex justify-between items-center">
                                     <h3 className="text-[11px] font-bold text-[#2D241E] flex items-center gap-2 uppercase tracking-wider">
-                                        <span className="material-symbols-outlined text-[16px] text-emerald-600">monitor_heart</span>
-                                        Nutritional Profile
+                                        <span className="material-symbols-outlined text-[16px] text-blue-600">info</span>
+                                        Menu Metadata
                                     </h3>
-                                    <span className="text-[11px] font-bold text-orange-400 bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100 uppercase tracking-wider">AI Verified</span>
+                                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100 uppercase tracking-wider">System Assigned</span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    {renderInput("Total Calories (kcal)", "local_fire_department", "calories", "e.g. 450")}
-                                    {renderInput("Protein Content (g)", "fitness_center", "protein", "e.g. 12g")}
+                                <div className="grid grid-cols-3 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Meal Type</label>
+                                        <p className="text-sm font-bold text-[#201c1a] capitalize px-1">{menuData.mealType}</p>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Dietary</label>
+                                        <p className="text-sm font-bold text-[#201c1a]">{menuData.type}</p>
+                                    </div>
+                                    <div className="space-y-1.5 text-right">
+                                        <label className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Status</label>
+                                        <p className="text-sm font-bold text-orange-600 uppercase tracking-tight">{activeKitchen?.approvalStatus}</p>
+                                    </div>
                                 </div>
                             </div>
 

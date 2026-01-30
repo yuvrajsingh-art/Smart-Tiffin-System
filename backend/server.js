@@ -16,6 +16,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const initScheduledJobs = require("./utils/scheduler");
 
 // Load environment variables
 dotenv.config();
@@ -137,4 +138,6 @@ const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  // Initialize Cron Jobs
+  initScheduledJobs();
 });

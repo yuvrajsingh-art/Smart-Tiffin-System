@@ -17,6 +17,7 @@ const {
     getDashboardStats,
     globalSearch,
     broadcastMessage,
+    clearBroadcast,
 
     // Customer Management
     getCustomers,
@@ -87,6 +88,9 @@ router.get("/search", protect, authorizeRoles("admin"), globalSearch);
 
 // POST /api/admin/broadcast - Send broadcast message
 router.post("/broadcast", protect, authorizeRoles("admin"), broadcastMessage);
+
+// DELETE /api/admin/broadcast - Clear broadcast message [NEW]
+router.delete("/broadcast", protect, authorizeRoles("admin"), clearBroadcast);
 
 // =============================================================================
 // CUSTOMER MANAGEMENT

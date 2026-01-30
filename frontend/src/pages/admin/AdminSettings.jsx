@@ -3,68 +3,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const AdminSettings = () => {
-    // --- Initial State (Loaded from localStorage or Defaults) ---
-    const getInitialSettings = () => {
-        const saved = localStorage.getItem('smart_tiffin_admin_settings');
-        if (saved) return JSON.parse(saved);
-        return {
-            // Menu Logic
-            isDailyMandatory: true,
-            dailyCutoffTime: '10:30',
-            allowSameDayEdit: false,
-            isWeeklyMandatory: true,
-            maxDishesPerTiffin: 6,
-            jainMandatory: true,
-
-            // Financials
-            baseCommission: 15,
-            premiumCommission: 12,
-            gstRate: 5,
-            minPayoutThreshold: 2000,
-
-            // System
-            appName: 'Smart Tiffin System',
-            appVersion: '2.4.0-rev4',
-            maintenanceMode: false,
-            cacheHealth: 98.2,
-
-            // Notifications
-            notifCustomerSMS: true,
-            notifCustomerPush: true,
-            notifProviderEmail: true,
-            notifProviderPush: true,
-            notifAdminUrgent: true,
-
-            // Security
-            globalFreeze: false,
-            twoFactorEnabled: true,
-            ipLockdown: false,
-
-            // --- ALL NEW SETTINGS ---
-            // Customer Policies
-            cancellationFee: 50,
-            refundSlab6h: 100,
-            refundSlab2h: 50,
-            autoWalletRefund: true,
-
-            // Compliance
-            fssaiMandatory: true,
-            gstProofRequired: false,
-            aadharVerifiedOnly: true,
-
-            // Integrations
-            smsProvider: 'Twilio',
-            mapsApiKey: 'AIzaSyA...L4',
-            smtpHost: 'smtp.sendgrid.net',
-
-            // Localization
-            currencyCode: 'INR',
-            timezone: 'Asia/Kolkata',
-            defaultLang: 'Hinglish'
-        };
-    };
-
-    const [settings, setSettings] = useState(getInitialSettings());
+    const [settings, setSettings] = useState({});
+    const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState('MenuRules');
     const [isPurging, setIsPurging] = useState(false);
     const [purgeProgress, setPurgeProgress] = useState(0);
@@ -73,15 +13,9 @@ const AdminSettings = () => {
         { id: 2, action: 'SYNC_COMPLETE', detail: 'Systems initialized with v2.4.0', time: '5m ago', type: 'system' },
     ]);
 
-    // Save to localStorage whenever settings change
-    useEffect(() => {
-        localStorage.setItem('smart_tiffin_admin_settings', JSON.stringify(settings));
-    }, [settings]);
-
     // --- Helper Functions ---
     const handleToggle = (key) => {
         setSettings(prev => ({ ...prev, [key]: !prev[key] }));
-        addLog('POLICY_CHANGE', `Toggled ${key} status`, 'user');
     };
 
     const handleChange = (key, val) => {
@@ -122,15 +56,16 @@ const AdminSettings = () => {
 
     const fetchSettings = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('/api/admin/settings', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data.success) {
-                setSettings(prev => ({ ...prev, ...res.data.data }));
+            setLoading(true);
+            const { data } = await axios.get('/api/admin/settings');
+            if (data.success) {
+                setSettings(data.data);
             }
         } catch (err) {
+            toast.error("Failed to load settings");
             console.error("Fetch Settings Error:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -139,10 +74,7 @@ const AdminSettings = () => {
     }, []);
 
     const handleSave = async () => {
-        const token = localStorage.getItem('token');
-        const syncPromise = axios.put('/api/admin/settings', settings, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const syncPromise = axios.put('/api/admin/settings', settings);
 
         toast.promise(
             syncPromise,

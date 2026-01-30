@@ -20,8 +20,28 @@ const Provider = require("../../models/providerprofile.model");
 const Notification = require("../../models/notification.model");
 const Menu = require("../../models/menu.model");
 const Ticket = require("../../models/ticket.model");
+const Settings = require("../../models/settings.model");
+const Log = require("../../models/log.model");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+
+// =============================================================================
+// HELPER: AUDIT LOGGING
+// =============================================================================
+
+const createLog = async (event, detail, adminId, icon = 'info', color = 'text-indigo-500') => {
+    try {
+        await Log.create({
+            event,
+            detail,
+            admin: adminId,
+            icon,
+            color
+        });
+    } catch (error) {
+        console.error("Logging Error:", error.message);
+    }
+};
 
 // =============================================================================
 // DASHBOARD STATS
@@ -42,13 +62,48 @@ exports.getDashboardStats = async (req, res) => {
             status: { $in: ["Placed", "Accepted", "Preparing", "Ready", "Out for Delivery"] }
         });
 
-        // ----- 2. Revenue Calculation -----
-        // Sum all successful transactions
-        const revenueData = await Transaction.aggregate([
+        // ----- 2. Revenue & Precision Analytics -----
+        const settings = await Settings.findOne() || await Settings.create({});
+        const commissionRate = settings.baseCommission || 15; // default 15%
+
+        // Match only successful transactions
+        const transactionStats = await Transaction.aggregate([
             { $match: { status: 'Success' } },
-            { $group: { _id: null, total: { $sum: "$amount" } } }
+            // Lookup provider to get their specific commission rate
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "provider",
+                    foreignField: "_id",
+                    as: "providerInfo"
+                }
+            },
+            { $unwind: "$providerInfo" },
+            // Project calculations
+            {
+                $project: {
+                    amount: 1,
+                    // Use provider's custom rate OR fall back to global base rate
+                    commissionRate: {
+                        $ifNull: ["$providerInfo.profile.commission_rate", commissionRate]
+                    }
+                }
+            },
+            // Group and sum
+            {
+                $group: {
+                    _id: null,
+                    grossRevenue: { $sum: "$amount" },
+                    adminCommission: {
+                        $sum: { $multiply: ["$amount", { $divide: ["$commissionRate", 100] }] }
+                    }
+                }
+            }
         ]);
-        const grossRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+        const grossRevenue = transactionStats.length > 0 ? Math.round(transactionStats[0].grossRevenue) : 0;
+        const adminCommission = transactionStats.length > 0 ? Math.round(transactionStats[0].adminCommission) : 0;
+        const providerPayouts = grossRevenue - adminCommission;
 
         // ----- 3. Sales Growth (Last 7 Days Chart Data) -----
         const sevenDaysAgo = new Date();
@@ -94,27 +149,11 @@ exports.getDashboardStats = async (req, res) => {
             ? Math.round((settled / totalProcessed) * 100)
             : 0;
 
-        // ----- 7. Activity Logs (Recent events) -----
-        const latestUsers = await User.find().sort({ createdAt: -1 }).limit(3);
-        const latestTransactions = await Transaction.find({ status: 'Success' })
+        // ----- 7. Activity Logs (Real audit trail) -----
+        const activityLogs = await Log.find()
             .sort({ createdAt: -1 })
-            .limit(3);
-
-        // Combine and sort by time
-        const activityLogs = [
-            ...latestUsers.map(u => ({
-                time: u.createdAt,
-                event: `New ${u.role} joined: ${u.fullName}`,
-                icon: u.role === 'provider' ? 'storefront' : 'person_add',
-                color: u.role === 'provider' ? 'text-violet-500' : 'text-blue-500'
-            })),
-            ...latestTransactions.map(t => ({
-                time: t.createdAt,
-                event: `Payment of ₹${t.amount} received`,
-                icon: 'payments',
-                color: 'text-emerald-500'
-            }))
-        ].sort((a, b) => b.time - a.time).slice(0, 5);
+            .limit(10)
+            .populate('admin', 'fullName');
 
         // ----- 8. Today's Menu -----
         const startOfDay = new Date();
@@ -146,6 +185,8 @@ exports.getDashboardStats = async (req, res) => {
             success: true,
             data: {
                 grossRevenue,
+                adminCommission,
+                providerPayouts,
                 totalCustomers,
                 totalProviders,
                 liveOrders,
@@ -154,7 +195,8 @@ exports.getDashboardStats = async (req, res) => {
                 pendingApprovals,
                 deliveryMetrics: { settled, transit, staged, completionRate },
                 activityLogs,
-                menu
+                menu,
+                settings // send settings for frontend metadata if needed
             }
         });
     } catch (error) {
@@ -383,6 +425,15 @@ exports.verifyProvider = async (req, res) => {
             return res.status(404).json({ success: false, message: "Provider not found" });
         }
 
+        // Log the action
+        await createLog(
+            'PROVIDER_VERIFIED',
+            `Provider ${provider.fullName} was approved.`,
+            req.user.id,
+            'verified',
+            'text-emerald-500'
+        );
+
         res.status(200).json({
             success: true,
             message: "Provider verified successfully",
@@ -410,6 +461,15 @@ exports.toggleProviderStatus = async (req, res) => {
         provider.status = provider.status === 'active' ? 'suspended' : 'active';
         await provider.save();
 
+        // Log the action
+        await createLog(
+            'PROVIDER_STATUS_TOGGLE',
+            `Provider ${provider.fullName} status set to ${provider.status}.`,
+            req.user.id,
+            provider.status === 'active' ? 'check_circle' : 'block',
+            provider.status === 'active' ? 'text-emerald-500' : 'text-rose-500'
+        );
+
         res.status(200).json({
             success: true,
             message: `Provider ${provider.status === 'active' ? 'activated' : 'suspended'}`,
@@ -436,25 +496,64 @@ exports.broadcastMessage = async (req, res) => {
             return res.status(400).json({ success: false, message: "Message is required" });
         }
 
-        // Get all users
-        const users = await User.find({});
+        // 1. Update Persistent Settings (Durable Broadcast)
+        let settings = await Settings.findOne();
+        if (!settings) settings = await Settings.create({});
 
-        // Create notification for each user
+        settings.activeBroadcast = {
+            message,
+            createdAt: new Date(),
+            isActive: true
+        };
+        await settings.save();
+
+        // 2. Create individual notifications for all users
+        const users = await User.find({});
         const notifications = users.map(user => ({
-            user: user._id,
-            type: 'broadcast',
+            recipient: user._id,
+            title: 'System Broadcast',
             message: message,
+            type: 'Alert',
             isRead: false
         }));
 
         await Notification.insertMany(notifications);
 
+        // 3. Emit real-time event
+        if (req.io) {
+            req.io.emit('broadcast-msg', { message });
+        }
+
+        // 4. Log the action
+        await createLog('SYSTEM_BROADCAST', `Admin sent a global alert: ${message.substring(0, 30)}...`, req.user.id, 'campaign', 'text-blue-500');
+
         res.status(200).json({
             success: true,
-            message: `Broadcast sent to ${users.length} users`
+            message: `Broadcast sent to ${users.length} users and saved to system.`
         });
     } catch (error) {
         console.error("Broadcast Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Clear active broadcast
+ */
+exports.clearBroadcast = async (req, res) => {
+    try {
+        let settings = await Settings.findOne();
+        if (settings) {
+            settings.activeBroadcast.isActive = false;
+            await settings.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Broadcast cleared"
+        });
+    } catch (error) {
+        console.error("Clear Broadcast Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -662,6 +761,15 @@ exports.addCustomer = async (req, res) => {
             status: 'active'
         });
 
+        // Log action
+        await createLog(
+            'CUSTOMER_CREATED',
+            `New customer ${fullName} added by admin.`,
+            req.user.id,
+            'person_add',
+            'text-blue-500'
+        );
+
         res.status(201).json({
             success: true,
             message: "Customer added successfully",
@@ -715,6 +823,15 @@ exports.deleteCustomer = async (req, res) => {
             return res.status(404).json({ success: false, message: "Customer not found" });
         }
 
+        // Log action
+        await createLog(
+            'CUSTOMER_DELETED',
+            `Customer ${customer.fullName} was permanently deleted.`,
+            req.user.id,
+            'person_remove',
+            'text-rose-500'
+        );
+
         res.status(200).json({
             success: true,
             message: "Customer deleted successfully"
@@ -740,6 +857,15 @@ exports.toggleCustomerStatus = async (req, res) => {
         // Toggle between active and banned
         customer.status = customer.status === 'banned' ? 'active' : 'banned';
         await customer.save();
+
+        // Log action
+        await createLog(
+            'CUSTOMER_STATUS_TOGGLE',
+            `Customer ${customer.fullName} was ${customer.status === 'banned' ? 'banned' : 'unbanned'}.`,
+            req.user.id,
+            customer.status === 'banned' ? 'person_off' : 'person',
+            customer.status === 'banned' ? 'text-rose-500' : 'text-emerald-500'
+        );
 
         res.status(200).json({
             success: true,
@@ -782,6 +908,15 @@ exports.updateOrderStatus = async (req, res) => {
         if (!order) {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
+
+        // Log action
+        await createLog(
+            'ORDER_STATUS_UPDATE',
+            `Order #${order._id.toString().slice(-6)} status updated to ${status}.`,
+            req.user.id,
+            'edit_document',
+            'text-indigo-500'
+        );
 
         res.status(200).json({
             success: true,
@@ -924,7 +1059,7 @@ exports.deleteProvider = async (req, res) => {
  */
 exports.getPendingMenus = async (req, res) => {
     try {
-        const pendingMenus = await Menu.find({ status: 'pending' })
+        const pendingMenus = await Menu.find({ approvalStatus: 'Pending' })
             .populate('provider', 'fullName')
             .sort({ createdAt: -1 });
 
@@ -947,13 +1082,26 @@ exports.approveMenu = async (req, res) => {
 
         const menu = await Menu.findByIdAndUpdate(
             id,
-            { status: 'approved', approvedAt: new Date() },
+            {
+                approvalStatus: 'Approved',
+                isPublished: true,
+                publishedAt: new Date()
+            },
             { new: true }
-        );
+        ).populate('provider', 'fullName');
 
         if (!menu) {
             return res.status(404).json({ success: false, message: "Menu not found" });
         }
+
+        // Log the action
+        await createLog(
+            'MENU_APPROVED',
+            `Menu for ${menu.provider?.fullName} was approved and published.`,
+            req.user.id,
+            'restaurant_menu',
+            'text-emerald-500'
+        );
 
         res.status(200).json({
             success: true,
@@ -976,13 +1124,25 @@ exports.rejectMenu = async (req, res) => {
 
         const menu = await Menu.findByIdAndUpdate(
             id,
-            { status: 'rejected', rejectionReason: reason },
+            {
+                approvalStatus: 'Rejected',
+                adminRemarks: reason
+            },
             { new: true }
-        );
+        ).populate('provider', 'fullName');
 
         if (!menu) {
             return res.status(404).json({ success: false, message: "Menu not found" });
         }
+
+        // Log the action
+        await createLog(
+            'MENU_REJECTED',
+            `Menu for ${menu.provider?.fullName} was rejected. Reason: ${reason}`,
+            req.user.id,
+            'cancel_presentation',
+            'text-rose-500'
+        );
 
         res.status(200).json({
             success: true,
@@ -1296,16 +1456,12 @@ exports.getInvoices = async (req, res) => {
  */
 exports.getSettings = async (req, res) => {
     try {
-        // Default settings (in production, fetch from database)
-        const settings = {
-            platformName: 'Smart Tiffin',
-            currency: 'INR',
-            timezone: 'Asia/Kolkata',
-            emailNotifications: true,
-            smsNotifications: false,
-            autoApproveProviders: false,
-            commissionRate: 15
-        };
+        let settings = await Settings.findOne();
+
+        // If no settings exist yet, create default
+        if (!settings) {
+            settings = await Settings.create({});
+        }
 
         res.status(200).json({
             success: true,
@@ -1322,12 +1478,29 @@ exports.getSettings = async (req, res) => {
  */
 exports.updateSettings = async (req, res) => {
     try {
-        const newSettings = req.body;
+        const updates = req.body;
+
+        let settings = await Settings.findOne();
+        if (!settings) {
+            settings = await Settings.create(updates);
+        } else {
+            Object.assign(settings, updates);
+            await settings.save();
+        }
+
+        // Log the change
+        await createLog(
+            'SETTINGS_UPDATED',
+            'Global configuration was modified by admin',
+            req.user.id,
+            'settings',
+            'text-orange-500'
+        );
 
         res.status(200).json({
             success: true,
             message: "Settings updated successfully",
-            data: newSettings
+            data: settings
         });
     } catch (error) {
         console.error("Update Settings Error:", error.message);

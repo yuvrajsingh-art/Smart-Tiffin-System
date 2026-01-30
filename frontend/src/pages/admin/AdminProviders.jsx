@@ -57,6 +57,7 @@ const AdminProviders = () => {
     const [showRegisterModal, setShowRegisterModal] = useState(false); // For Add Modal
     const [editingKitchen, setEditingKitchen] = useState(null); // For Edit Modal
     const [showRequestsModal, setShowRequestsModal] = useState(false); // For Requests Modal
+    const [viewingDocument, setViewingDocument] = useState(null); // { name: string, providerId: string }
 
     // Derived Data
     const filteredProviders = (providers || []).filter(pro => {
@@ -731,8 +732,12 @@ const AdminProviders = () => {
                                     <h5 className="text-xs font-bold text-[#897a70] uppercase tracking-wider mb-3 ml-1">Compliance Documents</h5>
                                     <div className="flex gap-3 overflow-x-auto pb-2">
                                         {['FSSAI License', 'Owner Aadhar', 'Kitchen Photos', 'Fire Safety Noc'].map((doc, i) => (
-                                            <div key={i} className="min-w-[120px] h-24 bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-orange-500/50 transition-all cursor-pointer group">
-                                                <span className="material-symbols-outlined text-gray-400 group-hover:text-orange-500 transition-colors">folder_open</span>
+                                            <div
+                                                key={i}
+                                                onClick={() => setViewingDocument({ name: doc, provider: selectedKitchen.name })}
+                                                className="min-w-[120px] h-24 bg-white border border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-orange-500/50 transition-all cursor-pointer group hover:shadow-md"
+                                            >
+                                                <span className="material-symbols-outlined text-gray-400 group-hover:text-orange-500 transition-colors">visibility</span>
                                                 <span className="text-xs font-bold text-[#5C4D42]">{doc}</span>
                                             </div>
                                         ))}
@@ -745,7 +750,47 @@ const AdminProviders = () => {
                 )
             }
 
-            {/* 3. Register/Edit Kitchen Modal */}
+            {/* 4. Document Viewer Modal */}
+            {
+                viewingDocument && createPortal(
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setViewingDocument(null)}></div>
+                        <div className="bg-transparent w-full max-w-4xl relative z-10 flex flex-col h-[85vh]">
+
+                            {/* Toolbar */}
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="text-white">
+                                    <h3 className="text-lg font-bold">{viewingDocument.name}</h3>
+                                    <p className="text-sm opacity-70">Reviewing document for {viewingDocument.provider}</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => toast.success("Document Verified", { icon: '✅', style: { borderRadius: '10px', background: '#2D241E', color: '#fff' } })} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                                        Verify
+                                    </button>
+                                    <button onClick={() => setViewingDocument(null)} className="size-10 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all">
+                                        <span className="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Viewer Stage */}
+                            <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-[2rem] border border-white/10 flex items-center justify-center relative overflow-hidden group">
+                                <div className="text-center p-10">
+                                    <span className="material-symbols-outlined text-8xl text-white/20 mb-4 group-hover:scale-110 transition-transform duration-500">description</span>
+                                    <p className="text-white/40 text-lg font-bold">Document Preview Placeholder</p>
+                                    <p className="text-white/20 text-sm mt-2">No actual file uploaded in demo mode.</p>
+                                </div>
+                                {/* Mock watermark */}
+                                <div className="absolute inset-0 pointer-events-none flex items-center justify-center rotate-[-45deg] opacity-5">
+                                    <span className="text-9xl font-bold text-white uppercase">Confidential</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            }
             {
                 (showRegisterModal || editingKitchen) && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
