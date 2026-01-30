@@ -94,10 +94,44 @@ const AdminCustomers = () => {
         }
     };
 
-    const handleAction = (type, name) => {
-        toast.success(`${type} done for ${name}`, {
-            style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
-        });
+    const handleAction = async (type, customer) => {
+        const token = localStorage.getItem('token');
+        const customerId = customer._id || customer.id;
+
+        try {
+            if (type === 'Ban' || type === 'Unban') {
+                const res = await axios.put(
+                    `http://localhost:5000/api/admin/customers/${customerId}/status`,
+                    {},
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (res.data.success) {
+                    fetchCustomers();
+                    toast.success(res.data.message, {
+                        style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+                    });
+                }
+            } else if (type === 'Delete') {
+                if (!window.confirm(`Are you sure you want to delete ${customer.fullName || customer.name}?`)) return;
+
+                const res = await axios.delete(
+                    `http://localhost:5000/api/admin/customers/${customerId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (res.data.success) {
+                    fetchCustomers();
+                    toast.success('Customer deleted', {
+                        style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+                    });
+                }
+            } else {
+                toast.success(`${type} done for ${customer.fullName || customer.name}`, {
+                    style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+                });
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || `Failed to ${type.toLowerCase()}`);
+        }
     };
 
     const toggleSelect = (id) => {
@@ -132,31 +166,42 @@ const AdminCustomers = () => {
         return matchesSearch && matchesFilter;
     }) : [];
 
-    const handleUpdateCustomer = (e) => {
+    const handleUpdateCustomer = async (e) => {
         try {
             if (e && e.preventDefault) e.preventDefault();
             const form = formRef.current;
             if (!form) return;
 
             const procToast = toast.loading("Saving changes...");
-            const updatedCustomer = {
-                ...editingCustomer,
-                name: form.elements['name']?.value,
+            const token = localStorage.getItem('token');
+
+            const updateData = {
+                fullName: form.elements['name']?.value,
                 email: form.elements['email']?.value,
-                phone: form.elements['phone']?.value,
+                mobile: form.elements['phone']?.value,
                 address: form.elements['address']?.value,
             };
 
-            setCustomers(prev => prev.map(c => c.id === editingCustomer.id ? updatedCustomer : c));
-            toast.dismiss(procToast);
-            toast.success(`${updatedCustomer.name} profile updated`, {
-                style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
-            });
-            setEditingCustomer(null);
+            const res = await axios.put(
+                `http://localhost:5000/api/admin/customers/${editingCustomer._id || editingCustomer.id}`,
+                updateData,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                // Refresh the customer list
+                fetchCustomers();
+                toast.dismiss(procToast);
+                toast.success(`Customer updated successfully`, {
+                    style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+                });
+                setEditingCustomer(null);
+            }
         } catch (err) {
-            toast.error("Failed to save");
+            toast.error(err.response?.data?.message || "Failed to save");
         }
     };
+
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">

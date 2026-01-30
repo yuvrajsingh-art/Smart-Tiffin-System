@@ -13,17 +13,55 @@ const router = express.Router();
 
 // Import controller functions
 const {
+    // Dashboard
     getDashboardStats,
+    globalSearch,
+    broadcastMessage,
+
+    // Customer Management
+    getCustomers,
+    updateCustomer,
+    deleteCustomer,
+    toggleCustomerStatus,
+
+    // Order Management
+    getOrders,
+    updateOrderStatus,
+    cancelOrder,
+    assignRider,
+
+    // Provider Management
     getProviders,
     verifyProvider,
     toggleProviderStatus,
-    broadcastMessage,
-    globalSearch,
-    getCustomers,
-    getOrders,
+    updateProvider,
+    deleteProvider,
+
+    // Finance Management
     getFinanceStats,
     getPayouts,
-    processPayout
+    processPayout,
+
+    // Menu Management
+    getPendingMenus,
+    approveMenu,
+    rejectMenu,
+
+    // Plans Management
+    getPlans,
+    createPlan,
+    updatePlan,
+    deletePlan,
+
+    // Support Tickets
+    getTickets,
+    getTicketById,
+    resolveTicket,
+    replyToTicket,
+
+    // Settings
+    getSettings,
+    updateSettings
 } = require("../controllers/admin/adminController");
 
 // Import authentication middleware
@@ -32,52 +70,133 @@ const { protect, authorizeRoles } = require("../middleware/authMiddleware.middle
 // =============================================================================
 // DASHBOARD
 // =============================================================================
+
 // GET /api/admin/stats - Get dashboard statistics
 router.get("/stats", protect, authorizeRoles("admin"), getDashboardStats);
 
-// =============================================================================
-// PROVIDER MANAGEMENT
-// =============================================================================
-// GET /api/admin/providers - Get all providers
-router.get("/providers", protect, authorizeRoles("admin"), getProviders);
+// GET /api/admin/search - Global search
+router.get("/search", protect, authorizeRoles("admin"), globalSearch);
 
-// PUT /api/admin/providers/:id/verify - Verify/Approve a provider
-router.put("/providers/:id/verify", protect, authorizeRoles("admin"), verifyProvider);
-
-// PUT /api/admin/providers/:id/status - Toggle provider status (suspend/activate)
-router.put("/providers/:id/status", protect, authorizeRoles("admin"), toggleProviderStatus);
+// POST /api/admin/broadcast - Send broadcast message
+router.post("/broadcast", protect, authorizeRoles("admin"), broadcastMessage);
 
 // =============================================================================
 // CUSTOMER MANAGEMENT
 // =============================================================================
+
 // GET /api/admin/customers - Get all customers
 router.get("/customers", protect, authorizeRoles("admin"), getCustomers);
+
+// PUT /api/admin/customers/:id - Update customer
+router.put("/customers/:id", protect, authorizeRoles("admin"), updateCustomer);
+
+// DELETE /api/admin/customers/:id - Delete customer
+router.delete("/customers/:id", protect, authorizeRoles("admin"), deleteCustomer);
+
+// PUT /api/admin/customers/:id/status - Toggle customer ban status
+router.put("/customers/:id/status", protect, authorizeRoles("admin"), toggleCustomerStatus);
 
 // =============================================================================
 // ORDER MANAGEMENT
 // =============================================================================
+
 // GET /api/admin/orders - Get all orders
 router.get("/orders", protect, authorizeRoles("admin"), getOrders);
+
+// PUT /api/admin/orders/:id/status - Update order status
+router.put("/orders/:id/status", protect, authorizeRoles("admin"), updateOrderStatus);
+
+// PUT /api/admin/orders/:id/cancel - Cancel order
+router.put("/orders/:id/cancel", protect, authorizeRoles("admin"), cancelOrder);
+
+// PUT /api/admin/orders/:id/rider - Assign rider to order
+router.put("/orders/:id/rider", protect, authorizeRoles("admin"), assignRider);
+
+// =============================================================================
+// PROVIDER MANAGEMENT
+// =============================================================================
+
+// GET /api/admin/providers - Get all providers
+router.get("/providers", protect, authorizeRoles("admin"), getProviders);
+
+// PUT /api/admin/providers/:id - Update provider
+router.put("/providers/:id", protect, authorizeRoles("admin"), updateProvider);
+
+// DELETE /api/admin/providers/:id - Delete provider
+router.delete("/providers/:id", protect, authorizeRoles("admin"), deleteProvider);
+
+// PUT /api/admin/providers/:id/verify - Verify provider
+router.put("/providers/:id/verify", protect, authorizeRoles("admin"), verifyProvider);
+
+// PUT /api/admin/providers/:id/status - Toggle provider status
+router.put("/providers/:id/status", protect, authorizeRoles("admin"), toggleProviderStatus);
 
 // =============================================================================
 // FINANCE MANAGEMENT
 // =============================================================================
+
 // GET /api/admin/finance/stats - Get finance statistics
 router.get("/finance/stats", protect, authorizeRoles("admin"), getFinanceStats);
 
-// GET /api/admin/finance/payouts - Get pending payouts list
+// GET /api/admin/finance/payouts - Get pending payouts
 router.get("/finance/payouts", protect, authorizeRoles("admin"), getPayouts);
 
-// POST /api/admin/finance/payout - Process a payout
+// POST /api/admin/finance/payout - Process payout
 router.post("/finance/payout", protect, authorizeRoles("admin"), processPayout);
 
 // =============================================================================
-// UTILITIES
+// MENU MANAGEMENT
 // =============================================================================
-// POST /api/admin/broadcast - Send broadcast message to all users
-router.post("/broadcast", protect, authorizeRoles("admin"), broadcastMessage);
 
-// GET /api/admin/search - Global search across entities
-router.get("/search", protect, authorizeRoles("admin"), globalSearch);
+// GET /api/admin/menus/pending - Get pending menus
+router.get("/menus/pending", protect, authorizeRoles("admin"), getPendingMenus);
+
+// PUT /api/admin/menus/:id/approve - Approve menu
+router.put("/menus/:id/approve", protect, authorizeRoles("admin"), approveMenu);
+
+// PUT /api/admin/menus/:id/reject - Reject menu
+router.put("/menus/:id/reject", protect, authorizeRoles("admin"), rejectMenu);
+
+// =============================================================================
+// PLANS MANAGEMENT
+// =============================================================================
+
+// GET /api/admin/plans - Get all plans
+router.get("/plans", protect, authorizeRoles("admin"), getPlans);
+
+// POST /api/admin/plans - Create new plan
+router.post("/plans", protect, authorizeRoles("admin"), createPlan);
+
+// PUT /api/admin/plans/:id - Update plan
+router.put("/plans/:id", protect, authorizeRoles("admin"), updatePlan);
+
+// DELETE /api/admin/plans/:id - Delete plan
+router.delete("/plans/:id", protect, authorizeRoles("admin"), deletePlan);
+
+// =============================================================================
+// SUPPORT TICKETS
+// =============================================================================
+
+// GET /api/admin/tickets - Get all tickets
+router.get("/tickets", protect, authorizeRoles("admin"), getTickets);
+
+// GET /api/admin/tickets/:id - Get single ticket
+router.get("/tickets/:id", protect, authorizeRoles("admin"), getTicketById);
+
+// PUT /api/admin/tickets/:id/resolve - Resolve ticket
+router.put("/tickets/:id/resolve", protect, authorizeRoles("admin"), resolveTicket);
+
+// POST /api/admin/tickets/:id/reply - Reply to ticket
+router.post("/tickets/:id/reply", protect, authorizeRoles("admin"), replyToTicket);
+
+// =============================================================================
+// SETTINGS
+// =============================================================================
+
+// GET /api/admin/settings - Get settings
+router.get("/settings", protect, authorizeRoles("admin"), getSettings);
+
+// PUT /api/admin/settings - Update settings
+router.put("/settings", protect, authorizeRoles("admin"), updateSettings);
 
 module.exports = router;

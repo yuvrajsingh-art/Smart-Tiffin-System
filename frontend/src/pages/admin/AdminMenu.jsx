@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // Mock Data
@@ -76,41 +77,71 @@ const AdminMenu = () => {
         });
     };
 
-    const handleApprove = () => {
+    const handleApprove = async () => {
         if (completionPercentage < 100) {
             toast.error("Please complete all required fields!");
             return;
         }
         setIsProcessing(true);
         const loading = toast.loading(`Approving ${activeKitchen.name}...`);
+        const token = localStorage.getItem('token');
+        const menuId = activeKitchen._id || activeKitchen.id;
 
-        setTimeout(() => {
+        try {
+            const res = await axios.put(
+                `http://localhost:5000/api/admin/menus/${menuId}/approve`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
             toast.dismiss(loading);
             setIsProcessing(false);
-            removeFromQueue(activeKitchen.id);
-            setLiveMenuCount(prev => prev + 1); // Real-time update
-            toast.success("Menu Approved & Live!", {
-                icon: '✅',
-                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-            });
-        }, 800);
+
+            if (res.data.success) {
+                removeFromQueue(activeKitchen.id);
+                setLiveMenuCount(prev => prev + 1);
+                toast.success("Menu Approved & Live!", {
+                    icon: '✅',
+                    style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+                });
+            }
+        } catch (err) {
+            toast.dismiss(loading);
+            setIsProcessing(false);
+            toast.error(err.response?.data?.message || 'Failed to approve menu');
+        }
     };
 
-    const handleReject = () => {
+    const handleReject = async () => {
         const reason = window.prompt("Reason for rejection?");
         if (!reason) return;
 
         setIsProcessing(true);
         const loading = toast.loading("Returning to kitchen...");
+        const token = localStorage.getItem('token');
+        const menuId = activeKitchen._id || activeKitchen.id;
 
-        setTimeout(() => {
+        try {
+            const res = await axios.put(
+                `http://localhost:5000/api/admin/menus/${menuId}/reject`,
+                { reason },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
             toast.dismiss(loading);
             setIsProcessing(false);
-            removeFromQueue(activeKitchen.id);
-            toast.error("Menu Rejected", {
-                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-            });
-        }, 800);
+
+            if (res.data.success) {
+                removeFromQueue(activeKitchen.id);
+                toast.error("Menu Rejected", {
+                    style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+                });
+            }
+        } catch (err) {
+            toast.dismiss(loading);
+            setIsProcessing(false);
+            toast.error(err.response?.data?.message || 'Failed to reject menu');
+        }
     };
 
     const handleBulkApprove = () => {

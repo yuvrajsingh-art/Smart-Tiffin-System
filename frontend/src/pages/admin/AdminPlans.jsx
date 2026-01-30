@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 
@@ -57,7 +58,7 @@ const AdminPlans = () => {
         }
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
         const form = formRef.current;
         if (!form) return;
@@ -65,28 +66,51 @@ const AdminPlans = () => {
         const name = form.elements['name']?.value;
         if (!name) return toast.error("Plan name is required");
 
-        const newPlan = {
-            id: editingPlan ? editingPlan.id : `PLN00${plans.length + 1}`,
+        const token = localStorage.getItem('token');
+        const planData = {
             name: name,
             price: form.elements['price']?.value || '0',
             period: form.elements['period']?.value || 'Monthly',
             type: form.elements['type']?.value || 'Veg',
             description: form.elements['desc']?.value || '',
             color: form.elements['color']?.value || 'from-gray-500 to-gray-700',
-            subscribers: editingPlan ? editingPlan.subscribers : 0,
-            revenue: editingPlan ? editingPlan.revenue : '₹0',
-            badge: editingPlan ? editingPlan.badge : 'New'
         };
 
-        if (editingPlan) {
-            setPlans(prev => prev.map(p => p.id === editingPlan.id ? newPlan : p));
-            toast.success("Standard Plan updated everywhere!");
-        } else {
-            setPlans(prev => [newPlan, ...prev]);
-            toast.success("New Standard Plan Launched!", { icon: '🚀' });
+        try {
+            if (editingPlan) {
+                // Update existing plan
+                const res = await axios.put(
+                    `http://localhost:5000/api/admin/plans/${editingPlan.id}`,
+                    planData,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (res.data.success) {
+                    setPlans(prev => prev.map(p => p.id === editingPlan.id ? { ...p, ...planData } : p));
+                    toast.success("Standard Plan updated everywhere!");
+                }
+            } else {
+                // Create new plan
+                const res = await axios.post(
+                    `http://localhost:5000/api/admin/plans`,
+                    planData,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (res.data.success) {
+                    const newPlan = {
+                        ...res.data.data,
+                        subscribers: 0,
+                        revenue: '₹0',
+                        badge: 'New'
+                    };
+                    setPlans(prev => [newPlan, ...prev]);
+                    toast.success("New Standard Plan Launched!", { icon: '🚀' });
+                }
+            }
+            setShowModal(false);
+            setEditingPlan(null);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to save plan');
         }
-        setShowModal(false);
-        setEditingPlan(null);
     };
 
     return (

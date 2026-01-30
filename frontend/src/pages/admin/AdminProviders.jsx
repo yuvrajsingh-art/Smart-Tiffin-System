@@ -104,11 +104,23 @@ const AdminProviders = () => {
         }
     };
 
-    const handleDelete = (id, name) => {
-        if (window.confirm(`Are you sure you want to remove ${name}?`)) {
-            setProviders(prev => prev.filter(p => p.id !== id));
-            toast.success(`${name} has been removed.`, { icon: '🗑️', style: { borderRadius: '10px', background: '#2D241E', color: '#fff' } });
-            if (selectedKitchen?.id === id) setSelectedKitchen(null);
+    const handleDelete = async (id, name) => {
+        if (!window.confirm(`Are you sure you want to remove ${name}?`)) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            const res = await axios.delete(
+                `http://localhost:5000/api/admin/providers/${id}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                fetchProviders();
+                toast.success(`${name} has been removed.`, { icon: '🗑️', style: { borderRadius: '10px', background: '#2D241E', color: '#fff' } });
+                if (selectedKitchen?._id === id || selectedKitchen?.id === id) setSelectedKitchen(null);
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to delete provider');
         }
     };
 

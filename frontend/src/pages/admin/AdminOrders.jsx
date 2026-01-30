@@ -82,36 +82,52 @@ const AdminOrders = () => {
         }, 800);
     };
 
-    const handleAssignRider = (rider) => {
+    const handleAssignRider = async (rider) => {
         if (!selectedOrder) return;
+        const token = localStorage.getItem('token');
+        const orderId = selectedOrder._id || selectedOrder.id;
 
-        toast.loading(`Assigning ${rider.name} to #${selectedOrder.id}...`);
+        try {
+            toast.loading(`Assigning ${rider.name} to order...`);
 
-        setTimeout(() => {
-            // Update local state
-            setOrders(prev => prev.map(o =>
-                o.id === selectedOrder.id
-                    ? { ...o, rider: `${rider.name.split(' ')[0]} (ID: ${rider.id})`, status: o.status === 'Preparing' ? 'In Transit' : o.status }
-                    : o
-            ));
+            const res = await axios.put(
+                `http://localhost:5000/api/admin/orders/${orderId}/rider`,
+                { riderName: rider.name, riderId: rider.id },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
 
-            // Also update the selected order in view to reflect change immediately if modal stays open (though we close it)
-            setSelectedOrder(prev => ({ ...prev, rider: `${rider.name.split(' ')[0]} (ID: ${rider.id})` }));
-
+            if (res.data.success) {
+                fetchOrders();
+                toast.dismiss();
+                toast.success(`Rider Assigned Successfully!`, { icon: '🛵' });
+                setShowRiderModal(false);
+            }
+        } catch (err) {
             toast.dismiss();
-            toast.success(`Rider Assigned Successfully!`, { icon: '🛵' });
-            setShowRiderModal(false);
-        }, 1200);
+            toast.error(err.response?.data?.message || 'Failed to assign rider');
+        }
     };
 
-    const handleStatusUpdate = (newStatus) => {
+    const handleStatusUpdate = async (newStatus) => {
         if (!selectedOrder) return;
+        const token = localStorage.getItem('token');
+        const orderId = selectedOrder._id || selectedOrder.id;
 
-        setOrders(prev => prev.map(o =>
-            o.id === selectedOrder.id ? { ...o, status: newStatus } : o
-        ));
-        setSelectedOrder(prev => ({ ...prev, status: newStatus }));
-        toast.success(`Order Marked as ${newStatus}`);
+        try {
+            const res = await axios.put(
+                `http://localhost:5000/api/admin/orders/${orderId}/status`,
+                { status: newStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                fetchOrders();
+                setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+                toast.success(`Order Marked as ${newStatus}`);
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to update status');
+        }
     };
 
     // -- Utilities --

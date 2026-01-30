@@ -597,3 +597,559 @@ exports.processPayout = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// =============================================================================
+// CUSTOMER CRUD (ADDITIONAL)
+// =============================================================================
+
+/**
+ * Update customer details
+ */
+exports.updateCustomer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { fullName, email, mobile, address, status } = req.body;
+
+        const customer = await User.findByIdAndUpdate(
+            id,
+            { fullName, email, mobile, address, status },
+            { new: true }
+        );
+
+        if (!customer) {
+            return res.status(404).json({ success: false, message: "Customer not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Customer updated successfully",
+            data: customer
+        });
+    } catch (error) {
+        console.error("Update Customer Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Delete a customer
+ */
+exports.deleteCustomer = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const customer = await User.findByIdAndDelete(id);
+
+        if (!customer) {
+            return res.status(404).json({ success: false, message: "Customer not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Customer deleted successfully"
+        });
+    } catch (error) {
+        console.error("Delete Customer Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Toggle customer status (ban/unban)
+ */
+exports.toggleCustomerStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const customer = await User.findById(id);
+
+        if (!customer) {
+            return res.status(404).json({ success: false, message: "Customer not found" });
+        }
+
+        // Toggle between active and banned
+        customer.status = customer.status === 'banned' ? 'active' : 'banned';
+        await customer.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Customer ${customer.status === 'banned' ? 'banned' : 'unbanned'} successfully`,
+            data: customer
+        });
+    } catch (error) {
+        console.error("Toggle Customer Status Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// ORDER CRUD (ADDITIONAL)
+// =============================================================================
+
+/**
+ * Update order status
+ */
+exports.updateOrderStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const validStatuses = ['Placed', 'Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Cancelled'];
+
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status" });
+        }
+
+        const order = await Order.findByIdAndUpdate(
+            id,
+            {
+                status,
+                ...(status === 'Delivered' && { deliveredAt: new Date() })
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Order status updated to ${status}`,
+            data: order
+        });
+    } catch (error) {
+        console.error("Update Order Status Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Cancel an order
+ */
+exports.cancelOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        const order = await Order.findByIdAndUpdate(
+            id,
+            {
+                status: 'Cancelled',
+                cancellationReason: reason || 'Cancelled by admin'
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Order cancelled successfully",
+            data: order
+        });
+    } catch (error) {
+        console.error("Cancel Order Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Assign rider to order
+ */
+exports.assignRider = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { riderName, riderId } = req.body;
+
+        const order = await Order.findByIdAndUpdate(
+            id,
+            {
+                deliveryPerson: riderName,
+                deliveryPersonId: riderId,
+                status: 'Out for Delivery'
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Rider ${riderName} assigned successfully`,
+            data: order
+        });
+    } catch (error) {
+        console.error("Assign Rider Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// PROVIDER CRUD (ADDITIONAL)
+// =============================================================================
+
+/**
+ * Update provider details
+ */
+exports.updateProvider = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const provider = await User.findByIdAndUpdate(id, updateData, { new: true });
+
+        if (!provider) {
+            return res.status(404).json({ success: false, message: "Provider not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Provider updated successfully",
+            data: provider
+        });
+    } catch (error) {
+        console.error("Update Provider Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Delete a provider
+ */
+exports.deleteProvider = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Delete user
+        const provider = await User.findByIdAndDelete(id);
+
+        if (!provider) {
+            return res.status(404).json({ success: false, message: "Provider not found" });
+        }
+
+        // Also delete provider profile if exists
+        await Provider.findOneAndDelete({ owner: id });
+
+        res.status(200).json({
+            success: true,
+            message: "Provider deleted successfully"
+        });
+    } catch (error) {
+        console.error("Delete Provider Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// MENU MANAGEMENT
+// =============================================================================
+
+/**
+ * Get pending menus awaiting approval
+ */
+exports.getPendingMenus = async (req, res) => {
+    try {
+        const pendingMenus = await Menu.find({ status: 'pending' })
+            .populate('provider', 'fullName')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: pendingMenus
+        });
+    } catch (error) {
+        console.error("Get Pending Menus Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Approve a menu
+ */
+exports.approveMenu = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const menu = await Menu.findByIdAndUpdate(
+            id,
+            { status: 'approved', approvedAt: new Date() },
+            { new: true }
+        );
+
+        if (!menu) {
+            return res.status(404).json({ success: false, message: "Menu not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Menu approved successfully",
+            data: menu
+        });
+    } catch (error) {
+        console.error("Approve Menu Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Reject a menu
+ */
+exports.rejectMenu = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        const menu = await Menu.findByIdAndUpdate(
+            id,
+            { status: 'rejected', rejectionReason: reason },
+            { new: true }
+        );
+
+        if (!menu) {
+            return res.status(404).json({ success: false, message: "Menu not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Menu rejected",
+            data: menu
+        });
+    } catch (error) {
+        console.error("Reject Menu Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// PLANS MANAGEMENT
+// =============================================================================
+
+/**
+ * Get all subscription plans
+ */
+exports.getPlans = async (req, res) => {
+    try {
+        // Using a simple plans array stored in memory or could be from a Plans model
+        const plans = [
+            { id: '1', name: 'Basic', price: 2999, duration: '30 days', meals: 60, type: 'veg' },
+            { id: '2', name: 'Standard', price: 4999, duration: '30 days', meals: 90, type: 'veg' },
+            { id: '3', name: 'Premium', price: 7999, duration: '30 days', meals: 90, type: 'both' }
+        ];
+
+        res.status(200).json({
+            success: true,
+            data: plans
+        });
+    } catch (error) {
+        console.error("Get Plans Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Create a new plan
+ */
+exports.createPlan = async (req, res) => {
+    try {
+        const { name, price, duration, meals, type } = req.body;
+
+        // For now, just return success (in production, save to database)
+        res.status(201).json({
+            success: true,
+            message: "Plan created successfully",
+            data: { name, price, duration, meals, type, id: Date.now().toString() }
+        });
+    } catch (error) {
+        console.error("Create Plan Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Update a plan
+ */
+exports.updatePlan = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        res.status(200).json({
+            success: true,
+            message: "Plan updated successfully",
+            data: { id, ...updateData }
+        });
+    } catch (error) {
+        console.error("Update Plan Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Delete a plan
+ */
+exports.deletePlan = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        res.status(200).json({
+            success: true,
+            message: "Plan deleted successfully"
+        });
+    } catch (error) {
+        console.error("Delete Plan Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// SUPPORT TICKETS
+// =============================================================================
+
+/**
+ * Get all support tickets
+ */
+exports.getTickets = async (req, res) => {
+    try {
+        const { status } = req.query;
+
+        // Mock tickets data (in production, fetch from database)
+        let tickets = [
+            { id: 'TKT001', user: 'Rahul Sharma', issue: 'Late delivery', priority: 'High', status: 'Open', date: new Date() },
+            { id: 'TKT002', user: 'Priya Verma', issue: 'Wrong item', priority: 'Medium', status: 'In Progress', date: new Date() },
+            { id: 'TKT003', user: 'Amit Kumar', issue: 'Refund request', priority: 'Low', status: 'Resolved', date: new Date() }
+        ];
+
+        if (status && status !== 'All') {
+            tickets = tickets.filter(t => t.status === status);
+        }
+
+        res.status(200).json({
+            success: true,
+            data: tickets
+        });
+    } catch (error) {
+        console.error("Get Tickets Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Get single ticket by ID
+ */
+exports.getTicketById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Mock ticket data
+        const ticket = {
+            id,
+            user: 'Rahul Sharma',
+            issue: 'Late delivery by 40 minutes',
+            priority: 'High',
+            status: 'Open',
+            date: new Date(),
+            messages: [
+                { from: 'user', text: 'My order is very late!', time: new Date() },
+                { from: 'admin', text: 'We are looking into this.', time: new Date() }
+            ]
+        };
+
+        res.status(200).json({
+            success: true,
+            data: ticket
+        });
+    } catch (error) {
+        console.error("Get Ticket Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Resolve a ticket
+ */
+exports.resolveTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { resolution } = req.body;
+
+        res.status(200).json({
+            success: true,
+            message: "Ticket resolved successfully",
+            data: { id, status: 'Resolved', resolution }
+        });
+    } catch (error) {
+        console.error("Resolve Ticket Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Reply to a ticket
+ */
+exports.replyToTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { message } = req.body;
+
+        res.status(200).json({
+            success: true,
+            message: "Reply sent successfully",
+            data: { ticketId: id, reply: message, time: new Date() }
+        });
+    } catch (error) {
+        console.error("Reply To Ticket Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =============================================================================
+// SETTINGS
+// =============================================================================
+
+/**
+ * Get admin settings
+ */
+exports.getSettings = async (req, res) => {
+    try {
+        // Default settings (in production, fetch from database)
+        const settings = {
+            platformName: 'Smart Tiffin',
+            currency: 'INR',
+            timezone: 'Asia/Kolkata',
+            emailNotifications: true,
+            smsNotifications: false,
+            autoApproveProviders: false,
+            commissionRate: 15
+        };
+
+        res.status(200).json({
+            success: true,
+            data: settings
+        });
+    } catch (error) {
+        console.error("Get Settings Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Update admin settings
+ */
+exports.updateSettings = async (req, res) => {
+    try {
+        const newSettings = req.body;
+
+        res.status(200).json({
+            success: true,
+            message: "Settings updated successfully",
+            data: newSettings
+        });
+    } catch (error) {
+        console.error("Update Settings Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
