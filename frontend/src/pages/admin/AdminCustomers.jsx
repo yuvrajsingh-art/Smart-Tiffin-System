@@ -491,13 +491,29 @@ const AdminCustomers = () => {
                             </div>
 
                             {/* Footer */}
-                            <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
-                                <button onClick={() => setSelectedCustomer(null)} className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors">
-                                    Close
-                                </button>
-                                <button onClick={() => { toast.success('Profile Saved'); setSelectedCustomer(null); }} className="px-5 py-2.5 bg-[#2D241E] text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg">
-                                    Save Changes
-                                </button>
+                            <div className="p-4 border-t border-gray-100 flex justify-between">
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => { handleAction(selectedCustomer.status === 'banned' ? 'Unban' : 'Ban', selectedCustomer); setSelectedCustomer(null); }}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectedCustomer.status === 'banned' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
+                                    >
+                                        {selectedCustomer.status === 'banned' ? 'Unban' : 'Ban'}
+                                    </button>
+                                    <button
+                                        onClick={() => { handleAction('Delete', selectedCustomer); setSelectedCustomer(null); }}
+                                        className="px-4 py-2 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold hover:bg-rose-200 transition-all"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setSelectedCustomer(null)} className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors">
+                                        Close
+                                    </button>
+                                    <button onClick={() => { toast.success('Profile Saved'); setSelectedCustomer(null); }} className="px-5 py-2.5 bg-[#2D241E] text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg">
+                                        Save Changes
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>,

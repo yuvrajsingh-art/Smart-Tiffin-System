@@ -433,7 +433,7 @@ const AdminProviders = () => {
                                                             <span className="material-symbols-outlined text-[18px]">visibility</span>
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(pro.id, pro.name)}
+                                                            onClick={() => handleDelete(pro._id || pro.id, pro.name || pro.fullName)}
                                                             className="size-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm"
                                                             title="Delete Kitchen"
                                                         >
