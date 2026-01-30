@@ -59,6 +59,33 @@ const AdminFinance = () => {
     const handleViewLedger = () => {
         toast('Redirecting to Full Ledger...', { icon: '📂' });
     };
+
+    const handleDownloadInvoice = async (id) => {
+        try {
+            toast.loading("Generating Invoice PDF...");
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`/api/admin/finance/invoice/${id}/download`, {
+                responseType: 'blob',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Invoice-${id.toString().slice(-6).toUpperCase()}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            toast.dismiss();
+            toast.success("Invoice Downloaded!");
+        } catch (error) {
+            toast.dismiss();
+            console.error("Download Error:", error);
+            toast.error("Failed to download invoice");
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
 
@@ -92,12 +119,12 @@ const AdminFinance = () => {
             {/* Main Content Area */}
             {activeTab === 'Overview' && <FinanceOverview stats={stats} payouts={payouts} openSettlement={openSettlement} handleViewLedger={handleViewLedger} loading={loading} />}
             {activeTab === 'Payouts' && <PayoutsTable payouts={payouts} openSettlement={openSettlement} handleBulkPayout={handleBulkPayout} loading={loading} />}
-            {activeTab === 'Invoices' && <InvoicesTable invoices={invoices} openInvoice={openInvoice} loading={loading} />}
+            {activeTab === 'Invoices' && <InvoicesTable invoices={invoices} openInvoice={openInvoice} loading={loading} onDownload={handleDownloadInvoice} />}
             {activeTab === 'Tax' && <TaxComplianceView />}
 
             {/* Modals */}
             {showSettlement && <SettlementModal data={selectedEntity} onClose={() => setShowSettlement(false)} />}
-            {showInvoice && <InvoicePreviewModal data={selectedEntity} onClose={() => setShowInvoice(false)} />}
+            {showInvoice && <InvoicePreviewModal data={selectedEntity} onClose={() => setShowInvoice(false)} onDownload={handleDownloadInvoice} />}
 
         </div >
     );
@@ -247,7 +274,7 @@ const PayoutsTable = ({ payouts, openSettlement, handleBulkPayout, loading }) =>
 );
 
 // --- Sub-Component: Invoices Table ---
-const InvoicesTable = ({ invoices, openInvoice, loading }) => {
+const InvoicesTable = ({ invoices, openInvoice, loading, onDownload }) => {
     const [search, setSearch] = useState('');
     const filteredInvoices = (invoices || []).filter(i =>
         (i?.id || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -276,7 +303,7 @@ const InvoicesTable = ({ invoices, openInvoice, loading }) => {
                             <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">User</th>
                             <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Amount</th>
                             <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Status</th>
-                            <th className="px-8 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider text-right">Preview</th>
+                            <th className="px-8 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100/50">
@@ -284,21 +311,24 @@ const InvoicesTable = ({ invoices, openInvoice, loading }) => {
                             <SkeletonLoader type="table-row" count={5} />
                         ) : filteredInvoices.length > 0 ? (
                             filteredInvoices.map((inv) => (
-                                <tr key={inv.id} className="group hover:bg-white/80 transition-all cursor-pointer" onClick={() => openInvoice(inv)}>
-                                    <td className="px-8 py-5 text-xs font-bold text-[#2D241E] font-mono">{inv.id}</td>
-                                    <td className="px-6 py-5">
+                                <tr key={inv.id} className="group hover:bg-white/80 transition-all cursor-pointer">
+                                    <td className="px-8 py-5 text-xs font-bold text-[#2D241E] font-mono" onClick={() => openInvoice(inv)}>{inv.id}</td>
+                                    <td className="px-6 py-5" onClick={() => openInvoice(inv)}>
                                         <p className="text-xs font-bold text-[#2D241E]">{inv.user}</p>
                                         <p className="text-[10px] text-[#897a70]">{inv.date}</p>
                                     </td>
-                                    <td className="px-6 py-5 text-xs font-bold text-[#2D241E]">{inv.amount}</td>
-                                    <td className="px-6 py-5">
+                                    <td className="px-6 py-5 text-xs font-bold text-[#2D241E]" onClick={() => openInvoice(inv)}>{inv.amount}</td>
+                                    <td className="px-6 py-5" onClick={() => openInvoice(inv)}>
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : inv.status === 'Overdue' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-600 border-gray-100'}`}>
                                             {inv.status}
                                         </span>
                                     </td>
-                                    <td className="px-8 py-5 text-right">
-                                        <button className="size-8 rounded-xl bg-white border border-gray-100 text-[#2D241E] flex items-center justify-center hover:border-blue-200 transition-all ml-auto shadow-sm">
+                                    <td className="px-8 py-5 text-right flex items-center justify-end gap-2">
+                                        <button onClick={() => openInvoice(inv)} className="size-8 rounded-xl bg-white border border-gray-100 text-[#2D241E] flex items-center justify-center hover:border-blue-200 transition-all shadow-sm" title="Preview">
                                             <span className="material-symbols-outlined text-[16px]">visibility</span>
+                                        </button>
+                                        <button onClick={(e) => { e.stopPropagation(); onDownload(inv.rawId); }} className="size-8 rounded-xl bg-[#2D241E] text-white flex items-center justify-center hover:bg-orange-600 transition-all shadow-sm" title="Download PDF">
+                                            <span className="material-symbols-outlined text-[16px]">download</span>
                                         </button>
                                     </td>
                                 </tr>
@@ -502,7 +532,7 @@ const InvoicePreviewModal = ({ data, onClose }) => {
 
                 {/* Footer Actions */}
                 <div className="relative z-10 p-4 bg-white border-t border-gray-100 flex gap-3 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
-                    <button className="flex-1 py-3 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-orange-600 transition-colors">Download PDF</button>
+                    <button onClick={() => onDownload(data.rawId)} className="flex-1 py-3 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-orange-600 transition-colors">Download PDF</button>
                     <button className="flex-1 py-3 bg-white border border-gray-200 text-[#2D241E] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-50 transition-colors">Email Invoice</button>
                 </div>
             </div>

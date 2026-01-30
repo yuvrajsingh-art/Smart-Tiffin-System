@@ -20,6 +20,7 @@ const {
 
     // Customer Management
     getCustomers,
+    addCustomer,
     updateCustomer,
     deleteCustomer,
     toggleCustomerStatus,
@@ -65,6 +66,12 @@ const {
     updateSettings
 } = require("../controllers/admin/adminController");
 
+const {
+    generateInvoicePDF,
+    exportSalesCSV,
+    exportCustomersCSV
+} = require("../controllers/admin/reportController");
+
 // Import authentication middleware
 const { protect, authorizeRoles } = require("../middleware/authMiddleware.middleware");
 
@@ -87,6 +94,9 @@ router.post("/broadcast", protect, authorizeRoles("admin"), broadcastMessage);
 
 // GET /api/admin/customers - Get all customers
 router.get("/customers", protect, authorizeRoles("admin"), getCustomers);
+
+// POST /api/admin/customers - Add a new customer
+router.post("/customers", protect, authorizeRoles("admin"), addCustomer);
 
 // PUT /api/admin/customers/:id - Update customer
 router.put("/customers/:id", protect, authorizeRoles("admin"), updateCustomer);
@@ -147,6 +157,15 @@ router.get("/finance/invoices", protect, authorizeRoles("admin"), getInvoices);
 
 // POST /api/admin/finance/payout/:id - Process payout
 router.post("/finance/payout/:id", protect, authorizeRoles("admin"), processPayout);
+
+// GET /api/admin/finance/invoice/:id/download - Download invoice PDF [NEW]
+router.get("/finance/invoice/:id/download", protect, authorizeRoles("admin"), generateInvoicePDF);
+
+// GET /api/admin/reports/sales/download - Download sales CSV [NEW]
+router.get("/reports/sales/download", protect, authorizeRoles("admin"), exportSalesCSV);
+
+// GET /api/admin/reports/customers/download - Download customers CSV [NEW]
+router.get("/reports/customers/download", protect, authorizeRoles("admin"), exportCustomersCSV);
 
 // =============================================================================
 // MENU MANAGEMENT

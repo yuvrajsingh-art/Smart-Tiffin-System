@@ -8,10 +8,13 @@ exports.protect = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-    try {
-      // 1. Get token
-      token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.query.token) {
+    token = req.query.token;
+  }
 
+  if (token) {
+    try {
       // 2. Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

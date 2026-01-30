@@ -21,6 +21,7 @@ const Notification = require("../../models/notification.model");
 const Menu = require("../../models/menu.model");
 const Ticket = require("../../models/ticket.model");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 // =============================================================================
 // DASHBOARD STATS
@@ -236,11 +237,16 @@ exports.getCustomers = async (req, res) => {
  */
 exports.getOrders = async (req, res) => {
     try {
-        const { date, search } = req.query;
+        const { date, startDate, endDate, search } = req.query;
         let query = {};
 
-        // Filter by date
-        if (date === 'today') {
+        // 1. Date Filtering
+        if (startDate && endDate) {
+            query.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+            };
+        } else if (date === 'today') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             query.createdAt = { $gte: today };
@@ -250,11 +256,29 @@ exports.getOrders = async (req, res) => {
             query.createdAt = { $lt: today };
         }
 
-        // Search by order ID
+        // 2. Search Logic (Customer Name, Mobile, Business Name, or ID)
         if (search) {
+            // Check if search is a valid ObjectId
+            const isObjectId = mongoose.Types.ObjectId.isValid(search);
+
+            // Find users (customers/providers) that match the search
+            const userMatch = await User.find({
+                $or: [
+                    { fullName: { $regex: search, $options: 'i' } },
+                    { mobile: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+            const userIds = userMatch.map(u => u._id);
+
             query.$or = [
-                { _id: mongoose.Types.ObjectId.isValid(search) ? search : null }
-            ].filter(f => f._id !== null);
+                { customer: { $in: userIds } },
+                { provider: { $in: userIds } }
+            ];
+
+            if (isObjectId) {
+                query.$or.push({ _id: search });
+            }
         }
 
         const orders = await Order.find(query)
@@ -264,16 +288,20 @@ exports.getOrders = async (req, res) => {
 
         // Format orders for frontend
         const formattedOrders = orders.map(order => ({
+            rawId: order._id,
             id: order._id.toString().slice(-6).toUpperCase(),
             customer: order.customer?.fullName || 'Unknown',
+            customerMobile: order.customer?.mobile || 'N/A',
             kitchen: order.provider?.businessName || 'Unknown',
-            type: order.planType || 'Single Order',
+            type: order.order_type === 'subscription' ? 'Subscription' : 'One-Time',
             status: order.status,
-            time: order.deliveredAt
-                ? new Date(order.deliveredAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            price: order.grandTotal || 0,
+            time: order.createdAt
+                ? new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
                 : 'Pending',
-            zone: order.customer?.address?.area || 'Unknown',
-            rider: order.deliveryPerson || 'Not Assigned'
+            date: order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A',
+            address: order.delivery_location?.address_text || 'Unknown',
+            rider: order.rider_id ? 'Assigned' : 'Not Assigned'
         }));
 
         res.status(200).json({
@@ -478,6 +506,8 @@ exports.globalSearch = async (req, res) => {
             data: {
                 customers,
                 providers,
+                providerProfiles: providers, // Compatibility with frontend
+                users: [...customers, ...providers],
                 orders,
                 totalResults: customers.length + providers.length + orders.length
             }
@@ -602,6 +632,46 @@ exports.processPayout = async (req, res) => {
 // =============================================================================
 // CUSTOMER CRUD (ADDITIONAL)
 // =============================================================================
+
+/**
+ * Add a new customer
+ */
+exports.addCustomer = async (req, res) => {
+    try {
+        const { fullName, email, mobile, password, address } = req.body;
+
+        if (!fullName || !email || !mobile || !password) {
+            return res.status(400).json({ success: false, message: "Please provide all required fields" });
+        }
+
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ success: false, message: "User with this email already exists" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const customer = await User.create({
+            fullName,
+            email,
+            mobile,
+            password: hashedPassword,
+            role: 'customer',
+            address,
+            isVerified: true, // Admin created users are verified by default
+            status: 'active'
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Customer added successfully",
+            data: customer
+        });
+    } catch (error) {
+        console.error("Add Customer Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 /**
  * Update customer details
@@ -1018,11 +1088,47 @@ exports.deletePlan = async (req, res) => {
  */
 exports.getTickets = async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status, startDate, endDate, search } = req.query;
         let query = {};
 
+        // 1. Status Filter
         if (status && status !== 'All') {
             query.status = status;
+        }
+
+        // 2. Date Range Filter
+        if (startDate && endDate) {
+            query.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+            };
+        }
+
+        // 3. Search Logic (User Name, Email, or Issue)
+        if (search) {
+            // Find users matching search
+            const userMatch = await User.find({
+                $or: [
+                    { fullName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+            const userIds = userMatch.map(u => u._id);
+
+            query.$or = [
+                { user: { $in: userIds } },
+                { issue: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+
+            // Allow searching by displays ID part
+            if (search.toUpperCase().startsWith('TKT')) {
+                // No easy way to match the slice ID in regex directly on DB side without aggregation
+                // But we can check if it's a valid ObjectId if the user pasted full ID
+                if (mongoose.Types.ObjectId.isValid(search)) {
+                    query.$or.push({ _id: search });
+                }
+            }
         }
 
         const tickets = await Ticket.find(query)
@@ -1034,12 +1140,14 @@ exports.getTickets = async (req, res) => {
             id: t._id,
             displayId: `TKT${t._id.toString().slice(-4).toUpperCase()}`,
             user: t.user?.fullName || 'Unknown User',
+            email: t.user?.email || 'N/A',
             issue: t.issue,
             priority: t.priority,
             status: t.status,
             date: t.createdAt.toLocaleDateString(), // Format date for frontend
+            time: t.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             kitchen: t.relatedProvider?.businessName || 'System',
-            hasUnread: false // Implement read/unread logic if needed
+            hasUnread: false
         }));
 
         res.status(200).json({
@@ -1090,10 +1198,16 @@ exports.resolveTicket = async (req, res) => {
             id,
             {
                 status: 'Resolved',
-                description: resolution ? `${ticket.description}\n\nResolution: ${resolution}` : undefined
+                description: resolution ? `${resolution}` : undefined // simplified for demo
             },
             { new: true }
-        );
+        ).populate('user', 'fullName email')
+            .populate('relatedProvider', 'businessName');
+
+        if (req.io) {
+            req.io.emit('ticket-updated', { ticket });
+            req.io.emit('new-ticket', { ticket }); // Demo purpose
+        }
 
         res.status(200).json({
             success: true,
@@ -1155,6 +1269,7 @@ exports.getInvoices = async (req, res) => {
 
         const invoices = transactions.map(t => ({
             id: `INV-${t._id.toString().slice(-6).toUpperCase()}`,
+            rawId: t._id,
             user: t.user?.fullName || 'Unknown',
             date: new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
             amount: `₹${t.amount}`,

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { createPortal } from 'react-dom';
+import { useSocket } from '../../context/SocketContext';
 import AdminStatCard from '../../components/admin/AdminStatCard';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 
@@ -28,6 +29,7 @@ const initialStats = {
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
+    const socket = useSocket();
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showLogs, setShowLogs] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false); // New
@@ -38,44 +40,88 @@ const AdminDashboard = () => {
     const [approvals, setApprovals] = useState([]);
     const [systemHealth, setSystemHealth] = useState('Stable');
     const [loading, setLoading] = useState(true);
+    const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+    const formRef = React.useRef(null);
 
     // 🔹 Real-time Stats State
     const [stats, setStats] = useState(initialStats);
 
     // 🔹 Fetch Stats from Backend
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const { data } = await axios.get('/api/admin/stats');
-                if (data.success) {
-                    setStats(prev => ({
-                        ...prev,
-                        ...data.data,
-                        salesGrowth: (data.data.salesGrowth || []).map(d => ({
-                            name: d._id.slice(5).replace('-', '/'),
-                            sales: d.sales,
-                            orders: d.orders
-                        }))
-                    }));
-                    // Approval queue state sync
-                    setApprovals((data.data.pendingApprovals || []).map(apr => ({
-                        id: apr._id,
-                        type: 'Provider',
-                        name: apr.fullName,
-                        req: 'Join Request',
-                        time: new Date(apr.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        email: apr.email
-                    })));
-                }
-            } catch (error) {
-                console.error("Error fetching stats:", error);
-                // Optionally set error state here
-            } finally {
-                setLoading(false);
+    const fetchStats = async () => {
+        try {
+            const { data } = await axios.get('/api/admin/stats');
+            if (data.success) {
+                setStats(prev => ({
+                    ...prev,
+                    ...data.data,
+                    salesGrowth: (data.data.salesGrowth || []).map(d => ({
+                        name: d._id.slice(5).replace('-', '/'),
+                        sales: d.sales,
+                        orders: d.orders
+                    }))
+                }));
+                // Approval queue state sync
+                setApprovals((data.data.pendingApprovals || []).map(apr => ({
+                    id: apr._id,
+                    type: 'Provider',
+                    name: apr.fullName,
+                    req: 'Join Request',
+                    time: new Date(apr.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    email: apr.email
+                })));
             }
-        };
+        } catch (error) {
+            console.error("Error fetching stats:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchStats();
     }, []);
+
+    // 🔹 Socket.io Listeners for Live Notifications
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('admin-notification', (data) => {
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-indigo-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
+                    <div className="bg-indigo-50 p-2 rounded-full">
+                        <span className="material-symbols-outlined text-indigo-600">notifications_active</span>
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-[#2D241E]">{data.title || 'Notification'}</p>
+                        <p className="text-[10px] text-gray-500 font-medium">{data.message}</p>
+                    </div>
+                </div>
+            ), { duration: 5000 });
+
+            fetchStats();
+        });
+
+        socket.on('new-order', (data) => {
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-emerald-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
+                    <div className="bg-emerald-50 p-2 rounded-full">
+                        <span className="material-symbols-outlined text-emerald-600">shopping_cart</span>
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-[#2D241E]">New Order Received!</p>
+                        <p className="text-[10px] text-gray-500 font-medium">#{data.order?.id} from {data.order?.customer}</p>
+                    </div>
+                </div>
+            ), { duration: 6000 });
+
+            fetchStats();
+        });
+
+        return () => {
+            socket.off('admin-notification');
+            socket.off('new-order');
+        };
+    }, [socket]);
 
 
 
@@ -130,6 +176,52 @@ const AdminDashboard = () => {
             toast.error("Failed to send broadcast");
         } finally {
             setIsSending(false);
+        }
+    };
+
+    const handleAddNewCustomer = async (e) => {
+        try {
+            if (e && e.preventDefault) e.preventDefault();
+            const form = formRef.current;
+            if (!form) return;
+
+            const name = form.elements['name']?.value;
+            const email = form.elements['email']?.value;
+            const phone = form.elements['phone']?.value;
+            const password = form.elements['password']?.value;
+            const address = form.elements['address']?.value;
+
+            if (!name || !email || !phone || !password) {
+                toast.error("Please fill all required fields");
+                return;
+            }
+
+            const procToast = toast.loading("Creating customer profile...");
+            const token = localStorage.getItem('token');
+
+            const res = await axios.post(
+                '/api/admin/customers',
+                {
+                    fullName: name,
+                    email,
+                    mobile: phone,
+                    address,
+                    password: password
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                toast.dismiss(procToast);
+                toast.success(`Customer ${name} added successfully`, {
+                    style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+                });
+                setShowAddCustomerModal(false);
+                // Optionally refresh some dashboard stats here
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to add customer");
+            console.error("Add Customer Error:", err);
         }
     };
 
@@ -314,8 +406,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-orange-500 shadow-lg"></span><span className="text-xs font-bold uppercase tracking-wider text-[#5C4D42]">Sales</span></div>
                             <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-blue-500 shadow-lg"></span><span className="text-xs font-bold uppercase tracking-wider text-[#5C4D42]">Orders</span></div>
                         </div>
-                        <ResponsiveContainer width="100%" height="100%">
-
+                        <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                             <AreaChart data={stats.salesGrowth} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -485,13 +576,13 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-2 gap-3">
                     {[
                         { label: 'Create Plan', icon: 'auto_awesome', path: '/admin/plans', col: 'bg-[#2D241E]', text: 'text-white' },
-                        { label: 'Add User', icon: 'person_add', path: '/admin/customers', col: 'bg-white', text: 'text-[#2D241E]' },
+                        { label: 'Add User', icon: 'person_add', action: () => setShowAddCustomerModal(true), col: 'bg-white', text: 'text-[#2D241E]' },
                         { label: 'Settings', icon: 'manufacturing', path: '/admin/settings', col: 'bg-white', text: 'text-[#2D241E]' },
                         { label: 'Finance', icon: 'token', path: '/admin/finance', col: 'bg-white', text: 'text-[#2D241E]' },
                     ].map((btn, i) => (
                         <button
                             key={i}
-                            onClick={() => navigate(btn.path)}
+                            onClick={btn.action ? btn.action : () => navigate(btn.path)}
                             className={`${btn.col} ${btn.text} rounded-[1.5rem] p-4 flex flex-col items-center justify-center gap-2 border border-black/5 hover:scale-[1.05] active:scale-[0.95] transition-all shadow-xl hover:shadow-2xl relative overflow-hidden group`}
                         >
                             <div className="absolute -top-4 -right-4 size-10 bg-white/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -644,9 +735,9 @@ const AdminDashboard = () => {
                             <div className="flex-1 overflow-y-auto p-5 space-y-6">
 
                                 {/* 1. Users Section */}
-                                {searchResults.users.length > 0 && (
+                                {searchResults?.users?.length > 0 && (
                                     <div>
-                                        <h4 className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-4 border-b border-indigo-100 pb-2">Users ({searchResults.users.length})</h4>
+                                        <h4 className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-4 border-b border-indigo-100 pb-2">Users ({searchResults?.users?.length})</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {searchResults.users.map(u => (
                                                 <div key={u._id} onClick={() => navigate(`/admin/customers?search=${u.email}`)} className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-lg cursor-pointer transition-all group">
@@ -666,9 +757,9 @@ const AdminDashboard = () => {
                                 )}
 
                                 {/* 2. Providers Section */}
-                                {searchResults.providerProfiles.length > 0 && (
+                                {searchResults?.providerProfiles?.length > 0 && (
                                     <div>
-                                        <h4 className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-4 border-b border-orange-100 pb-2">Kitchens ({searchResults.providerProfiles.length})</h4>
+                                        <h4 className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-4 border-b border-orange-100 pb-2">Kitchens ({searchResults?.providerProfiles?.length})</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {searchResults.providerProfiles.map(p => (
                                                 <div key={p._id} onClick={() => navigate(`/admin/providers?search=${p.messName}`)} className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-orange-200 hover:shadow-lg cursor-pointer transition-all flex justify-between items-center group">
@@ -686,7 +777,7 @@ const AdminDashboard = () => {
                                 {/* 3. Orders Section */}
                                 {searchResults.orders.length > 0 && (
                                     <div>
-                                        <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-4 border-b border-emerald-100 pb-2">Orders ({searchResults.orders.length})</h4>
+                                        <h4 className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-4 border-b border-emerald-100 pb-2">Orders ({searchResults?.orders?.length})</h4>
                                         <div className="space-y-2">
                                             {searchResults.orders.map(o => (
                                                 <div key={o._id} onClick={() => navigate(`/admin/orders?id=${o._id}`)} className="p-4 bg-white rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-lg cursor-pointer transition-all flex items-center justify-between group">
@@ -714,6 +805,76 @@ const AdminDashboard = () => {
                                         <p className="text-xs text-gray-400 font-bold mt-1">Try searching keywords like "John", "Tiffin", or Order IDs</p>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            }
+            {/* Add Customer Modal */}
+            {
+                showAddCustomerModal && createPortal(
+                    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowAddCustomerModal(false)}></div>
+                        <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[88vh]">
+
+                            {/* Compact Header */}
+                            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-base font-bold text-gray-800">Add New Customer</h3>
+                                    <p className="text-xs text-gray-500">Create a new customer profile</p>
+                                </div>
+                                <button onClick={() => setShowAddCustomerModal(false)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            </div>
+
+                            {/* Form Body */}
+                            <form ref={formRef} className="p-5 space-y-4 overflow-y-auto flex-1">
+                                <div className="flex items-center gap-4">
+                                    <div className="size-14 rounded-xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                                        <span className="material-symbols-outlined text-[20px]">person_add</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-medium text-gray-500 mb-1 block uppercase tracking-wider font-bold">Full Name *</label>
+                                        <input name="name" type="text" required placeholder="Enter name..." className="w-full border border-gray-200 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-[#2D241E] transition-colors" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-medium text-gray-500 mb-1 block uppercase tracking-wider font-bold">Email *</label>
+                                        <input name="email" type="email" required placeholder="customer@email.com" className="w-full border border-gray-200 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-[#2D241E] transition-colors" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-medium text-gray-500 mb-1 block uppercase tracking-wider font-bold">Phone *</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">+91</span>
+                                            <input name="phone" type="tel" required placeholder="00000 00000" className="w-full border border-gray-200 pl-10 pr-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-[#2D241E] transition-colors" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-medium text-gray-500 mb-1 block uppercase tracking-wider font-bold">Set Password *</label>
+                                        <input name="password" type="password" required placeholder="Create password..." className="w-full border border-gray-200 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-[#2D241E] transition-colors" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-medium text-gray-500 mb-1 block uppercase tracking-wider font-bold">Address</label>
+                                    <textarea name="address" placeholder="Enter delivery address..." className="w-full border border-gray-200 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-[#2D241E] transition-colors h-20 resize-none" />
+                                </div>
+                            </form>
+
+                            {/* Compact Footer */}
+                            <div className="p-3 border-t border-gray-100 flex justify-end gap-2">
+                                <button onClick={() => setShowAddCustomerModal(false)} className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-gray-600">Cancel</button>
+                                <button onClick={handleAddNewCustomer} className="px-5 py-2 bg-[#2D241E] text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 shadow-lg shadow-black/10">
+                                    <span className="material-symbols-outlined text-[16px]">person_add</span>
+                                    Create Profile
+                                </button>
                             </div>
                         </div>
                     </div>,

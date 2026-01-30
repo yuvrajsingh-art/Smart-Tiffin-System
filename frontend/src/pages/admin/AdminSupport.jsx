@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
+import { useSocket } from '../../context/SocketContext';
 
 // --- Mock Data Generators Removed ---
 // Real data fetched from API
@@ -12,23 +13,33 @@ const AdminSupport = () => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [showConfetti, setShowConfetti] = useState(false);
+    const socket = useSocket();
 
     const fetchTickets = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const res = await axios.get(`/api/admin/tickets?status=${filter}`, {
+            const res = await axios.get(`/api/admin/tickets`, {
+                params: {
+                    status: filter,
+                    search: searchQuery,
+                    startDate,
+                    endDate
+                },
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
                 const data = res.data.data;
-                setTickets(data.length > 0 ? data : initialTickets);
+                setTickets(data);
             }
         } catch (err) {
             console.error("Fetch Tickets Error:", err);
-            setTickets(initialTickets);
+            // setTickets([]); // Keep existing if error or handle gracefully
         } finally {
             setLoading(false);
         }
@@ -36,12 +47,51 @@ const AdminSupport = () => {
 
     useEffect(() => {
         fetchTickets();
-    }, [filter]);
+    }, [filter, searchQuery, startDate, endDate]);
 
-    // --- Live Simulation Effect Removed ---
+    // --- Real-time Ticket Updates ---
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('new-ticket', (data) => {
+            // Add new ticket to top of list
+            const newTicket = {
+                id: data.ticket._id,
+                displayId: `TKT${data.ticket._id.toString().slice(-4).toUpperCase()}`,
+                user: data.ticket.user?.fullName || 'Unknown User',
+                issue: data.ticket.issue,
+                priority: data.ticket.priority,
+                status: data.ticket.status,
+                date: new Date(data.ticket.createdAt).toLocaleDateString(),
+                kitchen: data.ticket.relatedProvider?.businessName || 'System',
+                hasUnread: true
+            };
+
+            setTickets(prev => [newTicket, ...prev]);
+
+            // Play notification sound
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => console.log('Audio play failed', e));
+
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-rose-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
+                    <div className="bg-rose-50 p-2 rounded-full"><span className="material-symbols-outlined text-rose-600">notification_important</span></div>
+                    <div>
+                        <p className="text-xs font-bold text-[#2D241E]">New Ticket Incoming!</p>
+                        <p className="text-[10px] text-gray-500 font-medium">#{newTicket.displayId}: {newTicket.issue}</p>
+                    </div>
+                </div>
+            ), { duration: 5000 });
+        });
+
+        return () => {
+            socket.off('new-ticket');
+        };
+    }, [socket]);
 
 
-    const filteredTickets = filter === 'All' ? tickets : tickets.filter(t => t.status === filter);
+    // Server-side filtering is active, but we keep this for instant UI feedback if data is already fetched
+    const filteredTickets = tickets;
 
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
@@ -66,9 +116,44 @@ const AdminSupport = () => {
                         <input
                             type="text"
                             placeholder="Search Tickets..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-2.5 pl-9 w-32 focus:w-48 transition-all placeholder:text-gray-400"
                         />
                     </div>
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
+
+                    {/* Date Pickers */}
+                    <div className="flex items-center gap-2 px-2">
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">From</span>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">To</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                title="Clear Dates"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                        )}
+                    </div>
+
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <div className="flex gap-1">
                         {['All', 'New', 'Open', 'Resolved'].map(t => (

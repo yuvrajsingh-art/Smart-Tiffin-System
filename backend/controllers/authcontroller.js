@@ -82,6 +82,17 @@ exports.registerCustomer = async (req, res) => {
     const user = await User.create(userData);
     const token = genToken(user);
 
+    // Notify Admin via Socket.io
+    if (req.io) {
+      req.io.emit('admin-notification', {
+        type: 'new-user',
+        title: 'New Customer Joined',
+        message: `${fullName} has just registered as a customer.`,
+        data: { id: user._id, role: 'customer' },
+        time: new Date().toLocaleTimeString()
+      });
+    }
+
     res.status(201).json({
       message: "Customer registered successfully",
       token,
@@ -138,6 +149,17 @@ exports.providerCustomer = async (req, res) => {
     // Create user
     const user = await User.create(userData);
     const token = genToken(user);
+
+    // Notify Admin via Socket.io
+    if (req.io) {
+      req.io.emit('admin-notification', {
+        type: 'new-provider',
+        title: 'New Provider Registration',
+        message: `${fullName} is requesting to join as a provider.`,
+        data: { id: user._id, role: 'provider' },
+        time: new Date().toLocaleTimeString()
+      });
+    }
 
     res.status(201).json({
       message: "Provider registered successfully",

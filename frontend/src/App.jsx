@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { UserProvider } from './context/UserContext';
+import { SocketProvider } from './context/SocketContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Pages - Auth & Public
@@ -53,77 +54,79 @@ function App() {
   return (
     <UserProvider>
       <SubscriptionProvider>
-        <BrowserRouter>
-          <Toaster position="top-center" reverseOrder={false} />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/role-selection" element={<RoleSelection />} />
-            <Route path="/register" element={<Register />} />
+        <SocketProvider>
+          <BrowserRouter>
+            <Toaster position="top-center" reverseOrder={false} />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/role-selection" element={<RoleSelection />} />
+              <Route path="/register" element={<Register />} />
 
-            {/* Customer Routes */}
-            <Route
-              path="/customer"
-              element={
-                <ProtectedRoute allowedRoles={['customer']}>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="dashboard" element={<CustomerDashboard />} />
-              <Route path="find-mess" element={<FindMess />} />
-              <Route path="mess/:id" element={<MessDetails />} />
-              <Route path="mess/:id/subscribe" element={<SubscriptionCheckout />} />
-              <Route path="menu" element={<Menu />} />
-              <Route path="track" element={<TrackDelivery />} />
-              <Route path="manage-subscription" element={<ManageSubscription />} />
-              <Route path="wallet" element={<Wallet />} />
-              <Route path="feedback" element={<Feedback />} />
-              <Route path="history" element={<History />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="notifications" element={<Notifications />} />
-            </Route>
+              {/* Customer Routes */}
+              <Route
+                path="/customer"
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="dashboard" element={<CustomerDashboard />} />
+                <Route path="find-mess" element={<FindMess />} />
+                <Route path="mess/:id" element={<MessDetails />} />
+                <Route path="mess/:id/subscribe" element={<SubscriptionCheckout />} />
+                <Route path="menu" element={<Menu />} />
+                <Route path="track" element={<TrackDelivery />} />
+                <Route path="manage-subscription" element={<ManageSubscription />} />
+                <Route path="wallet" element={<Wallet />} />
+                <Route path="feedback" element={<Feedback />} />
+                <Route path="history" element={<History />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="notifications" element={<Notifications />} />
+              </Route>
 
-            {/* Provider Routes */}
-            <Route
-              path="/provider"
-              element={
-                <ProtectedRoute allowedRoles={['provider']}>
-                  <ProviderLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="dashboard" element={<ProviderDashboard />} />
-              <Route path="menu" element={<ManageMenu />} />
-              <Route path="orders" element={<OrderManagement />} />
-              <Route path="profile" element={<ProviderProfile />} />
-            </Route>
+              {/* Provider Routes */}
+              <Route
+                path="/provider"
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <ProviderLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="dashboard" element={<ProviderDashboard />} />
+                <Route path="menu" element={<ManageMenu />} />
+                <Route path="orders" element={<OrderManagement />} />
+                <Route path="profile" element={<ProviderProfile />} />
+              </Route>
 
-            {/* Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="reports" element={<AdminReports />} />
-              <Route path="plans" element={<AdminPlans />} />
-              <Route path="providers" element={<AdminProviders />} />
-              <Route path="menu" element={<AdminMenu />} />
-              <Route path="customers" element={<AdminCustomers />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="support" element={<AdminSupport />} />
-              <Route path="finance" element={<AdminFinance />} />
-              <Route path="settings" element={<AdminSettings />} />
-              <Route path="*" element={<AdminDashboard />} />
-            </Route>
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="plans" element={<AdminPlans />} />
+                <Route path="providers" element={<AdminProviders />} />
+                <Route path="menu" element={<AdminMenu />} />
+                <Route path="customers" element={<AdminCustomers />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="support" element={<AdminSupport />} />
+                <Route path="finance" element={<AdminFinance />} />
+                <Route path="settings" element={<AdminSettings />} />
+                <Route path="*" element={<AdminDashboard />} />
+              </Route>
 
-          </Routes>
-        </BrowserRouter>
+            </Routes>
+          </BrowserRouter>
+        </SocketProvider>
       </SubscriptionProvider>
     </UserProvider>
   )

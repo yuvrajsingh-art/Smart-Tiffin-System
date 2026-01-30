@@ -4,6 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
+import { useSocket } from '../../context/SocketContext';
 
 // -- Mock Data Generators --
 // -- Mock Data Generators Removed --
@@ -17,11 +18,14 @@ const AdminOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
-    const [searchQuery, setSearchQuery] = useState(searchParams.get('id') || ''); // [NEW] Search State
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('id') || '');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalTab, setModalTab] = useState('Intelligence');
     const [showRiderModal, setShowRiderModal] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
+    const socket = useSocket();
 
     // -- Effects --
     const fetchOrders = async () => {
@@ -30,7 +34,9 @@ const AdminOrders = () => {
             const { data } = await axios.get(`/api/admin/orders`, {
                 params: {
                     date: viewMode.toLowerCase(),
-                    search: searchQuery
+                    search: searchQuery,
+                    startDate,
+                    endDate
                 }
             });
             if (data.success) {
@@ -43,10 +49,37 @@ const AdminOrders = () => {
         }
     };
 
+    // --- Real-time Order Updates ---
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('new-order', (data) => {
+            setOrders(prev => [data.order, ...prev]);
+
+            // Play sound
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => console.log('Audio play failed', e));
+
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-emerald-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
+                    <div className="bg-emerald-50 p-2 rounded-full"><span className="material-symbols-outlined text-emerald-600">local_shipping</span></div>
+                    <div>
+                        <p className="text-xs font-bold text-[#2D241E]">New Order Received!</p>
+                        <p className="text-[10px] text-gray-500 font-medium">#{data.order.id} for {data.order.customer}</p>
+                    </div>
+                </div>
+            ), { duration: 5000 });
+        });
+
+        return () => {
+            socket.off('new-order');
+        };
+    }, [socket]);
+
     useEffect(() => {
         fetchOrders();
         setFilter('All');
-    }, [viewMode, searchQuery]);
+    }, [viewMode, searchQuery, startDate, endDate]);
 
     // -- Handlers --
     const handleCallCustomer = (order) => {
@@ -63,6 +96,32 @@ const AdminOrders = () => {
             window.print();
             setIsPrinting(false);
         }, 800);
+    };
+
+    const handleExportCSV = async () => {
+        try {
+            toast.loading("Preparing Sales Report...");
+            const token = localStorage.getItem('token');
+            const res = await axios.get('/api/admin/reports/sales/download', {
+                responseType: 'blob',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `sales_report_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            toast.dismiss();
+            toast.success("Sales Report Downloaded!");
+        } catch (error) {
+            toast.dismiss();
+            console.error("Export Error:", error);
+            toast.error("Failed to export sales report");
+        }
     };
 
     const handleAssignRider = async (rider) => {
@@ -160,6 +219,14 @@ const AdminOrders = () => {
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-red-500 animate-pulse"></span>
                         {viewMode === 'Today' ? 'Live monitoring of active deliveries' : 'Historical archive of past orders'}
+                        {/* Simulation Trigger (Dev Only) */}
+                        <button
+                            onClick={() => socket && socket.emit('test-new-order')}
+                            className="ml-4 px-2 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] hover:bg-gray-300"
+                            title="Click to simulate incoming order for testing"
+                        >
+                            Simulate Incoming Order
+                        </button>
                     </p>
                 </div>
 
@@ -175,6 +242,39 @@ const AdminOrders = () => {
                         />
                     </div>
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
+
+                    {/* Date Pickers */}
+                    <div className="flex items-center gap-2 px-2">
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">From</span>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">To</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                title="Clear Dates"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <button
                         onClick={() => setViewMode('Today')}
                         className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all ${viewMode === 'Today' ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#5C4D42] hover:bg-white/80'}`}
@@ -188,6 +288,13 @@ const AdminOrders = () => {
                         Past Orders
                     </button>
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    <button
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 text-[10px] font-bold hover:bg-blue-100 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">download</span>
+                        Export
+                    </button>
                     <button
                         onClick={handlePrintManifest}
                         disabled={isPrinting}

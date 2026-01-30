@@ -67,46 +67,77 @@ const AdminCustomers = () => {
         fetchCustomers();
     }, []);
 
-    const handleAddNewCustomer = (e) => {
+    const handleAddNewCustomer = async (e) => {
         try {
             if (e && e.preventDefault) e.preventDefault();
             const form = formRef.current;
             if (!form) return;
 
-            const procToast = toast.loading("Onboarding node...");
             const name = form.elements['name']?.value;
+            const email = form.elements['email']?.value;
+            const phone = form.elements['phone']?.value;
+            const password = form.elements['password']?.value;
+            const address = form.elements['address']?.value;
+            const plan = form.elements['plan']?.value;
 
-            if (!name) {
-                toast.dismiss(procToast);
-                toast.error("Node Name Required");
+            if (!name || !email || !phone || !password) {
+                toast.error("Please fill all required fields");
                 return;
             }
 
-            const newId = `CUS00${customers.length + 1}`;
-            const newCustomer = {
-                id: newId,
-                name: name,
-                email: form.elements['email']?.value || '',
-                phone: form.elements['phone']?.value || '',
-                plan: form.elements['plan']?.value || 'None',
-                address: form.elements['address']?.value || '',
-                status: 'Active',
-                joins: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                balance: '₹0',
-                kyc: 'Verified',
-                tags: ['New'],
-                tickets: 0,
-                referrals: 0
-            };
+            const procToast = toast.loading("Creating customer profile...");
+            const token = localStorage.getItem('token');
 
-            setCustomers(prev => [...prev, newCustomer]);
-            toast.dismiss(procToast);
-            toast.success(`Customer ${newCustomer.name} added successfully`, {
-                style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
-            });
-            setShowAddCustomerModal(false);
+            const res = await axios.post(
+                '/api/admin/customers',
+                {
+                    fullName: name,
+                    email,
+                    mobile: phone,
+                    address,
+                    password: password
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                fetchCustomers();
+                toast.dismiss(procToast);
+                toast.success(`Customer ${name} added successfully`, {
+                    style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+                });
+                setShowAddCustomerModal(false);
+            }
         } catch (err) {
-            toast.error("Failed to add customer");
+            toast.error(err.response?.data?.message || "Failed to add customer");
+            console.error("Add Customer Error:", err);
+        }
+    };
+
+    const handleExportCSV = async () => {
+        const toastId = toast.loading("Preparing customer report...");
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get('/api/admin/reports/customers/download', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                responseType: 'blob'
+            });
+
+            // Create a blob from the response data
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `customers_report_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            toast.success("Report downloaded successfully!", { id: toastId });
+        } catch (error) {
+            console.error("Export Error:", error);
+            toast.error("Export failed. Please try again.", { id: toastId });
         }
     };
 
@@ -235,11 +266,15 @@ const AdminCustomers = () => {
 
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 bg-white/70 backdrop-blur-xl p-1 rounded-2xl border border-white/60 shadow-lg">
-                        <button onClick={() => handleAction('Export', 'Customer List')} className="px-5 py-2 rounded-xl text-[10px] font-bold text-[#5C4D42] hover:bg-white/80 uppercase tracking-wider transition-all flex items-center gap-2">
+                        <button onClick={handleExportCSV} className="px-5 py-2 rounded-xl text-[10px] font-bold text-[#5C4D42] hover:bg-white/80 uppercase tracking-wider transition-all flex items-center gap-2">
                             <span className="material-symbols-outlined text-[16px]">download</span>
                             Export
                         </button>
                     </div>
+                    <button onClick={() => setShowAddCustomerModal(true)} className="px-5 py-3 rounded-2xl bg-[#2D241E] text-white text-[10px] font-bold uppercase tracking-widest shadow-xl shadow-black/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px]">person_add</span>
+                        Add Customer
+                    </button>
                 </div>
             </div>
 
@@ -675,6 +710,10 @@ const AdminCustomers = () => {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">Password *</label>
+                                        <input name="password" type="password" required placeholder="Set password..." className="w-full border border-gray-200 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-gray-400 transition-colors" />
+                                    </div>
                                     <div>
                                         <label className="text-[10px] font-medium text-gray-500 mb-1 block">Plan</label>
                                         <select name="plan" className="w-full border border-gray-200 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-gray-400 transition-colors bg-white">
