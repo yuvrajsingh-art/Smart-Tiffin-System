@@ -2,28 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
-// --- Mock Data Generators ---
-const USERS = ['Rahul Sharma', 'Priya Verma', 'Amit Kumar', 'Sneha Patel', 'Vikram Singh', 'Anjali Gupta'];
-const ISSUES = ['Late delivery', 'Food quality issue', 'Wrong item', 'Subscription refund', 'App crashing', 'Rider rude'];
-const KITCHENS = ['Spice Kitchen', 'Annapurna Rasoi', 'Tiffin Box HQ', 'Mom\'s Kitchen', 'Veg Delight'];
-
-const generateTicket = (idOverride) => ({
-    id: idOverride || `TKT${Math.floor(Math.random() * 9000) + 1000}`,
-    user: USERS[Math.floor(Math.random() * USERS.length)],
-    issue: ISSUES[Math.floor(Math.random() * ISSUES.length)],
-    priority: Math.random() > 0.7 ? 'Critical' : Math.random() > 0.4 ? 'High' : 'Medium',
-    status: 'New',
-    date: 'Just now',
-    kitchen: KITCHENS[Math.floor(Math.random() * KITCHENS.length)],
-    hasUnread: true,
-});
-
-const initialTickets = [
-    { id: 'TKT882', user: 'Rahul Sharma', issue: 'Late delivery by 40 minutes', priority: 'High', status: 'Open', date: '10m ago', kitchen: 'Spice Kitchen', hasUnread: true },
-    { id: 'TKT881', user: 'Priya Verma', issue: 'Food quality not satisfactory', priority: 'Medium', status: 'In Review', date: '2h ago', kitchen: 'Annapurna Rasoi', hasUnread: false },
-    { id: 'TKT880', user: 'Amit Kumar', issue: 'Wrong item delivered', priority: 'Critical', status: 'Open', date: '5h ago', kitchen: 'Annapurna Rasoi', hasUnread: true },
-];
+// --- Mock Data Generators Removed ---
+// Real data fetched from API
+const initialTickets = [];
 
 const AdminSupport = () => {
     const [tickets, setTickets] = useState([]);
@@ -55,25 +38,7 @@ const AdminSupport = () => {
         fetchTickets();
     }, [filter]);
 
-    // --- Live Simulation Effect ---
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (Math.random() > 0.7) { // 30% chance every check
-                const newTicket = generateTicket();
-                setTickets(prev => [newTicket, ...prev]);
-                toast.custom((t) => (
-                    <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-rose-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
-                        <div className="bg-rose-50 p-2 rounded-full"><span className="material-symbols-outlined text-rose-600">notification_important</span></div>
-                        <div>
-                            <p className="text-xs font-bold text-[#2D241E]">New Ticket Incoming!</p>
-                            <p className="text-[10px] text-gray-500 font-medium">#{newTicket.id}: {newTicket.issue}</p>
-                        </div>
-                    </div>
-                ), { duration: 4000 });
-            }
-        }, 8000); // Check every 8 seconds
-        return () => clearInterval(interval);
-    }, []);
+    // --- Live Simulation Effect Removed ---
 
 
     const filteredTickets = filter === 'All' ? tickets : tickets.filter(t => t.status === filter);
@@ -153,11 +118,13 @@ const AdminSupport = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100/50">
-                            {filteredTickets.length > 0 ? (
+                            {loading ? (
+                                <SkeletonLoader type="table-row" count={5} />
+                            ) : filteredTickets.length > 0 ? (
                                 filteredTickets.map((ticket) => (
                                     <tr key={ticket.id} className={`group hover:bg-white/80 transition-all cursor-pointer ${ticket.status === 'New' ? 'bg-orange-50/30' : ''}`} onClick={() => setSelectedTicket(ticket)}>
                                         <td className="px-6 py-4 pl-8">
-                                            <p className="text-sm font-bold text-[#2D241E]">#{ticket.id}</p>
+                                            <p className="text-sm font-bold text-[#2D241E]">#{ticket.displayId}</p>
                                             <p className="text-xs font-bold text-[#897a70]">{ticket.date}</p>
                                         </td>
                                         <td className="px-6 py-4">

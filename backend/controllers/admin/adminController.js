@@ -19,6 +19,7 @@ const Transaction = require("../../models/transaction.model");
 const Provider = require("../../models/providerprofile.model");
 const Notification = require("../../models/notification.model");
 const Menu = require("../../models/menu.model");
+const Ticket = require("../../models/ticket.model");
 const mongoose = require("mongoose");
 
 // =============================================================================
@@ -1012,24 +1013,38 @@ exports.deletePlan = async (req, res) => {
 /**
  * Get all support tickets
  */
+/**
+ * Get all support tickets
+ */
 exports.getTickets = async (req, res) => {
     try {
         const { status } = req.query;
-
-        // Mock tickets data (in production, fetch from database)
-        let tickets = [
-            { id: 'TKT001', user: 'Rahul Sharma', issue: 'Late delivery', priority: 'High', status: 'Open', date: new Date() },
-            { id: 'TKT002', user: 'Priya Verma', issue: 'Wrong item', priority: 'Medium', status: 'In Progress', date: new Date() },
-            { id: 'TKT003', user: 'Amit Kumar', issue: 'Refund request', priority: 'Low', status: 'Resolved', date: new Date() }
-        ];
+        let query = {};
 
         if (status && status !== 'All') {
-            tickets = tickets.filter(t => t.status === status);
+            query.status = status;
         }
+
+        const tickets = await Ticket.find(query)
+            .populate('user', 'fullName email')
+            .populate('relatedProvider', 'businessName')
+            .sort({ createdAt: -1 });
+
+        const formattedTickets = tickets.map(t => ({
+            id: t._id,
+            displayId: `TKT${t._id.toString().slice(-4).toUpperCase()}`,
+            user: t.user?.fullName || 'Unknown User',
+            issue: t.issue,
+            priority: t.priority,
+            status: t.status,
+            date: t.createdAt.toLocaleDateString(), // Format date for frontend
+            kitchen: t.relatedProvider?.businessName || 'System',
+            hasUnread: false // Implement read/unread logic if needed
+        }));
 
         res.status(200).json({
             success: true,
-            data: tickets
+            data: formattedTickets
         });
     } catch (error) {
         console.error("Get Tickets Error:", error.message);
@@ -1044,19 +1059,14 @@ exports.getTicketById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Mock ticket data
-        const ticket = {
-            id,
-            user: 'Rahul Sharma',
-            issue: 'Late delivery by 40 minutes',
-            priority: 'High',
-            status: 'Open',
-            date: new Date(),
-            messages: [
-                { from: 'user', text: 'My order is very late!', time: new Date() },
-                { from: 'admin', text: 'We are looking into this.', time: new Date() }
-            ]
-        };
+        const ticket = await Ticket.findById(id)
+            .populate('user', 'fullName email mobile')
+            .populate('relatedOrder')
+            .populate('relatedProvider', 'fullName businessName');
+
+        if (!ticket) {
+            return res.status(404).json({ success: false, message: "Ticket not found" });
+        }
 
         res.status(200).json({
             success: true,
@@ -1076,10 +1086,19 @@ exports.resolveTicket = async (req, res) => {
         const { id } = req.params;
         const { resolution } = req.body;
 
+        const ticket = await Ticket.findByIdAndUpdate(
+            id,
+            {
+                status: 'Resolved',
+                description: resolution ? `${ticket.description}\n\nResolution: ${resolution}` : undefined
+            },
+            { new: true }
+        );
+
         res.status(200).json({
             success: true,
             message: "Ticket resolved successfully",
-            data: { id, status: 'Resolved', resolution }
+            data: ticket
         });
     } catch (error) {
         console.error("Resolve Ticket Error:", error.message);
@@ -1095,13 +1114,60 @@ exports.replyToTicket = async (req, res) => {
         const { id } = req.params;
         const { message } = req.body;
 
+        const ticket = await Ticket.findById(id);
+        if (!ticket) {
+            return res.status(404).json({ success: false, message: "Ticket not found" });
+        }
+
+        ticket.messages.push({
+            sender: 'admin',
+            text: message,
+            time: new Date()
+        });
+
+        // Also update status if needed
+        if (ticket.status === 'New') {
+            ticket.status = 'In Review';
+        }
+
+        await ticket.save();
+
         res.status(200).json({
             success: true,
             message: "Reply sent successfully",
-            data: { ticketId: id, reply: message, time: new Date() }
+            data: ticket
         });
     } catch (error) {
         console.error("Reply To Ticket Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Get Invoices (Derived from Success Transactions)
+ */
+exports.getInvoices = async (req, res) => {
+    try {
+        const transactions = await Transaction.find({ status: 'Success' })
+            .populate('user', 'fullName')
+            .sort({ createdAt: -1 })
+            .limit(20);
+
+        const invoices = transactions.map(t => ({
+            id: `INV-${t._id.toString().slice(-6).toUpperCase()}`,
+            user: t.user?.fullName || 'Unknown',
+            date: new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+            amount: `₹${t.amount}`,
+            status: 'Paid', // Transactions usually represent paid items
+            items: [{ name: t.description || 'Service', price: `₹${t.amount}` }]
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: invoices
+        });
+    } catch (error) {
+        console.error("Get Invoices Error:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };

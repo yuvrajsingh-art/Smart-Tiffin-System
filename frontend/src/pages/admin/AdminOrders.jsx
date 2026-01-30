@@ -3,28 +3,11 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 // -- Mock Data Generators --
-const generateTodayOrders = () => [
-    { id: 'ORD2901', customer: 'Rahul Sharma', kitchen: 'Annapurna Rasoi', type: 'Monthly Veg', status: 'Delivered', time: '12:45 PM', zone: 'Sector 7', rider: 'Vikram (ID: 402)' },
-    { id: 'ORD2902', customer: 'Priya Verma', kitchen: 'Spice Route', type: 'Weekly Non-Veg', status: 'In Transit', time: '1:10 PM', zone: 'Vijay Nagar', rider: 'Amit (ID: 881)' },
-    { id: 'ORD2903', customer: 'Amit Kumar', kitchen: 'Home Taste', type: 'Trial', status: 'Preparing', time: 'Pending', zone: 'Rajwada', rider: 'Searching...' },
-    { id: 'ORD2904', customer: 'Sneha Patel', kitchen: 'Annapurna Rasoi', type: 'Monthly Veg', status: 'Cancelled', time: '-', zone: 'Annapurna', rider: '-' },
-    { id: 'ORD2905', customer: 'Vikram Singh', kitchen: 'Spice Route', type: 'Trial', status: 'Out for Delivery', time: '1:30 PM', zone: 'Vijay Nagar', rider: 'Rohan (ID: 102)' },
-];
-
-const generatePastOrders = () => [
-    { id: 'ORD2899', customer: 'Anjali Gupta', kitchen: 'Spice Route', type: 'Monthly Veg', status: 'Delivered', time: 'Yesterday', zone: 'Sector 7', rider: 'Vikram (ID: 402)' },
-    { id: 'ORD2898', customer: 'Rohan Mehra', kitchen: 'Home Taste', type: 'Trial', status: 'Delivered', time: 'Yesterday', zone: 'Rajwada', rider: 'Amit (ID: 881)' },
-    { id: 'ORD2897', customer: 'Suresh Raina', kitchen: 'Annapurna Rasoi', type: 'Weekly Non-Veg', status: 'Failed', time: 'Yesterday', zone: 'Bhawarkua', rider: 'Raju (ID: 555)' },
-];
-
-const availableRiders = [
-    { id: 'R1', name: 'Suresh Kumar', dist: '0.8km', status: 'Free', rating: 4.8 },
-    { id: 'R2', name: 'Deepak Verma', dist: '1.2km', status: 'Busy', rating: 4.5 },
-    { id: 'R3', name: 'Ankit Singh', dist: '2.5km', status: 'Free', rating: 4.9 },
-    { id: 'R4', name: 'Rajesh Koothrappali', dist: '3.1km', status: 'Free', rating: 4.7 },
-];
+// -- Mock Data Generators Removed --
+const availableRiders = []; // Fetch from API in real implementation
 
 const AdminOrders = () => {
     // -- State Management --
@@ -264,7 +247,9 @@ const AdminOrders = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filteredOrders.length > 0 ? (
+                            {loading ? (
+                                <SkeletonLoader type="table-row" count={5} />
+                            ) : filteredOrders.length > 0 ? (
                                 filteredOrders.map((order) => (
                                     <tr key={order.id} className="group hover:bg-white/60 transition-colors">
                                         <td className="px-6 py-4">

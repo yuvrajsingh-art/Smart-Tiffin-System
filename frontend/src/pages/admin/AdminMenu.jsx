@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 // Mock Data
-const initialKitchens = [
-    { id: 'K1', name: 'Mom\'s Kitchen', plan: 'North Indian', status: 'Pending', time: '09:45 AM', rating: 4.8 },
-    { id: 'K2', name: 'Spicy Treats', plan: 'South Indian', status: 'Pending', time: '09:50 AM', rating: 4.5 },
-    { id: 'K3', name: 'Healthy Bites', plan: 'Diet Special', status: 'Pending', time: '10:05 AM', rating: 4.9 },
-    { id: 'K4', name: 'Ghar ka Swad', plan: 'Maharashtrian', status: 'Pending', time: '10:15 AM', rating: 4.7 }
-];
-
+// Mock Data Removed
+const initialKitchens = [];
 const emptyMenu = {
     main: '', side: '', dal: '', rice: '', bread: '', dessert: '', calories: '', protein: ''
 };
-
-const mockMenus = {
-    'K1': { main: 'Paneer Butter Masala', side: 'Aloo Gobi', dal: 'Dal Makhani', rice: 'Jeera Rice', bread: 'Butter Naan', dessert: 'Gulab Jamun', calories: '450', protein: '12g' },
-    'K2': { main: 'Masala Dosa', side: 'Coconut Chutney', dal: 'Sambar', rice: 'Lemon Rice', bread: '', dessert: 'Mysore Pak', calories: '350', protein: '8g' },
-    'K3': { main: 'Grilled Chicken', side: 'Steamed Veggies', dal: 'Lentil Soup', rice: 'Brown Rice', bread: 'Multigrain Roti', dessert: 'Fruit Salad', calories: '300', protein: '25g' },
-    'K4': { main: 'Puran Poli', side: 'Batata Bhaji', dal: 'Amti', rice: 'Indrayani Rice', bread: 'Chapati', dessert: 'Shrikhand', calories: '500', protein: '10g' }
-}
+// Removed mockMenus
 
 const AdminMenu = () => {
     const [kitchenQueue, setKitchenQueue] = useState([]);
@@ -47,15 +38,14 @@ const AdminMenu = () => {
             });
             if (res.data.success) {
                 const data = res.data.data;
-                setKitchenQueue(data.length > 0 ? data : initialKitchens); // Fallback to initial if empty for demo
+                setKitchenQueue(data);
                 if (data.length > 0 && !selectedKitchenId) {
                     setSelectedKitchenId(data[0]._id || data[0].id);
                 }
             }
         } catch (err) {
             console.error("Fetch Menus Error:", err);
-            // On error we still show mock for demo purposes if instructed, but here we keep it clean
-            setKitchenQueue(initialKitchens);
+            setKitchenQueue([]);
         } finally {
             setLoading(false);
         }
@@ -77,7 +67,7 @@ const AdminMenu = () => {
         if (activeKitchen) {
             // Mapping real model fields to UI fields if needed
             const kitchenId = activeKitchen._id || activeKitchen.id;
-            setMenuData(activeKitchen.menuItems || mockMenus[kitchenId] || emptyMenu);
+            setMenuData(activeKitchen.menuItems || emptyMenu);
             setIsDirty({});
         }
     }, [selectedKitchenId, activeKitchen]);
@@ -240,52 +230,7 @@ const AdminMenu = () => {
         </div>
     );
 
-    // --- LOGS MODAL ---
-    const LogsModal = () => {
-        if (!showLogsModal) return null;
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLogsModal(false)}></div>
-                <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
 
-                    {/* Compact Header */}
-                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="size-9 bg-gray-100 rounded-xl flex items-center justify-center">
-                                <span className="material-symbols-outlined text-gray-600 text-[18px]">history_edu</span>
-                            </div>
-                            <div>
-                                <h3 className="text-base font-bold text-gray-800">System Activity</h3>
-                                <p className="text-xs text-gray-400">Recent menu management actions</p>
-                            </div>
-                        </div>
-                        <button onClick={() => setShowLogsModal(false)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
-                            <span className="material-symbols-outlined text-[18px]">close</span>
-                        </button>
-                    </div>
-                    <div className="p-4 overflow-y-auto space-y-2">
-                        {[
-                            { action: 'Approved Menu', kitchen: 'Spicy Treats', time: '2m ago', icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                            { action: 'Updated Settings', kitchen: 'System', time: '15m ago', icon: 'settings', color: 'text-blue-500', bg: 'bg-blue-50' },
-                            { action: 'Rejected Menu', kitchen: 'Healthy Bites', time: '1h ago', icon: 'cancel', color: 'text-rose-500', bg: 'bg-rose-50' },
-                            { action: 'Approved Menu', kitchen: 'Ghar ka Swad', time: '2h ago', icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                        ].map((log, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200">
-                                <div className={`size-8 rounded-lg ${log.bg} ${log.color} flex items-center justify-center`}>
-                                    <span className="material-symbols-outlined text-[18px]">{log.icon}</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-gray-800 truncate">{log.action}</p>
-                                    <p className="text-[10px] text-gray-400 truncate">{log.kitchen}</p>
-                                </div>
-                                <span className="text-[9px] font-bold text-gray-400 uppercase">{log.time}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
     // --- EMPTY STATE RENDERING ---
     if (kitchenQueue.length === 0) {
@@ -319,7 +264,7 @@ const AdminMenu = () => {
                         </div>
                     </div>
                 </div>
-                <LogsModal />
+                <LogsModal isOpen={showLogsModal} onClose={() => setShowLogsModal(false)} />
             </div>
         );
     }
@@ -413,7 +358,9 @@ const AdminMenu = () => {
                             <h3 className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider">Pending Review</h3>
                         </div>
                         <div className="overflow-y-auto custom-scrollbar p-2 space-y-2">
-                            {kitchenQueue.map(kitchen => (
+                            {loading ? (
+                                <SkeletonLoader type="card" count={4} className="mb-2 !p-4 !rounded-[1.5rem]" />
+                            ) : kitchenQueue.map(kitchen => (
                                 <div
                                     key={kitchen.id}
                                     onClick={() => setSelectedKitchenId(kitchen.id)}
@@ -553,7 +500,56 @@ const AdminMenu = () => {
 
                 </div>
             </div>
+            <LogsModal isOpen={showLogsModal} onClose={() => setShowLogsModal(false)} />
         </div>
+    );
+};
+
+// --- LOGS MODAL ---
+const LogsModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
+
+                {/* Compact Header */}
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="size-9 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <span className="material-symbols-outlined text-gray-600 text-[18px]">history_edu</span>
+                        </div>
+                        <div>
+                            <h3 className="text-base font-bold text-gray-800">System Activity</h3>
+                            <p className="text-xs text-gray-400">Recent menu management actions</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                </div>
+                <div className="p-4 overflow-y-auto space-y-2">
+                    {[
+                        { action: 'Approved Menu', kitchen: 'Spicy Treats', time: '2m ago', icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                        { action: 'Updated Settings', kitchen: 'System', time: '15m ago', icon: 'settings', color: 'text-blue-500', bg: 'bg-blue-50' },
+                        { action: 'Rejected Menu', kitchen: 'Healthy Bites', time: '1h ago', icon: 'cancel', color: 'text-rose-500', bg: 'bg-rose-50' },
+                        { action: 'Approved Menu', kitchen: 'Ghar ka Swad', time: '2h ago', icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                    ].map((log, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200">
+                            <div className={`size-8 rounded-lg ${log.bg} ${log.color} flex items-center justify-center`}>
+                                <span className="material-symbols-outlined text-[18px]">{log.icon}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-gray-800 truncate">{log.action}</p>
+                                <p className="text-[10px] text-gray-400 truncate">{log.kitchen}</p>
+                            </div>
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">{log.time}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>,
+        document.body
     );
 };
 

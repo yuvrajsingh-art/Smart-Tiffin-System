@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
+
+// --- Mock Data for Invoices ---
+// --- Mock Data Removed ---
+const invoicesData = [];
 
 const AdminFinance = () => {
     const [activeTab, setActiveTab] = useState('Overview');
@@ -10,6 +15,7 @@ const AdminFinance = () => {
     const [selectedEntity, setSelectedEntity] = useState(null);
     const [stats, setStats] = useState({ grossRevenue: 0, totalPayouts: 0, pendingLiabilities: 0, netProfit: 0 });
     const [payouts, setPayouts] = useState([]);
+    const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -18,12 +24,14 @@ const AdminFinance = () => {
 
     const fetchFinanceData = async () => {
         try {
-            const [statsRes, payoutsRes] = await Promise.all([
+            const [statsRes, payoutsRes, invoicesRes] = await Promise.all([
                 axios.get('/api/admin/finance/stats'),
-                axios.get('/api/admin/finance/payouts')
+                axios.get('/api/admin/finance/payouts'),
+                axios.get('/api/admin/finance/invoices')
             ]);
             if (statsRes.data.success) setStats(statsRes.data.data);
             if (payoutsRes.data.success) setPayouts(payoutsRes.data.data);
+            if (invoicesRes.data.success) setInvoices(invoicesRes.data.data);
         } catch (error) {
             console.error("Finance fetch error:", error);
             toast.error("Failed to load finance data");
@@ -82,9 +90,9 @@ const AdminFinance = () => {
             </div >
 
             {/* Main Content Area */}
-            {activeTab === 'Overview' && <FinanceOverview stats={stats} payouts={payouts} openSettlement={openSettlement} handleViewLedger={handleViewLedger} />}
-            {activeTab === 'Payouts' && <PayoutsTable payouts={payouts} openSettlement={openSettlement} handleBulkPayout={handleBulkPayout} />}
-            {activeTab === 'Invoices' && <InvoicesTable openInvoice={openInvoice} />}
+            {activeTab === 'Overview' && <FinanceOverview stats={stats} payouts={payouts} openSettlement={openSettlement} handleViewLedger={handleViewLedger} loading={loading} />}
+            {activeTab === 'Payouts' && <PayoutsTable payouts={payouts} openSettlement={openSettlement} handleBulkPayout={handleBulkPayout} loading={loading} />}
+            {activeTab === 'Invoices' && <InvoicesTable invoices={invoices} openInvoice={openInvoice} loading={loading} />}
             {activeTab === 'Tax' && <TaxComplianceView />}
 
             {/* Modals */}
@@ -95,14 +103,18 @@ const AdminFinance = () => {
     );
 };
 
-const FinanceOverview = ({ stats, payouts, openSettlement, handleViewLedger }) => (
+const FinanceOverview = ({ stats, payouts, openSettlement, handleViewLedger, loading }) => (
     <div className="space-y-6 animate-slide-up">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-[#2D241E] to-[#453831] p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
                 <div className="absolute right-0 top-0 size-40 bg-white/5 rounded-full blur-[50px] group-hover:bg-white/10 transition-colors"></div>
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-4">Total Revenue</p>
-                <h3 className="text-5xl font-bold tracking-tighter">₹{(stats.grossRevenue || 0).toLocaleString()}</h3>
+                {loading ? (
+                    <div className="h-12 w-48 bg-white/10 rounded-lg animate-pulse mb-2"></div>
+                ) : (
+                    <h3 className="text-5xl font-bold tracking-tighter">₹{(stats.grossRevenue || 0).toLocaleString()}</h3>
+                )}
                 <div className="mt-6 flex items-center gap-2 text-emerald-400 bg-white/5 w-fit px-3 py-1.5 rounded-full backdrop-blur-md">
                     <span className="material-symbols-outlined text-[16px]">trending_up</span>
                     <span className="text-[10px] font-bold">+18.5% revenue growth</span>
@@ -115,7 +127,11 @@ const FinanceOverview = ({ stats, payouts, openSettlement, handleViewLedger }) =
                     <div className="size-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform"><span className="material-symbols-outlined">payments</span></div>
                 </div>
                 <div>
-                    <h3 className="text-3xl font-bold text-[#2D241E] mt-2">₹{(stats.pendingLiabilities || 0).toLocaleString()}</h3>
+                    {loading ? (
+                        <div className="h-10 w-32 bg-gray-200 rounded-lg animate-pulse mt-2 mb-1"></div>
+                    ) : (
+                        <h3 className="text-3xl font-bold text-[#2D241E] mt-2">₹{(stats.pendingLiabilities || 0).toLocaleString()}</h3>
+                    )}
                     <p className="text-[10px] font-bold text-[#897a70] mt-1">Due for processing</p>
                 </div>
                 <div className="w-full h-1.5 bg-gray-100 rounded-full mt-4 overflow-hidden">
@@ -129,7 +145,11 @@ const FinanceOverview = ({ stats, payouts, openSettlement, handleViewLedger }) =
                     <div className="size-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform"><span className="material-symbols-outlined">account_balance_wallet</span></div>
                 </div>
                 <div>
-                    <h3 className="text-3xl font-bold text-[#2D241E] mt-2">₹{(stats.netProfit || 0).toLocaleString()}</h3>
+                    {loading ? (
+                        <div className="h-10 w-32 bg-gray-200 rounded-lg animate-pulse mt-2 mb-1"></div>
+                    ) : (
+                        <h3 className="text-3xl font-bold text-[#2D241E] mt-2">₹{(stats.netProfit || 0).toLocaleString()}</h3>
+                    )}
                     <p className="text-[10px] font-bold text-[#897a70] mt-1">After payouts</p>
                 </div>
                 <div className="w-full h-1.5 bg-gray-100 rounded-full mt-4 overflow-hidden">
@@ -145,29 +165,35 @@ const FinanceOverview = ({ stats, payouts, openSettlement, handleViewLedger }) =
                 <button onClick={handleViewLedger} className="text-xs font-bold text-[#897a70] hover:text-[#2D241E] transition-colors">View All Ledger</button>
             </div>
             <div className="space-y-3">
-                {payouts.slice(0, 3).map((p, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:scale-[1.01] transition-transform cursor-pointer" onClick={() => openSettlement(p)}>
-                        <div className="flex items-center gap-4">
-                            <div className="size-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#2D241E] font-bold text-xs">{(p?.kitchen || 'K').charAt(0)}</div>
-                            <div>
-                                <p className="text-xs font-bold text-[#2D241E]">{p.kitchen}</p>
-                                <p className="text-[10px] font-medium text-[#897a70] uppercase tracking-wider">Payout • {p.date}</p>
+                {loading ? (
+                    <SkeletonLoader count={3} type="text" />
+                ) : (
+                    <>
+                        {payouts.slice(0, 3).map((p, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:scale-[1.01] transition-transform cursor-pointer" onClick={() => openSettlement(p)}>
+                                <div className="flex items-center gap-4">
+                                    <div className="size-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#2D241E] font-bold text-xs">{(p?.kitchen || 'K').charAt(0)}</div>
+                                    <div>
+                                        <p className="text-xs font-bold text-[#2D241E]">{p.kitchen}</p>
+                                        <p className="text-[10px] font-medium text-[#897a70] uppercase tracking-wider">Payout • {p.date}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-[#2D241E]">{p.amount}</p>
+                                    <p className={`text-[10px] font-bold ${p.status === 'Success' ? 'text-emerald-500' : 'text-amber-500'}`}>{p.status}</p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xs font-bold text-[#2D241E]">{p.amount}</p>
-                            <p className={`text-[10px] font-bold ${p.status === 'Success' ? 'text-emerald-500' : 'text-amber-500'}`}>{p.status}</p>
-                        </div>
-                    </div>
-                ))}
-                {payouts.length === 0 && <p className="text-center text-xs text-gray-400 py-4">No recent payouts</p>}
+                        ))}
+                        {payouts.length === 0 && <p className="text-center text-xs text-gray-400 py-4">No recent payouts</p>}
+                    </>
+                )}
             </div>
         </div>
     </div>
 );
 
 // --- Sub-Component: Payouts Table ---
-const PayoutsTable = ({ payouts, openSettlement, handleBulkPayout }) => (
+const PayoutsTable = ({ payouts, openSettlement, handleBulkPayout, loading }) => (
     <div className="bg-white/60 backdrop-blur-xl rounded-[2.5rem] border border-white/50 shadow-xl overflow-hidden min-h-[60vh] flex flex-col animate-slide-up">
         <div className="p-6 border-b border-white/50 flex justify-between items-center">
             <h3 className="text-lg font-bold text-[#2D241E]">Kitchen Settlements</h3>
@@ -185,28 +211,34 @@ const PayoutsTable = ({ payouts, openSettlement, handleBulkPayout }) => (
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100/50">
-                    {payouts.map((p) => (
-                        <tr key={p.id} className="group hover:bg-white/80 transition-all cursor-pointer" onClick={() => openSettlement(p)}>
-                            <td className="px-8 py-5">
-                                <p className="text-xs font-bold text-[#2D241E]">{p.kitchen}</p>
-                                <p className="text-[10px] font-bold text-[#897a70] mt-0.5">ID: {p.id}</p>
-                            </td>
-                            <td className="px-6 py-5 text-xs font-bold text-[#2D241E]">{p.amount}</td>
-                            <td className="px-6 py-5 text-xs font-bold text-[#5C4D42]">-</td>
-                            <td className="px-6 py-5">
-                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${p.status === 'Success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                                    {p.status}
-                                </span>
-                            </td>
-                            <td className="px-8 py-5 text-right">
-                                <button className="size-8 rounded-xl bg-white border border-gray-100 text-[#2D241E] flex items-center justify-center hover:bg-[#2D241E] hover:text-white transition-all ml-auto shadow-sm">
-                                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                    {payouts.length === 0 && (
-                        <tr><td colSpan="5" className="text-center py-6 text-xs text-gray-400">No payout records found.</td></tr>
+                    {loading ? (
+                        <SkeletonLoader type="table-row" count={5} />
+                    ) : (
+                        <>
+                            {payouts.map((p) => (
+                                <tr key={p.id} className="group hover:bg-white/80 transition-all cursor-pointer" onClick={() => openSettlement(p)}>
+                                    <td className="px-8 py-5">
+                                        <p className="text-xs font-bold text-[#2D241E]">{p.kitchen}</p>
+                                        <p className="text-[10px] font-bold text-[#897a70] mt-0.5">ID: {p.id}</p>
+                                    </td>
+                                    <td className="px-6 py-5 text-xs font-bold text-[#2D241E]">{p.amount}</td>
+                                    <td className="px-6 py-5 text-xs font-bold text-[#5C4D42]">-</td>
+                                    <td className="px-6 py-5">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${p.status === 'Success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                            {p.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-5 text-right">
+                                        <button className="size-8 rounded-xl bg-white border border-gray-100 text-[#2D241E] flex items-center justify-center hover:bg-[#2D241E] hover:text-white transition-all ml-auto shadow-sm">
+                                            <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {payouts.length === 0 && (
+                                <tr><td colSpan="5" className="text-center py-6 text-xs text-gray-400">No payout records found.</td></tr>
+                            )}
+                        </>
                     )}
                 </tbody>
             </table>
@@ -215,10 +247,9 @@ const PayoutsTable = ({ payouts, openSettlement, handleBulkPayout }) => (
 );
 
 // --- Sub-Component: Invoices Table ---
-const InvoicesTable = ({ openInvoice }) => {
-    // Keeping invoices mock for now as requested to focus on Payouts
+const InvoicesTable = ({ invoices, openInvoice, loading }) => {
     const [search, setSearch] = useState('');
-    const filteredInvoices = invoicesData.filter(i =>
+    const filteredInvoices = (invoices || []).filter(i =>
         (i?.id || '').toLowerCase().includes(search.toLowerCase()) ||
         (i?.user || '').toLowerCase().includes(search.toLowerCase())
     );
@@ -249,7 +280,9 @@ const InvoicesTable = ({ openInvoice }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100/50">
-                        {filteredInvoices.length > 0 ? (
+                        {loading ? (
+                            <SkeletonLoader type="table-row" count={5} />
+                        ) : filteredInvoices.length > 0 ? (
                             filteredInvoices.map((inv) => (
                                 <tr key={inv.id} className="group hover:bg-white/80 transition-all cursor-pointer" onClick={() => openInvoice(inv)}>
                                     <td className="px-8 py-5 text-xs font-bold text-[#2D241E] font-mono">{inv.id}</td>

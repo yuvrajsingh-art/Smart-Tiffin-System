@@ -41,6 +41,7 @@ const {
     getFinanceStats,
     getPayouts,
     processPayout,
+    getInvoices,
 
     // Menu Management
     getPendingMenus,
@@ -141,8 +142,11 @@ router.get("/finance/stats", protect, authorizeRoles("admin"), getFinanceStats);
 // GET /api/admin/finance/payouts - Get pending payouts
 router.get("/finance/payouts", protect, authorizeRoles("admin"), getPayouts);
 
-// POST /api/admin/finance/payout - Process payout
-router.post("/finance/payout", protect, authorizeRoles("admin"), processPayout);
+// GET /api/admin/finance/invoices - Get invoices
+router.get("/finance/invoices", protect, authorizeRoles("admin"), getInvoices);
+
+// POST /api/admin/finance/payout/:id - Process payout
+router.post("/finance/payout/:id", protect, authorizeRoles("admin"), processPayout);
 
 // =============================================================================
 // MENU MANAGEMENT

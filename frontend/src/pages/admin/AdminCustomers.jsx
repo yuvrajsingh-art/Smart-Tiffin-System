@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 const initialCustomersData = [
     { id: 'CUS001', name: 'Rahul Sharma', email: 'rahul@gmail.com', phone: '9876543210', plan: 'Monthly Veg', status: 'Active', joins: '12 Jan 2024', balance: '₹400', kyc: 'Verified', tags: ['VIP', 'Frequent'], tickets: 0, referrals: 12, address: 'B-201, Royal Enclave, Vijay Nagar, Indore' },
@@ -330,7 +331,9 @@ const AdminCustomers = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filteredCustomers.length > 0 ? (
+                            {loading ? (
+                                <SkeletonLoader type="table-row" count={5} />
+                            ) : filteredCustomers.length > 0 ? (
                                 filteredCustomers.map((cus) => (
                                     <tr key={cus.id} className="group hover:bg-white/60 transition-colors">
                                         <td className="px-6 py-4">
@@ -407,6 +410,7 @@ const AdminCustomers = () => {
                     </table>
                 </div>
             </div>
+
 
             {/* =========================================================================
                 MODALS
@@ -699,7 +703,7 @@ const AdminCustomers = () => {
                     document.body
                 )
             }
-        </div>
+        </div >
     );
 };
 

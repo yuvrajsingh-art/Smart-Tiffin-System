@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 const AdminProviders = () => {
     const formRef = useRef(null);
@@ -363,7 +364,9 @@ const AdminProviders = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filteredProviders.length > 0 ? (
+                            {loading ? (
+                                <SkeletonLoader type="table-row" count={5} />
+                            ) : filteredProviders.length > 0 ? (
                                 filteredProviders.map((pro) => (
                                     <tr key={pro.id} className="group hover:bg-white/60 transition-colors">
                                         <td className="px-6 py-4">

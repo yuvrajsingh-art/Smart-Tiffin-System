@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { createPortal } from 'react-dom';
 import AdminStatCard from '../../components/admin/AdminStatCard';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 // --- Data Constants ---
 // --- Data Constants ---
@@ -177,48 +178,71 @@ const AdminDashboard = () => {
 
 
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <AdminStatCard
-                    title="Total Revenue"
-                    value={`₹${(stats.grossRevenue || 0).toLocaleString()}`}
-                    trend="up"
-                    trendValue="+18.4%"
-                    icon="payments"
-                    color="text-emerald-600"
-                    delay="0ms"
-                    onClick={() => navigate('/admin/finance')}
-                />
-                <AdminStatCard
-                    title="Active Users"
-                    value={stats.totalCustomers || 0}
-                    trend="up"
-                    trendValue="+12.5%"
-                    icon="group"
-                    color="text-blue-600"
-                    delay="100ms"
-                    onClick={() => navigate('/admin/customers')}
-                />
-                <AdminStatCard
-                    title="Live Orders"
-                    value={stats.liveOrders || 0}
-                    trend="up"
-                    trendValue="RUSH"
-                    icon="lunch_dining"
-                    color="text-orange-500"
-                    delay="200ms"
-                    onClick={() => navigate('/admin/orders')}
-                />
-                <AdminStatCard
-                    title="Kitchens"
-                    value={`${stats.totalProviders || 0}`}
-                    trend="up"
-                    trendValue="ACTIVE"
-                    icon="hub"
-                    color="text-violet-600"
-                    delay="300ms"
-                    onClick={() => navigate('/admin/providers')}
-                />
-            </div>
+            {loading ? (
+                <div className="space-y-6 animate-pulse">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <SkeletonLoader type="card" count={4} className="h-40" />
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        <div className="lg:col-span-3 h-[420px] bg-gray-50 rounded-[2.5rem] border border-gray-100 p-6 relative overflow-hidden">
+                            <SkeletonLoader type="text" count={1} className="w-1/2 mb-8 bg-gray-200" />
+                            <div className="size-40 rounded-full border-[12px] border-gray-200 mx-auto mb-8"></div>
+                            <SkeletonLoader type="text" count={3} className="mb-2 bg-gray-200" />
+                        </div>
+                        <div className="lg:col-span-6 h-[420px] bg-gray-50 rounded-[2.5rem] border border-gray-100 p-6">
+                            <SkeletonLoader type="text" count={1} className="w-40 mb-6 bg-gray-200" />
+                            <div className="h-64 bg-gray-200 rounded-xl w-full"></div>
+                        </div>
+                        <div className="lg:col-span-3 h-[420px] bg-gray-50 rounded-[2.5rem] border border-gray-100 p-6">
+                            <SkeletonLoader type="text" count={1} className="w-32 mb-6 bg-gray-200" />
+                            <SkeletonLoader type="text" count={6} className="h-12 mb-3 bg-gray-200" />
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <AdminStatCard
+                        title="Total Revenue"
+                        value={`₹${(stats.grossRevenue || 0).toLocaleString()}`}
+                        trend="up"
+                        trendValue="+18.4%"
+                        icon="payments"
+                        color="text-emerald-600"
+                        delay="0ms"
+                        onClick={() => navigate('/admin/finance')}
+                    />
+                    <AdminStatCard
+                        title="Active Users"
+                        value={stats.totalCustomers || 0}
+                        trend="up"
+                        trendValue="+12.5%"
+                        icon="group"
+                        color="text-blue-600"
+                        delay="100ms"
+                        onClick={() => navigate('/admin/customers')}
+                    />
+                    <AdminStatCard
+                        title="Live Orders"
+                        value={stats.liveOrders || 0}
+                        trend="up"
+                        trendValue="RUSH"
+                        icon="lunch_dining"
+                        color="text-orange-500"
+                        delay="200ms"
+                        onClick={() => navigate('/admin/orders')}
+                    />
+                    <AdminStatCard
+                        title="Kitchens"
+                        value={`${stats.totalProviders || 0}`}
+                        trend="up"
+                        trendValue="ACTIVE"
+                        icon="hub"
+                        color="text-violet-600"
+                        delay="300ms"
+                        onClick={() => navigate('/admin/providers')}
+                    />
+                </div>
+            )}
 
             {/* 3. Main Operations Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
