@@ -91,7 +91,7 @@ const AdminOrders = () => {
             toast.loading(`Assigning ${rider.name} to order...`);
 
             const res = await axios.put(
-                `http://localhost:5000/api/admin/orders/${orderId}/rider`,
+                `/api/admin/orders/${orderId}/rider`,
                 { riderName: rider.name, riderId: rider.id },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -115,7 +115,7 @@ const AdminOrders = () => {
 
         try {
             const res = await axios.put(
-                `http://localhost:5000/api/admin/orders/${orderId}/status`,
+                `/api/admin/orders/${orderId}/status`,
                 { status: newStatus },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

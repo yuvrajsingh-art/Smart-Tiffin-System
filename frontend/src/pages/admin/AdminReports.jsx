@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 import {
@@ -59,11 +60,35 @@ const AdminReports = () => {
         { label: 'Avg Rating', val: 4.85, change: '+0.2%', color: 'from-amber-400 to-yellow-600', sub: 'Global Satisfaction', prefix: '', suffix: '/5' },
     ]);
 
+    const fetchReportData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get('/api/admin/stats', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                const stats = res.data.data;
+                // Sync some real stats into reports metrics
+                setMetrics(prev => prev.map(m => {
+                    if (m.label === 'EBITDA') return { ...m, val: stats.totalRevenue || 0 };
+                    return m;
+                }));
+            }
+        } catch (err) {
+            console.error("Fetch Report Data Error:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchReportData();
+    }, []);
+
     const [genLogs, setGenLogs] = useState([]);
     const [showDrilldown, setShowDrilldown] = useState(false);
     const [selectedMetric, setSelectedMetric] = useState(null);
     const [isAuditing, setIsAuditing] = useState(false);
     const [auditStep, setAuditStep] = useState(0); // 0: Idle, 1: Scanning, 2: Validating, 3: Completed
+
 
     const handleGenerate = () => {
         setIsGenerating(true);

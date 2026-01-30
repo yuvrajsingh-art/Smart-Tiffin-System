@@ -101,7 +101,7 @@ const AdminCustomers = () => {
         try {
             if (type === 'Ban' || type === 'Unban') {
                 const res = await axios.put(
-                    `http://localhost:5000/api/admin/customers/${customerId}/status`,
+                    `/api/admin/customers/${customerId}/status`,
                     {},
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -115,7 +115,7 @@ const AdminCustomers = () => {
                 if (!window.confirm(`Are you sure you want to delete ${customer.fullName || customer.name}?`)) return;
 
                 const res = await axios.delete(
-                    `http://localhost:5000/api/admin/customers/${customerId}`,
+                    `/api/admin/customers/${customerId}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (res.data.success) {
@@ -183,7 +183,7 @@ const AdminCustomers = () => {
             };
 
             const res = await axios.put(
-                `http://localhost:5000/api/admin/customers/${editingCustomer._id || editingCustomer.id}`,
+                `/api/admin/customers/${editingCustomer._id || editingCustomer.id}`,
                 updateData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

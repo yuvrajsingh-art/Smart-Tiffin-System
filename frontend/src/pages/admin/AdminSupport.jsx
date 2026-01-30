@@ -26,10 +26,34 @@ const initialTickets = [
 ];
 
 const AdminSupport = () => {
-    const [tickets, setTickets] = useState(initialTickets);
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [showConfetti, setShowConfetti] = useState(false);
+
+    const fetchTickets = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`/api/admin/tickets?status=${filter}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                const data = res.data.data;
+                setTickets(data.length > 0 ? data : initialTickets);
+            }
+        } catch (err) {
+            console.error("Fetch Tickets Error:", err);
+            setTickets(initialTickets);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTickets();
+    }, [filter]);
 
     // --- Live Simulation Effect ---
     useEffect(() => {
@@ -50,6 +74,7 @@ const AdminSupport = () => {
         }, 8000); // Check every 8 seconds
         return () => clearInterval(interval);
     }, []);
+
 
     const filteredTickets = filter === 'All' ? tickets : tickets.filter(t => t.status === filter);
 

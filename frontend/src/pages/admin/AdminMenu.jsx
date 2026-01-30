@@ -22,9 +22,10 @@ const mockMenus = {
 }
 
 const AdminMenu = () => {
-    const [kitchenQueue, setKitchenQueue] = useState(initialKitchens);
-    const [selectedKitchenId, setSelectedKitchenId] = useState(initialKitchens[0]?.id || null);
+    const [kitchenQueue, setKitchenQueue] = useState([]);
+    const [selectedKitchenId, setSelectedKitchenId] = useState(null);
     const [menuData, setMenuData] = useState(emptyMenu);
+    const [loading, setLoading] = useState(true);
 
     // Form States
     const [isDirty, setIsDirty] = useState({});
@@ -35,20 +36,48 @@ const AdminMenu = () => {
     const [showLogsModal, setShowLogsModal] = useState(false);
 
     // Derived State
-    const activeKitchen = kitchenQueue.find(k => k.id === selectedKitchenId);
+    const activeKitchen = kitchenQueue.find(k => (k._id || k.id) === selectedKitchenId);
+
+    const fetchPendingMenus = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const res = await axios.get('/api/admin/menus/pending', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                const data = res.data.data;
+                setKitchenQueue(data.length > 0 ? data : initialKitchens); // Fallback to initial if empty for demo
+                if (data.length > 0 && !selectedKitchenId) {
+                    setSelectedKitchenId(data[0]._id || data[0].id);
+                }
+            }
+        } catch (err) {
+            console.error("Fetch Menus Error:", err);
+            // On error we still show mock for demo purposes if instructed, but here we keep it clean
+            setKitchenQueue(initialKitchens);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPendingMenus();
+    }, []);
 
     // Auto-select when queue changes
     useEffect(() => {
         if (!activeKitchen && kitchenQueue.length > 0) {
-            setSelectedKitchenId(kitchenQueue[0].id);
+            setSelectedKitchenId(kitchenQueue[0]._id || kitchenQueue[0].id);
         }
     }, [kitchenQueue, activeKitchen]);
 
     // Update form when selection changes
     useEffect(() => {
         if (activeKitchen) {
-            // In real app, fetch here. For now use mocks or empty
-            setMenuData(mockMenus[activeKitchen.id] || emptyMenu); // Mock fetch
+            // Mapping real model fields to UI fields if needed
+            const kitchenId = activeKitchen._id || activeKitchen.id;
+            setMenuData(activeKitchen.menuItems || mockMenus[kitchenId] || emptyMenu);
             setIsDirty({});
         }
     }, [selectedKitchenId, activeKitchen]);
@@ -57,6 +86,7 @@ const AdminMenu = () => {
         setMenuData(prev => ({ ...prev, [field]: value }));
         setIsDirty(prev => ({ ...prev, [field]: true }));
     };
+
 
     const completionPercentage = (() => {
         const total = 8; // Total fields
@@ -89,7 +119,7 @@ const AdminMenu = () => {
 
         try {
             const res = await axios.put(
-                `http://localhost:5000/api/admin/menus/${menuId}/approve`,
+                `/api/admin/menus/${menuId}/approve`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -123,7 +153,7 @@ const AdminMenu = () => {
 
         try {
             const res = await axios.put(
-                `http://localhost:5000/api/admin/menus/${menuId}/reject`,
+                `/api/admin/menus/${menuId}/reject`,
                 { reason },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

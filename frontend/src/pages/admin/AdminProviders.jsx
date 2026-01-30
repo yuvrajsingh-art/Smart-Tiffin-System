@@ -110,7 +110,7 @@ const AdminProviders = () => {
         const token = localStorage.getItem('token');
         try {
             const res = await axios.delete(
-                `http://localhost:5000/api/admin/providers/${id}`,
+                `/api/admin/providers/${id}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 

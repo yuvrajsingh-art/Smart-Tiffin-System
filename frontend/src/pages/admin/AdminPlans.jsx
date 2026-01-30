@@ -80,7 +80,7 @@ const AdminPlans = () => {
             if (editingPlan) {
                 // Update existing plan
                 const res = await axios.put(
-                    `http://localhost:5000/api/admin/plans/${editingPlan.id}`,
+                    `/api/admin/plans/${editingPlan.id}`,
                     planData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -91,7 +91,7 @@ const AdminPlans = () => {
             } else {
                 // Create new plan
                 const res = await axios.post(
-                    `http://localhost:5000/api/admin/plans`,
+                    `/api/admin/plans`,
                     planData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );

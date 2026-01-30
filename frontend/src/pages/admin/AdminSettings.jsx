@@ -120,20 +120,50 @@ const AdminSettings = () => {
         }, 150);
     };
 
-    const handleSave = () => {
+    const fetchSettings = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get('/api/admin/settings', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setSettings(prev => ({ ...prev, ...res.data.data }));
+            }
+        } catch (err) {
+            console.error("Fetch Settings Error:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const handleSave = async () => {
+        const token = localStorage.getItem('token');
+        const syncPromise = axios.put('/api/admin/settings', settings, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
         toast.promise(
-            new Promise(resolve => setTimeout(resolve, 1000)),
+            syncPromise,
             {
                 loading: 'Syncing Rules to System Servers...',
                 success: 'All Systems Synchronized!',
-                error: 'Sync Failed',
+                error: (err) => err.response?.data?.message || 'Sync Failed',
             },
             {
                 style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
             }
         );
-        addLog('MASTER_SYNC', 'Global configuration push successful', 'user');
+
+        try {
+            await syncPromise;
+            addLog('MASTER_SYNC', 'Global configuration push successful', 'user');
+        } catch (err) {
+            console.error("Sync Error:", err);
+        }
     };
+
 
     const sections = [
         { id: 'MenuRules', icon: 'terminal', label: 'Tiffin Logic' },
