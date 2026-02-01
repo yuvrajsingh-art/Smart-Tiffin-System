@@ -18,7 +18,7 @@ const AdminSupport = () => {
     const [endDate, setEndDate] = useState('');
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [showConfetti, setShowConfetti] = useState(false);
-    const socket = useSocket();
+    const { socket } = useSocket();
 
     const fetchTickets = async () => {
         try {

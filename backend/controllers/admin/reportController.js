@@ -1,53 +1,65 @@
+/**
+ * =============================================================================
+ * REPORT CONTROLLER
+ * =============================================================================
+ * Handles report generation and export functionality:
+ * - Invoice PDF generation
+ * - Sales CSV export
+ * - Customers CSV export
+ * =============================================================================
+ */
+
 const PDFDocument = require('pdfkit');
-const json2csv = require('json2csv'); // Robust import
+const json2csv = require('json2csv');
 const Transaction = require('../../models/transaction.model');
 const Order = require('../../models/order.model');
+const User = require('../../models/user.model');
+const { isValidObjectId } = require('../../utils/validationHelper');
+const { formatDate } = require('../../utils/dateHelper');
+const { sendError } = require('../../utils/responseHelper');
+
+// =============================================================================
+// INVOICE PDF GENERATION
+// =============================================================================
 
 /**
- * Generate Invoice PDF
- * Downloads a PDF invoice for a specific transaction
+ * Generate and download invoice PDF
+ * @route GET /api/admin/finance/invoice/:id/download
+ * @param {String} id - Transaction ID
  */
 exports.generateInvoicePDF = async (req, res) => {
     try {
-        const { id } = req.params; // Transaction ID (Invoice ID)
+        const { id } = req.params;
 
-        // Find transaction (simulated lookup from ID string pattern if needed, or direct DB ID)
-        // Assuming ID passed is the MongoDB _id matching the Invoice ID suffix
-        // If frontend passes "INV-123456", we might need logic to find it. 
-        // For simplicity, we assume frontend passes the Transaction _id.
-
-        let query = {};
-        if (id.length > 10 && !id.startsWith('INV')) {
-            query._id = id;
-        } else {
-            // Handle "INV-X" format if passed, or just fail for now assuming explicit ID
-            return res.status(400).json({ success: false, message: "Invalid ID format" });
+        // Validate ID format
+        if (!isValidObjectId(id)) {
+            return sendError(res, 400, "Invalid invoice ID format");
         }
 
-        // Populate orderId and then the customer inside that order
-        const transaction = await Transaction.findOne(query).populate({
+        // Find transaction with populated order and customer
+        const transaction = await Transaction.findById(id).populate({
             path: 'orderId',
             populate: { path: 'customer', select: 'fullName email address' }
         });
 
         if (!transaction) {
-            return res.status(404).json({ success: false, message: "Invoice not found" });
+            return sendError(res, 404, "Invoice not found");
         }
 
         const customer = transaction.orderId?.customer;
         const customerName = customer?.fullName || 'Guest User';
         const customerEmail = customer?.email || '';
 
-        // Create PDF
+        // Create PDF document
         const doc = new PDFDocument({ margin: 50 });
 
-        // Set Headers
+        // Set response headers
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Invoice-${transaction._id}.pdf`);
 
         doc.pipe(res);
 
-        // -- Header --
+        // Header section
         doc.fillColor('#444444')
             .fontSize(20)
             .text('Smart Tiffin System', 110, 57)
@@ -56,17 +68,20 @@ exports.generateInvoicePDF = async (req, res) => {
             .text('support@smarttiffin.com', 200, 80, { align: 'right' })
             .moveDown();
 
-        // -- Invoice Info --
+        // Invoice info section
         doc.fillColor('#000000')
             .fontSize(20)
             .text('INVOICE', 50, 160);
 
+        const invoiceNumber = `INV-${transaction._id.toString().slice(-6).toUpperCase()}`;
+        const invoiceDate = formatDate(transaction.createdAt);
+
         doc.fontSize(10)
-            .text(`Invoice Number: INV-${transaction._id.toString().slice(-6).toUpperCase()}`, 50, 200)
-            .text(`Invoice Date: ${new Date(transaction.createdAt).toLocaleDateString()}`, 50, 215)
+            .text(`Invoice Number: ${invoiceNumber}`, 50, 200)
+            .text(`Invoice Date: ${invoiceDate}`, 50, 215)
             .text(`Balance Due: ₹0.00`, 50, 130, { align: 'right' });
 
-        // -- Bill To --
+        // Bill to section
         doc.text('Bill To:', 300, 200)
             .font('Helvetica-Bold')
             .text(customerName, 300, 215)
@@ -74,7 +89,7 @@ exports.generateInvoicePDF = async (req, res) => {
             .text(customerEmail, 300, 230)
             .moveDown();
 
-        // -- Table --
+        // Table section
         const tableTop = 270;
         doc.font('Helvetica-Bold');
         doc.text('Item Description', 50, tableTop)
@@ -84,17 +99,18 @@ exports.generateInvoicePDF = async (req, res) => {
 
         doc.font('Helvetica');
         const position = tableTop + 30;
-        doc.text(transaction.description || 'Tiffin Service Subscription', 50, position)
+        const itemDescription = transaction.description || 'Tiffin Service Subscription';
+        doc.text(itemDescription, 50, position)
             .text(`₹${transaction.amount}`, 400, position, { width: 90, align: 'right' });
 
         doc.moveTo(50, position + 20).lineTo(550, position + 20).stroke();
 
-        // -- Total --
+        // Total section
         doc.font('Helvetica-Bold')
             .text('Total:', 350, position + 40, { align: 'right' })
             .text(`₹${transaction.amount}`, 400, position + 40, { width: 90, align: 'right' });
 
-        // -- Footer --
+        // Footer section
         doc.fontSize(10)
             .text(
                 'Payment is complete. Thank you for your business.',
@@ -107,16 +123,21 @@ exports.generateInvoicePDF = async (req, res) => {
 
     } catch (error) {
         console.error("PDF Generation Error:", error);
-        res.status(500).json({ success: false, message: "PDF Generation Failed" });
+        return sendError(res, 500, "PDF generation failed", error);
     }
 };
 
+// =============================================================================
+// CSV EXPORTS
+// =============================================================================
+
 /**
- * Export Sales CSV
- * Downloads a CSV file of sales data
+ * Export sales data as CSV
+ * @route GET /api/admin/reports/sales/download
  */
 exports.exportSalesCSV = async (req, res) => {
     try {
+        // Fetch orders (excluding cancelled)
         const orders = await Order.find({ status: { $ne: 'Cancelled' } })
             .populate('customer', 'fullName')
             .populate('provider', 'businessName')
@@ -124,69 +145,81 @@ exports.exportSalesCSV = async (req, res) => {
 
         console.log(`[Export] Found ${orders.length} orders`);
 
+        // Define CSV fields
         const fields = ['OrderID', 'Customer', 'Kitchen', 'Amount', 'Date', 'Status', 'PlanType'];
 
-        const data = orders.map(o => ({
-            OrderID: o._id?.toString() || 'N/A',
-            Customer: o.customer?.fullName || 'Unknown',
-            Kitchen: o.provider?.businessName || 'System',
-            Amount: o.grandTotal || 0,
-            Date: new Date(o.createdAt).toLocaleDateString(),
-            Status: o.status,
-            PlanType: o.order_type || 'One-time'
+        // Map orders to CSV data
+        const data = orders.map(order => ({
+            OrderID: order._id?.toString() || 'N/A',
+            Customer: order.customer?.fullName || 'Unknown',
+            Kitchen: order.provider?.businessName || 'System',
+            Amount: order.grandTotal || 0,
+            Date: formatDate(order.createdAt),
+            Status: order.status,
+            PlanType: order.order_type || 'One-time'
         }));
 
+        // Handle empty data
         if (data.length === 0) {
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename=sales_report.csv');
             return res.status(200).send("OrderID,Customer,Kitchen,Amount,Date,Status,PlanType\n");
         }
 
+        // Generate CSV
         try {
-            // json2csv v6 handle
             const Parser = json2csv.Parser || require('json2csv').Parser;
             const parser = new Parser({ fields });
             const csv = parser.parse(data);
 
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', 'attachment; filename=sales_report.csv');
-            res.status(200).send(csv);
+            return res.status(200).send(csv);
         } catch (parserError) {
             console.error("CSV Parser Error:", parserError);
-            res.status(500).json({ success: false, message: "CSV Formatting Failed: " + parserError.message });
+            return sendError(res, 500, `CSV formatting failed: ${parserError.message}`);
         }
 
     } catch (error) {
-        console.error("CSV Export Main Error:", error);
-        res.status(500).json({ success: false, message: "CSV Export Failed: " + error.message });
+        console.error("CSV Export Error:", error);
+        return sendError(res, 500, "CSV export failed", error);
     }
 };
 
 /**
- * Export Customers CSV
- * Downloads a CSV file of all customers
+ * Export customers data as CSV
+ * @route GET /api/admin/reports/customers/download
  */
 exports.exportCustomersCSV = async (req, res) => {
     try {
+        // Fetch all customers
         const customers = await User.find({ role: 'customer' })
             .sort({ createdAt: -1 });
 
         console.log(`[Export] Found ${customers.length} customers`);
 
+        // Define CSV fields
         const fields = ['CustomerID', 'FullName', 'Email', 'Mobile', 'Status', 'WalletBalance', 'Joins'];
 
-        const data = customers.map(c => ({
-            CustomerID: c._id?.toString() || 'N/A',
-            FullName: c.fullName || 'Unknown',
-            Email: c.email || 'N/A',
-            Mobile: c.mobile || 'N/A',
-            Status: c.status || 'active',
-            WalletBalance: c.walletBalance || 0,
-            Joins: new Date(c.createdAt).toLocaleDateString()
+        // Map customers to CSV data
+        const data = customers.map(customer => ({
+            CustomerID: customer._id?.toString() || 'N/A',
+            FullName: customer.fullName || 'Unknown',
+            Email: customer.email || 'N/A',
+            Mobile: customer.mobile || 'N/A',
+            Status: customer.status || 'active',
+            WalletBalance: customer.walletBalance || 0,
+            Joins: formatDate(customer.createdAt)
         }));
 
+        // Handle empty data
         if (data.length === 0) {
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename=customers_report.csv');
             return res.status(200).send("CustomerID,FullName,Email,Mobile,Status,WalletBalance,Joins\n");
         }
 
+        // Generate CSV
         try {
             const Parser = json2csv.Parser || require('json2csv').Parser;
             const parser = new Parser({ fields });
@@ -194,14 +227,14 @@ exports.exportCustomersCSV = async (req, res) => {
 
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', 'attachment; filename=customers_report.csv');
-            res.status(200).send(csv);
+            return res.status(200).send(csv);
         } catch (parserError) {
             console.error("CSV Parser Error:", parserError);
-            res.status(500).json({ success: false, message: "CSV Formatting Failed: " + parserError.message });
+            return sendError(res, 500, `CSV formatting failed: ${parserError.message}`);
         }
 
     } catch (error) {
         console.error("CSV Customer Export Error:", error);
-        res.status(500).json({ success: false, message: "Customer Export Failed: " + error.message });
+        return sendError(res, 500, "Customer export failed", error);
     }
 };

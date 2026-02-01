@@ -37,11 +37,15 @@ const io = new Server(server, {
     origin: "http://localhost:5173", // Frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling'], // Allow both transports
+  allowEIO3: true // Backward compatibility
 });
+
 
 // Socket.io Connection Logic
 io.on("connection", (socket) => {
+
   console.log(`🔌 New Client Connected: ${socket.id}`);
 
   // Test Event for Admin Panel Verification
@@ -62,6 +66,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+
     console.log(`❌ Client Disconnected: ${socket.id}`);
   });
 });
@@ -84,6 +89,10 @@ app.use(cors({
 
 // Parse JSON request bodies
 app.use(express.json());
+
+// Request Logger - Log all API requests in development
+const requestLogger = require('./middleware/requestLogger.middleware');
+app.use(requestLogger);
 
 // =============================================================================
 // ROUTES IMPORT
@@ -131,13 +140,92 @@ app.use("/api/provider-store", storeProfileRoutes);
 app.use("/api/admin", adminRoutes);
 
 // =============================================================================
+// CONSOLE COLORS & STYLING
+// =============================================================================
+
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+
+  // Foreground colors
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m',
+
+  // Background colors
+  bgGreen: '\x1b[42m',
+  bgBlue: '\x1b[44m',
+  bgMagenta: '\x1b[45m',
+  bgCyan: '\x1b[46m',
+};
+
+const log = {
+  info: (msg) => console.log(`${colors.cyan}ℹ${colors.reset}  ${msg}`),
+  success: (msg) => console.log(`${colors.green}✓${colors.reset}  ${msg}`),
+  warning: (msg) => console.log(`${colors.yellow}⚠${colors.reset}  ${msg}`),
+  error: (msg) => console.log(`${colors.red}✗${colors.reset}  ${msg}`),
+  server: (msg) => console.log(`${colors.magenta}◉${colors.reset}  ${msg}`),
+};
+
+// =============================================================================
 // START SERVER
 // =============================================================================
 
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log('');
+  console.log(`${colors.cyan}${colors.bright}`);
+  console.log('  ╔═══════════════════════════════════════════════════════════════╗');
+  console.log('  ║                                                               ║');
+  console.log('  ║   🍱  SMART TIFFIN SYSTEM                                     ║');
+  console.log('  ║       Backend API Server                                      ║');
+  console.log('  ║                                                               ║');
+  console.log('  ╚═══════════════════════════════════════════════════════════════╝');
+  console.log(`${colors.reset}`);
+  console.log('');
+
+  console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
+  console.log('');
+
+  log.success(`${colors.green}${colors.bright}Server is LIVE!${colors.reset}`);
+  console.log('');
+
+  console.log(`  ${colors.bright}🌐 API URL:${colors.reset}        ${colors.cyan}http://localhost:${PORT}${colors.reset}`);
+  console.log(`  ${colors.bright}📡 Socket.io:${colors.reset}      ${colors.cyan}ws://localhost:${PORT}${colors.reset}`);
+  console.log(`  ${colors.bright}🗄️  Database:${colors.reset}       ${colors.green}MongoDB Connected${colors.reset}`);
+  console.log(`  ${colors.bright}🔑 Auth:${colors.reset}           ${colors.green}JWT Enabled${colors.reset}`);
+  console.log('');
+
+  console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
+  console.log('');
+
+  console.log(`  ${colors.bright}📋 Available Routes:${colors.reset}`);
+  console.log(`     ${colors.yellow}├──${colors.reset} /api/auth          ${colors.dim}Authentication${colors.reset}`);
+  console.log(`     ${colors.yellow}├──${colors.reset} /api/admin         ${colors.dim}Admin Panel${colors.reset}`);
+  console.log(`     ${colors.yellow}├──${colors.reset} /api/provider-*    ${colors.dim}Provider APIs${colors.reset}`);
+  console.log(`     ${colors.yellow}└──${colors.reset} /                  ${colors.dim}Health Check${colors.reset}`);
+  console.log('');
+
+  console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
+  console.log('');
+
+  log.info(`Environment: ${colors.yellow}${process.env.NODE_ENV || 'development'}${colors.reset}`);
+  log.info(`Started at: ${colors.yellow}${new Date().toLocaleString()}${colors.reset}`);
+  console.log('');
+
+  console.log(`  ${colors.green}${colors.bright}🚀 Ready to accept connections!${colors.reset}`);
+  console.log('');
+  console.log(`${colors.dim}═══════════════════════════════════════════════════════════════${colors.reset}`);
+  console.log('');
+
   // Initialize Cron Jobs
   initScheduledJobs();
+  log.success('Scheduled jobs initialized');
+  console.log('');
 });

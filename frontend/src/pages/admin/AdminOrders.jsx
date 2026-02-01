@@ -25,7 +25,7 @@ const AdminOrders = () => {
     const [modalTab, setModalTab] = useState('Intelligence');
     const [showRiderModal, setShowRiderModal] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
-    const socket = useSocket();
+    const { socket } = useSocket();
 
     // -- Effects --
     const fetchOrders = async () => {

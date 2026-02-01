@@ -29,7 +29,7 @@ const initialStats = {
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const socket = useSocket();
+    const { socket } = useSocket();
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showLogs, setShowLogs] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false); // New
@@ -381,7 +381,6 @@ const AdminDashboard = () => {
                             onClick={() => navigate('/admin/customers')}
                         />
                     </div>
-            )}
 
                     {/* 3. Main Operations Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">

@@ -65,7 +65,7 @@ const {
     // Settings
     getSettings,
     updateSettings
-} = require("../controllers/admin/adminController");
+} = require("../controllers/admin");  // Now imports from modular index.js
 
 const {
     generateInvoicePDF,
