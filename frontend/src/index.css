@@ -218,6 +218,12 @@ body {
   }
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* --- SCROLLBAR --- */
 
 .custom-scrollbar::-webkit-scrollbar {

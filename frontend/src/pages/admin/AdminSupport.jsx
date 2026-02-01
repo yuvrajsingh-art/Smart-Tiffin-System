@@ -1,93 +1,108 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
+import { useSocket } from '../../context/SocketContext';
 
-// --- Mock Data Generators ---
-const USERS = ['Rahul Sharma', 'Priya Verma', 'Amit Kumar', 'Sneha Patel', 'Vikram Singh', 'Anjali Gupta'];
-const ISSUES = ['Late delivery', 'Food quality issue', 'Wrong item', 'Subscription refund', 'App crashing', 'Rider rude'];
-const KITCHENS = ['Spice Kitchen', 'Annapurna Rasoi', 'Tiffin Box HQ', 'Mom\'s Kitchen', 'Veg Delight'];
-
-const generateTicket = (idOverride) => ({
-    id: idOverride || `TKT${Math.floor(Math.random() * 9000) + 1000}`,
-    user: USERS[Math.floor(Math.random() * USERS.length)],
-    issue: ISSUES[Math.floor(Math.random() * ISSUES.length)],
-    priority: Math.random() > 0.7 ? 'Critical' : Math.random() > 0.4 ? 'High' : 'Medium',
-    status: 'New',
-    date: 'Just now',
-    kitchen: KITCHENS[Math.floor(Math.random() * KITCHENS.length)],
-    hasUnread: true,
-});
-
-const initialTickets = [
-    { id: 'TKT882', user: 'Rahul Sharma', issue: 'Late delivery by 40 minutes', priority: 'High', status: 'Open', date: '10m ago', kitchen: 'Spice Kitchen', hasUnread: true },
-    { id: 'TKT881', user: 'Priya Verma', issue: 'Food quality not satisfactory', priority: 'Medium', status: 'In Review', date: '2h ago', kitchen: 'Annapurna Rasoi', hasUnread: false },
-    { id: 'TKT880', user: 'Amit Kumar', issue: 'Wrong item delivered', priority: 'Critical', status: 'Open', date: '5h ago', kitchen: 'Annapurna Rasoi', hasUnread: true },
-];
+// --- Mock Data Generators Removed ---
+// Real data fetched from API
+const initialTickets = [];
 
 const AdminSupport = () => {
-    const [tickets, setTickets] = useState(initialTickets);
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [showConfetti, setShowConfetti] = useState(false);
+    const { socket } = useSocket();
 
-    // --- Live Simulation Effect ---
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (Math.random() > 0.7) { // 30% chance every check
-                const newTicket = generateTicket();
-                setTickets(prev => [newTicket, ...prev]);
-                toast.custom((t) => (
-                    <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-rose-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
-                        <div className="bg-rose-50 p-2 rounded-full"><span className="material-symbols-outlined text-rose-600">notification_important</span></div>
-                        <div>
-                            <p className="text-xs font-bold text-[#2D241E]">New Ticket Incoming!</p>
-                            <p className="text-[10px] text-gray-500 font-medium">#{newTicket.id}: {newTicket.issue}</p>
-                        </div>
-                    </div>
-                ), { duration: 4000 });
+    const fetchTickets = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`/api/admin/tickets`, {
+                params: {
+                    status: filter,
+                    search: searchQuery,
+                    startDate,
+                    endDate
+                },
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                const data = res.data.data;
+                setTickets(data);
             }
-        }, 8000); // Check every 8 seconds
-        return () => clearInterval(interval);
-    }, []);
+        } catch (err) {
+            console.error("Fetch Tickets Error:", err);
+            // setTickets([]); // Keep existing if error or handle gracefully
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const filteredTickets = filter === 'All' ? tickets : tickets.filter(t => t.status === filter);
+    useEffect(() => {
+        fetchTickets();
+    }, [filter, searchQuery, startDate, endDate]);
+
+    // --- Real-time Ticket Updates ---
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('new-ticket', (data) => {
+            // Add new ticket to top of list
+            const newTicket = {
+                id: data.ticket._id,
+                displayId: `TKT${data.ticket._id.toString().slice(-4).toUpperCase()}`,
+                user: data.ticket.user?.fullName || 'Unknown User',
+                issue: data.ticket.issue,
+                priority: data.ticket.priority,
+                status: data.ticket.status,
+                date: new Date(data.ticket.createdAt).toLocaleDateString(),
+                kitchen: data.ticket.relatedProvider?.businessName || 'System',
+                hasUnread: true
+            };
+
+            setTickets(prev => [newTicket, ...prev]);
+
+            // Play notification sound
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => console.log('Audio play failed', e));
+
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-rose-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
+                    <div className="bg-rose-50 p-2 rounded-full"><span className="material-symbols-outlined text-rose-600">notification_important</span></div>
+                    <div>
+                        <p className="text-xs font-bold text-[#2D241E]">New Ticket Incoming!</p>
+                        <p className="text-[10px] text-gray-500 font-medium">#{newTicket.displayId}: {newTicket.issue}</p>
+                    </div>
+                </div>
+            ), { duration: 5000 });
+        });
+
+        return () => {
+            socket.off('new-ticket');
+        };
+    }, [socket]);
+
+
+    // Server-side filtering is active, but we keep this for instant UI feedback if data is already fetched
+    const filteredTickets = tickets;
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
-            {/* Texture Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
 
-            {/* 1. Global Ticker (Top) */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Support Pulse</span>
-                </div>
-                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "System: Average response time at 14m",
-                        "New Ticket: Customer 'Rahul' reported delivery delay",
-                        "Resolved: 85 tickets closed in last 24h",
-                        "Critical Alert: Payment failure reported by 2 users",
-                        "Feedback: 4.9/5 CSAT score for today's shifts"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
+            {/* Header Block */}
 
-            {/* 2. Golden Header Block */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Support Center</h1>
-                        <span className="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-blue-500/10">LIVE_OPS</span>
+                        <span className="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-blue-500/10">Operations Center</span>
                     </div>
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-blue-500 animate-pulse"></span>
@@ -101,9 +116,44 @@ const AdminSupport = () => {
                         <input
                             type="text"
                             placeholder="Search Tickets..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-2.5 pl-9 w-32 focus:w-48 transition-all placeholder:text-gray-400"
                         />
                     </div>
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
+
+                    {/* Date Pickers */}
+                    <div className="flex items-center gap-2 px-2">
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">From</span>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">To</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                title="Clear Dates"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                        )}
+                    </div>
+
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <div className="flex gap-1">
                         {['All', 'New', 'Open', 'Resolved'].map(t => (
@@ -153,17 +203,19 @@ const AdminSupport = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100/50">
-                            {filteredTickets.length > 0 ? (
+                            {loading ? (
+                                <SkeletonLoader type="table-row" count={5} />
+                            ) : filteredTickets.length > 0 ? (
                                 filteredTickets.map((ticket) => (
                                     <tr key={ticket.id} className={`group hover:bg-white/80 transition-all cursor-pointer ${ticket.status === 'New' ? 'bg-orange-50/30' : ''}`} onClick={() => setSelectedTicket(ticket)}>
                                         <td className="px-6 py-4 pl-8">
-                                            <p className="text-sm font-bold text-[#2D241E]">#{ticket.id}</p>
+                                            <p className="text-sm font-bold text-[#2D241E]">#{ticket.displayId}</p>
                                             <p className="text-xs font-bold text-[#897a70]">{ticket.date}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="size-8 rounded-full bg-gradient-to-br from-orange-100 to-rose-100 border border-white shadow-sm flex items-center justify-center text-[11px] font-bold text-orange-800">
-                                                    {ticket.user.charAt(0)}
+                                                    {(ticket?.user || 'U').charAt(0)}
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-bold text-[#2D241E] leading-tight">{ticket.issue}</p>
@@ -213,14 +265,14 @@ const AdminSupport = () => {
                 </div>
             </div>
 
-            {/* Ticket DNA Modal */}
-            {selectedTicket && <TicketDNAModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />}
+            {/* Ticket Details Modal */}
+            {selectedTicket && <TicketDetailsModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />}
         </div>
     );
 };
 
 // --- Sub-Component: Interactive Ticket Detail Modal ---
-const TicketDNAModal = ({ ticket, onClose }) => {
+const TicketDetailsModal = ({ ticket, onClose }) => {
     const [messages, setMessages] = useState([
         { id: 1, text: `Hi, I'm facing an issue: ${ticket.issue}`, sender: 'user', time: '10:30 AM' },
         { id: 2, text: 'We are looking into it. Please wait.', sender: 'bot', time: '10:31 AM' }
@@ -248,22 +300,19 @@ const TicketDNAModal = ({ ticket, onClose }) => {
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={onClose}></div>
-            <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-5xl h-[85vh] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="bg-white rounded-2xl w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl relative z-10 flex">
 
-                {/* Texture */}
-                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-                {/* Left: Context Panel (Glass) */}
-                <div className="w-[350px] bg-white/60 backdrop-blur-xl border-r border-gray-100 p-8 flex flex-col gap-6 relative z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="size-14 rounded-[1.2rem] bg-[#2D241E] text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-orange-900/20">
-                            {ticket.user.charAt(0)}
+                {/* Left: Context Panel */}
+                <div className="w-[320px] bg-gray-50 border-r border-gray-100 p-6 flex flex-col gap-6 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="size-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
+                            {(ticket?.user || 'U').charAt(0)}
                         </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-[#2D241E] leading-none tracking-tight">{ticket.user}</h3>
-                            <p className="text-[10px] font-bold text-[#897a70] mt-1.5 uppercase tracking-wide">Loyal Customer</p>
+                        <div className="min-w-0">
+                            <h3 className="text-base font-bold text-gray-800 truncate">{ticket.user}</h3>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Customer Profile</p>
                         </div>
                     </div>
 
@@ -285,71 +334,71 @@ const TicketDNAModal = ({ ticket, onClose }) => {
                         </div>
                     </div>
 
-                    <div className="mt-auto space-y-3">
-                        <button className="w-full py-4 bg-[#2D241E] text-white rounded-2xl font-bold text-xs hover:bg-orange-600 transition-colors shadow-lg shadow-orange-900/20 uppercase tracking-wider">Mark Resolved</button>
-                        <button className="w-full py-4 bg-white border border-gray-200 text-[#2D241E] rounded-2xl font-bold text-xs hover:bg-gray-50 transition-colors uppercase tracking-wider">Escalate Case</button>
+                    <div className="mt-auto space-y-2">
+                        <button className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-xs hover:bg-black transition-colors uppercase tracking-widest">Mark Resolved</button>
+                        <button className="w-full py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-50 transition-colors uppercase tracking-widest">Escalate Case</button>
                     </div>
                 </div>
 
                 {/* Right: Interactive Chat */}
-                <div className="flex-1 flex flex-col bg-[#FDFBF9] relative z-10">
-                    <div className="h-20 border-b border-gray-100 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm">
-                        <div className="flex items-center gap-3">
-                            <span className="relative flex h-2.5 w-2.5">
+                <div className="flex-1 flex flex-col bg-white">
+                    <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0">
+                        <div className="flex items-center gap-2">
+                            <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
                             <div>
-                                <p className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Live Conversation</p>
-                                <p className="text-[10px] font-bold text-[#897a70]">Ticket #{ticket.id} • Priority Support</p>
+                                <p className="text-xs font-bold text-gray-800 uppercase tracking-widest">Live Connect</p>
+                                <p className="text-[10px] text-gray-400">#{ticket.id} • Assigned to You</p>
                             </div>
                         </div>
-                        <button onClick={onClose} className="size-10 rounded-full bg-white border border-gray-100 hover:bg-gray-50 flex items-center justify-center transition-all shadow-sm">
-                            <span className="material-symbols-outlined text-[20px] text-[#5C4D42]">close</span>
+                        <button onClick={onClose} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                            <span className="material-symbols-outlined text-[18px]">close</span>
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
                         {messages.map((msg) => (
                             <div key={msg.id} className={`flex ${msg.sender === 'agent' ? 'justify-end' : msg.sender === 'sys' ? 'justify-center' : 'justify-start'}`}>
                                 {msg.sender === 'sys' ? (
-                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-4 py-1.5 rounded-full border border-gray-200">{msg.text}</span>
+                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 uppercase tracking-tighter">{msg.text}</span>
                                 ) : (
-                                    <div className={`max-w-[75%] p-5 rounded-[1.5rem] shadow-sm relative group ${msg.sender === 'agent' ? 'bg-[#2D241E] text-white rounded-tr-sm' : 'bg-white text-[#2D241E] rounded-tl-sm border border-gray-100'}`}>
+                                    <div className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-sm ${msg.sender === 'agent' ? 'bg-gray-900 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'}`}>
                                         <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
-                                        <p className={`text-[10px] font-bold mt-2 opacity-40 ${msg.sender === 'agent' ? 'text-white' : 'text-[#2D241E]'}`}>{msg.time}</p>
+                                        <p className={`text-[10px] font-medium mt-1 opacity-40 ${msg.sender === 'agent' ? 'text-white text-right' : 'text-gray-500'}`}>{msg.time}</p>
                                     </div>
                                 )}
                             </div>
                         ))}
                         {isTyping && (
-                            <div className="flex items-center gap-2 text-gray-400 ml-4">
-                                <span className="size-1.5 bg-gray-400 rounded-full animate-bounce"></span>
-                                <span className="size-1.5 bg-gray-400 rounded-full animate-bounce delay-100"></span>
-                                <span className="size-1.5 bg-gray-400 rounded-full animate-bounce delay-200"></span>
+                            <div className="flex items-center gap-1.5 text-gray-400 ml-2">
+                                <span className="size-1 bg-gray-300 rounded-full animate-bounce"></span>
+                                <span className="size-1 bg-gray-300 rounded-full animate-bounce delay-100"></span>
+                                <span className="size-1 bg-gray-300 rounded-full animate-bounce delay-200"></span>
                             </div>
                         )}
                         <div ref={chatEndRef} />
                     </div>
 
-                    <div className="p-6 bg-white border-t border-gray-100 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
+                    <div className="p-4 bg-white border-t border-gray-100">
                         {/* Quick Responses */}
-                        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
-                            {['Refund Processed', 'Apologies for delay', 'Sending replacement w/ complementary item'].map(txt => (
-                                <button key={txt} onClick={() => setInputText(txt)} className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-bold text-[#5C4D42] hover:bg-[#2D241E] hover:text-white transition-colors whitespace-nowrap shadow-sm">{txt}</button>
+                        <div className="flex gap-1.5 mb-3 overflow-x-auto no-scrollbar">
+                            {['Refund Processed', 'Internal Error Fixed', 'Sending Voucher'].map(txt => (
+                                <button key={txt} onClick={() => setInputText(txt)} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold text-gray-500 hover:bg-gray-900 hover:text-white transition-all whitespace-nowrap">{txt}</button>
                             ))}
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder="Type your response..."
-                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-5 text-sm font-bold text-[#2D241E] shadow-inner focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all placeholder:text-gray-400"
+                                placeholder="Write a response..."
+                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-gray-200 outline-none transition-all"
                             />
-                            <button onClick={handleSend} className="size-12 bg-[#FF5722] text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 hover:scale-105 active:scale-95 transition-all">
-                                <span className="material-symbols-outlined">send</span>
+                            <button onClick={handleSend} className="size-11 bg-orange-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all shrink-0">
+                                <span className="material-symbols-outlined text-[20px]">send</span>
                             </button>
                         </div>
                     </div>

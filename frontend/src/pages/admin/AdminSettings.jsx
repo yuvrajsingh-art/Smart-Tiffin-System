@@ -1,86 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const AdminSettings = () => {
-    // --- Initial State (Loaded from localStorage or Defaults) ---
-    const getInitialSettings = () => {
-        const saved = localStorage.getItem('smart_tiffin_admin_settings');
-        if (saved) return JSON.parse(saved);
-        return {
-            // Menu Logic
-            isDailyMandatory: true,
-            dailyCutoffTime: '10:30',
-            allowSameDayEdit: false,
-            isWeeklyMandatory: true,
-            maxDishesPerTiffin: 6,
-            jainMandatory: true,
-
-            // Financials
-            baseCommission: 15,
-            premiumCommission: 12,
-            gstRate: 5,
-            minPayoutThreshold: 2000,
-
-            // System
-            appName: 'Smart Tiffin System',
-            appVersion: '2.4.0-rev4',
-            maintenanceMode: false,
-            cacheHealth: 98.2,
-
-            // Notifications
-            notifCustomerSMS: true,
-            notifCustomerPush: true,
-            notifProviderEmail: true,
-            notifProviderPush: true,
-            notifAdminUrgent: true,
-
-            // Security
-            globalFreeze: false,
-            twoFactorEnabled: true,
-            ipLockdown: false,
-
-            // --- ALL NEW SETTINGS ---
-            // Customer Policies
-            cancellationFee: 50,
-            refundSlab6h: 100,
-            refundSlab2h: 50,
-            autoWalletRefund: true,
-
-            // Compliance
-            fssaiMandatory: true,
-            gstProofRequired: false,
-            aadharVerifiedOnly: true,
-
-            // Integrations
-            smsProvider: 'Twilio',
-            mapsApiKey: 'AIzaSyA...L4',
-            smtpHost: 'smtp.sendgrid.net',
-
-            // Localization
-            currencyCode: 'INR',
-            timezone: 'Asia/Kolkata',
-            defaultLang: 'Hinglish'
-        };
-    };
-
-    const [settings, setSettings] = useState(getInitialSettings());
+    const [settings, setSettings] = useState({});
+    const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState('MenuRules');
     const [isPurging, setIsPurging] = useState(false);
     const [purgeProgress, setPurgeProgress] = useState(0);
     const [auditLogs, setAuditLogs] = useState([
         { id: 1, action: 'SYSTEM_BOOT', detail: 'Settings Engine Initialized', time: 'Just now', type: 'system' },
-        { id: 2, action: 'SYNC_COMPLETE', detail: 'Nodes initialized with v2.4.0', time: '5m ago', type: 'system' },
+        { id: 2, action: 'SYNC_COMPLETE', detail: 'Systems initialized with v2.4.0', time: '5m ago', type: 'system' },
     ]);
-
-    // Save to localStorage whenever settings change
-    useEffect(() => {
-        localStorage.setItem('smart_tiffin_admin_settings', JSON.stringify(settings));
-    }, [settings]);
 
     // --- Helper Functions ---
     const handleToggle = (key) => {
         setSettings(prev => ({ ...prev, [key]: !prev[key] }));
-        addLog('POLICY_CHANGE', `Toggled ${key} status`, 'user');
     };
 
     const handleChange = (key, val) => {
@@ -111,7 +46,7 @@ const AdminSettings = () => {
                     toast.success('System Cache Purged Successfully', {
                         style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
                     });
-                    addLog('CACHE_PURGE', 'Cleaned 4.2GB stagnant nodes', 'system');
+                    addLog('CACHE_PURGE', 'Optimized system storage', 'system');
                     return 100;
                 }
                 return prev + 10;
@@ -119,20 +54,48 @@ const AdminSettings = () => {
         }, 150);
     };
 
-    const handleSave = () => {
+    const fetchSettings = async () => {
+        try {
+            setLoading(true);
+            const { data } = await axios.get('/api/admin/settings');
+            if (data.success) {
+                setSettings(data.data);
+            }
+        } catch (err) {
+            toast.error("Failed to load settings");
+            console.error("Fetch Settings Error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const handleSave = async () => {
+        const syncPromise = axios.put('/api/admin/settings', settings);
+
         toast.promise(
-            new Promise(resolve => setTimeout(resolve, 1000)),
+            syncPromise,
             {
-                loading: 'Syncing Rules to Distributed Nodes...',
-                success: 'All Nodes Synchronized!',
-                error: 'Node Sync Failed',
+                loading: 'Syncing Rules to System Servers...',
+                success: 'All Systems Synchronized!',
+                error: (err) => err.response?.data?.message || 'Sync Failed',
             },
             {
                 style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
             }
         );
-        addLog('MASTER_SYNC', 'Global configuration push successful', 'user');
+
+        try {
+            await syncPromise;
+            addLog('MASTER_SYNC', 'Global configuration push successful', 'user');
+        } catch (err) {
+            console.error("Sync Error:", err);
+        }
     };
+
 
     const sections = [
         { id: 'MenuRules', icon: 'terminal', label: 'Tiffin Logic' },
@@ -148,41 +111,15 @@ const AdminSettings = () => {
     ];
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s] relative">
-            {/* Texture Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
 
-            {/* 1. Global Ticker (Top) */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-10">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2 border-r border-white/10">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">System Pulse</span>
-                </div>
-                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "Audit: Global configuration push successful",
-                        "Security: Node sync complete across all clusters",
-                        "Cache: 100% Health after morning purge",
-                        "Access: Admin 'Rahul' updated financial rules",
-                        "System: Auto-backup generated at 04:00 AM"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
 
             {/* 2. Golden Header Block */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">System Settings</h1>
-                        <span className="px-2 py-0.5 bg-violet-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-violet-500/10">MASTER_CONTROL</span>
+                        <span className="px-2 py-0.5 bg-violet-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-violet-500/10">Admin Console</span>
                     </div>
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-violet-500 animate-pulse"></span>
@@ -196,7 +133,7 @@ const AdminSettings = () => {
                         className="px-5 py-2.5 bg-[#2D241E] text-white rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all hover:bg-[#453831] flex items-center gap-2 shadow-xl shadow-black/10 scale-105 active:scale-95"
                     >
                         <span className="material-symbols-outlined text-[18px]">sync</span>
-                        Push Global Sync
+                        Apply Changes
                     </button>
                 </div>
             </div>
@@ -231,7 +168,7 @@ const AdminSettings = () => {
                         <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3">System Hub</h4>
                         <div className="flex items-center gap-3">
                             <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span className="text-sm font-bold">Indore Cluster Live</span>
+                            <span className="text-sm font-bold">System Online</span>
                         </div>
                     </div>
                 </div>
@@ -249,7 +186,7 @@ const AdminSettings = () => {
                     {activeSection === 'MenuRules' && (
                         <div className="space-y-6 animate-[fadeIn_0.3s] relative z-10">
                             <div className="mb-2">
-                                <h3 className="text-base font-bold text-[#2D241E] uppercase tracking-wider italic">Tiffin Protocol Rules</h3>
+                                <h3 className="text-base font-bold text-[#2D241E] uppercase tracking-wider italic">Operational Rules</h3>
                                 <p className="text-xs text-[#897a70] font-bold uppercase mt-0.5 tracking-wider">Configure core operational constraints for providers.</p>
                             </div>
 
@@ -260,7 +197,7 @@ const AdminSettings = () => {
                                     </h4>
                                     <div className="space-y-3">
                                         {[
-                                            { label: 'Daily Sync Mandatory', desc: 'Forces a 24h refresh cycle.', key: 'isDailyMandatory' },
+                                            { label: 'Daily Update Mandatory', desc: 'Forces a 24h refresh cycle.', key: 'isDailyMandatory' },
                                             { label: 'Allow Same-Day Edit', desc: 'Permit updates during live slots.', key: 'allowSameDayEdit' },
                                         ].map((rule) => (
                                             <div key={rule.key} className="flex justify-between items-center bg-white/80 p-3.5 rounded-2xl border border-white/20">
@@ -789,30 +726,9 @@ const AdminSettings = () => {
                     )}
                 </div>
             </div>
-
-            {/* --- Maintenance Protocol Overlay --- */}
-            {
-                settings.maintenanceMode && (
-                    <div className="fixed inset-0 z-[100] bg-[#2D241E]/30 backdrop-blur-3xl flex items-center justify-center p-8 pointer-events-none">
-                        <div className="p-16 bg-[#F5F2EB] rounded-[5rem] border-[12px] border-white text-center shadow-[0_50px_100px_rgba(0,0,0,0.5)] max-w-2xl relative overflow-hidden pointer-events-auto">
-                            <div className="absolute top-0 inset-x-0 h-3 bg-rose-600 animate-pulse"></div>
-                            <span className="material-symbols-outlined text-[120px] text-rose-600 mb-8 animate-bounce">settings_slow_motion_video</span>
-                            <h2 className="text-5xl font-bold text-[#2D241E] italic tracking-tighter mb-4">SYSTEM IN STASIS</h2>
-                            <p className="text-sm font-medium text-[#5C4D42] leading-relaxed mb-12 max-w-md mx-auto">
-                                The platform is currently locked in <span className="font-bold text-rose-600 italic">ADMIN STASIS</span>. All external API traffic is blocked. Service will resume once maintenance is terminated.
-                            </p>
-                            <button
-                                onClick={() => handleToggle('maintenanceMode')}
-                                className="px-12 py-5 bg-[#2D241E] text-white rounded-[2.5rem] text-xs font-bold uppercase tracking-wider shadow-2xl hover:bg-emerald-600 transition-all hover:scale-105 active:scale-95"
-                            >
-                                Terminate Protocol
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
-        </div >
+        </div>
     );
+
 };
 
 export default AdminSettings;

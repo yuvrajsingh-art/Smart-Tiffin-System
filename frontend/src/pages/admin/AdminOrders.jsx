@@ -1,51 +1,85 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
+import { useSocket } from '../../context/SocketContext';
 
 // -- Mock Data Generators --
-const generateTodayOrders = () => [
-    { id: 'ORD2901', customer: 'Rahul Sharma', kitchen: 'Annapurna Rasoi', type: 'Monthly Veg', status: 'Delivered', time: '12:45 PM', zone: 'Sector 7', rider: 'Vikram (ID: 402)' },
-    { id: 'ORD2902', customer: 'Priya Verma', kitchen: 'Spice Route', type: 'Weekly Non-Veg', status: 'In Transit', time: '1:10 PM', zone: 'Vijay Nagar', rider: 'Amit (ID: 881)' },
-    { id: 'ORD2903', customer: 'Amit Kumar', kitchen: 'Home Taste', type: 'Trial', status: 'Preparing', time: 'Pending', zone: 'Rajwada', rider: 'Searching...' },
-    { id: 'ORD2904', customer: 'Sneha Patel', kitchen: 'Annapurna Rasoi', type: 'Monthly Veg', status: 'Cancelled', time: '-', zone: 'Annapurna', rider: '-' },
-    { id: 'ORD2905', customer: 'Vikram Singh', kitchen: 'Spice Route', type: 'Trial', status: 'Out for Delivery', time: '1:30 PM', zone: 'Vijay Nagar', rider: 'Rohan (ID: 102)' },
-];
-
-const generatePastOrders = () => [
-    { id: 'ORD2899', customer: 'Anjali Gupta', kitchen: 'Spice Route', type: 'Monthly Veg', status: 'Delivered', time: 'Yesterday', zone: 'Sector 7', rider: 'Vikram (ID: 402)' },
-    { id: 'ORD2898', customer: 'Rohan Mehra', kitchen: 'Home Taste', type: 'Trial', status: 'Delivered', time: 'Yesterday', zone: 'Rajwada', rider: 'Amit (ID: 881)' },
-    { id: 'ORD2897', customer: 'Suresh Raina', kitchen: 'Annapurna Rasoi', type: 'Weekly Non-Veg', status: 'Failed', time: 'Yesterday', zone: 'Bhawarkua', rider: 'Raju (ID: 555)' },
-];
-
-const availableRiders = [
-    { id: 'R1', name: 'Suresh Kumar', dist: '0.8km', status: 'Free', rating: 4.8 },
-    { id: 'R2', name: 'Deepak Verma', dist: '1.2km', status: 'Busy', rating: 4.5 },
-    { id: 'R3', name: 'Ankit Singh', dist: '2.5km', status: 'Free', rating: 4.9 },
-    { id: 'R4', name: 'Rajesh Koothrappali', dist: '3.1km', status: 'Free', rating: 4.7 },
-];
+// -- Mock Data Generators Removed --
+const availableRiders = []; // Fetch from API in real implementation
 
 const AdminOrders = () => {
     // -- State Management --
+    // -- State Management --
+    const [searchParams] = useSearchParams();
     const [viewMode, setViewMode] = useState('Today'); // 'Today' | 'Past'
-    const [orders, setOrders] = useState(generateTodayOrders());
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
-    const [searchQuery, setSearchQuery] = useState(''); // [NEW] Search State
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('id') || '');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalTab, setModalTab] = useState('Intelligence');
     const [showRiderModal, setShowRiderModal] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
+    const { socket } = useSocket();
 
     // -- Effects --
-    useEffect(() => {
-        // Switch data based on view mode
-        if (viewMode === 'Today') {
-            setOrders(generateTodayOrders());
-        } else {
-            setOrders(generatePastOrders());
+    const fetchOrders = async () => {
+        setLoading(true);
+        try {
+            const { data } = await axios.get(`/api/admin/orders`, {
+                params: {
+                    date: viewMode.toLowerCase(),
+                    search: searchQuery,
+                    startDate,
+                    endDate
+                }
+            });
+            if (data.success) {
+                setOrders(data.data);
+            }
+        } catch (error) {
+            toast.error("Failed to load orders");
+        } finally {
+            setLoading(false);
         }
-        setFilter('All'); // Reset filter on view switch
-        setSearchQuery(''); // Reset search on view switch
-    }, [viewMode]);
+    };
+
+    // --- Real-time Order Updates ---
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('new-order', (data) => {
+            setOrders(prev => [data.order, ...prev]);
+
+            // Play sound
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => console.log('Audio play failed', e));
+
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-emerald-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
+                    <div className="bg-emerald-50 p-2 rounded-full"><span className="material-symbols-outlined text-emerald-600">local_shipping</span></div>
+                    <div>
+                        <p className="text-xs font-bold text-[#2D241E]">New Order Received!</p>
+                        <p className="text-[10px] text-gray-500 font-medium">#{data.order.id} for {data.order.customer}</p>
+                    </div>
+                </div>
+            ), { duration: 5000 });
+        });
+
+        return () => {
+            socket.off('new-order');
+        };
+    }, [socket]);
+
+    useEffect(() => {
+        fetchOrders();
+        setFilter('All');
+    }, [viewMode, searchQuery, startDate, endDate]);
 
     // -- Handlers --
     const handleCallCustomer = (order) => {
@@ -64,36 +98,78 @@ const AdminOrders = () => {
         }, 800);
     };
 
-    const handleAssignRider = (rider) => {
-        if (!selectedOrder) return;
+    const handleExportCSV = async () => {
+        try {
+            toast.loading("Preparing Sales Report...");
+            const token = localStorage.getItem('token');
+            const res = await axios.get('/api/admin/reports/sales/download', {
+                responseType: 'blob',
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-        toast.loading(`Assigning ${rider.name} to #${selectedOrder.id}...`);
-
-        setTimeout(() => {
-            // Update local state
-            setOrders(prev => prev.map(o =>
-                o.id === selectedOrder.id
-                    ? { ...o, rider: `${rider.name.split(' ')[0]} (ID: ${rider.id})`, status: o.status === 'Preparing' ? 'In Transit' : o.status }
-                    : o
-            ));
-
-            // Also update the selected order in view to reflect change immediately if modal stays open (though we close it)
-            setSelectedOrder(prev => ({ ...prev, rider: `${rider.name.split(' ')[0]} (ID: ${rider.id})` }));
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `sales_report_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
 
             toast.dismiss();
-            toast.success(`Rider Assigned Successfully!`, { icon: '🛵' });
-            setShowRiderModal(false);
-        }, 1200);
+            toast.success("Sales Report Downloaded!");
+        } catch (error) {
+            toast.dismiss();
+            console.error("Export Error:", error);
+            toast.error("Failed to export sales report");
+        }
     };
 
-    const handleStatusUpdate = (newStatus) => {
+    const handleAssignRider = async (rider) => {
         if (!selectedOrder) return;
+        const token = localStorage.getItem('token');
+        const orderId = selectedOrder._id || selectedOrder.id;
 
-        setOrders(prev => prev.map(o =>
-            o.id === selectedOrder.id ? { ...o, status: newStatus } : o
-        ));
-        setSelectedOrder(prev => ({ ...prev, status: newStatus }));
-        toast.success(`Order Marked as ${newStatus}`);
+        try {
+            toast.loading(`Assigning ${rider.name} to order...`);
+
+            const res = await axios.put(
+                `/api/admin/orders/${orderId}/rider`,
+                { riderName: rider.name, riderId: rider.id },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                fetchOrders();
+                toast.dismiss();
+                toast.success(`Rider Assigned Successfully!`, { icon: '🛵' });
+                setShowRiderModal(false);
+            }
+        } catch (err) {
+            toast.dismiss();
+            toast.error(err.response?.data?.message || 'Failed to assign rider');
+        }
+    };
+
+    const handleStatusUpdate = async (newStatus) => {
+        if (!selectedOrder) return;
+        const token = localStorage.getItem('token');
+        const orderId = selectedOrder._id || selectedOrder.id;
+
+        try {
+            const res = await axios.put(
+                `/api/admin/orders/${orderId}/status`,
+                { status: newStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                fetchOrders();
+                setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+                toast.success(`Order Marked as ${newStatus}`);
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to update status');
+        }
     };
 
     // -- Utilities --
@@ -114,9 +190,9 @@ const AdminOrders = () => {
         const matchesStatus = filter === 'All' ? true : o.status === filter;
         // 2. Search Filter (ID, Customer, Kitchen) [NEW]
         const matchesSearch = searchQuery === '' ? true :
-            o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            o.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            o.kitchen.toLowerCase().includes(searchQuery.toLowerCase());
+            (o?.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (o?.customer || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (o?.kitchen || '').toLowerCase().includes(searchQuery.toLowerCase());
 
         return matchesStatus && matchesSearch;
     });
@@ -130,46 +206,27 @@ const AdminOrders = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 animate-[fadeIn_0.5s]">
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10">
 
-            {/* Texture Background */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
-
-            {/* Live Ticker */}
-            <div className="w-full bg-[#2D241E] text-white overflow-hidden py-1.5 rounded-xl shadow-lg flex items-center gap-4 px-4 relative z-0">
-                <div className="flex items-center gap-1 shrink-0 z-10 bg-[#2D241E] pr-2">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
-                    <span className="text-xs font-bold uppercase tracking-wider text-red-400">Logistics Live</span>
-                </div>
-                <div className="flex gap-8 animate-[marquee_20s_linear_infinite] whitespace-nowrap opacity-80 hover:opacity-100 transition-opacity">
-                    {[
-                        "Heavy traffic reported in Sector 7 - Re-routing drivers",
-                        "Order #ORD2901 Delivered safely by Vikram",
-                        "Kitchen 'Spice Route' is experiencing high volume",
-                        "New 'Winter Special' batch pickup initiated",
-                        "Rider #441 is currently offline"
-                    ].map((item, i) => (
-                        <span key={i} className="text-[10px] font-bold flex items-center gap-2">
-                            <span className="size-1 bg-white/20 rounded-full"></span>
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            </div>
 
             {/* 1. Header & Live Toggle */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                 <div className="space-y-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Order Dispatch</h1>
-                        <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-red-500/10">LIVE_ROOM</span>
+                        <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-red-500/10">Operations Center</span>
                     </div>
                     <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-red-500 animate-pulse"></span>
                         {viewMode === 'Today' ? 'Live monitoring of active deliveries' : 'Historical archive of past orders'}
+                        {/* Simulation Trigger (Dev Only) */}
+                        <button
+                            onClick={() => socket && socket.emit('test-new-order')}
+                            className="ml-4 px-2 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] hover:bg-gray-300"
+                            title="Click to simulate incoming order for testing"
+                        >
+                            Simulate Incoming Order
+                        </button>
                     </p>
                 </div>
 
@@ -185,6 +242,39 @@ const AdminOrders = () => {
                         />
                     </div>
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
+
+                    {/* Date Pickers */}
+                    <div className="flex items-center gap-2 px-2">
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">From</span>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">To</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
+                            />
+                        </div>
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => { setStartDate(''); setEndDate(''); }}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                title="Clear Dates"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <button
                         onClick={() => setViewMode('Today')}
                         className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all ${viewMode === 'Today' ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#5C4D42] hover:bg-white/80'}`}
@@ -198,6 +288,13 @@ const AdminOrders = () => {
                         Past Orders
                     </button>
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                    <button
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 text-[10px] font-bold hover:bg-blue-100 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">download</span>
+                        Export
+                    </button>
                     <button
                         onClick={handlePrintManifest}
                         disabled={isPrinting}
@@ -257,7 +354,9 @@ const AdminOrders = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filteredOrders.length > 0 ? (
+                            {loading ? (
+                                <SkeletonLoader type="table-row" count={5} />
+                            ) : filteredOrders.length > 0 ? (
                                 filteredOrders.map((order) => (
                                     <tr key={order.id} className="group hover:bg-white/60 transition-colors">
                                         <td className="px-6 py-4">
@@ -298,7 +397,7 @@ const AdminOrders = () => {
                                                 <button
                                                     onClick={() => setSelectedOrder(order)}
                                                     className="size-8 rounded-lg bg-[#2D241E] text-white flex items-center justify-center hover:bg-orange-600 transition-all shadow-md shadow-black/10"
-                                                    title="Track Order DNA"
+                                                    title="Track Order"
                                                 >
                                                     <span className="material-symbols-outlined text-[16px]">near_me</span>
                                                 </button>
@@ -331,42 +430,39 @@ const AdminOrders = () => {
                 </div>
             </div>
 
-            {/* Order DNA Monitor Modal */}
+            {/* Order Details Modal */}
             {selectedOrder && !showRiderModal && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={() => setSelectedOrder(null)}></div>
-                    <div className="bg-[#F5F2EB] rounded-[3rem] w-full max-w-3xl overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] animate-[scaleIn_0.3s] relative z-10 border-[12px] border-white ring-1 ring-black/5 flex flex-col max-h-[92vh]">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedOrder(null)}></div>
+                    <div className="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]">
 
-                        {/* Texture Overlay */}
-                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2D241E 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-                        {/* Modal Header [DNA STYLE] */}
-                        <div className="relative z-10 p-8 pb-4 bg-white/80 backdrop-blur-xl border-b border-[#2D241E]/5 flex justify-between items-start shrink-0">
+                        {/* Compact Header */}
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                             <div>
-                                <h3 className="text-2xl font-bold text-[#2D241E]">Order DNA</h3>
-                                <p className="text-[11px] font-bold text-[#897a70] mt-1">Live tracking & cluster logistics intelligence</p>
+                                <h3 className="text-base font-bold text-gray-800">Order Details</h3>
+                                <p className="text-xs text-gray-500">Live tracking & order info</p>
                             </div>
-                            <button onClick={() => setSelectedOrder(null)} className="size-8 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all">
+                            <button onClick={() => setSelectedOrder(null)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
                                 <span className="material-symbols-outlined text-[18px]">close</span>
                             </button>
                         </div>
 
                         {/* Tab Navigation */}
-                        <div className="relative z-10 px-8 py-4 shrink-0 overflow-x-auto no-scrollbar bg-white/40 backdrop-blur-sm border-b border-[#2D241E]/5">
-                            <div className="flex gap-1 bg-white/60 p-1.5 rounded-[1.5rem] border border-white/50 w-fit shadow-sm">
+                        <div className="px-4 py-3 shrink-0 overflow-x-auto no-scrollbar border-b border-gray-100">
+                            <div className="flex gap-1 bg-gray-50 p-1 rounded-xl w-fit">
                                 {[
-                                    { id: 'Intelligence', label: 'Intelligence', icon: 'near_me' },
-                                    { id: 'Manifest', label: 'Manifest', icon: 'list_alt' },
-                                    { id: 'Logistics', label: 'Logistics', icon: 'local_shipping' },
-                                    { id: 'Finance', label: 'Financials', icon: 'payments' },
-                                    { id: 'Audit', label: 'Audit Trail', icon: 'history' },
+                                    { id: 'Intelligence', label: 'Overview', icon: 'near_me' },
+                                    { id: 'Manifest', label: 'Items', icon: 'list_alt' },
+                                    { id: 'Logistics', label: 'Delivery', icon: 'local_shipping' },
+                                    { id: 'Finance', label: 'Payment', icon: 'payments' },
+                                    { id: 'Audit', label: 'History', icon: 'history' },
                                 ].map(t => (
                                     <button
                                         key={t.id}
                                         onClick={() => setModalTab(t.id)}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${modalTab === t.id ? 'bg-[#2D241E] text-white shadow-lg' : 'text-[#897a70] hover:bg-white hover:text-[#2D241E]'}`}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${modalTab === t.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
-                                        <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
+                                        <span className="material-symbols-outlined text-[14px]">{t.icon}</span>
                                         {t.label}
                                     </button>
                                 ))}
@@ -374,7 +470,7 @@ const AdminOrders = () => {
                         </div>
 
                         {/* Modal Content */}
-                        <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar px-8 pb-4 space-y-8 pt-4">
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4">
 
                             {/* Order Identification Card */}
                             <div className="p-5 bg-white border border-[#2D241E]/5 rounded-[2.5rem] flex items-center gap-6 shadow-sm">
@@ -422,7 +518,7 @@ const AdminOrders = () => {
                                     <div className="space-y-4">
                                         <h5 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider flex items-center gap-2">
                                             <span className="material-symbols-outlined text-orange-500 text-[18px]">route</span>
-                                            Delivery Pulse
+                                            Delivery Timeline
                                         </h5>
                                         <div className="p-6 bg-white/60 border border-white/50 rounded-[2.5rem] space-y-6 shadow-sm">
                                             {[
@@ -449,7 +545,7 @@ const AdminOrders = () => {
                                             <span className="material-symbols-outlined text-blue-400">near_me</span>
                                         </div>
                                         <div className="p-5 bg-violet-50/80 border border-violet-100 rounded-[2rem] flex items-center justify-between shadow-sm">
-                                            <div><p className="text-[10px] font-bold text-violet-900/50 uppercase tracking-wider">Fleet Sync</p><h5 className="text-xl font-bold text-violet-900 italic tracking-tight">{selectedOrder.rider}</h5></div>
+                                            <div><p className="text-[10px] font-bold text-violet-900/50 uppercase tracking-wider">Assigned Rider</p><h5 className="text-xl font-bold text-violet-900 italic tracking-tight">{selectedOrder.rider}</h5></div>
                                             <span className="material-symbols-outlined text-violet-400">delivery_dining</span>
                                         </div>
                                     </div>
@@ -649,7 +745,7 @@ const AdminOrders = () => {
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="size-10 bg-white rounded-full flex items-center justify-center text-gray-600 font-bold text-xs group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors shadow-sm">
-                                            {rider.name.charAt(0)}
+                                            {(rider?.name || 'R').charAt(0)}
                                         </div>
                                         <div className="text-left">
                                             <p className="text-xs font-bold text-[#2D241E]">{rider.name}</p>
