@@ -83,7 +83,23 @@ const subscriptionSchema = new mongoose.Schema({
 
     pauseFrom: Date,
     pauseTo: Date,
-    pauseReason: String
+    pauseReason: String,
+    
+    // New fields for subscription management
+    pausedDates: [String], // Array of date strings (YYYY-MM-DD)
+    planType: {
+        type: String,
+        enum: ["veg", "non-veg", "jain"],
+        default: "veg"
+    },
+    totalAmount: Number,
+    mealTypes: [{
+        type: String,
+        enum: ["breakfast", "lunch", "dinner"]
+    }],
+    upgradedAt: Date,
+    cancelledAt: Date,
+    cancellationReason: String
 
 }, { timestamps: true });
 

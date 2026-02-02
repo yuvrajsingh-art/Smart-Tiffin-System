@@ -52,7 +52,16 @@ const userSchema = new mongoose.Schema({
   },
   status: {
      type: String, enum: ["active", "banned"], default: "active" 
-  }
+  },
+  
+  // Profile fields
+  dietPreference: {
+    type: String,
+    enum: ["Pure Veg", "Non-Veg", "Jain"],
+    default: "Pure Veg"
+  },
+  deletedAt: Date,
+  deletionReason: String
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

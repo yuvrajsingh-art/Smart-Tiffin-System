@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Logo from "../Logo.jsx";
+import Logo from "../ui/Logo.jsx";
 import { MdDashboard, MdOutlineRestaurantMenu } from "react-icons/md";
 import { FaUserGroup } from "react-icons/fa6";
 import { CiDeliveryTruck } from "react-icons/ci";
