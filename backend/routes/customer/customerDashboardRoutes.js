@@ -9,7 +9,7 @@ const {
 const { protect } = require("../../middleware/authMiddleware.middleware");
 
 // Dashboard routes
-router.get("/dashboard", protect, getCustomerDashboard);
+router.get("/", protect, getCustomerDashboard);
 router.get("/live-tracking", protect, getLiveTracking);
 
 module.exports = router;

@@ -1,37 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const MessDetails = () => {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState('menu');
+    const [provider, setProvider] = useState(null);
+    const [menuData, setMenuData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Data
-    const provider = {
-        id: id,
-        name: "Annapurna Mess Services",
-        image: "https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2670&auto=format&fit=crop",
-        banner: "https://images.unsplash.com/photo-1543353071-873f17a7a088?q=80&w=2670&auto=format&fit=crop",
-        type: "Veg & Non-Veg",
-        rating: 4.8,
-        reviews: 120,
-        address: "Kothrud, Pune",
-        description: "Authentic Maharashtrian Thali. Serving since 2012.",
-        features: ["Hygiene Verified", "Sunday Sweet", "Ghar Jaisa Taste"],
-        reviewsList: [
-            { id: 1, user: "Rohan D.", rating: 5, date: "2 days ago", text: "Best Paneer Masala I've had in Pune! Reminds me of home." },
-            { id: 2, user: "Neha S.", rating: 4, date: "1 week ago", text: "Good variety, but Sunday delivery is sometimes late. Food is tasty." },
-            { id: 3, user: "Amit K.", rating: 5, date: "2 weeks ago", text: "Hygiene is top notch. Packaging is spill-proof." }
-        ],
-        menu: [
-            { day: "Mon", lunch: "Paneer Butter Masala, 3 Rotis, Rice", dinner: "Aloo Gobi Dry, 3 Rotis, Dal", badges: ["Bestseller"] },
-            { day: "Tue", lunch: "Aloo Matar, 3 Rotis, Jeera Rice", dinner: "Sev Bhaji, 3 Rotis, Khichdi" },
-            { day: "Wed", lunch: "Veg Kofta Curry, 3 Rotis, Rice", dinner: "Dal Fry, Jeera Rice, Salad" },
-            { day: "Thu", lunch: "Baingan Bharta, 3 Rotis, Rice", dinner: "Methi Matar, 3 Rotis, Dal", badges: ["Chef's Special"] },
-            { day: "Fri", lunch: "Chole Masala, 2 Bhature, Rice", dinner: "Soyabean Curry, 3 Rotis" },
-            { day: "Sat", lunch: "Rajma Chawal, Curd, Salad", dinner: "Egg Curry / Paneer Bhurji", badges: ["Protein Heavy"] },
-            { day: "Sun", lunch: "Puran Poli Special Thali", dinner: "Light Khichdi Kadhi", badges: ["Sweet Treat"] },
-        ]
+    const fetchDetails = async () => {
+        setLoading(true);
+        try {
+            // Fetch provider details
+            const { data: detailData } = await axios.get(`/api/discovery/mess/${id}`);
+            if (detailData.success) {
+                setProvider(detailData.data);
+
+                // Fetch public menu using providerId from details
+                const { data: menuResp } = await axios.get(`/api/customer/menu/public/${detailData.data.providerId}`);
+                if (menuResp.success) {
+                    setMenuData(menuResp.data);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching details:", error);
+            toast.error("Failed to load mess details");
+        } finally {
+            setLoading(false);
+        }
     };
+
+    useEffect(() => {
+        fetchDetails();
+    }, [id]);
+
+    if (loading) return (
+        <div className="flex h-screen items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary"></div>
+        </div>
+    );
+
+    if (!provider) return (
+        <div className="text-center py-20">
+            <h2 className="text-2xl font-bold">Provider not found</h2>
+            <Link to="/customer/find-mess" className="text-primary hover:underline">Go back to discovery</Link>
+        </div>
+    );
+
+    const menuDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return (
         <div className="max-w-6xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
@@ -100,30 +118,33 @@ const MessDetails = () => {
                                     This Week's Menu
                                 </h3>
                                 <div className="grid gap-3">
-                                    {provider.menu.map((day, idx) => (
-                                        <div key={idx} className="relative flex gap-4 p-4 rounded-2xl hover:bg-orange-50/50 border border-transparent hover:border-orange-100 transition-colors group overflow-hidden">
-                                            {/* Badges */}
-                                            {day.badges && (
-                                                <div className="absolute top-0 right-0 bg-primary/10 text-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">
-                                                    {day.badges[0]}
-                                                </div>
-                                            )}
+                                    {menuData ? (
+                                        menuDays.map((day, idx) => (
+                                            <div key={idx} className="relative flex gap-4 p-4 rounded-2xl hover:bg-orange-50/50 border border-transparent hover:border-orange-100 transition-colors group overflow-hidden">
+                                                {menuData[day]?.badges?.length > 0 && (
+                                                    <div className="absolute top-0 right-0 bg-primary/10 text-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">
+                                                        {menuData[day].badges[0]}
+                                                    </div>
+                                                )}
 
-                                            <div className="w-12 h-12 rounded-xl bg-[#2D241E] text-white flex items-center justify-center font-black text-sm uppercase shadow-sm shrink-0">
-                                                {day.day}
-                                            </div>
-                                            <div className="flex-1 grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-[10px] text-[#5C4D42]/60 font-bold uppercase tracking-wider mb-0.5">Lunch</p>
-                                                    <p className="text-sm font-bold text-[#2D241E] line-clamp-1 group-hover:text-primary transition-colors">{day.lunch}</p>
+                                                <div className="w-12 h-12 rounded-xl bg-[#2D241E] text-white flex items-center justify-center font-black text-sm uppercase shadow-sm shrink-0">
+                                                    {day}
                                                 </div>
-                                                <div>
-                                                    <p className="text-[10px] text-[#5C4D42]/60 font-bold uppercase tracking-wider mb-0.5">Dinner</p>
-                                                    <p className="text-sm font-bold text-[#2D241E] line-clamp-1 text-opacity-80">{day.dinner}</p>
+                                                <div className="flex-1 grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <p className="text-[10px] text-[#5C4D42]/60 font-bold uppercase tracking-wider mb-0.5">Lunch</p>
+                                                        <p className="text-sm font-bold text-[#2D241E] line-clamp-1 group-hover:text-primary transition-colors">{menuData[day]?.lunch}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] text-[#5C4D42]/60 font-bold uppercase tracking-wider mb-0.5">Dinner</p>
+                                                        <p className="text-sm font-bold text-[#2D241E] line-clamp-1 text-opacity-80">{menuData[day]?.dinner}</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        <p className="text-gray-400 text-center py-10 italic">Menu data not available for this provider yet.</p>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -140,6 +161,16 @@ const MessDetails = () => {
                                         </span>
                                     ))}
                                 </div>
+                                <div className="mt-6">
+                                    <h4 className="text-sm font-black text-[#2D241E] mb-2">Cuisines Offered</h4>
+                                    <div className="flex flex-wrap gap-1">
+                                        {provider.cuisines.map((c, i) => (
+                                            <span key={i} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-md text-[10px] font-bold border border-orange-100">
+                                                {c}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -149,27 +180,7 @@ const MessDetails = () => {
                                     <span className="material-symbols-outlined text-amber-500">star</span>
                                     Student Reviews
                                 </h3>
-                                {provider.reviewsList.map((review) => (
-                                    <div key={review.id} className="p-4 rounded-2xl bg-white/50 border border-white/60 shadow-sm hover:shadow-md transition-all">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <div className="size-8 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center font-black text-xs text-orange-700">
-                                                    {review.user.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-[#2D241E]">{review.user}</p>
-                                                    <p className="text-[9px] text-gray-400 font-medium">{review.date}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex text-amber-400 text-[10px]">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <span key={i} className={`material-symbols-outlined text-[14px] ${i < review.rating ? 'fill-current' : 'text-gray-200'}`}>star</span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-[#5C4D42] leading-relaxed font-medium">"{review.text}"</p>
-                                    </div>
-                                ))}
+                                <p className="text-gray-400 text-center py-10 italic">No reviews yet for this provider.</p>
                             </div>
                         )}
                     </div>

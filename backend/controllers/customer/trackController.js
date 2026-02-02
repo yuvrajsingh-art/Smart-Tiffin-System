@@ -1,7 +1,7 @@
 const Order = require("../../models/order.model");
 const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
-const { Menu } = require("../../models/menu.model");
+const Menu = require("../../models/menu.model");
 
 // Get live tracking details for active order
 exports.getLiveTracking = async (req, res) => {
@@ -9,7 +9,7 @@ exports.getLiveTracking = async (req, res) => {
         const customerId = req.user._id;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
@@ -19,7 +19,7 @@ exports.getLiveTracking = async (req, res) => {
             orderDate: { $gte: today, $lt: tomorrow },
             status: { $nin: ['delivered', 'cancelled'] }
         }).populate('menu', 'name mainDish image mealType spiceLevel')
-          .populate('provider', 'fullName');
+            .populate('provider', 'fullName');
 
         if (!activeOrder) {
             return res.status(404).json({
@@ -153,9 +153,9 @@ exports.updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
         const { status } = req.body;
-        
+
         const validStatuses = ['pending', 'confirmed', 'preparing', 'cooking', 'ready', 'packed', 'out_for_delivery', 'delivered', 'cancelled'];
-        
+
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
                 success: false,
@@ -197,7 +197,7 @@ exports.updateOrderStatus = async (req, res) => {
 const generateTimeline = (order) => {
     const now = new Date();
     const orderTime = new Date(order.createdAt);
-    
+
     const steps = [
         {
             title: 'Order Placed',
@@ -223,7 +223,7 @@ const generateTimeline = (order) => {
         },
         {
             title: 'Delivered',
-            time: order.status === 'delivered' 
+            time: order.status === 'delivered'
                 ? new Date(order.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                 : `Est. ${new Date(orderTime.getTime() + 90 * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
             active: order.status === 'delivered',
@@ -238,7 +238,7 @@ const generateTimeline = (order) => {
 // Helper function to format menu items
 const formatMenuItems = (menu) => {
     if (!menu) return "Delicious meal";
-    
+
     const items = [];
     if (menu.bread?.count && menu.bread?.type) {
         items.push(`${menu.bread.count} ${menu.bread.type}`);
@@ -247,6 +247,6 @@ const formatMenuItems = (menu) => {
     if (menu.rice) items.push(menu.rice);
     if (menu.accompaniments?.salad) items.push("Salad");
     if (menu.accompaniments?.pickle) items.push("Pickle");
-    
+
     return items.length > 0 ? items.join(", ") : "Delicious meal";
 };

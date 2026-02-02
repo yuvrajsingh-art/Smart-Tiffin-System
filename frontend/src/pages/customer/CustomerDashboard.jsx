@@ -1,15 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/UserContext';
+import axios from 'axios';
 
 const CustomerDashboard = () => {
     const { hasActiveSubscription, subscription } = useSubscription();
-    // For manual testing, you can force isActive to true if needed, or rely on context
-    const isActive = hasActiveSubscription();
+    const [dashboardData, setDashboardData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [trackerState] = useState(2);
+    const { user } = useAuth();
+    const userName = user?.name || dashboardData?.userName || 'Customer';
 
-    const [trackerState] = useState(2); // 1: Prep, 2: Cooking, 3: Packed, 4: Out, 5: Delivered
-    const userName = localStorage.getItem('userName') || 'Student';
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const { data } = await axios.get('/api/customer/dashboard');
+                if (data.success) {
+                    setDashboardData(data.data);
+                }
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    const isActive = hasActiveSubscription();
     const isImpersonating = localStorage.getItem('impersonationMode') === 'true';
+
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+    );
 
     return (
         <div className="w-full mx-auto flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
@@ -27,7 +53,6 @@ const CustomerDashboard = () => {
                     <button
                         onClick={() => {
                             localStorage.removeItem('impersonationMode');
-                            localStorage.removeItem('userName');
                             localStorage.setItem('userRole', 'admin');
                             window.history.back();
                         }}
@@ -79,7 +104,7 @@ const CustomerDashboard = () => {
                                         </div>
                                         <div className="bg-white/50 backdrop-blur-md px-4 py-2 rounded-xl border border-white/60 text-right">
                                             <p className="text-[10px] font-bold text-gray-400 uppercase">Estimated Arrival</p>
-                                            <p className="text-base font-black text-[#2D241E]">12:45 PM</p>
+                                            <p className="text-base font-black text-[#2D241E]">{subscription?.lunchTime || "12:45 PM"}</p>
                                         </div>
                                     </div>
 
@@ -116,16 +141,30 @@ const CustomerDashboard = () => {
                                     {/* Lunch */}
                                     <div className="min-w-[180px] bg-orange-50/50 p-4 rounded-2xl border border-orange-100 flex-1 relative overflow-hidden">
                                         <span className="bg-white/80 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-orange-600 absolute top-3 right-3">Lunch</span>
-                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">🍛</div>
-                                        <h4 className="font-bold text-[#2D241E] text-sm">Paneer Masala Thali</h4>
-                                        <p className="text-[10px] text-[#5C4D42] mt-1">3 Rotis, Jeera Rice, Dal Fry</p>
+                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">
+                                            {dashboardData?.todaysMenu?.lunch?.emoji || "🍛"}
+                                        </div>
+                                        <h4 className="font-bold text-[#2D241E] text-sm">
+                                            {dashboardData?.todaysMenu?.lunch?.name || "Standard Thali"}
+                                        </h4>
+                                        <p className="text-[10px] text-[#5C4D42] mt-1">
+                                            {dashboardData?.todaysMenu?.lunch?.items || "3 Rotis, Dal, Sabzi, Rice"}
+                                        </p>
+                                        <p className="text-[9px] font-bold text-orange-400 mt-2">{subscription?.lunchTime}</p>
                                     </div>
                                     {/* Dinner */}
                                     <div className="min-w-[180px] bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex-1 relative overflow-hidden opacity-60">
                                         <span className="bg-white/80 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-blue-600 absolute top-3 right-3">Dinner</span>
-                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">🌙</div>
-                                        <h4 className="font-bold text-[#2D241E] text-sm">Light Khichdi Kadhi</h4>
-                                        <p className="text-[10px] text-[#5C4D42] mt-1">With Papad & Pickle</p>
+                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">
+                                            {dashboardData?.todaysMenu?.dinner?.emoji || "🌙"}
+                                        </div>
+                                        <h4 className="font-bold text-[#2D241E] text-sm">
+                                            {dashboardData?.todaysMenu?.dinner?.name || "Light Dinner"}
+                                        </h4>
+                                        <p className="text-[10px] text-[#5C4D42] mt-1">
+                                            {dashboardData?.todaysMenu?.dinner?.items || "Khichdi Kadhi / Rotis"}
+                                        </p>
+                                        <p className="text-[9px] font-bold text-blue-400 mt-2">{subscription?.dinnerTime}</p>
                                     </div>
                                 </div>
                             </div>
@@ -144,8 +183,10 @@ const CustomerDashboard = () => {
                                 <div className="relative z-10">
                                     <h3 className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">Wallet Balance</h3>
                                     <div className="flex items-baseline gap-1 mb-4">
-                                        <span className="text-2xl font-bold">₹2,450</span>
-                                        <span className="text-[10px] font-bold text-green-400">+₹500 added</span>
+                                        <span className="text-2xl font-bold">₹{dashboardData?.walletBalance?.toLocaleString() || "0"}</span>
+                                        {dashboardData?.recentAddition > 0 && (
+                                            <span className="text-[10px] font-bold text-green-400">+₹{dashboardData.recentAddition} added</span>
+                                        )}
                                     </div>
 
                                     <Link to="/customer/wallet" className="flex items-center justify-between bg-white/10 hover:bg-white/20 p-3 rounded-xl transition-all border border-white/5">
@@ -180,11 +221,11 @@ const CustomerDashboard = () => {
                             {/* Streak/Reward (Gamification) */}
                             <div className="glass-panel p-5 rounded-[2rem] flex items-center gap-4 border-2 border-orange-100 bg-orange-50/30">
                                 <div className="size-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl font-black">
-                                    🔥
+                                    {(dashboardData?.streak > 0) ? "🔥" : "❄️"}
                                 </div>
                                 <div>
-                                    <h4 className="font-black text-[#2D241E]">12 Day Streak!</h4>
-                                    <p className="text-xs text-[#5C4D42] font-medium">You saved ₹120 this month via easy-ti.</p>
+                                    <h4 className="font-black text-[#2D241E]">{dashboardData?.streak || 0} Day Streak!</h4>
+                                    <p className="text-xs text-[#5C4D42] font-medium">Keep ordering to grow your streak.</p>
                                 </div>
                             </div>
 

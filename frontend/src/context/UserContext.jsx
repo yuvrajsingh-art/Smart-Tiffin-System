@@ -72,7 +72,8 @@ export const UserProvider = ({ children }) => {
 
             if (data.token) {
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('userRole', data.user.role);
+                // We shouldn't store name/role in localStorage as per user request
+                // The user object in state will be the source of truth
                 setToken(data.token);
                 setUser(data.user);
 
@@ -98,7 +99,6 @@ export const UserProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
         setToken(null);
         setUser(null);
         toast.success("Logged out successfully");

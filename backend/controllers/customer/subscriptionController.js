@@ -2,12 +2,13 @@ const Subscription = require("../../models/subscription.model");
 const User = require("../../models/user.model");
 const CustomerWallet = require("../../models/customerWallet.model");
 const Transaction = require("../../models/transaction.model");
+const StoreProfile = require("../../models/storeProfile.model");
 
 // Get subscription details for management
 exports.getSubscriptionDetails = async (req, res) => {
     try {
         const customerId = req.user._id;
-        
+
         // Get active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
@@ -52,7 +53,7 @@ exports.getSubscriptionDetails = async (req, res) => {
             },
             {
                 id: "gold_weightloss",
-                name: "Gold Weight Loss", 
+                name: "Gold Weight Loss",
                 price: 5000,
                 features: "High Protein, Low Carbs",
                 tag: "Best Value",
@@ -130,9 +131,11 @@ exports.managePausedDays = async (req, res) => {
             const transaction = new Transaction({
                 customer: customerId,
                 type: 'credit',
+                transactionType: 'Refund',
                 amount: refundAmount,
                 description: `Refund for ${pausedDates.length} paused days`,
-                status: 'completed'
+                referenceId: `REF-${Date.now()}`,
+                status: 'Success'
             });
             await transaction.save();
         }
@@ -210,9 +213,11 @@ exports.upgradeSubscription = async (req, res) => {
         const transaction = new Transaction({
             customer: customerId,
             type: 'debit',
+            transactionType: 'Subscription Purchase',
             amount: upgradeAmount,
             description: `Subscription upgraded to ${newPlan.name}`,
-            status: 'completed'
+            referenceId: `UPG-${Date.now()}`,
+            status: 'Success'
         });
         await transaction.save();
 
@@ -287,9 +292,11 @@ exports.cancelSubscription = async (req, res) => {
         const transaction = new Transaction({
             customer: customerId,
             type: 'credit',
+            transactionType: 'Refund',
             amount: refundAmount,
             description: 'Subscription cancellation refund',
-            status: 'completed'
+            referenceId: `CAN-${Date.now()}`,
+            status: 'Success'
         });
         await transaction.save();
 
@@ -309,20 +316,166 @@ exports.cancelSubscription = async (req, res) => {
     }
 };
 
+// Purchase new subscription
+exports.purchaseSubscription = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+        const {
+            providerId,
+            planName,
+            totalAmount,
+            durationInDays,
+            startDate,
+            mealType,
+            lunchTime,
+            dinnerTime,
+            deliveryAddress,
+            planType
+        } = req.body;
+
+        console.log("Subscription Purchase Request:", {
+            customerId,
+            providerId,
+            planName,
+            totalAmount,
+            mealType,
+            planType
+        });
+
+        // 1. Basic Validation
+        if (!providerId || !totalAmount || !planName) {
+            console.log("Missing fields detected:", { providerId, totalAmount, planName });
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required subscription details'
+            });
+        }
+
+        // Find the actual provider User ID from StoreProfile
+        const store = await StoreProfile.findById(providerId);
+        if (!store) {
+            console.log("Store not found for ID:", providerId);
+            return res.status(404).json({
+                success: false,
+                message: 'Provider store not found'
+            });
+        }
+        const providerUserId = store.provider;
+
+        // 2. Check Wallet Balance
+        const wallet = await CustomerWallet.findOne({ customer: customerId });
+        if (!wallet || wallet.balance < totalAmount) {
+            console.log("Insufficient balance. Wallet:", wallet ? wallet.balance : "No wallet", "Required:", totalAmount);
+            return res.status(400).json({
+                success: false,
+                message: `Insufficient wallet balance (Current: ₹${wallet ? wallet.balance : 0}). Please top up your wallet.`
+            });
+        }
+
+        // 3. Deduct Balance
+        wallet.balance -= totalAmount;
+        wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+        await wallet.save();
+
+        // 4. Calculate End Date
+        const start = new Date(startDate || Date.now());
+        const end = new Date(start);
+        end.setDate(start.getDate() + (durationInDays || 30));
+
+        // Create Subscription
+        // Robust mapping for mealType enum ["Lunch", "Dinner", "Both"]
+        const normalizedMealType = mealType && mealType.toLowerCase();
+        let finalMealType = "Both";
+        let finalMealTypesArr = ["lunch", "dinner"];
+
+        if (normalizedMealType === 'lunch') {
+            finalMealType = "Lunch";
+            finalMealTypesArr = ["lunch"];
+        } else if (normalizedMealType === 'dinner') {
+            finalMealType = "Dinner";
+            finalMealTypesArr = ["dinner"];
+        }
+
+        const subscription = new Subscription({
+            customer: customerId,
+            provider: providerUserId,
+            created_by: "customer",
+            planName,
+            price: totalAmount,
+            totalAmount,
+            type: durationInDays <= 7 ? "weekly" : "monthly",
+            category: (planType && planType.toLowerCase()) || "veg",
+            planType: (planType && planType.toLowerCase()) || "veg",
+            durationInDays: durationInDays || 30,
+            startDate: start,
+            endDate: end,
+            mealType: finalMealType,
+            mealTypes: finalMealTypesArr,
+            lunchTime,
+            dinnerTime,
+            paymentStatus: "Paid",
+            status: "approved",
+            adminApproval: "approved"
+        });
+
+        await subscription.save();
+
+        // 6. Create Transaction Record
+        const transaction = new Transaction({
+            customer: customerId,
+            provider: providerUserId,
+            type: 'debit',
+            transactionType: 'Subscription Purchase',
+            amount: totalAmount,
+            description: `Subscription for ${planName} at ${store.mess_name}`,
+            referenceId: `SUB-${subscription._id.toString().slice(-6)}`,
+            status: 'Success',
+            subscriptionId: subscription._id
+        });
+
+        await transaction.save();
+
+        res.json({
+            success: true,
+            data: {
+                subscriptionId: subscription._id,
+                newBalance: wallet.balance,
+                message: 'Subscription purchased successfully! Welcome aboard.'
+            }
+        });
+
+    } catch (error) {
+        console.error("Purchase Subscription Error Details:");
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            console.error("Mongoose Validation Error:", messages);
+            return res.status(400).json({
+                success: false,
+                message: `Validation Error: ${messages.join(', ')}`
+            });
+        }
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to process subscription purchase. ' + (error.message || '')
+        });
+    }
+};
+
 // Helper function to generate calendar data
 const generateCalendarData = (subscription) => {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
+
     const calendar = [];
     const pausedDates = subscription.pausedDates || [];
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
         const dateString = date.toISOString().split('T')[0];
-        
+
         calendar.push({
             day,
             date: dateString,
@@ -331,7 +484,7 @@ const generateCalendarData = (subscription) => {
             isToday: date.toDateString() === today.toDateString()
         });
     }
-    
+
     return {
         month: today.toLocaleString('default', { month: 'long' }),
         year: currentYear,

@@ -3,25 +3,41 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import BackgroundBlobs from '../../components/common/BackgroundBlobs';
 import PageHeader from '../../components/common/PageHeader';
+import { useAuth } from '../../context/UserContext';
 
 const Profile = () => {
     const navigate = useNavigate();
-    // Mock user data
-    const [user, setUser] = useState({
-        name: 'Rohan Das',
-        email: 'rohan.das@college.edu',
-        phone: '+91 98765 43210',
-        address: 'Room 304, Boys Hostel Block A, Fergusson College Road, Pune',
+    const { user: authUser, logout } = useAuth();
+
+    // Local state for editing, initialized with authUser data
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
         diet: 'Pure Veg',
-        memberSince: 'Oct 2025'
+        memberSince: ''
     });
+
+    useEffect(() => {
+        if (authUser) {
+            setFormData({
+                name: authUser.name || '',
+                email: authUser.email || '',
+                phone: authUser.mobile || '',
+                address: authUser.address || '',
+                diet: authUser.dietPreference || 'Pure Veg',
+                memberSince: authUser.memberSince ? new Date(authUser.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Oct 2025'
+            });
+        }
+    }, [authUser]);
 
     const [isEditing, setIsEditing] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const stats = [
-        { label: 'Member Since', value: user.memberSince, icon: 'calendar_month' },
+        { label: 'Member Since', value: formData.memberSince, icon: 'calendar_month' },
         { label: 'Total Spent', value: '₹4,250', icon: 'payments', color: 'text-primary' },
         { label: 'Loyalty Level', value: 'Silver', icon: 'military_tech', color: 'text-orange-500' },
     ];
@@ -32,8 +48,7 @@ const Profile = () => {
     };
 
     const handleLogout = () => {
-        localStorage.clear();
-        navigate('/');
+        logout();
     };
 
     return (
@@ -81,7 +96,7 @@ const Profile = () => {
                             </button>
                         </div>
 
-                        <h2 className="text-2xl font-black text-[#2D241E] mb-1">{user.name}</h2>
+                        <h2 className="text-2xl font-black text-[#2D241E] mb-1">{formData.name}</h2>
                         <p className="text-xs font-bold text-primary opacity-60 uppercase tracking-widest mb-6">Student ID: #ST-ROH882</p>
 
                         <div className="flex gap-2 w-full">
@@ -94,7 +109,7 @@ const Profile = () => {
                             </div>
                             <div className="flex-1 bg-orange-50 rounded-xl p-3 border border-orange-100 text-left">
                                 <span className="block text-[8px] font-black text-orange-700 uppercase tracking-widest mb-1">Diet</span>
-                                <span className="font-black text-[#2D241E] text-sm">{user.diet}</span>
+                                <span className="font-black text-[#2D241E] text-sm">{formData.diet}</span>
                             </div>
                         </div>
                     </div>
@@ -152,9 +167,9 @@ const Profile = () => {
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Full Name</label>
                             <input
                                 type="text"
-                                value={user.name}
+                                value={formData.name}
                                 disabled={!isEditing}
-                                onChange={e => setUser({ ...user, name: e.target.value })}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 className="w-full bg-white/40 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl px-5 py-4 font-bold text-[#2D241E] outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-gray-300"
                             />
                         </div>
@@ -163,9 +178,9 @@ const Profile = () => {
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Phone Number</label>
                             <input
                                 type="text"
-                                value={user.phone}
+                                value={formData.phone}
                                 disabled={!isEditing}
-                                onChange={e => setUser({ ...user, phone: e.target.value })}
+                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                 className="w-full bg-white/40 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl px-5 py-4 font-bold text-[#2D241E] outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-gray-300"
                             />
                         </div>
@@ -174,9 +189,9 @@ const Profile = () => {
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Email Address</label>
                             <input
                                 type="email"
-                                value={user.email}
+                                value={formData.email}
                                 disabled={!isEditing}
-                                onChange={e => setUser({ ...user, email: e.target.value })}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 className="w-full bg-white/40 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl px-5 py-4 font-bold text-[#2D241E] outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-gray-300"
                             />
                         </div>
@@ -184,9 +199,9 @@ const Profile = () => {
                         <div className="space-y-2 md:col-span-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Delivery Address</label>
                             <textarea
-                                value={user.address}
+                                value={formData.address}
                                 disabled={!isEditing}
-                                onChange={e => setUser({ ...user, address: e.target.value })}
+                                onChange={e => setFormData({ ...formData, address: e.target.value })}
                                 rows="3"
                                 className="w-full bg-white/40 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-2xl px-5 py-4 font-bold text-[#2D241E] outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed resize-none placeholder:text-gray-300"
                                 placeholder="House no, Street Name, Area..."
@@ -200,8 +215,8 @@ const Profile = () => {
                                     <button
                                         key={d}
                                         disabled={!isEditing}
-                                        onClick={() => setUser({ ...user, diet: d })}
-                                        className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${user.diet === d
+                                        onClick={() => setFormData({ ...formData, diet: d })}
+                                        className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${formData.diet === d
                                             ? 'bg-[#2D241E] text-white shadow-xl shadow-black/10'
                                             : 'bg-white/40 text-gray-400 border-2 border-transparent hover:bg-white'
                                             } ${!isEditing && 'cursor-default'}`}

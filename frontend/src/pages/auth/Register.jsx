@@ -114,7 +114,7 @@ const Register = () => {
 
             if (data.token) {
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('userRole', data.user.role);
+                // Note: UserContext will pick up the token and fetch profile
 
                 toast.success(`Welcome ${data.user.fullName}!`);
 

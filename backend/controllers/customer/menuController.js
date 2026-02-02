@@ -1,4 +1,4 @@
-const { Menu } = require("../../models/menu.model");
+const Menu = require("../../models/menu.model");
 const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
 
@@ -6,7 +6,7 @@ const Subscription = require("../../models/subscription.model");
 exports.getWeeklyMenu = async (req, res) => {
     try {
         const customerId = req.user._id;
-        
+
         // Check if customer has active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
@@ -22,16 +22,16 @@ exports.getWeeklyMenu = async (req, res) => {
         }
 
         const providerId = activeSubscription.provider._id;
-        
+
         // Get current week dates (Monday to Sunday)
         const today = new Date();
         const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
         const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // If Sunday, go back 6 days
-        
+
         const monday = new Date(today);
         monday.setDate(today.getDate() + mondayOffset);
         monday.setHours(0, 0, 0, 0);
-        
+
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
         sunday.setHours(23, 59, 59, 999);
@@ -47,7 +47,7 @@ exports.getWeeklyMenu = async (req, res) => {
         // Format menu data for frontend
         const menuData = {};
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        
+
         // Initialize all days with default data
         days.forEach(day => {
             menuData[day] = {
@@ -58,7 +58,7 @@ exports.getWeeklyMenu = async (req, res) => {
                     img: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200"
                 },
                 dinner: {
-                    title: "Menu Not Available", 
+                    title: "Menu Not Available",
                     items: "Please check with provider",
                     cal: 0,
                     img: "https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200"
@@ -70,10 +70,10 @@ exports.getWeeklyMenu = async (req, res) => {
         weeklyMenus.forEach(menu => {
             const menuDate = new Date(menu.menuDate);
             const dayName = days[menuDate.getDay()];
-            
+
             if (menuData[dayName]) {
                 const menuItems = [];
-                
+
                 // Build menu items string
                 if (menu.bread?.count && menu.bread?.type) {
                     menuItems.push(`${menu.bread.count} ${menu.bread.type}`);
@@ -82,14 +82,14 @@ exports.getWeeklyMenu = async (req, res) => {
                 if (menu.dal) menuItems.push(menu.dal);
                 if (menu.mainDish) menuItems.push(menu.mainDish);
                 if (menu.sabjiDry) menuItems.push(menu.sabjiDry);
-                
+
                 // Add accompaniments
                 const accompaniments = [];
                 if (menu.accompaniments?.salad) accompaniments.push("Salad");
                 if (menu.accompaniments?.pickle) accompaniments.push("Pickle");
                 if (menu.accompaniments?.papad) accompaniments.push("Papad");
                 if (menu.accompaniments?.raita) accompaniments.push("Raita");
-                
+
                 if (accompaniments.length > 0) {
                     menuItems.push(...accompaniments);
                 }
@@ -124,7 +124,7 @@ exports.getWeeklyMenu = async (req, res) => {
 exports.getTodayMenu = async (req, res) => {
     try {
         const customerId = req.user._id;
-        
+
         // Check active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
@@ -142,7 +142,7 @@ exports.getTodayMenu = async (req, res) => {
         const providerId = activeSubscription.provider._id;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
@@ -159,7 +159,7 @@ exports.getTodayMenu = async (req, res) => {
 
         const formatMenu = (menu) => {
             if (!menu) return null;
-            
+
             const items = [];
             if (menu.bread?.count && menu.bread?.type) {
                 items.push(`${menu.bread.count} ${menu.bread.type}`);
@@ -167,7 +167,7 @@ exports.getTodayMenu = async (req, res) => {
             if (menu.rice) items.push(menu.rice);
             if (menu.dal) items.push(menu.dal);
             if (menu.mainDish) items.push(menu.mainDish);
-            
+
             return {
                 name: menu.name || menu.mainDish || "Special Thali",
                 items: items.join(", ") || menu.description || "Delicious meal",
@@ -196,22 +196,85 @@ exports.getTodayMenu = async (req, res) => {
     }
 };
 
+// Get public weekly menu for a provider
+exports.getPublicMenu = async (req, res) => {
+    try {
+        const { providerId } = req.params;
+
+        // Get current week dates
+        const today = new Date();
+        const currentDay = today.getDay();
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + mondayOffset);
+        monday.setHours(0, 0, 0, 0);
+
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
+
+        const weeklyMenus = await Menu.find({
+            provider: providerId,
+            menuDate: { $gte: monday, $lte: sunday },
+            isPublished: true,
+            approvalStatus: "Approved"
+        }).sort({ menuDate: 1, mealType: 1 });
+
+        const menuData = {};
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        days.forEach(day => {
+            menuData[day] = {
+                lunch: "Menu Not Available",
+                dinner: "Menu Not Available",
+                badges: []
+            };
+        });
+
+        weeklyMenus.forEach(menu => {
+            const menuDate = new Date(menu.menuDate);
+            const dayName = days[menuDate.getDay()];
+
+            if (menuData[dayName]) {
+                const items = [];
+                if (menu.mainDish) items.push(menu.mainDish);
+                if (menu.sabjiDry) items.push(menu.sabjiDry);
+
+                menuData[dayName][menu.mealType] = items.join(", ") || menu.name || "Special Thali";
+                if (menu.tags) menuData[dayName].badges = menu.tags;
+            }
+        });
+
+        res.json({
+            success: true,
+            data: menuData
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch public menu'
+        });
+    }
+};
+
 // Helper function to calculate calories
 const calculateCalories = (menu) => {
     let calories = 0;
-    
+
     // Base calories for different components
     if (menu.bread?.count) calories += menu.bread.count * 80; // 80 cal per roti
     if (menu.rice) calories += 200; // Base rice calories
     if (menu.dal) calories += 150; // Dal calories
     if (menu.mainDish) calories += 250; // Main dish calories
     if (menu.sabjiDry) calories += 100; // Dry sabji calories
-    
+
     // Add accompaniment calories
     if (menu.accompaniments?.salad) calories += 30;
     if (menu.accompaniments?.raita) calories += 80;
     if (menu.accompaniments?.papad) calories += 50;
-    
+
     return calories || 500; // Default 500 if no calculation
 };
 
@@ -229,6 +292,6 @@ const getDefaultImage = (mealType, foodType) => {
             'Egg': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=200'
         }
     };
-    
+
     return images[mealType]?.[foodType] || images[mealType]?.['Veg'] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200';
 };

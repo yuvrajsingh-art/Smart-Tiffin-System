@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useSubscription } from '../../context/SubscriptionContext';
 import PaymentModal from '../../components/common/PaymentModal';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const SubscriptionCheckout = () => {
+    const { id: providerId } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { buySubscription } = useSubscription();
+
+    const [provider, setProvider] = useState(null);
+    const [loadingProvider, setLoadingProvider] = useState(true);
 
     const planType = searchParams.get('plan') || 'monthly';
     const planName = planType === 'monthly' ? 'Monthly Complete' : 'Weekly Trial';
@@ -52,16 +58,35 @@ const SubscriptionCheckout = () => {
         setShowPaymentModal(true);
     };
 
-    const handlePaymentSuccess = (details) => {
+    const handlePaymentSuccess = async (details) => {
         setIsProcessing(true);
-        // Simulate API verification
-        setTimeout(() => {
-            buySubscription(planName, grandTotal);
-            setTimeout(() => {
-                setCurrentStep(5); // Success
-                setIsProcessing(false);
-            }, 1000);
-        }, 1500);
+
+        const subscriptionData = {
+            providerId,
+            planName,
+            totalAmount: grandTotal,
+            durationInDays: planType === 'weekly' ? 7 : 30,
+            startDate: config.startDate,
+            mealType: config.mealType,
+            lunchTime: delivery.lunchTime,
+            dinnerTime: delivery.dinnerTime,
+            deliveryAddress: delivery.address,
+            planType: 'veg' // Mapping to model's category/planType
+        };
+
+        try {
+            const result = await buySubscription(subscriptionData);
+            if (result.success) {
+                toast.success("Subscription activated!");
+                setCurrentStep(5);
+            } else {
+                toast.error(result.message || "Payment failed");
+            }
+        } catch (error) {
+            toast.error("An unexpected error occurred");
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const handleAutoDetect = () => {
@@ -70,6 +95,29 @@ const SubscriptionCheckout = () => {
             address: { ...prev.address, street: 'Shivaji Nagar, FC Road', city: 'Pune', pincode: '411005' }
         }));
     };
+
+    // Fetch provider details for timings
+    useEffect(() => {
+        const fetchProvider = async () => {
+            try {
+                const { data } = await axios.get(`/api/discovery/mess/${providerId}`);
+                if (data.success) {
+                    setProvider(data.data);
+                    setDelivery(prev => ({
+                        ...prev,
+                        lunchTime: data.data.timings.lunch.split(' - ')[0],
+                        dinnerTime: data.data.timings.dinner.split(' - ')[0]
+                    }));
+                }
+            } catch (error) {
+                console.error("Error fetching provider:", error);
+                toast.error("Failed to load mess timings");
+            } finally {
+                setLoadingProvider(false);
+            }
+        };
+        fetchProvider();
+    }, [providerId]);
 
     // Sub-components
     const StepTitle = ({ title, subtitle }) => (
@@ -232,6 +280,45 @@ const SubscriptionCheckout = () => {
                                     onChange={e => setDelivery({ ...delivery, phone: e.target.value.replace(/\D/g, '') })}
                                 />
                             </div>
+
+                            {/* Time Selection */}
+                            <div className="grid grid-cols-2 gap-3">
+                                {config.mealType !== 'dinner' && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lunch Time</label>
+                                        <div className="bg-white p-2 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-sm text-orange-400">wb_sunny</span>
+                                            <input
+                                                type="text"
+                                                value={delivery.lunchTime}
+                                                onChange={e => setDelivery({ ...delivery, lunchTime: e.target.value })}
+                                                className="bg-transparent outline-none font-bold text-xs w-full"
+                                                placeholder="e.g. 12:30 PM"
+                                            />
+                                        </div>
+                                        {provider && <p className="text-[8px] text-gray-400 font-bold px-1">Window: {provider.timings.lunch}</p>}
+                                    </div>
+                                )}
+                                {config.mealType !== 'lunch' && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Dinner Time</label>
+                                        <div className="bg-white p-2 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-sm text-blue-400">nights_stay</span>
+                                            <input
+                                                type="text"
+                                                value={delivery.dinnerTime}
+                                                onChange={e => setDelivery({ ...delivery, dinnerTime: e.target.value })}
+                                                className="bg-transparent outline-none font-bold text-xs w-full"
+                                                placeholder="e.g. 08:30 PM"
+                                            />
+                                        </div>
+                                        {provider && <p className="text-[8px] text-gray-400 font-bold px-1">Window: {provider.timings.dinner}</p>}
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-[9px] text-[#5C4D42] italic px-1">
+                                <span className="material-symbols-outlined text-[10px] align-middle">info</span> Note: Exact delivery depends on kitchen load.
+                            </p>
                         </div>
 
                         <div className="flex gap-3 mt-6">

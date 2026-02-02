@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSubscription } from '../context/SubscriptionContext';
+import { useAuth } from '../context/UserContext';
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
@@ -25,6 +26,7 @@ const DashboardLayout = () => {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     // Auth & Subscription State
+    const { logout, user } = useAuth();
     const { hasActiveSubscription } = useSubscription();
     const isSubscribed = hasActiveSubscription();
 
@@ -43,8 +45,7 @@ const DashboardLayout = () => {
     const visibleNavItems = navItems.filter(item => item.public || isSubscribed);
 
     const handleLogout = () => {
-        localStorage.clear(); // Clears everything including impersonationMode
-        navigate('/');
+        logout();
     };
 
     return (
@@ -123,7 +124,7 @@ const DashboardLayout = () => {
                     </div>
 
                     <div className="hidden md:block">
-                        <h1 className="text-2xl font-black text-[#2D241E] tracking-tight">Welcome back, Rohan!</h1>
+                        <h1 className="text-2xl font-black text-[#2D241E] tracking-tight">Welcome back, {user?.name?.split(' ')[0] || 'User'}!</h1>
                         <p className="text-sm font-medium text-[#5C4D42] flex items-center gap-2 mt-1">
                             <span className="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
                             <span>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -137,7 +138,7 @@ const DashboardLayout = () => {
                         </Link>
                         <div className="flex items-center gap-3 pl-6 border-l border-orange-200/50">
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-[#2D241E]">Rohan Das</p>
+                                <p className="text-sm font-bold text-[#2D241E]">{user?.name || 'User'}</p>
                                 {isSubscribed ? (
                                     <p className="text-xs text-primary font-bold uppercase tracking-wider">Premium Plan</p>
                                 ) : (

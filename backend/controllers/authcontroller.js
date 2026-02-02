@@ -45,15 +45,18 @@ const genToken = (user) => {
 exports.registerCustomer = async (req, res) => {
   try {
     const { fullName, email, password, mobile, address, latitude, longitude } = req.body;
+    console.log("📝 Incoming Registration Request:", { fullName, email, mobile });
 
     // Validate required fields
     if (!fullName || !email || !password || !mobile) {
+      console.log("⚠️ Registration Failed: Missing fields");
       return res.status(400).json({ message: "All required fields missing" });
     }
 
     // Check if user already exists
     const userExist = await User.findOne({ email });
     if (userExist) {
+      console.log("⚠️ Registration Failed: User already exists -", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -80,6 +83,7 @@ exports.registerCustomer = async (req, res) => {
 
     // Create user
     const user = await User.create(userData);
+    console.log("✅ User created successfully in DB:", user._id);
     const token = genToken(user);
 
     // Notify Admin via Socket.io
@@ -100,7 +104,7 @@ exports.registerCustomer = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Register Customer Error:", error.message);
+    console.error("❌ Register Customer Error:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
@@ -241,7 +245,11 @@ exports.getProfile = async (req, res) => {
         id: req.user._id,
         name: req.user.fullName,
         role: req.user.role,
-        email: req.user.email
+        email: req.user.email,
+        mobile: req.user.mobile,
+        address: req.user.address,
+        dietPreference: req.user.dietPreference,
+        memberSince: req.user.createdAt
       }
     });
 

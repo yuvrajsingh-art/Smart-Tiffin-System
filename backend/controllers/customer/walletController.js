@@ -21,8 +21,8 @@ exports.getWalletDetails = async (req, res) => {
         const formattedTransactions = transactions.map(tx => ({
             id: tx._id,
             title: tx.description || (tx.type === 'credit' ? 'Money Added' : 'Payment'),
-            date: tx.createdAt.toLocaleDateString('en-US', { 
-                day: 'numeric', 
+            date: tx.createdAt.toLocaleDateString('en-US', {
+                day: 'numeric',
                 month: 'short',
                 hour: '2-digit',
                 minute: '2-digit'
@@ -77,9 +77,11 @@ exports.addMoneyToWallet = async (req, res) => {
         const transaction = new Transaction({
             customer: customerId,
             type: 'credit',
+            transactionType: 'Wallet Topup',
             amount,
             description: 'Money added to wallet',
-            status: 'completed'
+            referenceId: `TOP-${Date.now()}`,
+            status: 'Success'
         });
         await transaction.save();
 
@@ -112,7 +114,7 @@ exports.getWalletBalance = async (customerId) => {
             type: "credit",
             createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
         }).sort({ createdAt: -1 });
-        
+
         const recentAddition = recentTransaction ? recentTransaction.amount : 0;
 
         return {

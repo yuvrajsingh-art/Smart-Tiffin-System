@@ -1,79 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const MOCK_PROVIDERS = [
-    {
-        id: 1,
-        name: "Annapurna Mess",
-        image: "https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2670&auto=format&fit=crop",
-        distance: "0.5 km",
-        type: "Veg & Non-Veg",
-        priceRange: "₹2800",
-        rating: 4.8,
-        reviews: 210,
-        description: "Authentic Marathi Thali with daily variety.",
-        location: "Kothrud",
-        tags: ["Bestseller"]
-    },
-    {
-        id: 2,
-        name: "Healthy Bites",
-        image: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=2670&auto=format&fit=crop",
-        distance: "1.2 km",
-        type: "Pure Veg",
-        priceRange: "₹2500",
-        rating: 4.6,
-        reviews: 145,
-        description: "Less oil, home-style taste.",
-        location: "Karve Nagar",
-        tags: ["Healthy"]
-    },
-    {
-        id: 3,
-        name: "Spice Box",
-        image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=2670&auto=format&fit=crop",
-        distance: "2.5 km",
-        type: "Veg & Non-Veg",
-        priceRange: "₹3200",
-        rating: 4.3,
-        reviews: 89,
-        description: "North Indian specialties.",
-        location: "Baner",
-        tags: ["Premium"]
-    },
-    {
-        id: 4,
-        name: "Maa Ki Rasoi",
-        image: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=1000&auto=format&fit=crop",
-        distance: "0.8 km",
-        type: "Pure Veg",
-        priceRange: "₹2400",
-        rating: 4.9,
-        reviews: 312,
-        description: "Simple, satvik food.",
-        location: "Sadashiv Peth",
-        tags: ["Top Rated"]
-    }
-];
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const FindMess = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [location, setLocation] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
+    const [providers, setProviders] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const filters = ['All', 'Pure Veg', 'Student Special', 'Budget', 'Premium'];
 
-    const filteredProviders = MOCK_PROVIDERS.filter(provider => {
-        const matchesSearch = provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            provider.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesLocation = provider.location.toLowerCase().includes(location.toLowerCase());
-        const matchesFilter = activeFilter === 'All' ||
-            (activeFilter === 'Pure Veg' && provider.type === 'Pure Veg') ||
-            (activeFilter !== 'Pure Veg' && provider.tags.includes(activeFilter)) ||
-            (activeFilter === 'Budget' && parseInt(provider.priceRange.replace('₹', '')) < 3000);
+    const fetchProviders = async () => {
+        setLoading(true);
+        try {
+            const { data } = await axios.get('/api/discovery/find-mess', {
+                params: {
+                    location: location,
+                    searchTerm: searchTerm,
+                    filter: activeFilter
+                }
+            });
+            if (data.success) {
+                setProviders(data.data);
+            }
+        } catch (error) {
+            console.error("Error fetching providers:", error);
+            toast.error("Failed to load mess providers");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        return matchesSearch && matchesLocation && matchesFilter;
-    });
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchProviders();
+        }, 300); // Debounce search/location changes
+
+        return () => clearTimeout(timer);
+    }, [searchTerm, location, activeFilter]);
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 animate-[fadeIn_0.5s_ease-out] pb-20 relative px-4">
@@ -132,7 +98,10 @@ const FindMess = () => {
                         </div>
 
                         {/* Search Button */}
-                        <button className="h-10 px-5 bg-[#111716] text-white rounded-xl font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm">
+                        <button
+                            onClick={fetchProviders}
+                            className="h-10 px-5 bg-[#111716] text-white rounded-xl font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm"
+                        >
                             <span>Search</span>
                         </button>
                     </div>
@@ -154,8 +123,16 @@ const FindMess = () => {
 
             {/* Provider Grid (Compact) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 relative z-10 px-4">
-                {filteredProviders.length > 0 ? (
-                    filteredProviders.map((provider) => (
+                {loading ? (
+                    Array(4).fill(0).map((_, i) => (
+                        <div key={i} className="animate-pulse glass-panel rounded-[1.5rem] p-4 bg-white/40 h-64">
+                            <div className="w-full h-32 bg-gray-200 rounded-xl mb-4"></div>
+                            <div className="w-3/4 h-4 bg-gray-200 rounded mb-2"></div>
+                            <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
+                        </div>
+                    ))
+                ) : providers.length > 0 ? (
+                    providers.map((provider) => (
                         <div key={provider.id} className="group glass-panel rounded-[1.5rem] p-2 hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 bg-white/40 border-white/50">
                             {/* Image Wrapper */}
                             <div className="relative h-40 rounded-[1.2rem] overflow-hidden mb-3 shadow-sm group-hover:shadow-md transition-all">

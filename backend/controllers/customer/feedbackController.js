@@ -2,13 +2,13 @@ const Order = require("../../models/order.model");
 const Review = require("../../models/review.model");
 const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
-const { Menu } = require("../../models/menu.model");
+const Menu = require("../../models/menu.model");
 
 // Get feedback stats and recent meal for feedback
 exports.getFeedbackData = async (req, res) => {
     try {
         const customerId = req.user._id;
-        
+
         // Check active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
@@ -34,23 +34,23 @@ exports.getFeedbackData = async (req, res) => {
             orderDate: { $gte: today, $lt: tomorrow },
             status: 'delivered'
         }).populate('menu', 'name mainDish mealType')
-          .populate('provider', 'fullName')
-          .sort({ orderDate: -1 });
+            .populate('provider', 'fullName')
+            .sort({ orderDate: -1 });
 
         // Get feedback stats
         const totalReviews = await Review.countDocuments({ customer: customerId });
-        
+
         const avgRatingResult = await Review.aggregate([
             { $match: { customer: customerId } },
             { $group: { _id: null, avgRating: { $avg: '$rating' } } }
         ]);
-        
+
         const avgRating = avgRatingResult[0]?.avgRating || 0;
-        
+
         // Count badges (reviews with rating >= 4)
-        const badges = await Review.countDocuments({ 
-            customer: customerId, 
-            rating: { $gte: 4 } 
+        const badges = await Review.countDocuments({
+            customer: customerId,
+            rating: { $gte: 4 }
         });
 
         const stats = [
@@ -109,7 +109,7 @@ exports.submitFeedback = async (req, res) => {
             customer: customerId,
             status: 'delivered'
         }).populate('provider', 'fullName')
-          .populate('menu', 'name mainDish');
+            .populate('menu', 'name mainDish');
 
         if (!order) {
             return res.status(404).json({
@@ -182,8 +182,8 @@ exports.getFeedbackHistory = async (req, res) => {
         // Format reviews for frontend
         const feedbackHistory = reviews.map(review => {
             const reviewDate = new Date(review.reviewDate);
-            const dateString = reviewDate.toLocaleDateString('en-US', { 
-                day: 'numeric', 
+            const dateString = reviewDate.toLocaleDateString('en-US', {
+                day: 'numeric',
                 month: 'short'
             });
 
@@ -224,7 +224,7 @@ exports.getFeedbackTags = async (req, res) => {
     try {
         // Predefined tags for consistency
         const tags = [
-            'Fresh', 'Tasty', 'On Time', 'Great Portion', 
+            'Fresh', 'Tasty', 'On Time', 'Great Portion',
             'Hot Food', 'Healthy', 'Good Packaging', 'Authentic',
             'Well Cooked', 'Good Value', 'Clean', 'Spicy'
         ];

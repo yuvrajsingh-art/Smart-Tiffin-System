@@ -114,6 +114,17 @@ const storeProfileRoutes = require("./routes/provider/storeProfileRoutes");
 // Admin routes
 const adminRoutes = require("./routes/adminRoutes");
 
+// Customer routes
+const customerDashboardRoutes = require("./routes/customer/customerDashboardRoutes");
+const customerWalletRoutes = require("./routes/customer/walletRoutes");
+const customerMenuRoutes = require("./routes/customer/menuRoutes");
+const messDiscoveryRoutes = require("./routes/customer/messDiscoveryRoutes");
+const customerFeedbackRoutes = require("./routes/customer/feedbackRoutes");
+const customerHistoryRoutes = require("./routes/customer/historyRoutes");
+const customerTrackRoutes = require("./routes/customer/trackRoutes");
+const customerSubscriptionRoutes = require("./routes/customer/subscriptionRoutes");
+const customerProfileRoutes = require("./routes/customer/profileRoutes");
+
 // =============================================================================
 // ROUTES REGISTRATION
 // =============================================================================
@@ -138,6 +149,17 @@ app.use("/api/provider-store", storeProfileRoutes);
 
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);
+
+// Customer endpoints: /api/customer/* and /api/discovery/*
+app.use("/api/customer/dashboard", customerDashboardRoutes);
+app.use("/api/customer/wallet", customerWalletRoutes);
+app.use("/api/customer/menu", customerMenuRoutes);
+app.use("/api/discovery", messDiscoveryRoutes);
+app.use("/api/customer/feedback", customerFeedbackRoutes);
+app.use("/api/customer/history", customerHistoryRoutes);
+app.use("/api/customer/track", customerTrackRoutes);
+app.use("/api/customer/subscription", customerSubscriptionRoutes);
+app.use("/api/customer/profile", customerProfileRoutes);
 
 // =============================================================================
 // CONSOLE COLORS & STYLING
@@ -179,88 +201,9 @@ const log = {
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log('');
-  console.log(`${colors.cyan}${colors.bright}`);
-  console.log('  ╔═══════════════════════════════════════════════════════════════╗');
-  console.log('  ║                                                               ║');
-  console.log('  ║   🍱  SMART TIFFIN SYSTEM                                     ║');
-  console.log('  ║       Backend API Server                                      ║');
-  console.log('  ║                                                               ║');
-  console.log('  ╚═══════════════════════════════════════════════════════════════╝');
-  console.log(`${colors.reset}`);
-  console.log('');
-
-  console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
-  console.log('');
-
-const authRoutes = require("./routes/authRoutes");
-const providerOnboardingRoutes = require("./routes/provider/providerOnboarding.routes")
-const providerMenuRoutes = require("./routes/provider/providerMenuRoutes")
-const providerDeshbordRoutes = require("./routes/provider/providerDeshbordRoutes")
-const kdsRoutes = require("./routes/provider/kdsRoutes")
-const subscriptionRoutes = require("./routes/provider/subscriptionRoutes")
-const reviewTriageRoutes = require("./routes/provider/reviewTriageRoutes")
-const storeProfileRoutes = require("./routes/provider/storeProfileRoutes")
-const messDiscoveryRoutes = require("./routes/customer/messDiscoveryRoutes")
-const customerDashboardRoutes = require("./routes/customer/customerDashboardRoutes")
-const walletRoutes = require("./routes/customer/walletRoutes")
-const customerMenuRoutes = require("./routes/customer/menuRoutes")
-const trackRoutes = require("./routes/customer/trackRoutes")
-const customerSubscriptionRoutes = require("./routes/customer/subscriptionRoutes")
-const historyRoutes = require("./routes/customer/historyRoutes")
-const feedbackRoutes = require("./routes/customer/feedbackRoutes")
-const profileRoutes = require("./routes/customer/profileRoutes")
-  log.success(`${colors.green}${colors.bright}Server is LIVE!${colors.reset}`);
-  console.log('');
-
-  console.log(`  ${colors.bright}🌐 API URL:${colors.reset}        ${colors.cyan}http://localhost:${PORT}${colors.reset}`);
-  console.log(`  ${colors.bright}📡 Socket.io:${colors.reset}      ${colors.cyan}ws://localhost:${PORT}${colors.reset}`);
-  console.log(`  ${colors.bright}🗄️  Database:${colors.reset}       ${colors.green}MongoDB Connected${colors.reset}`);
-  console.log(`  ${colors.bright}🔑 Auth:${colors.reset}           ${colors.green}JWT Enabled${colors.reset}`);
-  console.log('');
-
-app.use("/api/provider-onboarding", providerOnboardingRoutes);
-app.use("/api/provider-menus", providerMenuRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/provider-deshbord", providerDeshbordRoutes)
-app.use("/api/provider-kds", kdsRoutes)
-app.use("/api/provider-subscription", subscriptionRoutes)
-app.use("/api/provider-reviews", reviewTriageRoutes)
-app.use("/api/provider-store", storeProfileRoutes)
-app.use("/api/discovery", messDiscoveryRoutes)
-app.use("/api/customer", customerDashboardRoutes)
-app.use("/api/customer/wallet", walletRoutes)
-app.use("/api/customer/menu", customerMenuRoutes)
-app.use("/api/customer/track", trackRoutes)
-app.use("/api/customer/subscription", customerSubscriptionRoutes)
-app.use("/api/customer/history", historyRoutes)
-app.use("/api/customer/feedback", feedbackRoutes)
-app.use("/api/customer/profile", profileRoutes)
-
-  console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
-  console.log('');
-
-  console.log(`  ${colors.bright}📋 Available Routes:${colors.reset}`);
-  console.log(`     ${colors.yellow}├──${colors.reset} /api/auth          ${colors.dim}Authentication${colors.reset}`);
-  console.log(`     ${colors.yellow}├──${colors.reset} /api/admin         ${colors.dim}Admin Panel${colors.reset}`);
-  console.log(`     ${colors.yellow}├──${colors.reset} /api/provider-*    ${colors.dim}Provider APIs${colors.reset}`);
-  console.log(`     ${colors.yellow}└──${colors.reset} /                  ${colors.dim}Health Check${colors.reset}`);
-  console.log('');
-
-  console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
-  console.log('');
-
-  log.info(`Environment: ${colors.yellow}${process.env.NODE_ENV || 'development'}${colors.reset}`);
-  log.info(`Started at: ${colors.yellow}${new Date().toLocaleString()}${colors.reset}`);
-  console.log('');
-
-  console.log(`  ${colors.green}${colors.bright}🚀 Ready to accept connections!${colors.reset}`);
-  console.log('');
-  console.log(`${colors.dim}═══════════════════════════════════════════════════════════════${colors.reset}`);
-  console.log('');
+  console.log(`\n🚀 Server is LIVE!\n🌐 API URL: http://localhost:${PORT}\n🗄️  Database: MongoDB Connected\n🔑 Auth: JWT Enabled\n`);
 
   // Initialize Cron Jobs
   initScheduledJobs();
-  log.success('Scheduled jobs initialized');
-  console.log('');
+  console.log('Scheduled jobs initialized');
 });

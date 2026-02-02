@@ -9,7 +9,7 @@ const subscriptionSchema = new mongoose.Schema({
 
     created_by: {
         type: String,
-        enum: ["admin", "provider"],
+        enum: ["admin", "provider", "customer"],
         required: true
     },
     provider: {
@@ -55,12 +55,22 @@ const subscriptionSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-   
+
 
     mealType: {
         type: String,
         enum: ["Lunch", "Dinner", "Both"],
         required: true
+    },
+
+    lunchTime: {
+        type: String,
+        default: "12:30 PM"
+    },
+
+    dinnerTime: {
+        type: String,
+        default: "08:30 PM"
     },
 
     paymentStatus: {
@@ -77,14 +87,15 @@ const subscriptionSchema = new mongoose.Schema({
         { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
 
     adminApproval: {
-         type: String, 
-         enum: ["pending", "approved", "rejected"], 
-         default: "approved" },
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "approved"
+    },
 
     pauseFrom: Date,
     pauseTo: Date,
     pauseReason: String,
-    
+
     // New fields for subscription management
     pausedDates: [String], // Array of date strings (YYYY-MM-DD)
     planType: {

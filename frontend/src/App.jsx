@@ -5,6 +5,7 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 import { UserProvider } from './context/UserContext';
 import { SocketProvider } from './context/SocketContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import SubscriptionGuard from './components/auth/SubscriptionGuard';
 
 // Pages - Auth & Public
 import LandingPage from './pages/LandingPage'
@@ -78,12 +79,15 @@ function App() {
                 <Route path="find-mess" element={<FindMess />} />
                 <Route path="mess/:id" element={<MessDetails />} />
                 <Route path="mess/:id/subscribe" element={<SubscriptionCheckout />} />
-                <Route path="menu" element={<Menu />} />
-                <Route path="track" element={<TrackDelivery />} />
-                <Route path="manage-subscription" element={<ManageSubscription />} />
+
+                {/* Subscription Protected Routes */}
+                <Route path="menu" element={<SubscriptionGuard><Menu /></SubscriptionGuard>} />
+                <Route path="track" element={<SubscriptionGuard><TrackDelivery /></SubscriptionGuard>} />
+                <Route path="manage-subscription" element={<SubscriptionGuard><ManageSubscription /></SubscriptionGuard>} />
+                <Route path="feedback" element={<SubscriptionGuard><Feedback /></SubscriptionGuard>} />
+                <Route path="history" element={<SubscriptionGuard><History /></SubscriptionGuard>} />
+
                 <Route path="wallet" element={<Wallet />} />
-                <Route path="feedback" element={<Feedback />} />
-                <Route path="history" element={<History />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="notifications" element={<Notifications />} />
               </Route>
