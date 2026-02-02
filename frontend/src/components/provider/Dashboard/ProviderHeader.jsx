@@ -3,7 +3,7 @@ import { FaBell, FaSearch } from 'react-icons/fa';
 
 function ProviderHeader() {
     return (
-        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <header className=" bg-gradient-to-r from-[#fffbf5] to-[#fff4e7]   border-amber-50  font-sans px-6 py-4 rounded-[2px]">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Welcome back, Chef!</h1>
