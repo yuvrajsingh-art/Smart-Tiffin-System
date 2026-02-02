@@ -1,4 +1,5 @@
-const  {Menu}  = require("../../models/menu.model");
+const { Menu } = require("../../models/menu.model");
+const Settings = require("../../models/settings.model"); // Import Settings
 
 exports.createOrUpdateMenu = async (req, res) => {
   try {
@@ -16,6 +17,33 @@ exports.createOrUpdateMenu = async (req, res) => {
       addOns,
       operationalStatus
     } = req.body;
+
+    // --- CUT-OFF VALIDATION [NEW] ---
+    const settings = await Settings.findOne();
+    const cutoffTime = settings?.dailyCutoffTime || '10:30'; // Default 10:30 AM
+
+    const today = new Date();
+    const menuDateObj = new Date(menuDate);
+
+    // Check if editing "Today's" or "Past" menu
+    const isToday = menuDateObj.toDateString() === today.toDateString();
+
+    if (isToday) {
+      const [cutoffHour, cutoffMinute] = cutoffTime.split(':').map(Number);
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      if (currentHour > cutoffHour || (currentHour === cutoffHour && currentMinute >= cutoffMinute)) {
+        // Allow if 'allowSameDayEdit' is explicitly true (emergency override)
+        if (!settings?.allowSameDayEdit) {
+          return res.status(400).json({
+            success: false,
+            message: `Daily cut-off time (${cutoffTime}) has passed. You typically cannot edit today's menu.`
+          });
+        }
+      }
+    }
 
     const menu = await Menu.findOneAndUpdate(
       {
