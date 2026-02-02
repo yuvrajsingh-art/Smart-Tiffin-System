@@ -1,42 +1,119 @@
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema({
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
-  provider: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
-  },
-  items: [
-    {
-      name: String,
-      quantity: Number,
-      price: Number
-    }
-  ],
-  totalAmount: {
-    type: Number,
-    required: true
-  },
-  deliveryAddress: {
-    type: String,
-    required: true
-  },
-  status: {
-    type: String,
-    enum: [
-      "pending",
-      "accepted",
-      "preparing",
-      "out_for_delivery",
-      "delivered",
-      "cancelled"
-    ],
-    default: "pending"
-  }
+    customer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+    
+    provider: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+    
+    subscription: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "subscription",
+        required: true
+    },
+    
+    orderNumber: {
+        type: String,
+        unique: true,
+        required: true
+    },
+    
+    orderDate: {
+        type: Date,
+        required: true
+    },
+    
+    mealType: {
+        type: String,
+        enum: ["Lunch", "Dinner"],
+        required: true
+    },
+    
+    status: {
+        type: String,
+        enum: ["confirmed", "cooking", "prepared", "out_for_delivery", "delivered", "cancelled"],
+        default: "confirmed"
+    },
+    
+    // Tracking timestamps
+    confirmedAt: {
+        type: Date,
+        default: Date.now
+    },
+    
+    cookingStartedAt: Date,
+    preparedAt: Date,
+    outForDeliveryAt: Date,
+    deliveredAt: Date,
+    
+    // Estimated delivery time
+    estimatedDeliveryTime: Date,
+    
+    // Menu details
+    menuItems: [{
+        name: String,
+        description: String,
+        image: String
+    }],
+    
+    // Delivery details
+    deliveryAddress: {
+        street: String,
+        city: String,
+        pincode: String,
+        landmark: String
+    },
+    
+    deliveryInstructions: String,
+    
+    // Payment details
+    amount: {
+        type: Number,
+        required: true
+    },
+    
+    paymentStatus: {
+        type: String,
+        enum: ["Pending", "Paid", "Failed", "Refunded"],
+        default: "Paid"
+    },
+    
+    paymentMethod: {
+        type: String,
+        enum: ["Wallet", "UPI", "Cash", "Card"],
+        default: "Wallet"
+    },
+    
+    // Rating and feedback
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5
+    },
+    
+    feedback: String,
+    
+    // Cancellation details
+    cancellationReason: String,
+    cancelledAt: Date,
+    refundAmount: Number
+    
 }, { timestamps: true });
+
+// Generate order number before saving
+orderSchema.pre('save', async function(next) {
+    if (!this.orderNumber) {
+        const count = await mongoose.model('Order').countDocuments();
+        this.orderNumber = `ST-${String(count + 1).padStart(6, '0')}`;
+    }
+    next();
+});
 
 module.exports = mongoose.model("Order", orderSchema);

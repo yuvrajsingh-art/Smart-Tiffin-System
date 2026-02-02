@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSubscription } from '../../context/SubscriptionContext';
+import PaymentModal from '../../components/common/PaymentModal';
 
 const SubscriptionCheckout = () => {
     const [searchParams] = useSearchParams();
@@ -13,6 +14,7 @@ const SubscriptionCheckout = () => {
 
     const [currentStep, setCurrentStep] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // Form State
     const [config, setConfig] = useState({
@@ -47,14 +49,19 @@ const SubscriptionCheckout = () => {
     const grandTotal = getBasePrice() + getAddonsTotal();
 
     const handlePayment = () => {
+        setShowPaymentModal(true);
+    };
+
+    const handlePaymentSuccess = (details) => {
         setIsProcessing(true);
+        // Simulate API verification
         setTimeout(() => {
             buySubscription(planName, grandTotal);
             setTimeout(() => {
                 setCurrentStep(5); // Success
                 setIsProcessing(false);
             }, 1000);
-        }, 2000);
+        }, 1500);
     };
 
     const handleAutoDetect = () => {
@@ -397,6 +404,15 @@ const SubscriptionCheckout = () => {
                 </div>
 
             </div>
+            {/* Payment Modal Integration */}
+            <PaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                amount={grandTotal}
+                onSuccess={handlePaymentSuccess}
+                title={`Subscribe to ${planName}`}
+            />
+
         </div>
     );
 };

@@ -1,9 +1,52 @@
-const express = require("express");
-const {registerUser,loginUser} = require("../controllers/authcontroller");
+/**
+ * =============================================================================
+ * AUTHENTICATION ROUTES
+ * =============================================================================
+ * Handles user authentication, registration, and profile management
+ * Base URL: /api/auth
+ * =============================================================================
+ */
 
+const express = require("express");
 const router = express.Router();
 
-router.post("/register", registerUser);
+// Import controller functions
+const {
+    loginUser,
+    registerCustomer,
+    providerCustomer,
+    signOut,
+    googleAuth,
+    getProfile
+} = require("../controllers/authcontroller");
+
+// Import authentication middleware
+const { protect } = require("../middleware/authMiddleware.middleware");
+
+// =============================================================================
+// PUBLIC ROUTES (No authentication required)
+// =============================================================================
+
+// POST /api/auth/registerCustomer/customer - Register new customer
+router.post("/registerCustomer/customer", registerCustomer);
+
+// POST /api/auth/registerProvider/provider - Register new provider
+router.post("/registerProvider/provider", providerCustomer);
+
+// POST /api/auth/login - Login user (all roles)
 router.post("/login", loginUser);
+
+// POST /api/auth/logout - Logout user
+router.post("/logout", signOut);
+
+// POST /api/auth/google-auth - Google OAuth login
+router.post("/google-auth", googleAuth);
+
+// =============================================================================
+// PROTECTED ROUTES (Authentication required)
+// =============================================================================
+
+// GET /api/auth/profile - Get current user profile
+router.get("/profile", protect, getProfile);
 
 module.exports = router;

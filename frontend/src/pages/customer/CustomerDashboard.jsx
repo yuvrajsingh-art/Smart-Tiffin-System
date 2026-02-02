@@ -8,9 +8,35 @@ const CustomerDashboard = () => {
     const isActive = hasActiveSubscription();
 
     const [trackerState] = useState(2); // 1: Prep, 2: Cooking, 3: Packed, 4: Out, 5: Delivered
+    const userName = localStorage.getItem('userName') || 'Student';
+    const isImpersonating = localStorage.getItem('impersonationMode') === 'true';
 
     return (
-        <div className="max-w-7xl mx-auto flex flex-col gap-8 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
+        <div className="w-full mx-auto flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
+
+            {/* Impersonation Banner */}
+            {isImpersonating && (
+                <div className="bg-[#2D241E] text-white px-4 py-3 rounded-xl flex items-center justify-between shadow-xl mb-2 animate-[slideInDown_0.5s]">
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-orange-500 animate-pulse">visibility</span>
+                        <div className="text-xs font-medium">
+                            <span className="font-bold text-orange-400 uppercase tracking-wider block text-[10px]">Admin View</span>
+                            Viewing as <span className="font-bold text-xl">{userName}</span>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('impersonationMode');
+                            localStorage.removeItem('userName');
+                            localStorage.setItem('userRole', 'admin');
+                            window.history.back();
+                        }}
+                        className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                    >
+                        Exit View <span className="material-symbols-outlined text-[14px]">logout</span>
+                    </button>
+                </div>
+            )}
 
             {/* Background Blobs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
@@ -24,41 +50,41 @@ const CustomerDashboard = () => {
                     {/* Welcome Header */}
                     <div className="flex justify-between items-end">
                         <div>
-                            <h1 className="text-3xl font-black text-[#2D241E] leading-tight">Hello, Student! 👋</h1>
-                            <p className="text-[#5C4D42] font-medium">Your tiffin is being prepared with love.</p>
+                            <h1 className="text-2xl font-black text-[#2D241E] leading-tight">Hello, {userName.split(' ')[0]}! 👋</h1>
+                            <p className="text-[#5C4D42] font-medium text-sm">Your tiffin is being prepared with love.</p>
                         </div>
                         <div className="hidden md:block">
-                            <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-2 shadow-sm border border-green-200">
+                            <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 shadow-sm border border-green-200">
                                 <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
                                 Subscription Active
                             </span>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         {/* Left Col: Live Status */}
-                        <div className="lg:col-span-2 space-y-8">
+                        <div className="lg:col-span-2 space-y-6">
 
                             {/* Live Tracker Card */}
-                            <section className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden group border border-white/60 shadow-xl">
+                            <section className="glass-panel p-6 rounded-[2rem] relative overflow-hidden group border border-white/60 shadow-xl">
                                 {/* bg blobs */}
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100/50 rounded-full blur-3xl pointer-events-none"></div>
 
                                 <div className="relative z-10">
-                                    <div className="flex justify-between items-start mb-8">
+                                    <div className="flex justify-between items-start mb-6">
                                         <div>
-                                            <span className="text-xs font-black text-orange-500 uppercase tracking-widest mb-1 block">Live Status</span>
-                                            <h2 className="text-2xl font-black text-[#2D241E]">Lunch is Cooking 🍳</h2>
+                                            <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 block">Live Status</span>
+                                            <h2 className="text-xl font-black text-[#2D241E]">Lunch is Cooking 🍳</h2>
                                         </div>
                                         <div className="bg-white/50 backdrop-blur-md px-4 py-2 rounded-xl border border-white/60 text-right">
                                             <p className="text-[10px] font-bold text-gray-400 uppercase">Estimated Arrival</p>
-                                            <p className="text-lg font-black text-[#2D241E]">12:45 PM</p>
+                                            <p className="text-base font-black text-[#2D241E]">12:45 PM</p>
                                         </div>
                                     </div>
 
                                     {/* Progress Bar */}
-                                    <div className="relative h-3 bg-gray-100 rounded-full mb-8 overflow-hidden">
+                                    <div className="relative h-2.5 bg-gray-100 rounded-full mb-8 overflow-hidden">
                                         <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-400 to-primary w-[45%] rounded-full shadow-[0_0_15px_rgba(234,88,12,0.5)] animate-pulse"></div>
                                     </div>
 
@@ -66,40 +92,40 @@ const CustomerDashboard = () => {
                                     <div className="flex justify-between px-2 relative">
                                         {['Prep', 'Cooking', 'Packed', 'On Way', 'Delivered'].map((step, idx) => (
                                             <div key={step} className="flex flex-col items-center gap-2 z-10">
-                                                <div className={`size-10 rounded-full flex items-center justify-center border-4 transition-all duration-500 ${idx + 1 <= trackerState ? 'border-primary bg-white text-primary scale-110 shadow-lg' : 'border-gray-100 bg-gray-50 text-gray-300'}`}>
-                                                    <span className="material-symbols-outlined text-[18px] font-bold">
+                                                <div className={`size-9 rounded-full flex items-center justify-center border-4 transition-all duration-500 ${idx + 1 <= trackerState ? 'border-primary bg-white text-primary scale-110 shadow-lg' : 'border-gray-100 bg-gray-50 text-gray-300'}`}>
+                                                    <span className="material-symbols-outlined text-[16px] font-bold">
                                                         {idx === 0 ? 'kitchen' : idx === 1 ? 'skillet' : idx === 2 ? 'package_2' : idx === 3 ? 'moped' : 'check'}
                                                     </span>
                                                 </div>
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider ${idx + 1 <= trackerState ? 'text-[#2D241E]' : 'text-gray-300'}`}>{step}</span>
+                                                <span className={`text-[9px] font-bold uppercase tracking-wider ${idx + 1 <= trackerState ? 'text-[#2D241E]' : 'text-gray-300'}`}>{step}</span>
                                             </div>
                                         ))}
                                         {/* Connecting Line (Visual only, behind dots) */}
-                                        <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-100 -z-10"></div>
+                                        <div className="absolute top-4 left-0 w-full h-0.5 bg-gray-100 -z-10"></div>
                                     </div>
                                 </div>
                             </section>
 
                             {/* Today's Menu */}
-                            <div className="glass-panel p-6 rounded-[2rem] border border-white/60">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-lg font-black text-[#2D241E]">Today's Menu</h3>
-                                    <Link to="/customer/menu" className="text-primary text-sm font-bold hover:underline">View Full Week</Link>
+                            <div className="glass-panel p-5 rounded-[2rem] border border-white/60">
+                                <div className="flex justify-between items-center mb-5">
+                                    <h3 className="text-base font-black text-[#2D241E]">Today's Menu</h3>
+                                    <Link to="/customer/menu" className="text-primary text-xs font-bold hover:underline">View Full Week</Link>
                                 </div>
                                 <div className="flex gap-4 overflow-x-auto pb-2">
                                     {/* Lunch */}
-                                    <div className="min-w-[200px] bg-orange-50/50 p-4 rounded-2xl border border-orange-100 flex-1 relative overflow-hidden">
-                                        <span className="bg-white/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-black uppercase text-orange-600 absolute top-3 right-3">Lunch</span>
-                                        <div className="size-10 rounded-full bg-white flex items-center justify-center text-xl mb-3 shadow-sm">🍛</div>
-                                        <h4 className="font-bold text-[#2D241E]">Paneer Masala Thali</h4>
-                                        <p className="text-xs text-[#5C4D42] mt-1">3 Rotis, Jeera Rice, Dal Fry</p>
+                                    <div className="min-w-[180px] bg-orange-50/50 p-4 rounded-2xl border border-orange-100 flex-1 relative overflow-hidden">
+                                        <span className="bg-white/80 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-orange-600 absolute top-3 right-3">Lunch</span>
+                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">🍛</div>
+                                        <h4 className="font-bold text-[#2D241E] text-sm">Paneer Masala Thali</h4>
+                                        <p className="text-[10px] text-[#5C4D42] mt-1">3 Rotis, Jeera Rice, Dal Fry</p>
                                     </div>
                                     {/* Dinner */}
-                                    <div className="min-w-[200px] bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex-1 relative overflow-hidden opacity-60">
-                                        <span className="bg-white/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-black uppercase text-blue-600 absolute top-3 right-3">Dinner</span>
-                                        <div className="size-10 rounded-full bg-white flex items-center justify-center text-xl mb-3 shadow-sm">🌙</div>
-                                        <h4 className="font-bold text-[#2D241E]">Light Khichdi Kadhi</h4>
-                                        <p className="text-xs text-[#5C4D42] mt-1">With Papad & Pickle</p>
+                                    <div className="min-w-[180px] bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex-1 relative overflow-hidden opacity-60">
+                                        <span className="bg-white/80 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-blue-600 absolute top-3 right-3">Dinner</span>
+                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">🌙</div>
+                                        <h4 className="font-bold text-[#2D241E] text-sm">Light Khichdi Kadhi</h4>
+                                        <p className="text-[10px] text-[#5C4D42] mt-1">With Papad & Pickle</p>
                                     </div>
                                 </div>
                             </div>
@@ -108,6 +134,29 @@ const CustomerDashboard = () => {
 
                         {/* Right Col: Wallet & Actions */}
                         <div className="space-y-6">
+
+                            {/* Wallet Balance Card (NEW) */}
+                            <div className="p-6 rounded-[2rem] bg-[#2D241E] text-white relative overflow-hidden shadow-xl group">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <span className="material-symbols-outlined text-7xl">account_balance_wallet</span>
+                                </div>
+
+                                <div className="relative z-10">
+                                    <h3 className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">Wallet Balance</h3>
+                                    <div className="flex items-baseline gap-1 mb-4">
+                                        <span className="text-2xl font-bold">₹2,450</span>
+                                        <span className="text-[10px] font-bold text-green-400">+₹500 added</span>
+                                    </div>
+
+                                    <Link to="/customer/wallet" className="flex items-center justify-between bg-white/10 hover:bg-white/20 p-3 rounded-xl transition-all border border-white/5">
+                                        <span className="text-xs font-bold flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-sm">add_card</span>
+                                            Add Money
+                                        </span>
+                                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                    </Link>
+                                </div>
+                            </div>
 
                             {/* Quick Actions Grid */}
                             <div>

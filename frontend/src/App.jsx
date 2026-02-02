@@ -5,7 +5,6 @@ import { SubscriptionProvider } from './context/SubscriptionContext';
 import { UserProvider } from './context/UserContext';
 import { SocketProvider } from './context/SocketContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import SubscriptionGuard from './components/auth/SubscriptionGuard';
 
 // Pages - Auth & Public
 import LandingPage from './pages/LandingPage'
@@ -34,9 +33,9 @@ import Notifications from './pages/customer/Notifications'
 
 // Pages - Provider
 import ProviderDashboard from './pages/provider/ProviderDashboard';
-import ProviderOnboarding from './pages/provider/ProviderOnboarding';
  import OrderManagement from './pages/provider/OrderManagement';
- 
+import ProviderProfile from './pages/provider/ProviderProfile';
+
 // Pages - Admin
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminReports from './pages/admin/AdminReports';
@@ -48,11 +47,10 @@ import AdminMenu from './pages/admin/AdminMenu';
 import AdminFinance from './pages/admin/AdminFinance';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminSupport from './pages/admin/AdminSupport';
- 
 
- 
+
 function App() {
-   return (
+  return (
     <UserProvider>
       <SubscriptionProvider>
         <SocketProvider>
@@ -74,21 +72,18 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                {/* Public Customer Pages Only */}
                 <Route path="dashboard" element={<CustomerDashboard />} />
                 <Route path="find-mess" element={<FindMess />} />
                 <Route path="mess/:id" element={<MessDetails />} />
                 <Route path="mess/:id/subscribe" element={<SubscriptionCheckout />} />
-                <Route path="profile" element={<Profile />} />
+                <Route path="menu" element={<Menu />} />
+                <Route path="track" element={<TrackDelivery />} />
                 <Route path="manage-subscription" element={<ManageSubscription />} />
+                <Route path="wallet" element={<Wallet />} />
+                <Route path="feedback" element={<Feedback />} />
+                <Route path="history" element={<History />} />
+                <Route path="profile" element={<Profile />} />
                 <Route path="notifications" element={<Notifications />} />
-
-                {/* Subscription Protected Pages */}
-                <Route path="menu" element={<SubscriptionGuard><Menu /></SubscriptionGuard>} />
-                <Route path="track" element={<SubscriptionGuard><TrackDelivery /></SubscriptionGuard>} />
-                <Route path="wallet" element={<SubscriptionGuard><Wallet /></SubscriptionGuard>} />
-                <Route path="feedback" element={<SubscriptionGuard><Feedback /></SubscriptionGuard>} />
-                <Route path="history" element={<SubscriptionGuard><History /></SubscriptionGuard>} />
               </Route>
 
               {/* Provider Routes */}
@@ -101,7 +96,6 @@ function App() {
                 }
               >
                 <Route path="dashboard" element={<ProviderDashboard />} />
-                <Route path="onboarding" element={<ProviderOnboarding />} />
                 <Route path="menu" element={<ManageMenu />} />
                 <Route path="orders" element={<OrderManagement />} />
                 <Route path="profile" element={<ProviderProfile />} />

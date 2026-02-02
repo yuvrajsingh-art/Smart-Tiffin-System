@@ -5,52 +5,94 @@ const providerSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
+      unique: true
     },
 
-    kitchenName: {
+    // Operational Settings
+  isActive: { type: Boolean, default: false },
+  autoAccept: { type: Boolean, default: false },
+  preparationTime: { type: Number, default: 30 }, // minutes
+  serviceRadius: { type: Number, default: 5 }, // km
+
+    // STEP 1 – IDENTITY
+    messName: { type: String, required: true },
+    description: { type: String },
+    ownerName: { type: String },
+    phone: { type: String },
+    profileImage: { type: String },
+    bannerImage: { type: String },
+
+    // STEP 2 – LEGAL
+    fssaiNumber: { type: String },
+    fssaiCertificate: { type: String },
+    legalStatus: {
       type: String,
-      required: true
+      enum: ["pending", "verified", "suspended", "rejected"],
+      default: "pending"
     },
 
-    phone: {
-      type: String,
-      required: true
-    },
-
-    address: {
-      fullAddress: String,
-      city: String,
-      state: String,
-      pincode: String
-    },
+    // STEP 3 – OPERATIONS
 
     location: {
       type: {
         type: String,
         enum: ["Point"],
-        required: true
+        default: "Point"
       },
       coordinates: {
-        type: [Number], // [longitude, latitude]
-        required: true
-      }
+        type: [Number], // [lng, lat]
+        index: "2dsphere"
+      },
+      address: { type: String, required: true },
+      city: { type: String, required: true, index: true },
+      pincode: { type: String, required: true }
+    },
+    deliveryRadius: Number,
+    orderCutoffTime: String,
+
+    // STEP 4 – BANKING
+    bankDetails: {
+      accountHolderName: String,
+      accountNumber: String,
+      ifscCode: String
     },
 
-    services: {
-      breakfast: { type: Boolean, default: false },
-      lunch: { type: Boolean, default: false },
-      dinner: { type: Boolean, default: false }
+    onboardingStep: {
+      type: Number,
+      default: 1
     },
 
-    isAvailable: {
+    isOnboardingComplete: {
       type: Boolean,
-      default: true
-    }
+      default: false
+    },
+    // DASHBOARD FIELDS
+    kitchenStatus: {
+      type: Boolean,
+      default: true // ON
+    },
+
+    rating: {
+      type: Number,
+      default: 0
+    },
+
+    totalReviews: {
+      type: Number,
+      default: 0
+    },
+    commission_rate: { type: Number, default: 15 },
+    documents: {
+      aadharCard: String,
+      panCard: String,
+      cancelledCheque: String,
+      fssaiCert: String
+    },
   },
+
   { timestamps: true }
 );
-
 providerSchema.index({ location: "2dsphere" });
 
 module.exports = mongoose.model("Provider", providerSchema);
