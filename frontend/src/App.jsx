@@ -33,6 +33,7 @@ import Notifications from './pages/customer/Notifications'
 
 // Pages - Provider
 import ProviderDashboard from './pages/provider/ProviderDashboard';
+import ProviderOnboarding from './pages/provider/ProviderOnboarding';
 import ManageMenu from './pages/provider/ManageMenu';
 import OrderManagement from './pages/provider/OrderManagement';
 import ProviderProfile from './pages/provider/ProviderProfile';
@@ -97,6 +98,7 @@ function App() {
                 }
               >
                 <Route path="dashboard" element={<ProviderDashboard />} />
+                <Route path="onboarding" element={<ProviderOnboarding />} />
                 <Route path="menu" element={<ManageMenu />} />
                 <Route path="orders" element={<OrderManagement />} />
                 <Route path="profile" element={<ProviderProfile />} />

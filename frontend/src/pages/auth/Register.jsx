@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
@@ -89,12 +91,49 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
-        console.log("Payload:", formData);
-        setTimeout(() => {
-            alert(`Welcome ${formData.name}!`);
-            navigate('/customer/dashboard');
-        }, 1000);
+        if (!validateForm()) {
+            toast.error("Please fill all required fields correctly.");
+            return;
+        }
+
+        setLoadingLocation(true); // Re-using this for general loading state
+        try {
+            const endpoint = role === 'provider' ? '/api/auth/registerProvider/provider' : '/api/auth/registerCustomer/customer';
+
+            const payload = {
+                fullName: formData.name,
+                email: formData.email,
+                password: formData.password,
+                mobile: formData.phone,
+                address: `${formData.address.street}, ${formData.address.city} - ${formData.address.pincode}`,
+                latitude: 28.6139, // Default for now if location fails
+                longitude: 77.2090
+            };
+
+            const { data } = await axios.post(endpoint, payload);
+
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userRole', data.user.role);
+
+                toast.success(`Welcome ${data.user.fullName}!`);
+
+                // Redirection based on role
+                if (data.user.role === 'provider') {
+                    navigate('/provider/onboarding');
+                } else {
+                    navigate('/customer/dashboard');
+                }
+
+                // Force reload to update context state if necessary
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("Registration Error:", error);
+            toast.error(error.response?.data?.message || "Registration failed. Try again.");
+        } finally {
+            setLoadingLocation(false);
+        }
     };
 
     const handleAllowLocation = async () => {
