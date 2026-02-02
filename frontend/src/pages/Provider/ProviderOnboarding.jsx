@@ -32,11 +32,15 @@ const ProviderOnboarding = () => {
     const handleStep1Submit = async () => {
         setIsLoading(true);
         try {
-            await axios.post('/api/provider/onboarding/identity', {
+            await axios.post('/api/provider-onboarding/identity', {
                 messName: formData.messName,
                 ownerName: formData.ownerName,
                 phone: formData.phone,
-                logo: formData.logo
+                logo: formData.logo,
+                // Required location fields for initial schema validation
+                address: 'Pending',
+                city: 'Pending',
+                pincode: '000000'
             });
             toast.success("Identity Saved");
             nextStep();
@@ -50,7 +54,7 @@ const ProviderOnboarding = () => {
     const handleStep2Submit = async () => {
         setIsLoading(true);
         try {
-            await axios.post('/api/provider/onboarding/legal', {
+            await axios.post('/api/provider-onboarding/legal', {
                 fssaiNumber: formData.fssaiNumber,
                 fssaiCertificate: formData.fssaiCertificate
             });
@@ -66,7 +70,7 @@ const ProviderOnboarding = () => {
     const handleStep3Submit = async () => {
         setIsLoading(true);
         try {
-            await axios.post('/api/provider/onboarding/operations', {
+            await axios.post('/api/provider-onboarding/operations', {
                 address: formData.address,
                 latitude: 28.6139, // Default for now
                 longitude: 77.2090,
@@ -85,7 +89,7 @@ const ProviderOnboarding = () => {
     const handleFinalSubmit = async () => {
         setIsLoading(true);
         try {
-            await axios.post('/api/provider/onboarding/banking', {
+            await axios.post('/api/provider-onboarding/banking', {
                 accountHolderName: formData.accountHolderName,
                 accountNumber: formData.accountNumber,
                 ifscCode: formData.ifscCode

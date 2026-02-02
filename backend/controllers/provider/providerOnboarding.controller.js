@@ -3,7 +3,7 @@ const ProviderProfile = require("../../models/providerprofile.model");
 /* STEP 1 – IDENTITY */
 exports.saveIdentity = async (req, res) => {
   try {
-    const { messName, ownerName, phone, logo } = req.body;
+    const { messName, ownerName, phone, logo, address, city, pincode } = req.body;
 
     const profile = await ProviderProfile.findOneAndUpdate(
       { user: req.user.id },
@@ -13,6 +13,11 @@ exports.saveIdentity = async (req, res) => {
         ownerName,
         phone,
         logo,
+        location: {
+          address: address || "Pending",
+          city: city || "Pending",
+          pincode: pincode || "000000"
+        },
         onboardingStep: 2
       },
       { new: true, upsert: true }
