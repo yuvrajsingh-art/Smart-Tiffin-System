@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
+import PaymentModal from '../../components/common/PaymentModal';
+import BackgroundBlobs from '../../components/common/BackgroundBlobs';
+import PageHeader from '../../components/common/PageHeader';
 
 const Menu = () => {
     // Current Day Only
@@ -14,6 +17,7 @@ const Menu = () => {
 
     // Preferences State
     const [showPrefModal, setShowPrefModal] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [activeMealType, setActiveMealType] = useState(null); // 'lunch' or 'dinner'
     const [preferences, setPreferences] = useState({
         lunch: { spice: 'Medium', note: '', extras: [] },
@@ -71,28 +75,27 @@ const Menu = () => {
     };
 
     const currentMenu = menuData[selectedDay] || menuData['Mon']; // Fallback
+    const totalGuests = guestCounts.lunch + guestCounts.dinner;
+    const totalCost = totalGuests * 150;
+
+    const handlePaymentSuccess = (details) => {
+        setGuestCounts({ lunch: 0, dinner: 0 });
+        setShowPaymentModal(false);
+        alert(`Payment of ₹${details.amount} successful via ${details.method}! Guest meals booked.`);
+    };
 
     return (
-        <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
+        <div className="w-full pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
 
             {/* Background Blobs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                <div className="blob blob-1 blob-primary opacity-30 scale-75"></div>
-                <div className="blob blob-2 blob-secondary opacity-30 scale-75"></div>
-            </div>
+            <BackgroundBlobs />
 
             {/* Header */}
-            <div className="mb-2 pt-4">
-                <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 mb-2 transition-colors">
-                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-black text-[#2D241E] leading-tight">Today's Menu</h1>
-                    <p className="text-xs font-bold text-[#5C4D42] opacity-60 uppercase tracking-widest">
-                        {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="Today's Menu"
+                subtitle={new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+                backText="Back"
+            />
 
             {/* Timeline Layout */}
             <div className="relative mt-8">
@@ -104,13 +107,13 @@ const Menu = () => {
                     <div key={type} className="relative pl-20 mb-8 last:mb-0 group">
                         {/* Time Marker */}
                         <div className="absolute left-0 top-0 w-[4rem] flex flex-col items-center gap-1 z-10 pt-4">
-                            <span className="text-[12px] font-black text-[#2D241E] leading-none">{type === 'lunch' ? '12:30' : '08:30'}</span>
+                            <span className="text-[12px] font-bold text-[#2D241E] leading-none">{type === 'lunch' ? '12:30' : '08:30'}</span>
                             <span className="text-[9px] font-bold text-gray-400 leading-none">PM</span>
 
                             <div className={`size-3.5 rounded-full border-[3px] border-[#FFFBF5] shadow-sm mt-1 z-20 ${type === 'lunch' ? 'bg-orange-500' : 'bg-blue-500'}`}></div>
                         </div>
 
-                        <div className={`glass-card p-5 rounded-[2rem] flex flex-col sm:flex-row gap-5 items-center pr-6 overflow-hidden relative transition-all duration-300 border border-white/60 shadow-sm hover:shadow-md ${pausedMeals[type] ? 'grayscale opacity-80 bg-gray-50/80 shadow-none' : 'hover:bg-white/80'}`}>
+                        <div className={`glass-card p-5 rounded-[2.5rem] flex flex-col sm:flex-row gap-5 items-center pr-6 overflow-hidden relative transition-all duration-300 border border-white/60 shadow-sm hover:shadow-md ${pausedMeals[type] ? 'grayscale opacity-80 bg-gray-50/80 shadow-none' : 'hover:bg-white/80'}`}>
 
                             {/* Paused Overlay */}
                             {pausedMeals[type] && (
@@ -123,7 +126,7 @@ const Menu = () => {
                             )}
 
                             {/* Card Badge */}
-                            <div className={`absolute top-0 right-0 px-4 py-1.5 rounded-bl-2xl text-[10px] font-black uppercase tracking-wider ${type === 'lunch' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                            <div className={`absolute top-0 right-0 px-4 py-1.5 rounded-bl-2xl text-[10px] font-bold uppercase tracking-wider ${type === 'lunch' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
                                 {type}
                             </div>
 
@@ -133,7 +136,7 @@ const Menu = () => {
 
                             <div className="flex-1 min-w-0 text-center sm:text-left w-full space-y-2">
                                 <div>
-                                    <h3 className="font-black text-[#2D241E] text-lg leading-tight">{currentMenu[type].title}</h3>
+                                    <h3 className="font-bold text-[#2D241E] text-lg leading-tight">{currentMenu[type].title}</h3>
                                     <p className="text-xs text-[#5C4D42] font-medium leading-relaxed line-clamp-2 mt-1 opacity-80">{currentMenu[type].items}</p>
 
                                     {/* Show Preferences if set */}
@@ -225,7 +228,7 @@ const Menu = () => {
                         <div className="relative z-10">
                             <div className="flex justify-between items-center mb-6">
                                 <div>
-                                    <h3 className="text-xl font-black text-[#2D241E]">Customize Meal</h3>
+                                    <h3 className="text-xl font-bold text-[#2D241E]">Customize Meal</h3>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activeMealType}</p>
                                 </div>
                                 <button onClick={() => setShowPrefModal(false)} className="size-10 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors group">
@@ -282,8 +285,39 @@ const Menu = () => {
                 document.body
             )}
 
+            {/* Sticky Checkout Bar */}
+            {totalGuests > 0 && (
+                <div className="fixed bottom-4 left-4 right-4 z-[9000] max-w-7xl mx-auto animate-[slideInUp_0.3s]">
+                    <div className="bg-[#2D241E] text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="size-10 bg-white/10 rounded-full flex items-center justify-center">
+                                <span className="material-symbols-outlined">group_add</span>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm">Guest Meals: {totalGuests}</h4>
+                                <p className="text-xs text-white/60">Total: ₹{totalCost}</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowPaymentModal(true)}
+                            className="bg-white text-[#2D241E] px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform flex items-center gap-2"
+                        >
+                            Pay ₹{totalCost}
+                            <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <PaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                amount={totalCost}
+                onSuccess={handlePaymentSuccess}
+                title="Pay for Guest Meals"
+            />
+
         </div>
     );
 };
-
 export default Menu;

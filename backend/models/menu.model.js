@@ -1,90 +1,129 @@
 const mongoose = require("mongoose");
 
+const addOnSchema = new mongoose.Schema({
+  name: String,
+  price: Number,
+  isActive: {
+    type: Boolean,
+    default: true
+  }
+});
+
 const menuSchema = new mongoose.Schema(
   {
     provider: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true
     },
 
-    plan: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Tiffin",
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    description: String,
+    image: String,
+
+
+
+    category: {
+      type: String,
+      enum: ["Thali", "Bowl", "Combo", "Bread", "Curry"],
+      required: true
     },
 
+
+    type: {
+      type: String,
+      enum: ["Veg", "Non-Veg", "Egg"],
+      required: true
+    },
+    spiceLevel: { type: String, enum: ["Low", "Medium", "High"] },
+
+
+    isAvailable: { type: Boolean, default: true },
+    availableSlots: [{ type: String, enum: ["Lunch", "Dinner"] }],
+    availableDays: [{
+      type: String,
+      enum: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      default: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    }],
+    // Date + Meal
     menuDate: {
       type: Date,
-      required: true,
+      required: true
     },
-
-    dayOfWeek: String,
 
     mealType: {
       type: String,
       enum: ["breakfast", "lunch", "dinner"],
-      required: true,
+      default: "lunch"
     },
 
-    items: [
-      {
-        name: { type: String, required: true },
-        description: String,
-        quantity: String
+    // MAIN ITEMS
+    mainDish: String,              // Paneer Butter Masala
+    sabjiDry: String,              // Aloo Gobi Matar
+    dal: String,                   // Dal Tadka Yellow
+    rice: String,                 // Jeera Rice
+
+    // BREAD
+    bread: {
+      type: {
+        type: String,   // Butter Roti
+        required: true
+      },
+      count: {
+        type: Number,   // 4
+        required: true
       }
-    ],
-
-    portionSize: {
-      type: String,
-      enum: ["small", "medium", "large"],
-      default: "medium",
     },
 
-    category: {
-      type: String,
-      enum: ["regular", "diet", "premium"],
-      default: "regular",
+
+    // ACCOMPANIMENTS
+    accompaniments: {
+      salad: { type: Boolean, default: false },
+      pickle: { type: Boolean, default: false },
+      papad: { type: Boolean, default: false },
+      raita: { type: Boolean, default: false }
     },
 
-    tags: [String],
-
-    calories: Number,
-
-    isVeg: {
+    // SPECIAL THALI
+    isSpecialThali: {
       type: Boolean,
-      default: true,
+      default: false
     },
 
-    maxOrders: {
-      type: Number,
-      default: 100,
+    specialThaliPrice: Number,
+
+    // ADD-ONS / UPSELLS
+    addOns: [addOnSchema],
+
+    // STATUS
+    operationalStatus: {
+      type: String,
+      enum: ["open", "soldout"],
+      default: "open"
     },
 
-    orderCutoffTime: Date,
-
-    image: String,
-
-    note: String,
-
-    isAvailable: {
+    isPublished: {
       type: Boolean,
-      default: true,
+      default: false
     },
+    publishedAt: Date,
+
+    // Admin Control
+    approvalStatus: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending"
+    },
+    adminRemarks: String
   },
   { timestamps: true }
 );
-
-//  One menu per provider per date per meal
 menuSchema.index(
   { provider: 1, menuDate: 1, mealType: 1 },
   { unique: true }
 );
 
-//  Auto calculate dayOfWeek
-menuSchema.pre("save", function (next) {
-  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  this.dayOfWeek = days[this.menuDate.getDay()];
-  next();
-});
 
 module.exports = mongoose.model("Menu", menuSchema);
