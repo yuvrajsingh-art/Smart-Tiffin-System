@@ -193,23 +193,6 @@ server.listen(PORT, () => {
   console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
   console.log('');
 
-const authRoutes = require("./routes/authRoutes");
-const providerOnboardingRoutes = require("./routes/provider/providerOnboarding.routes")
-const providerMenuRoutes = require("./routes/provider/providerMenuRoutes")
-const providerDeshbordRoutes = require("./routes/provider/providerDeshbordRoutes")
-const kdsRoutes = require("./routes/provider/kdsRoutes")
-const subscriptionRoutes = require("./routes/provider/subscriptionRoutes")
-const reviewTriageRoutes = require("./routes/provider/reviewTriageRoutes")
-const storeProfileRoutes = require("./routes/provider/storeProfileRoutes")
-const messDiscoveryRoutes = require("./routes/customer/messDiscoveryRoutes")
-const customerDashboardRoutes = require("./routes/customer/customerDashboardRoutes")
-const walletRoutes = require("./routes/customer/walletRoutes")
-const customerMenuRoutes = require("./routes/customer/menuRoutes")
-const trackRoutes = require("./routes/customer/trackRoutes")
-const customerSubscriptionRoutes = require("./routes/customer/subscriptionRoutes")
-const historyRoutes = require("./routes/customer/historyRoutes")
-const feedbackRoutes = require("./routes/customer/feedbackRoutes")
-const profileRoutes = require("./routes/customer/profileRoutes")
   log.success(`${colors.green}${colors.bright}Server is LIVE!${colors.reset}`);
   console.log('');
 
@@ -218,24 +201,6 @@ const profileRoutes = require("./routes/customer/profileRoutes")
   console.log(`  ${colors.bright}🗄️  Database:${colors.reset}       ${colors.green}MongoDB Connected${colors.reset}`);
   console.log(`  ${colors.bright}🔑 Auth:${colors.reset}           ${colors.green}JWT Enabled${colors.reset}`);
   console.log('');
-
-app.use("/api/provider-onboarding", providerOnboardingRoutes);
-app.use("/api/provider-menus", providerMenuRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/provider-deshbord", providerDeshbordRoutes)
-app.use("/api/provider-kds", kdsRoutes)
-app.use("/api/provider-subscription", subscriptionRoutes)
-app.use("/api/provider-reviews", reviewTriageRoutes)
-app.use("/api/provider-store", storeProfileRoutes)
-app.use("/api/discovery", messDiscoveryRoutes)
-app.use("/api/customer", customerDashboardRoutes)
-app.use("/api/customer/wallet", walletRoutes)
-app.use("/api/customer/menu", customerMenuRoutes)
-app.use("/api/customer/track", trackRoutes)
-app.use("/api/customer/subscription", customerSubscriptionRoutes)
-app.use("/api/customer/history", historyRoutes)
-app.use("/api/customer/feedback", feedbackRoutes)
-app.use("/api/customer/profile", profileRoutes)
 
   console.log(`${colors.dim}─────────────────────────────────────────────────────────────────${colors.reset}`);
   console.log('');
