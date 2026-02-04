@@ -15,7 +15,7 @@ function ProviderSidebar() {
   const [active, setActive] = useState("dashboard");
 
   const menu = [
-  { id: "dashboard", icon: <MdDashboard />, label: "Dashboard", path: "/Provider/ProviderDashboard" },
+  { id: "dashboard", icon: <MdDashboard />, label: "Dashboard", path: "/" },
   { id: "menu", icon: <MdOutlineRestaurantMenu />, label: "Manage Daily Menu", path: "/Provider/ManageMenu" },
   { id: "customers", icon: <FaUserGroup />, label: "Active Customers", path: "/Provider/ActiveCustomers" },
   { id: "delivery", icon: <CiDeliveryTruck />, label: "Delivery Status", path: "/Provider/DeliveryStatus" },

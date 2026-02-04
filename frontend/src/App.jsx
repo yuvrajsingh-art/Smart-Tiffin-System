@@ -92,7 +92,22 @@ function App() {
   //             </Route>
 
   //             {/* Provider Routes */}
-
+  //             <Route
+  //               path="/Provider"
+  //               element={
+  //                 <ProtectedRoute allowedRoles={['Provider']}>
+  //                   <DashboardLayout />
+  //                 </ProtectedRoute>
+  //               }
+  //             >
+  //               <Route path="ProviderDashboard" element={<ProviderDashboard />} />
+  //               <Route path="ManageMenu" element={<ManageMenu />} />
+  //               <Route path="ActiveCustomers" element={<ActiveCustomers />} />
+  //               <Route path="DeliveryStatus" element={<DeliveryStatus />} />
+  //               <Route path="CustomerFeedback" element={<CustomerFeedback />} />
+  //               <Route path="ProviderAnalysis" element={<ProviderAnalysis />} />
+  //               <Route path="ProviderProfile" element={<ProviderProfile />} />
+  //             </Route>
 
   //             {/* Admin Routes */}
   //             <Route
@@ -123,23 +138,23 @@ function App() {
   //   </UserProvider>
   // )
 
-
-
-
-  return(
+  return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<ProviderDashboard />} />
-        <Route path="/Provider/ProviderDashboard" element={<ProviderDashboard />} />
-        <Route path="/Provider/ManageMenu" element={<ManageMenu />} />
-        <Route path="/Provider/ActiveCustomers" element={<ActiveCustomers />} />
-        <Route path="/Provider/DeliveryStatus" element={<DeliveryStatus />} />
-        <Route path="/Provider/CustomerFeedback" element={<CustomerFeedback />} />
-        <Route path="/Provider/ProviderAnalysis" element={<ProviderAnalysis />} />
-        <Route path="/Provider/ProviderProfile" element={<ProviderProfile />} />
-      </Routes>
+        
+          <Route path="/" element={<ProviderDashboard />} />
+          <Route path="/Provider/ManageMenu" element={<ManageMenu />} />
+          <Route path="/Provider/ActiveCustomers" element={<ActiveCustomers />} />
+          <Route path="/Provider/DeliveryStatus" element={<DeliveryStatus />} />
+          <Route path="/Provider/CustomerFeedback" element={<CustomerFeedback />} />
+          <Route path="/Provider/ProviderAnalysis" element={<ProviderAnalysis />} />
+          <Route path="/Provider/ProviderProfile" element={<ProviderProfile />} />
+       </Routes>
     </BrowserRouter>
   )
+
+
+
 }
 
 
