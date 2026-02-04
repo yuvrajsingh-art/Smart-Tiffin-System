@@ -193,7 +193,8 @@ exports.getFeedbackHistory = async (req, res) => {
                 meal: review.mealType === 'lunch' ? 'Lunch' : 'Dinner',
                 rating: review.rating,
                 comment: review.comment || 'No comment provided',
-                tags: review.tags || []
+                tags: review.tags || [],
+                response: review.response?.message || null
             };
         });
 

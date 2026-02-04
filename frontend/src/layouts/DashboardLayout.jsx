@@ -40,6 +40,7 @@ const DashboardLayout = () => {
         { icon: 'pause_circle', label: 'Manage Subscription', to: '/customer/manage-subscription', public: false },
         { icon: 'history', label: 'History', to: '/customer/history', public: false },
         { icon: 'thumb_up', label: 'Feedback', to: '/customer/feedback', public: false },
+        { icon: 'support_agent', label: 'Support', to: '/customer/support', public: true },
     ];
 
     const visibleNavItems = navItems.filter(item => item.public || isSubscribed);

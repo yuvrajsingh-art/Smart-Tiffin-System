@@ -73,6 +73,13 @@ const subscriptionSchema = new mongoose.Schema({
         default: "08:30 PM"
     },
 
+    deliveryAddress: {
+        street: String,
+        city: String,
+        pincode: String,
+        phone: String
+    },
+
     paymentStatus: {
         type: String,
         enum: ["Pending", "Paid", "Failed"],
@@ -103,6 +110,18 @@ const subscriptionSchema = new mongoose.Schema({
         enum: ["veg", "non-veg", "jain"],
         default: "veg"
     },
+    skippedMeals: [{
+        date: String, // YYYY-MM-DD
+        mealType: {
+            type: String,
+            enum: ["lunch", "dinner"]
+        },
+        refundAmount: Number,
+        skippedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     totalAmount: Number,
     mealTypes: [{
         type: String,

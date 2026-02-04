@@ -114,16 +114,8 @@ const storeProfileRoutes = require("./routes/provider/storeProfileRoutes");
 // Admin routes
 const adminRoutes = require("./routes/adminRoutes");
 
-// Customer routes
-const customerDashboardRoutes = require("./routes/customer/customerDashboardRoutes");
-const customerWalletRoutes = require("./routes/customer/walletRoutes");
-const customerMenuRoutes = require("./routes/customer/menuRoutes");
-const messDiscoveryRoutes = require("./routes/customer/messDiscoveryRoutes");
-const customerFeedbackRoutes = require("./routes/customer/feedbackRoutes");
-const customerHistoryRoutes = require("./routes/customer/historyRoutes");
-const customerTrackRoutes = require("./routes/customer/trackRoutes");
-const customerSubscriptionRoutes = require("./routes/customer/subscriptionRoutes");
-const customerProfileRoutes = require("./routes/customer/profileRoutes");
+// Customer routes consolidated
+const customerRoutes = require("./routes/customer");
 
 // =============================================================================
 // ROUTES REGISTRATION
@@ -151,15 +143,8 @@ app.use("/api/provider-store", storeProfileRoutes);
 app.use("/api/admin", adminRoutes);
 
 // Customer endpoints: /api/customer/* and /api/discovery/*
-app.use("/api/customer/dashboard", customerDashboardRoutes);
-app.use("/api/customer/wallet", customerWalletRoutes);
-app.use("/api/customer/menu", customerMenuRoutes);
-app.use("/api/discovery", messDiscoveryRoutes);
-app.use("/api/customer/feedback", customerFeedbackRoutes);
-app.use("/api/customer/history", customerHistoryRoutes);
-app.use("/api/customer/track", customerTrackRoutes);
-app.use("/api/customer/subscription", customerSubscriptionRoutes);
-app.use("/api/customer/profile", customerProfileRoutes);
+app.use("/api/customer", customerRoutes);
+app.use("/api/discovery", require("./routes/customer/messDiscoveryRoutes"));
 
 // =============================================================================
 // CONSOLE COLORS & STYLING

@@ -17,8 +17,9 @@ exports.getSubscriptionDetails = async (req, res) => {
         }).populate('provider', 'fullName');
 
         if (!activeSubscription) {
-            return res.status(404).json({
-                success: false,
+            return res.json({
+                success: true,
+                data: null,
                 message: 'No active subscription found'
             });
         }
@@ -248,6 +249,7 @@ exports.cancelSubscription = async (req, res) => {
     try {
         const customerId = req.user._id;
         const { reason } = req.body;
+        console.log(`[CANCEL START] Customer: ${customerId}, Reason: ${reason}`);
 
         // Get active subscription
         const subscription = await Subscription.findOne({
@@ -257,11 +259,14 @@ exports.cancelSubscription = async (req, res) => {
         });
 
         if (!subscription) {
+            console.log("[CANCEL ERROR] No active subscription found");
             return res.status(404).json({
                 success: false,
                 message: 'No active subscription found'
             });
         }
+
+        console.log(`[CANCEL FOUND] Subscription ID: ${subscription._id}`);
 
         // Calculate refund amount (remaining days)
         const today = new Date();
@@ -270,35 +275,49 @@ exports.cancelSubscription = async (req, res) => {
         const dailyRate = (subscription.totalAmount || 2400) / 30; // Assuming 30 days per month
         const refundAmount = Math.max(0, remainingDays * dailyRate);
 
-        // Update subscription status
-        subscription.status = "cancelled";
-        subscription.cancelledAt = new Date();
-        subscription.cancellationReason = reason || "User requested";
-        await subscription.save();
+        console.log(`[CANCEL REFUND] Amount: ${refundAmount}, Remaining Days: ${remainingDays}`);
+
+        // Update subscription status using findByIdAndUpdate to avoid potential save() validation hooks issues
+        await Subscription.findByIdAndUpdate(subscription._id, {
+            status: "cancelled",
+            cancelledAt: new Date(),
+            cancellationReason: reason || "User requested"
+        });
+
+        console.log(`[CANCEL UPDATE] Subscription Cancelled`);
 
         // Add refund to wallet
-        let wallet = await CustomerWallet.findOne({ customer: customerId });
-        if (!wallet) {
-            wallet = new CustomerWallet({
+        try {
+            let wallet = await CustomerWallet.findOne({ customer: customerId });
+            if (!wallet) {
+                console.log("[CANCEL WALLET] Creating new wallet");
+                wallet = new CustomerWallet({
+                    customer: customerId,
+                    balance: 0
+                });
+            }
+
+            wallet.balance += refundAmount;
+            await wallet.save();
+            console.log(`[CANCEL WALLET] Refund added to wallet ${wallet._id}`);
+
+            // Create refund transaction
+            const transaction = new Transaction({
                 customer: customerId,
-                balance: 0
+                type: 'credit',
+                transactionType: 'Refund',
+                amount: refundAmount,
+                description: 'Subscription cancellation refund',
+                referenceId: `CAN-${Date.now()}`,
+                status: 'Success'
             });
+            await transaction.save();
+            console.log("[CANCEL TX] Transaction created");
+
+        } catch (walletError) {
+            console.error("[CANCEL WALLET ERROR] Error processing wallet refund:", walletError);
+            // Don't fail the entire request if refund fails
         }
-
-        wallet.balance += refundAmount;
-        await wallet.save();
-
-        // Create refund transaction
-        const transaction = new Transaction({
-            customer: customerId,
-            type: 'credit',
-            transactionType: 'Refund',
-            amount: refundAmount,
-            description: 'Subscription cancellation refund',
-            referenceId: `CAN-${Date.now()}`,
-            status: 'Success'
-        });
-        await transaction.save();
 
         res.json({
             success: true,
@@ -309,9 +328,10 @@ exports.cancelSubscription = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("[CANCEL CRITICAL ERROR]", error);
         res.status(500).json({
             success: false,
-            message: 'Failed to cancel subscription'
+            message: 'Failed to cancel subscription. Please contact support.'
         });
     }
 };
@@ -333,6 +353,14 @@ exports.purchaseSubscription = async (req, res) => {
             planType
         } = req.body;
 
+        const fs = require('fs');
+        const logData = {
+            time: new Date().toISOString(),
+            customerId,
+            body: req.body
+        };
+        fs.appendFileSync('purchase_debug.log', JSON.stringify(logData, null, 2) + '\n');
+
         console.log("Subscription Purchase Request:", {
             customerId,
             providerId,
@@ -341,6 +369,20 @@ exports.purchaseSubscription = async (req, res) => {
             mealType,
             planType
         });
+
+        // 0. Check for existing active subscription
+        const existingSubscription = await Subscription.findOne({
+            customer: customerId,
+            status: "approved",
+            endDate: { $gte: new Date() }
+        });
+
+        if (existingSubscription) {
+            return res.status(400).json({
+                success: false,
+                message: 'You already have an active subscription. Please cancel it before purchasing a new one.'
+            });
+        }
 
         // 1. Basic Validation
         if (!providerId || !totalAmount || !planName) {
@@ -362,17 +404,33 @@ exports.purchaseSubscription = async (req, res) => {
         }
         const providerUserId = store.provider;
 
-        // 2. Check Wallet Balance
-        const wallet = await CustomerWallet.findOne({ customer: customerId });
-        if (!wallet || wallet.balance < totalAmount) {
-            console.log("Insufficient balance. Wallet:", wallet ? wallet.balance : "No wallet", "Required:", totalAmount);
-            return res.status(400).json({
-                success: false,
-                message: `Insufficient wallet balance (Current: ₹${wallet ? wallet.balance : 0}). Please top up your wallet.`
+        // 2. Handle Wallet (Simulate payment gateway credit)
+        let wallet = await CustomerWallet.findOne({ customer: customerId });
+        if (!wallet) {
+            wallet = new CustomerWallet({
+                customer: customerId,
+                balance: 0
             });
         }
 
-        // 3. Deduct Balance
+        // Simulating that the PaymentModal in frontend actually paid externally
+        // and now we credit that amount to the wallet before deducting it.
+        // This makes the "Direct Pay" flow work seamlessly.
+        wallet.balance += totalAmount;
+        await wallet.save();
+
+        // Separate credit transaction for the simulated payment
+        await Transaction.create({
+            customer: customerId,
+            type: 'credit',
+            transactionType: 'Payment Gateway',
+            amount: totalAmount,
+            description: `Payment for ${planName} via UPI`,
+            referenceId: `PGW-${Date.now()}`,
+            status: 'Success'
+        });
+
+        // 3. Deduct Balance (Actual Subscription Purchase)
         wallet.balance -= totalAmount;
         wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
         await wallet.save();
@@ -411,8 +469,10 @@ exports.purchaseSubscription = async (req, res) => {
             endDate: end,
             mealType: finalMealType,
             mealTypes: finalMealTypesArr,
+            mealTypes: finalMealTypesArr,
             lunchTime,
             dinnerTime,
+            deliveryAddress,
             paymentStatus: "Paid",
             status: "approved",
             adminApproval: "approved"
@@ -435,6 +495,7 @@ exports.purchaseSubscription = async (req, res) => {
 
         await transaction.save();
 
+        console.log("Purchase Subscription Success!");
         res.json({
             success: true,
             data: {
@@ -446,12 +507,21 @@ exports.purchaseSubscription = async (req, res) => {
 
     } catch (error) {
         console.error("Purchase Subscription Error Details:");
+        console.error("Name:", error.name);
+        console.error("Message:", error.message);
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map(val => val.message);
             console.error("Mongoose Validation Error:", messages);
             return res.status(400).json({
                 success: false,
                 message: `Validation Error: ${messages.join(', ')}`
+            });
+        }
+        if (error.kind === 'ObjectId') {
+            console.error("Invalid ObjectId detected for field:", error.path);
+            return res.status(400).json({
+                success: false,
+                message: `Invalid ID format for ${error.path}`
             });
         }
         console.error(error);

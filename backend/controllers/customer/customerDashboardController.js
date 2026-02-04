@@ -11,7 +11,7 @@ exports.getCustomerDashboard = async (req, res) => {
     try {
         const customerId = req.user._id;
         const today = new Date();
-        
+
         // Check active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
@@ -36,18 +36,7 @@ exports.getCustomerDashboard = async (req, res) => {
 
         // Get today's menu from menu controller
         const menuData = await getTodayMenuData(customerId);
-        const todaysMenu = menuData || {
-            lunch: {
-                name: "Paneer Masala Thali",
-                items: "3 Rotis, Jeera Rice, Dal Fry",
-                emoji: "🍛"
-            },
-            dinner: {
-                name: "Light Khichdi Kadhi",
-                items: "With Papad & Pickle",
-                emoji: "🌙"
-            }
-        };
+        const todaysMenu = menuData || null;
 
         // Get user name from database
         const user = await User.findById(customerId);
@@ -59,15 +48,25 @@ exports.getCustomerDashboard = async (req, res) => {
             data: {
                 hasActiveSubscription: !!activeSubscription,
                 liveStatus: todayOrder ? {
-                    status: todayOrder.status || "cooking",
-                    currentStep: 2,
-                    mealType: "Lunch"
+                    status: todayOrder.status,
+                    currentStep: (() => {
+                        const status = todayOrder.status;
+                        if (['pending', 'confirmed', 'preparing'].includes(status)) return 1;
+                        if (status === 'cooking') return 2;
+                        if (['ready', 'packed'].includes(status)) return 3;
+                        if (status === 'out_for_delivery') return 4;
+                        if (status === 'delivered') return 5;
+                        return 1;
+                    })(),
+                    mealType: todayOrder.menu ? (todayOrder.menu.mealType === 'lunch' ? 'Lunch' : 'Dinner') : "Meal"
                 } : null,
                 walletBalance,
                 recentAddition,
                 streak,
                 todaysMenu,
-                userName
+                userName,
+                lunchTime: activeSubscription?.lunchTime || "12:45 PM",
+                dinnerTime: activeSubscription?.dinnerTime || "08:45 PM"
             }
         });
 
@@ -97,9 +96,9 @@ exports.updateStreak = async (customerId) => {
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         let streak = await Streak.findOne({ customer: customerId });
-        
+
         if (!streak) {
             streak = new Streak({
                 customer: customerId,
@@ -111,9 +110,9 @@ exports.updateStreak = async (customerId) => {
         } else {
             const lastOrderDate = new Date(streak.lastOrderDate);
             lastOrderDate.setHours(0, 0, 0, 0);
-            
+
             const daysDiff = Math.floor((today - lastOrderDate) / (1000 * 60 * 60 * 24));
-            
+
             if (daysDiff === 1) {
                 // Consecutive day
                 streak.currentStreak += 1;
@@ -125,14 +124,14 @@ exports.updateStreak = async (customerId) => {
                 streak.currentStreak = 1;
             }
             // If daysDiff === 0, same day order, don't change streak
-            
+
             streak.lastOrderDate = today;
             streak.totalOrders += 1;
         }
-        
+
         await streak.save();
         return streak;
-        
+
     } catch (error) {
         console.error('Error updating streak:', error);
         return null;
@@ -143,12 +142,12 @@ exports.updateStreak = async (customerId) => {
 const getTodayMenuData = async (customerId) => {
     try {
         const { getTodayMenu } = require('./menuController');
-        
+
         // Create mock req object
         const mockReq = {
             user: { _id: customerId }
         };
-        
+
         // Create mock res object to capture response
         let responseData = null;
         const mockRes = {
@@ -157,13 +156,13 @@ const getTodayMenuData = async (customerId) => {
             },
             status: () => mockRes
         };
-        
+
         await getTodayMenu(mockReq, mockRes);
-        
+
         if (responseData?.success && responseData?.data) {
             return responseData.data;
         }
-        
+
         return null;
     } catch (error) {
         return null;

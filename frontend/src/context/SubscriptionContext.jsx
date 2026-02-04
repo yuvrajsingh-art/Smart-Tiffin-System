@@ -23,7 +23,7 @@ export const SubscriptionProvider = ({ children }) => {
     const fetchSubscription = async () => {
         try {
             const { data } = await axios.get('/api/customer/subscription/details');
-            if (data.success) {
+            if (data.success && data.data?.subscription) {
                 const subData = data.data.subscription;
                 setSubscription({
                     status: 'Active',
@@ -35,6 +35,8 @@ export const SubscriptionProvider = ({ children }) => {
                     lunchTime: subData.lunchTime,
                     dinnerTime: subData.dinnerTime
                 });
+            } else {
+                setSubscription(null);
             }
         } catch (error) {
             // Handle 401 (Unauthorized) or 404 (Not Found) gracefully
@@ -92,7 +94,8 @@ export const SubscriptionProvider = ({ children }) => {
             subscription,
             buySubscription,
             cancelSubscription,
-            hasActiveSubscription
+            hasActiveSubscription,
+            fetchSubscription
         }}>
             {children}
         </SubscriptionContext.Provider>

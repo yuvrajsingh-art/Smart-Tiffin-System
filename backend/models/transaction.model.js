@@ -20,7 +20,7 @@ const transactionSchema = new mongoose.Schema({
 
     transactionType: {
         type: String,
-        enum: ["Order Payment", "Payout to Bank", "Penalty", "Refund", "Commission Deduction", "Subscription Purchase", "Wallet Topup"],
+        enum: ["Order Payment", "Payout to Bank", "Penalty", "Refund", "Commission Deduction", "Subscription Purchase", "Wallet Topup","Payment Gateway"],
         required: true
     },
 

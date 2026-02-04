@@ -81,7 +81,9 @@ const seedMenu = async () => {
                 dal: menuData[i].lunch.dal,
                 rice: menuData[i].lunch.rice,
                 bread: { type: "Roti", count: menuData[i].lunch.rotis },
-                isAvailable: true
+                isAvailable: true,
+                isPublished: true,
+                approvalStatus: "Approved"
             });
 
             // Dinner Entry
@@ -98,7 +100,9 @@ const seedMenu = async () => {
                 dal: menuData[i].dinner.dal,
                 rice: menuData[i].dinner.rice,
                 bread: { type: "Roti", count: menuData[i].dinner.rotis },
-                isAvailable: true
+                isAvailable: true,
+                isPublished: true,
+                approvalStatus: "Approved"
             });
         }
 

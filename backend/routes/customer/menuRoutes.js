@@ -13,5 +13,7 @@ const { protect } = require("../../middleware/authMiddleware.middleware");
 router.get("/weekly", protect, getWeeklyMenu);
 router.get("/today", protect, getTodayMenu);
 router.get("/public/:providerId", getPublicMenu);
+router.post("/toggle-skip", protect, require("../../controllers/customer/menuController").toggleMealSkip);
+router.get("/skipped-meals", protect, require("../../controllers/customer/menuController").getSkippedMeals);
 
 module.exports = router;

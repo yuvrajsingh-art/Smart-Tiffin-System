@@ -31,6 +31,7 @@ import MessDetails from './pages/discovery/MessDetails'
 import SubscriptionCheckout from './pages/discovery/SubscriptionCheckout'
 import Profile from './pages/customer/Profile'
 import Notifications from './pages/customer/Notifications'
+import Support from './pages/customer/Support'
 
 // Pages - Provider
 import ProviderDashboard from './pages/provider/ProviderDashboard';
@@ -90,6 +91,7 @@ function App() {
                 <Route path="wallet" element={<Wallet />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="notifications" element={<Notifications />} />
+                <Route path="support" element={<Support />} />
               </Route>
 
               {/* Provider Routes */}

@@ -1,6 +1,9 @@
 const Menu = require("../../models/menu.model");
 const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
+const CustomerWallet = require("../../models/customerWallet.model");
+const Transaction = require("../../models/transaction.model");
+const { createNotification } = require("../../utils/notificationService");
 
 // Get weekly menu for customer
 exports.getWeeklyMenu = async (req, res) => {
@@ -108,7 +111,8 @@ exports.getWeeklyMenu = async (req, res) => {
             data: {
                 menuData,
                 providerName: activeSubscription.provider.fullName,
-                subscriptionId: activeSubscription._id
+                subscriptionId: activeSubscription._id,
+                skippedMeals: activeSubscription.skippedMeals || []
             }
         });
 
@@ -120,12 +124,175 @@ exports.getWeeklyMenu = async (req, res) => {
     }
 };
 
-// Get today's menu only
+/**
+ * Toggle skip for a specific meal (Lunch/Dinner)
+ * POST /api/customer/menu/toggle-skip
+ */
+exports.toggleMealSkip = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+        const { date, mealType } = req.body; // date format: YYYY-MM-DD, mealType: lunch/dinner
+
+        if (!date || !mealType) {
+            return res.status(400).json({ success: false, message: "Date and mealType are required" });
+        }
+
+        // 1. Check active subscription
+        const subscription = await Subscription.findOne({
+            customer: customerId,
+            status: "approved",
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() }
+        });
+
+        if (!subscription) {
+            return res.status(404).json({ success: false, message: "No active subscription found" });
+        }
+
+        // 2. Validate cutoff time if date is today
+        const todayStr = new Date().toISOString().split('T')[0];
+        const requestedDateStr = new Date(date).toISOString().split('T')[0];
+
+        if (requestedDateStr === todayStr) {
+            const now = new Date();
+            if (now.getHours() >= 10) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Cutoff time (10:00 AM) exceeded for today's meal. Cannot change status now."
+                });
+            }
+        } else if (new Date(date) < new Date(todayStr)) {
+            return res.status(400).json({ success: false, message: "Cannot skip past meals" });
+        }
+
+        // 3. Check if already skipped
+        const skipIndex = subscription.skippedMeals.findIndex(
+            s => s.date === requestedDateStr && s.mealType === mealType
+        );
+
+        let message = "";
+        let refundProcessed = 0;
+
+        if (skipIndex > -1) {
+            // Unskip logic (Reverse)
+            const skippedMeal = subscription.skippedMeals[skipIndex];
+            refundProcessed = -skippedMeal.refundAmount; // Deduct the refund back
+
+            // Check wallet balance before deducting (user might have spent it)
+            const wallet = await CustomerWallet.findOne({ customer: customerId });
+            if (wallet && wallet.balance < skippedMeal.refundAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Insufficient wallet balance to resume this meal (refund was already used)."
+                });
+            }
+
+            subscription.skippedMeals.splice(skipIndex, 1);
+            message = `${mealType.charAt(0).toUpperCase() + mealType.slice(1)} resumed successfully. Amount deducted from wallet.`;
+        } else {
+            // Skip logic
+            // Calculate refund amount: (Price / (Duration * MealsPerDay))
+            const mealsPerDay = subscription.mealType === "Both" ? 2 : 1;
+            const totalMeals = subscription.durationInDays * mealsPerDay;
+            const perMealCost = Math.floor(subscription.price / totalMeals);
+            refundProcessed = perMealCost;
+
+            subscription.skippedMeals.push({
+                date: requestedDateStr,
+                mealType,
+                refundAmount: refundProcessed
+            });
+            message = `${mealType.charAt(0).toUpperCase() + mealType.slice(1)} skipped successfully. ₹${refundProcessed} refunded to wallet.`;
+        }
+
+        // 4. Update Subscription
+        await subscription.save();
+
+        // 5. Update Wallet & Create Transaction
+        if (refundProcessed !== 0) {
+            await CustomerWallet.findOneAndUpdate(
+                { customer: customerId },
+                { $inc: { balance: refundProcessed } },
+                { upsert: true }
+            );
+
+            await Transaction.create({
+                customer: customerId,
+                provider: subscription.provider,
+                type: refundProcessed > 0 ? "credit" : "debit",
+                transactionType: "Refund",
+                referenceId: `SKIP-${subscription._id.toString().slice(-4)}-${requestedDateStr}`,
+                amount: Math.abs(refundProcessed),
+                status: "Success",
+                description: refundProcessed > 0
+                    ? `Refund for skipping ${mealType} on ${requestedDateStr}`
+                    : `Charge for resuming ${mealType} on ${requestedDateStr}`,
+                subscriptionId: subscription._id
+            });
+
+            // 6. Send Notification
+            await createNotification(
+                customerId,
+                refundProcessed > 0 ? "Meal Skipped" : "Meal Resumed",
+                refundProcessed > 0
+                    ? `Your ${mealType} for ${requestedDateStr} has been skipped. ₹${refundProcessed} credited to wallet.`
+                    : `Your ${mealType} for ${requestedDateStr} has been resumed. ₹${Math.abs(refundProcessed)} deducted from wallet.`,
+                refundProcessed > 0 ? "Success" : "Info",
+                { mealType, date: requestedDateStr, refundAmount: refundProcessed }
+            );
+        }
+
+        res.json({
+            success: true,
+            message,
+            data: {
+                skippedMeals: subscription.skippedMeals
+            }
+        });
+
+    } catch (error) {
+        console.error("Toggle Skip Meal Error:", error);
+        res.status(500).json({ success: false, message: "Failed to update meal status" });
+    }
+};
+
+/**
+ * Get skipped meals for active subscription
+ * GET /api/customer/menu/skipped-meals
+ */
+exports.getSkippedMeals = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+
+        const subscription = await Subscription.findOne({
+            customer: customerId,
+            status: "approved",
+            endDate: { $gte: new Date() }
+        });
+
+        if (!subscription) {
+            return res.status(404).json({ success: false, message: "No active subscription found" });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                skippedMeals: subscription.skippedMeals || []
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Failed to fetch skipped meals" });
+    }
+};
+
+/**
+ * Get today's menu for subscribed customer
+ * GET /api/customer/menu/today
+ */
 exports.getTodayMenu = async (req, res) => {
     try {
         const customerId = req.user._id;
 
-        // Check active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
             status: "approved",
@@ -133,20 +300,15 @@ exports.getTodayMenu = async (req, res) => {
         }).populate('provider', 'fullName');
 
         if (!activeSubscription) {
-            return res.status(404).json({
-                success: false,
-                message: 'No active subscription found'
-            });
+            return res.status(404).json({ success: false, message: "No active subscription found" });
         }
 
         const providerId = activeSubscription.provider._id;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
-        // Get today's menu
         const todayMenus = await Menu.find({
             provider: providerId,
             menuDate: { $gte: today, $lt: tomorrow },
@@ -159,20 +321,16 @@ exports.getTodayMenu = async (req, res) => {
 
         const formatMenu = (menu) => {
             if (!menu) return null;
-
             const items = [];
-            if (menu.bread?.count && menu.bread?.type) {
-                items.push(`${menu.bread.count} ${menu.bread.type}`);
-            }
+            if (menu.bread?.count) items.push(`${menu.bread.count} ${menu.bread.type}`);
             if (menu.rice) items.push(menu.rice);
             if (menu.dal) items.push(menu.dal);
             if (menu.mainDish) items.push(menu.mainDish);
 
             return {
                 name: menu.name || menu.mainDish || "Special Thali",
-                items: items.join(", ") || menu.description || "Delicious meal",
+                items: items.join(", "),
                 emoji: menu.mealType === 'lunch' ? "🍛" : "🌙",
-                provider: activeSubscription.provider.fullName,
                 calories: calculateCalories(menu),
                 spiceLevel: menu.spiceLevel || "Medium",
                 type: menu.type || "Veg"
@@ -184,24 +342,22 @@ exports.getTodayMenu = async (req, res) => {
             data: {
                 lunch: formatMenu(lunchMenu),
                 dinner: formatMenu(dinnerMenu),
-                providerName: activeSubscription.provider.fullName
+                providerName: activeSubscription.provider.fullName,
+                skippedMeals: activeSubscription.skippedMeals || []
             }
         });
 
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch today menu'
-        });
+        res.status(500).json({ success: false, message: "Failed to fetch today's menu" });
     }
 };
 
-// Get public weekly menu for a provider
+/**
+ * Get public menu for provider
+ */
 exports.getPublicMenu = async (req, res) => {
     try {
         const { providerId } = req.params;
-
-        // Get current week dates
         const today = new Date();
         const currentDay = today.getDay();
         const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
@@ -223,75 +379,47 @@ exports.getPublicMenu = async (req, res) => {
 
         const menuData = {};
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
         days.forEach(day => {
-            menuData[day] = {
-                lunch: "Menu Not Available",
-                dinner: "Menu Not Available",
-                badges: []
-            };
+            menuData[day] = { lunch: "Menu Not Available", dinner: "Menu Not Available", badges: [] };
         });
 
         weeklyMenus.forEach(menu => {
             const menuDate = new Date(menu.menuDate);
             const dayName = days[menuDate.getDay()];
-
             if (menuData[dayName]) {
                 const items = [];
                 if (menu.mainDish) items.push(menu.mainDish);
                 if (menu.sabjiDry) items.push(menu.sabjiDry);
-
-                menuData[dayName][menu.mealType] = items.join(", ") || menu.name || "Special Thali";
+                menuData[dayName][menu.mealType] = items.join(", ") || menu.name;
                 if (menu.tags) menuData[dayName].badges = menu.tags;
             }
         });
 
-        res.json({
-            success: true,
-            data: menuData
-        });
-
+        res.json({ success: true, data: menuData });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch public menu'
-        });
+        res.status(500).json({ success: false, message: "Failed to fetch public menu" });
     }
 };
 
 // Helper function to calculate calories
 const calculateCalories = (menu) => {
     let calories = 0;
-
-    // Base calories for different components
-    if (menu.bread?.count) calories += menu.bread.count * 80; // 80 cal per roti
-    if (menu.rice) calories += 200; // Base rice calories
-    if (menu.dal) calories += 150; // Dal calories
-    if (menu.mainDish) calories += 250; // Main dish calories
-    if (menu.sabjiDry) calories += 100; // Dry sabji calories
-
-    // Add accompaniment calories
+    if (menu.bread?.count) calories += menu.bread.count * 80;
+    if (menu.rice) calories += 200;
+    if (menu.dal) calories += 150;
+    if (menu.mainDish) calories += 250;
+    if (menu.sabjiDry) calories += 100;
     if (menu.accompaniments?.salad) calories += 30;
     if (menu.accompaniments?.raita) calories += 80;
     if (menu.accompaniments?.papad) calories += 50;
-
-    return calories || 500; // Default 500 if no calculation
+    return calories || 500;
 };
 
 // Helper function to get default images
 const getDefaultImage = (mealType, foodType) => {
     const images = {
-        lunch: {
-            'Veg': 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200',
-            'Non-Veg': 'https://images.unsplash.com/photo-1585937421612-70a008356f36?q=80&w=200',
-            'Egg': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=200'
-        },
-        dinner: {
-            'Veg': 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200',
-            'Non-Veg': 'https://images.unsplash.com/photo-1606491956091-76c9efdd336f?q=80&w=200',
-            'Egg': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=200'
-        }
+        lunch: { 'Veg': 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200' },
+        dinner: { 'Veg': 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200' }
     };
-
-    return images[mealType]?.[foodType] || images[mealType]?.['Veg'] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200';
+    return images[mealType]?.[foodType] || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200';
 };
