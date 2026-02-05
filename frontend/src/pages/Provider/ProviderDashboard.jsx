@@ -1,8 +1,5 @@
-import { useState } from 'react';
-import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
+ import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
-import { FaUtensils, FaEye, FaPhone } from 'react-icons/fa';
-import { IoTime } from 'react-icons/io5';
 import ProviderStatsCards from '../../components/ui/Provider/Dashboard/ProviderStateCards';
 import ProviderRecentOrders from '../../components/ui/Provider/Dashboard/ProviderRecentOrders';
 
