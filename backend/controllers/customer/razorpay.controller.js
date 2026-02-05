@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const DummyBank = require('../../models/dummyBank.model');
+const logger = require('../../utils/logger');
 
 // Initialize Razorpay only if keys are present
 let razorpayInstance = null;
@@ -25,11 +26,12 @@ exports.createOrder = async (req, res) => {
 
         // 1. Check if we should use Mock or Real
         if (!razorpayInstance) {
-            console.log("RAZORPAY: Using Mock Mode (No keys found)");
+            logger.info("Razorpay: Using Mock Mode", { amount });
 
             // Validate against DummyBank balance even in Mock Mode for realism
             const bank = await DummyBank.findOne({ user: req.user._id });
             if (bank && bank.balance < amount) {
+                logger.warn("Mock Payment Failed: Insufficient Fund", { balance: bank.balance, required: amount });
                 return res.status(400).json({
                     success: false,
                     message: `Insufficient bank balance in your linked account. Available: ₹${bank.balance}`
@@ -79,7 +81,7 @@ exports.verifyPayment = async (req, res) => {
 
         // 1. Mock Verification Logic
         if (!razorpayInstance || razorpay_order_id.startsWith('order_mock_')) {
-            console.log("RAZORPAY: Verifying Mock Payment");
+            logger.info("Razorpay: Verifying Mock Payment", { orderId: razorpay_order_id });
 
             // Deduct from DummyBank to keep simulation closed-loop
             const bank = await DummyBank.findOne({ user: req.user._id });
@@ -107,6 +109,7 @@ exports.verifyPayment = async (req, res) => {
             // but usually real payments are external. We'll skip bank deduction for real payments.
             res.status(200).json({ success: true, message: 'Payment verified successfully' });
         } else {
+            logger.error("Payment Verification Failed: Invalid Signature");
             res.status(400).json({ success: false, message: 'Invalid signature' });
         }
 

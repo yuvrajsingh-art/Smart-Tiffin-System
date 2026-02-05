@@ -1,10 +1,24 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
-const PreferenceModal = ({ isOpen, onClose, activeMealType, preferences, setPreferences, onSave }) => {
+const PreferenceModal = ({ isOpen, onClose, activeMealType, preferences, setPreferences, onSave, walletBalance = 0, originalPreferences }) => {
+    const [paymentMethod, setPaymentMethod] = React.useState('wallet');
     if (!isOpen) return null;
 
     const currentPrefs = preferences[activeMealType];
+    const originalPrefs = originalPreferences?.[activeMealType] || { extras: { extraRoti: 0, extraRice: false } };
+
+    // Calculate Total Cost
+    const totalRotiCost = (currentPrefs.extras?.extraRoti || 0) * 10;
+    const totalRiceCost = currentPrefs.extras?.extraRice ? 30 : 0;
+    const totalExtraCost = totalRotiCost + totalRiceCost;
+
+    // Calculate Already Paid (from original state)
+    const paidRotiCost = (originalPrefs.extras?.extraRoti || 0) * 10;
+    const paidRiceCost = originalPrefs.extras?.extraRice ? 30 : 0;
+    const alreadyPaidCost = paidRotiCost + paidRiceCost;
+
+    const payableDifference = Math.max(0, totalExtraCost - alreadyPaidCost);
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-md animate-[fadeIn_0.2s]">
@@ -46,27 +60,114 @@ const PreferenceModal = ({ isOpen, onClose, activeMealType, preferences, setPref
                         </div>
                     </div>
 
-                    {/* Note */}
-                    <div className="mb-8">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Special Instructions</label>
-                        <textarea
-                            value={currentPrefs.note}
-                            onChange={(e) => setPreferences(prev => ({
-                                ...prev,
-                                [activeMealType]: { ...prev[activeMealType], note: e.target.value }
-                            }))}
-                            placeholder="Any preferences? (e.g. No Onion)"
-                            className="w-full bg-gray-50 rounded-2xl p-4 text-sm font-bold text-[#2D241E] border border-transparent outline-none focus:bg-white focus:border-primary/20 focus:shadow-sm transition-all resize-none h-28 placeholder:font-medium placeholder:text-gray-300"
-                        />
+                    {/* Add-ons */}
+                    <div className="mb-6">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Add-ons (Extras)</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Extra Roti */}
+                            <div className="bg-gray-50 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 border border-gray-100">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase">Extra Roti</span>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => setPreferences(prev => ({
+                                            ...prev,
+                                            [activeMealType]: {
+                                                ...prev[activeMealType],
+                                                extras: { ...prev[activeMealType].extras, extraRoti: Math.max(0, (prev[activeMealType].extras?.extraRoti || 0) - 1) }
+                                            }
+                                        }))}
+                                        className="size-8 rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">remove</span>
+                                    </button>
+                                    <span className="font-bold text-[#2D241E]">{currentPrefs.extras?.extraRoti || 0}</span>
+                                    <button
+                                        onClick={() => setPreferences(prev => ({
+                                            ...prev,
+                                            [activeMealType]: {
+                                                ...prev[activeMealType],
+                                                extras: { ...prev[activeMealType].extras, extraRoti: (prev[activeMealType].extras?.extraRoti || 0) + 1 }
+                                            }
+                                        }))}
+                                        className="size-8 rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">add</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Extra Rice */}
+                            <button
+                                onClick={() => setPreferences(prev => ({
+                                    ...prev,
+                                    [activeMealType]: {
+                                        ...prev[activeMealType],
+                                        extras: { ...prev[activeMealType].extras, extraRice: !prev[activeMealType].extras?.extraRice }
+                                    }
+                                }))}
+                                className={`p-4 rounded-2xl flex flex-col items-center justify-center gap-2 border transition-all ${currentPrefs.extras?.extraRice ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-100'}`}
+                            >
+                                <span className={`text-[10px] font-bold uppercase ${currentPrefs.extras?.extraRice ? 'text-orange-500' : 'text-gray-400'}`}>Extra Rice</span>
+                                <span className={`material-symbols-outlined text-2xl ${currentPrefs.extras?.extraRice ? 'text-orange-500 fill-1' : 'text-gray-300'}`}>
+                                    {currentPrefs.extras?.extraRice ? 'check_circle' : 'circle'}
+                                </span>
+                            </button>
+                        </div>
                     </div>
 
-                    <button
-                        onClick={() => onSave(currentPrefs)}
-                        className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] font-bold shadow-xl shadow-orange-900/10 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
-                    >
-                        <span className="material-symbols-outlined text-lg">check_circle</span>
-                        <span>Save Preferences</span>
-                    </button>
+                    {/* Payment Method Selector (Only if extras > 0) */}
+                    {totalExtraCost > 0 && (
+                        <div className="mb-8 p-5 bg-orange-50/50 rounded-[2rem] border border-orange-100 animate-[fadeIn_0.3s]">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Total Extras</p>
+                                    <p className="text-xl font-black text-[#2D241E]">₹{totalExtraCost}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Wallet Balance</p>
+                                    <p className={`font-bold text-xs ${walletBalance < 0 ? 'text-red-500' : 'text-green-600'}`}>₹{walletBalance}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 p-1 bg-white/60 rounded-xl">
+                                <button
+                                    onClick={() => setPaymentMethod('wallet')}
+                                    className={`flex-1 py-2 rounded-lg font-bold text-[10px] uppercase transition-all flex items-center justify-center gap-1 ${paymentMethod === 'wallet' ? 'bg-[#2D241E] text-white shadow-md' : 'text-gray-400'}`}
+                                >
+                                    <span className="material-symbols-outlined text-sm">account_balance_wallet</span> Wallet
+                                </button>
+                                <button
+                                    onClick={() => setPaymentMethod('online')}
+                                    className={`flex-1 py-2 rounded-lg font-bold text-[10px] uppercase transition-all flex items-center justify-center gap-1 ${paymentMethod === 'online' ? 'bg-primary text-white shadow-md' : 'text-gray-400'}`}
+                                >
+                                    <span className="material-symbols-outlined text-sm">payments</span> Online
+                                </button>
+                            </div>
+
+                            {paymentMethod === 'wallet' && walletBalance < totalExtraCost && (
+                                <p className="text-[9px] text-orange-600 font-bold mt-2 text-center animate-pulse">
+                                    Low balance! This will be added to your debt (Udhaar).
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-4 rounded-2xl font-bold text-gray-400 hover:text-gray-600 transition-colors text-xs uppercase"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => onSave({ ...currentPrefs, paymentMethod })}
+                            className="flex-[2] py-4 bg-[#2D241E] hover:bg-[#3D342E] text-white rounded-2xl font-bold shadow-lg shadow-[#2D241E]/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                        >
+                            <span>Confirm & Save</span>
+                            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>,

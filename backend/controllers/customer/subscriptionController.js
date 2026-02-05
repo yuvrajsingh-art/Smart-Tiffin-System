@@ -1,4 +1,5 @@
 const Subscription = require("../../models/subscription.model");
+const logger = require("../../utils/logger");
 const User = require("../../models/user.model");
 const CustomerWallet = require("../../models/customerWallet.model");
 const Transaction = require("../../models/transaction.model");
@@ -252,7 +253,7 @@ exports.cancelSubscription = async (req, res) => {
     try {
         const customerId = req.user._id;
         const { reason } = req.body;
-        console.log(`[CANCEL START] Customer: ${customerId}, Reason: ${reason}`);
+        // console.log(`[CANCEL START] Customer: ${customerId}, Reason: ${reason}`);
 
         // Get active subscription
         const subscription = await Subscription.findOne({
@@ -262,14 +263,14 @@ exports.cancelSubscription = async (req, res) => {
         });
 
         if (!subscription) {
-            console.log("[CANCEL ERROR] No active subscription found");
+            // console.log("[CANCEL ERROR] No active subscription found");
             return res.status(404).json({
                 success: false,
                 message: 'No active subscription found'
             });
         }
 
-        console.log(`[CANCEL FOUND] Subscription ID: ${subscription._id}`);
+        // console.log(`[CANCEL FOUND] Subscription ID: ${subscription._id}`);
 
         // Calculate refund amount (remaining days)
         const today = new Date();
@@ -293,7 +294,7 @@ exports.cancelSubscription = async (req, res) => {
         const dailyRate = (subscription.totalAmount) / totalDurationDays;
         const refundAmount = Math.floor(remainingDays * dailyRate); // Floor to avoid decimal issues
 
-        console.log(`[CANCEL REFUND] Amount: ${refundAmount}, Remaining Days: ${remainingDays}`);
+        // console.log(`[CANCEL REFUND] Amount: ${refundAmount}, Remaining Days: ${remainingDays}`);
 
         // Update subscription status using findByIdAndUpdate to avoid potential save() validation hooks issues
         await Subscription.findByIdAndUpdate(subscription._id, {
@@ -302,8 +303,6 @@ exports.cancelSubscription = async (req, res) => {
             cancellationReason: reason || "User requested",
             refundAmount: Math.floor(refundAmount)
         });
-
-        console.log(`[CANCEL UPDATE] Subscription Cancellation Requested. Refund Pending: ${refundAmount}`);
 
         res.json({
             success: true,
@@ -314,7 +313,7 @@ exports.cancelSubscription = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("[CANCEL CRITICAL ERROR]", error);
+        console.error("Cancellation Request Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to request cancellation. Please contact support.'
@@ -338,8 +337,17 @@ exports.purchaseSubscription = async (req, res) => {
             deliveryAddress,
             planType,
             paymentMethod = 'upi',
+
             transactionId
         } = req.body;
+
+        logger.info("Subscription Purchase Initiated", {
+            customer: customerId,
+            providerId,
+            plan: planName,
+            amount: totalAmount,
+            method: paymentMethod
+        });
 
         const fs = require('fs');
         const logData = {
@@ -349,15 +357,7 @@ exports.purchaseSubscription = async (req, res) => {
         };
         fs.appendFileSync('purchase_debug.log', JSON.stringify(logData, null, 2) + '\n');
 
-        console.log("Subscription Purchase Request:", {
-            customerId,
-            providerId,
-            planName,
-            totalAmount,
-            mealType,
-            planType,
-            paymentMethod
-        });
+
 
         // 0. Check for existing active subscription
         const existingSubscription = await Subscription.findOne({
@@ -387,6 +387,7 @@ exports.purchaseSubscription = async (req, res) => {
 
         // 1. Basic Validation
         if (!providerId || !totalAmount || !planName) {
+            logger.warn("Purchase Failed: Missing Fields", { providerId, totalAmount, planName });
             console.log("Missing fields detected:", { providerId, totalAmount, planName });
             return res.status(400).json({
                 success: false,
@@ -394,10 +395,17 @@ exports.purchaseSubscription = async (req, res) => {
             });
         }
 
-        // Find the actual provider User ID from StoreProfile
-        const store = await StoreProfile.findById(providerId);
+        // Find the actual provider User ID from StoreProfile 
+        // Support both provider (User ID) and _id (Store ID) to prevent 404 from frontend
+        const store = await StoreProfile.findOne({
+            $or: [
+                { provider: providerId },
+                { _id: providerId }
+            ]
+        });
+
         if (!store) {
-            console.log("Store not found for ID:", providerId);
+            logger.warn("Purchase Failed: Store Not Found", { providerId });
             return res.status(404).json({
                 success: false,
                 message: 'Provider store not found'
@@ -575,13 +583,19 @@ exports.purchaseSubscription = async (req, res) => {
                 subscriptionId: subscription._id
             });
 
-            console.log(`Provider Earnings Credited: ₹${providerEarnings} (Rate: ${commissionRate}%)`);
+
+
+            logger.info(`Provider Earnings Credited: ₹${providerEarnings} (Rate: ${commissionRate}%)`);
         } catch (walletError) {
-            console.error("Error crediting provider wallet:", walletError);
-            // We don't fail the whole purchase if provider credit fails, but we log it
+            logger.error("Error crediting provider wallet:", walletError);
+            // Continue flow as subscription is already active
         }
 
-        console.log("Purchase Subscription Success!");
+        logger.success("Subscription Purchased Successfully", {
+            subscriptionId: subscription._id,
+            customer: customerId
+        });
+
         res.json({
             success: true,
             data: {

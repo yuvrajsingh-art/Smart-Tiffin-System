@@ -15,13 +15,21 @@ const GuestMealStickyBar = ({ totalGuests, totalCost, onCheckout }) => {
                         <p className="text-xs text-white/60">Total: ₹{totalCost}</p>
                     </div>
                 </div>
-                <button
-                    onClick={onCheckout}
-                    className="bg-white text-[#2D241E] px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform flex items-center gap-2"
-                >
-                    Pay ₹{totalCost}
-                    <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => onCheckout(false)}
+                        className="px-6 py-2.5 rounded-xl font-bold text-sm border border-white/20 hover:bg-white/10 transition-colors"
+                    >
+                        Book (Pay Later)
+                    </button>
+                    <button
+                        onClick={() => onCheckout(true)}
+                        className="bg-white text-[#2D241E] px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform flex items-center gap-2"
+                    >
+                        Pay Now ₹{totalCost}
+                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                    </button>
+                </div>
             </div>
         </div>
     );

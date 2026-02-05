@@ -89,6 +89,13 @@ app.use(cors({
 
 // Parse JSON request bodies
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Debug Middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Request Logger - Log all API requests in development
 const requestLogger = require('./middleware/requestLogger.middleware');

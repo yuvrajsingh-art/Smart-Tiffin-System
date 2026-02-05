@@ -8,7 +8,9 @@ const MealTimelineItem = ({
     onTogglePause,
     onUpdateGuest,
     guestCount,
-    onOpenPreferences
+    bookedCount,
+    onOpenPreferences,
+    isPastCutoff = false
 }) => {
     return (
         <div className="relative pl-20 mb-8 last:mb-0 group">
@@ -46,11 +48,23 @@ const MealTimelineItem = ({
                         <p className="text-xs text-[#5C4D42] font-medium leading-relaxed line-clamp-2 mt-1 opacity-80">{menu?.items}</p>
 
                         {/* Show Preferences if set */}
-                        {(preferences?.spice !== 'Medium' || preferences?.note) && (
+                        {(preferences?.spice !== 'Medium' || preferences?.note || preferences?.extras?.extraRoti > 0 || preferences?.extras?.extraRice) && (
                             <div className="mt-2 flex flex-wrap gap-1">
                                 {preferences?.spice !== 'Medium' && (
                                     <span className="text-[9px] font-bold bg-white text-orange-600 px-2 py-0.5 rounded border border-orange-100">
                                         {preferences?.spice} Spice
+                                    </span>
+                                )}
+                                {preferences?.extras?.extraRoti > 0 && (
+                                    <span className="text-[9px] font-bold bg-white text-primary px-2 py-0.5 rounded border border-primary/20 flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[10px]">bakery_dining</span>
+                                        +{preferences.extras.extraRoti} Roti
+                                    </span>
+                                )}
+                                {preferences?.extras?.extraRice && (
+                                    <span className="text-[9px] font-bold bg-white text-blue-600 px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[10px]">rice_bowl</span>
+                                        + Rice
                                     </span>
                                 )}
                                 {preferences?.note && (
@@ -70,25 +84,46 @@ const MealTimelineItem = ({
                             <span className="material-symbols-outlined text-[10px] text-orange-400">local_fire_department</span> {menu?.cal} cal
                         </span>
                     </div>
+
+                    {isPastCutoff && !paused && (
+                        <div className="flex items-center gap-1.5 mt-1 bg-red-50/50 px-3 py-1.5 rounded-xl border border-red-100/30 w-fit animate-[fadeIn_0.5s]">
+                            <span className="material-symbols-outlined text-red-500 text-[14px]">lock</span>
+                            <span className="text-[9px] font-black text-red-500/80 uppercase tracking-widest leading-none">
+                                Cutoff Reached ({type === 'lunch' ? '10 AM' : '4 PM'})
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actions */}
                 <div className="flex flex-row sm:flex-col gap-2 relative z-30 justify-center">
 
                     {/* Guest Counter */}
-                    <div className={`flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm h-10 ${paused ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <div className={`flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm h-10 ${paused || isPastCutoff ? 'opacity-50 pointer-events-none' : ''}`}>
                         {guestCount > 0 ? (
                             <>
-                                <button onClick={() => onUpdateGuest(-1)} className="size-10 hover:bg-gray-50 text-gray-500 flex items-center justify-center active:bg-gray-100">
+                                <button
+                                    onClick={() => onUpdateGuest(-1)}
+                                    className={`size-10 flex items-center justify-center active:bg-gray-100 ${guestCount <= bookedCount ? 'opacity-20 cursor-not-allowed' : 'hover:bg-gray-50 text-gray-500'}`}
+                                    disabled={guestCount <= bookedCount || isPastCutoff}
+                                >
                                     <span className="material-symbols-outlined text-xs">remove</span>
                                 </button>
                                 <span className="font-bold text-xs w-6 text-center">{guestCount}</span>
-                                <button onClick={() => onUpdateGuest(1)} className="size-10 hover:bg-gray-50 text-gray-500 flex items-center justify-center active:bg-gray-100">
+                                <button
+                                    onClick={() => onUpdateGuest(1)}
+                                    disabled={isPastCutoff}
+                                    className="size-10 hover:bg-gray-50 text-gray-500 flex items-center justify-center active:bg-gray-100"
+                                >
                                     <span className="material-symbols-outlined text-xs">add</span>
                                 </button>
                             </>
                         ) : (
-                            <button onClick={() => onUpdateGuest(1)} className="h-10 px-3 flex items-center gap-1.5 text-orange-600 font-bold text-[10px] hover:bg-orange-50 transition-colors w-full">
+                            <button
+                                onClick={() => onUpdateGuest(1)}
+                                disabled={isPastCutoff}
+                                className="h-10 px-3 flex items-center gap-1.5 text-orange-600 font-bold text-[10px] hover:bg-orange-50 transition-colors w-full"
+                            >
                                 <span className="material-symbols-outlined text-base">person_add</span>
                                 <span className="hidden sm:inline">Guest</span>
                             </button>
@@ -98,14 +133,26 @@ const MealTimelineItem = ({
                     <div className="flex gap-2">
                         <button
                             onClick={onOpenPreferences}
-                            className={`h-10 flex-1 rounded-xl border border-gray-200 flex items-center justify-center transition-colors shadow-sm ${preferences?.spice !== 'Medium' ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-white text-gray-400 hover:bg-gray-50 hover:text-[#2D241E]'}`}
+                            disabled={paused || isPastCutoff}
+                            className={`h-10 flex-1 rounded-xl border flex items-center justify-center transition-colors shadow-sm ${paused || isPastCutoff
+                                ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed'
+                                : preferences?.spice !== 'Medium' || preferences?.note || preferences?.extras?.extraRoti > 0 || preferences?.extras?.extraRice
+                                    ? 'bg-orange-50 text-orange-600 border-orange-200'
+                                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50 hover:text-[#2D241E]'
+                                }`}
                             title="Edit Preference"
                         >
                             <span className="material-symbols-outlined text-lg">tune</span>
                         </button>
                         <button
                             onClick={onTogglePause}
-                            className={`h-10 flex-1 rounded-xl border flex items-center justify-center transition-all shadow-sm ${paused ? 'bg-red-500 border-red-500 text-white' : 'bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200'}`}
+                            disabled={isPastCutoff}
+                            className={`h-10 flex-1 rounded-xl border flex items-center justify-center transition-all shadow-sm ${isPastCutoff
+                                ? 'bg-gray-50 border-gray-100 text-gray-200 cursor-not-allowed'
+                                : paused
+                                    ? 'bg-red-500 border-red-500 text-white'
+                                    : 'bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200'
+                                }`}
                             title={paused ? "Resume Meal" : "Skip/Pause Meal"}
                         >
                             <span className="material-symbols-outlined text-lg">{paused ? 'play_arrow' : 'pause'}</span>

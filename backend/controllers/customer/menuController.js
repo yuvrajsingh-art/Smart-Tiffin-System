@@ -155,10 +155,18 @@ exports.toggleMealSkip = async (req, res) => {
 
         if (requestedDateStr === todayStr) {
             const now = new Date();
-            if (now.getHours() >= 10) {
+            const currentHour = now.getHours();
+
+            // Lunch Cutoff: 10:00 AM
+            // Dinner Cutoff: 4:00 PM (16:00)
+            const cutoffHour = mealType.toLowerCase() === 'lunch' ? 10 : 16;
+            const cutoffLabel = mealType.toLowerCase() === 'lunch' ? '10:00 AM' : '4:00 PM';
+
+            if (currentHour >= cutoffHour) {
+                console.log(`[PAUSE_DENIED] Cutoff reached for ${mealType}: ${currentHour} >= ${cutoffHour}`);
                 return res.status(400).json({
                     success: false,
-                    message: "Cutoff time (10:00 AM) exceeded for today's meal. Cannot change status now."
+                    message: `Cutoff time (${cutoffLabel}) exceeded for today's ${mealType}. Cannot change status now.`
                 });
             }
         } else if (new Date(date) < new Date(todayStr)) {

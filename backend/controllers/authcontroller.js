@@ -15,6 +15,7 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const logger = require("../utils/logger");
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -45,18 +46,18 @@ const genToken = (user) => {
 exports.registerCustomer = async (req, res) => {
   try {
     const { fullName, email, password, mobile, address, latitude, longitude } = req.body;
-    console.log("📝 Incoming Registration Request:", { fullName, email, mobile });
+    logger.auth("Register Attempt", { email, role: "customer" });
 
     // Validate required fields
     if (!fullName || !email || !password || !mobile) {
-      console.log("⚠️ Registration Failed: Missing fields");
+      logger.warn("Register Failed: Missing Fields", { email });
       return res.status(400).json({ message: "All required fields missing" });
     }
 
     // Check if user already exists
     const userExist = await User.findOne({ email });
     if (userExist) {
-      console.log("⚠️ Registration Failed: User already exists -", email);
+      logger.warn("Register Failed: Duplicate User", { email });
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -83,7 +84,7 @@ exports.registerCustomer = async (req, res) => {
 
     // Create user
     const user = await User.create(userData);
-    console.log("✅ User created successfully in DB:", user._id);
+    logger.auth("Register Success", { id: user._id, role: "customer" });
     const token = genToken(user);
 
     // Notify Admin via Socket.io
@@ -104,7 +105,7 @@ exports.registerCustomer = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Register Customer Error:", error.message);
+    logger.error("Register Error", { error: error.message });
     res.status(500).json({ message: error.message });
   }
 };
@@ -189,6 +190,7 @@ exports.providerCustomer = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    logger.auth("Login Attempt", { email });
 
     // Check user exists
     const user = await User.findOne({ email });
@@ -209,6 +211,8 @@ exports.loginUser = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    logger.auth("Login Success", { id: user._id, role: user.role });
+
     res.status(200).json({
       message: "Login successful",
       token,
@@ -220,7 +224,7 @@ exports.loginUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Login Error:", error.message);
+    logger.error("Login Error", { error: error.message });
     res.status(500).json({ message: error.message });
   }
 };
@@ -241,7 +245,7 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log(`👤 Profile Request: ${req.user.email} (${req.user.role})`);
+    // console.log(`👤 Profile Request: ${req.user.email} (${req.user.role})`);
 
     res.status(200).json({
       user: {
@@ -257,7 +261,11 @@ exports.getProfile = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Get Profile Error:", error.message);
+    logger.error("❌ Get Profile CRITICAL Failure", {
+      message: error.message,
+      stack: error.stack,
+      user: req.user ? req.user._id : 'No User'
+    });
     res.status(500).json({
       message: "Internal Server Error while fetching profile",
       error: error.message
