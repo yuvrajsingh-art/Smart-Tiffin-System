@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Shared Components
 const StepTitle = ({ title, subtitle }) => (
@@ -244,11 +245,13 @@ export const StepDelivery = ({ delivery, setDelivery, config, provider, handleAu
 };
 
 // --- Step 4: Payment ---
-export const StepPayment = ({ isProcessing, onBack, onPay, grandTotal }) => {
+export const StepPayment = ({ isProcessing, onBack, onPay, grandTotal, walletBalance, paymentMethod, setPaymentMethod }) => {
+    const isInsufficient = paymentMethod === 'wallet' && walletBalance < grandTotal;
+
     return (
         <div className="animate-[fadeIn_0.5s_ease-out] relative">
             {isProcessing && (
-                <div className="absolute inset-0 bg-white/80 backdrop-blur-md z-50 flex flex-col items-center justify-center rounded-[2.5rem]">
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-md z-[102] flex flex-col items-center justify-center rounded-[2.5rem]">
                     <div className="size-16 border-4 border-gray-200 border-t-[#2D241E] rounded-full animate-spin mb-4"></div>
                     <h3 className="text-[#2D241E] font-black text-lg animate-pulse">Processing...</h3>
                     <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Please do not close</p>
@@ -257,33 +260,61 @@ export const StepPayment = ({ isProcessing, onBack, onPay, grandTotal }) => {
 
             <StepTitle title="Secure Payment" subtitle="Complete your subscription safely." />
 
-            <div className="space-y-4">
-                <div className="border-2 border-primary/20 bg-primary/5 rounded-[1.5rem] p-5 flex items-center gap-4 cursor-pointer ring-1 ring-primary relative overflow-hidden group hover:bg-primary/10 transition-colors shadow-md">
-                    <div className="absolute top-0 right-0 bg-primary text-white text-[9px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-widest">Recommended</div>
-                    <div className="size-6 rounded-full border-[6px] border-primary bg-white shadow-sm"></div>
-                    <div className="flex-1">
-                        <p className="font-black text-[#2D241E] text-base mb-0.5">UPI / QR Payment</p>
-                        <p className="text-xs font-bold text-[#5C4D42] opacity-80">Instant Activation • Zero Fees</p>
-                    </div>
-                    <div className="h-8 w-12 bg-white rounded flex items-center justify-center shadow-sm opacity-80">
-                        <span className="font-black text-xs text-[#2D241E]">UPI</span>
-                    </div>
-                </div>
-
-                <div className="border border-dashed border-gray-300 rounded-[1.5rem] p-5 flex items-center gap-4 opacity-50 cursor-not-allowed">
-                    <div className="size-6 rounded-full border-2 border-gray-300 bg-transparent"></div>
-                    <div className="flex-1">
-                        <p className="font-black text-gray-500 text-base mb-0.5">Credit / Debit Card</p>
-                        <p className="text-xs font-bold text-gray-400">Coming Soon</p>
-                    </div>
-                    <span className="material-symbols-outlined text-gray-400">credit_card</span>
-                </div>
+            {/* Simplified Selection Chips */}
+            <div className="flex gap-3 mb-8">
+                {[
+                    { id: 'online', label: 'Online Pay', icon: 'payments' },
+                    { id: 'wallet', label: 'Wallet', icon: 'account_balance_wallet', showBalance: true },
+                ].map((method) => (
+                    <button
+                        key={method.id}
+                        onClick={() => setPaymentMethod(method.id)}
+                        className={`flex-1 p-4 rounded-2xl border-2 transition-all flex flex-col items-start gap-2 group ${paymentMethod === method.id
+                            ? 'border-[#2D241E] bg-[#2D241E] text-white shadow-xl translate-y-[-2px]'
+                            : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'
+                            }`}
+                    >
+                        <div className={`p-2 rounded-xl transition-colors ${paymentMethod === method.id ? 'bg-white/10' : 'bg-gray-50'}`}>
+                            <span className={`material-symbols-outlined text-xl ${paymentMethod === method.id ? 'text-white' : 'text-gray-400'}`}>{method.icon}</span>
+                        </div>
+                        <div className="text-left">
+                            <p className="text-[10px] font-black uppercase tracking-wider">{method.label}</p>
+                            {method.showBalance && (
+                                <p className={`text-[9px] font-bold ${paymentMethod === method.id ? 'text-white/60' : 'text-gray-400'}`}>
+                                    {walletBalance === 0 && !isProcessing ? 'Checking...' : `₹${walletBalance?.toFixed(0)} Credits`}
+                                </p>
+                            )}
+                            {!method.showBalance && (
+                                <p className={`text-[9px] font-bold ${paymentMethod === method.id ? 'text-white/60' : 'text-gray-400'}`}>
+                                    UPI, Card, Net
+                                </p>
+                            )}
+                        </div>
+                    </button>
+                ))}
             </div>
+
+            {isInsufficient && paymentMethod === 'wallet' && (
+                <div className="mb-6 p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-between animate-[fadeIn_0.3s]">
+                    <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-red-500">warning</span>
+                        <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Insufficient Wallet Balance</p>
+                    </div>
+                    <Link to="/customer/wallet" className="px-3 py-1.5 bg-red-500 text-white text-[9px] font-black rounded-lg hover:bg-red-600 transition-all">TOP UP</Link>
+                </div>
+            )}
+
+            {isInsufficient && (
+                <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100 flex items-center gap-2 animate-[shake_0.5s]">
+                    <span className="material-symbols-outlined text-red-500 text-lg">error</span>
+                    <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Insufficient wallet balance to complete purchase.</p>
+                </div>
+            )}
 
             <div className="mt-6 p-4 bg-green-50 rounded-2xl border border-green-100 flex items-start gap-3">
                 <span className="material-symbols-outlined text-green-600">verified_user</span>
                 <div>
-                    <p className="text-xs font-black text-[#2D241E]">100% Secure Payment</p>
+                    <p className="text-xs font-black text-[#2D241E]">100% Secure Transaction</p>
                     <p className="text-[10px] text-[#5C4D42] leading-tight mt-0.5">Your payment is encrypted and secured. No card details are stored.</p>
                 </div>
             </div>
@@ -292,10 +323,12 @@ export const StepPayment = ({ isProcessing, onBack, onPay, grandTotal }) => {
                 <button onClick={onBack} className="px-6 py-3 text-xs font-bold text-[#5C4D42] hover:bg-[#2D241E]/5 rounded-xl transition-colors">Back</button>
                 <button
                     onClick={onPay}
-                    disabled={isProcessing}
-                    className="flex-1 py-4 bg-[#2D241E] text-white rounded-[1.2rem] font-black shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm group"
+                    disabled={isProcessing || isInsufficient}
+                    className={`flex-1 py-4 text-white rounded-[1.2rem] font-black shadow-xl transition-all flex items-center justify-center gap-2 text-sm group ${isInsufficient ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#2D241E] hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99]'
+                        }`}
                 >
-                    <span className="material-symbols-outlined text-lg group-hover:rotate-12 transition-transform">lock</span> Pay ₹{grandTotal}
+                    <span className="material-symbols-outlined text-lg group-hover:rotate-12 transition-transform">lock</span>
+                    {isProcessing ? 'Processing...' : `Pay ₹${grandTotal}`}
                 </button>
             </div>
         </div>

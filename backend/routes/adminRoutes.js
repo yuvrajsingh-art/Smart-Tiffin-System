@@ -44,6 +44,8 @@ const {
     getPayouts,
     processPayout,
     getInvoices,
+    approveCancellation,
+    getRefundRequests,
 
     // Menu Management
     getPendingMenus,
@@ -161,6 +163,12 @@ router.get("/finance/invoices", protect, authorizeRoles("admin"), getInvoices);
 
 // POST /api/admin/finance/payout/:id - Process payout
 router.post("/finance/payout/:id", protect, authorizeRoles("admin"), processPayout);
+
+// GET /api/admin/finance/refunds - Get refund requests [NEW]
+router.get("/finance/refunds", protect, authorizeRoles("admin"), getRefundRequests);
+
+// POST /api/admin/finance/refund/:id/approve - Approve cancellation refund [NEW]
+router.post("/finance/refund/:id/approve", protect, authorizeRoles("admin"), approveCancellation);
 
 // GET /api/admin/finance/invoice/:id/download - Download invoice PDF [NEW]
 router.get("/finance/invoice/:id/download", protect, authorizeRoles("admin"), generateInvoicePDF);

@@ -13,6 +13,7 @@ import {
     StepDelivery,
     StepPayment
 } from '../../components/discovery';
+import useGeolocation from '../../hooks/useGeolocation';
 
 const SubscriptionCheckout = () => {
     const { id: providerId } = useParams();
@@ -35,6 +36,8 @@ const SubscriptionCheckout = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [walletBalance, setWalletBalance] = useState(0);
+    const [paymentMethod, setPaymentMethod] = useState('online');
 
     // Form State
     const [config, setConfig] = useState({
@@ -93,7 +96,9 @@ const SubscriptionCheckout = () => {
                 ...delivery.address,
                 phone: delivery.phone
             },
-            planType: 'veg' // Mapping to model's category/planType
+            planType: 'veg', // Mapping to model's category/planType
+            paymentMethod: details.method,
+            transactionId: details.transactionId
         };
 
         try {
@@ -111,21 +116,45 @@ const SubscriptionCheckout = () => {
         }
     };
 
-    const handleAutoDetect = () => {
-        if (user) {
+    const { getLocation, reverseGeocode, loading: locationLoading } = useGeolocation();
+
+    const handleAutoDetect = async () => {
+        try {
+            toast.loading("Fetching fresh location...", { id: 'loc-load' });
+            const coords = await getLocation();
+            const addr = await reverseGeocode(coords.latitude, coords.longitude);
+
             setDelivery(prev => ({
                 ...prev,
                 address: {
                     ...prev.address,
-                    street: user.address || '',
-                    city: user.city || '',
-                    pincode: user.pincode || ''
-                },
-                phone: user.mobile || ''
+                    street: addr.street,
+                    city: addr.city,
+                    pincode: addr.pincode
+                }
             }));
-            if (!user.address) toast('Please add address in your profile first');
-        } else {
-            toast.error("Please login to use this feature");
+
+            toast.success("Location updated accurately!", { id: 'loc-load' });
+        } catch (err) {
+            console.error("Auto-detect failed, falling back to profile:", err);
+            // Fallback to user profile if geolocation fails
+            if (user) {
+                setDelivery(prev => ({
+                    ...prev,
+                    address: {
+                        ...prev.address,
+                        street: user.address || '',
+                        city: user.city || '',
+                        pincode: user.pincode || ''
+                    },
+                    phone: user.mobile || ''
+                }));
+                toast.dismiss('loc-load');
+                if (!user.address) toast('Please add address in your profile first', { icon: 'ℹ️' });
+                else toast.success("Used profile address");
+            } else {
+                toast.error(err?.message || err || "Please login or enter manually", { id: 'loc-load' });
+            }
         }
     };
 
@@ -149,13 +178,25 @@ const SubscriptionCheckout = () => {
                 setLoadingProvider(false);
             }
         };
+
+        const fetchWallet = async () => {
+            try {
+                const { data } = await axios.get('/api/customer/wallet/balance');
+                if (data.success) {
+                    setWalletBalance(data.data.balance);
+                }
+            } catch (error) {
+                console.error("Error fetching wallet:", error);
+            }
+        };
+
         fetchProvider();
+        fetchWallet();
     }, [providerId]);
 
-    // PREVENT RENDER IF UNSUBSCRIBED TO AVOID FLASH (Better to have loading state)
-    // Removed hasActiveSubscription check for now or handle it better - 
-    // Actually letting user access this page even if subscribed might be confusing, keeping check but improving UI
-    if (hasActiveSubscription()) {
+    // PREVENT RENDER IF UNSUBSCRIBED TO AVOID FLASH
+    // Trigger the guard only if user is NOT on the payment or success screen
+    if (hasActiveSubscription() && currentStep < 4) {
         return (
             <div className="min-h-[85vh] flex flex-col items-center justify-center p-4 animate-[fadeIn_0.5s_ease-out]">
                 <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center border border-white/50 relative overflow-hidden">
@@ -192,7 +233,17 @@ const SubscriptionCheckout = () => {
             case 3:
                 return <StepDelivery delivery={delivery} setDelivery={setDelivery} config={config} provider={provider} handleAutoDetect={handleAutoDetect} onBack={() => setCurrentStep(2)} onNext={() => setCurrentStep(4)} />;
             case 4:
-                return <StepPayment isProcessing={isProcessing} onBack={() => setCurrentStep(3)} onPay={handlePayment} grandTotal={grandTotal} />;
+                return (
+                    <StepPayment
+                        isProcessing={isProcessing}
+                        onBack={() => setCurrentStep(3)}
+                        onPay={paymentMethod === 'online' ? handlePayment : () => handlePaymentSuccess({ method: 'wallet' })}
+                        grandTotal={grandTotal}
+                        walletBalance={walletBalance}
+                        paymentMethod={paymentMethod}
+                        setPaymentMethod={setPaymentMethod}
+                    />
+                );
             case 5: // Success
                 return (
                     <div className="text-center py-8 animate-[scaleIn_0.5s_cubic-bezier(0.175,0.885,0.32,1.275)]">
@@ -253,6 +304,7 @@ const SubscriptionCheckout = () => {
                 amount={grandTotal}
                 onSuccess={handlePaymentSuccess}
                 title={`Subscribe to ${planName}`}
+                initialMethod={paymentMethod}
             />
 
         </div>

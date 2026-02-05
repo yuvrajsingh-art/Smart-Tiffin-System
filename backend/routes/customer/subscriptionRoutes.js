@@ -9,13 +9,13 @@ const {
     purchaseSubscription
 } = require("../../controllers/customer/subscriptionController");
 
-const { protect } = require("../../middleware/authMiddleware.middleware");
+const { protect, customerOnly } = require("../../middleware/authMiddleware.middleware");
 
 // Subscription management routes
-router.get("/details", protect, getSubscriptionDetails);
-router.post("/purchase", protect, purchaseSubscription);
-router.put("/pause", protect, managePausedDays);
-router.put("/upgrade", protect, upgradeSubscription);
-router.put("/cancel", protect, cancelSubscription);
+router.get("/details", protect, customerOnly, getSubscriptionDetails);
+router.post("/purchase", protect, customerOnly, purchaseSubscription);
+router.put("/pause", protect, customerOnly, managePausedDays);
+router.put("/upgrade", protect, customerOnly, upgradeSubscription);
+router.put("/cancel", protect, customerOnly, cancelSubscription);
 
 module.exports = router;

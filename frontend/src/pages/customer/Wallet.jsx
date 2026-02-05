@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import {
     PaymentModal,
     BackgroundBlobs,
@@ -14,6 +15,7 @@ import { WalletSkeleton } from '../../components/common';
 const Wallet = () => {
     const [loading, setLoading] = useState(true);
     const [balance, setBalance] = useState(0);
+    const [bankData, setBankData] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
     const [amountToAdd, setAmountToAdd] = useState('');
@@ -23,6 +25,7 @@ const Wallet = () => {
             const { data } = await axios.get('/api/customer/wallet');
             if (data.success) {
                 setBalance(data.data.balance || 0);
+                setBankData(data.data.bank || null);
                 setTransactions(data.data.transactions || []);
             }
         } catch (error) {
@@ -37,20 +40,28 @@ const Wallet = () => {
     }, []);
 
     const handleAddMoneySuccess = async (details) => {
+        const toastId = toast.loading('Processing transaction...');
         try {
             const { data } = await axios.post('/api/customer/wallet/add-money', {
-                amount: parseFloat(details.totalAmount)
+                amount: parseFloat(details.totalAmount),
+                transactionId: details.transactionId
             });
 
             if (data.success) {
                 setBalance(data.data.newBalance);
                 fetchWalletDetails();
+                toast.success('Funds added successfully!', { id: toastId });
+                setShowAddMoneyModal(false);
+                setAmountToAdd('');
             }
         } catch (error) {
             console.error("Failed to add money:", error);
+            toast.error(error.response?.data?.message || 'Transaction failed. Please try again.', { id: toastId });
+            // Do NOT close modal on error so user can retry? 
+            // Current PaymentModal logic closes it immediately before calling onSuccess.
+            // So we can't keep it open easily without refactoring PaymentModal.
+            setShowAddMoneyModal(false);
         }
-        setShowAddMoneyModal(false);
-        setAmountToAdd('');
     };
 
     const quickAmounts = [100, 500, 1000, 2000];
@@ -64,13 +75,15 @@ const Wallet = () => {
                 <WalletSkeleton />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <WalletBalanceCard
-                        balance={balance}
-                        amountToAdd={amountToAdd}
-                        setAmountToAdd={setAmountToAdd}
-                        onAddMoney={() => setShowAddMoneyModal(true)}
-                        quickAmounts={quickAmounts}
-                    />
+                    <div className="space-y-8">
+                        <WalletBalanceCard
+                            balance={balance}
+                            amountToAdd={amountToAdd}
+                            setAmountToAdd={setAmountToAdd}
+                            onAddMoney={() => setShowAddMoneyModal(true)}
+                            quickAmounts={quickAmounts}
+                        />
+                    </div>
 
                     <WalletTransactionList transactions={transactions} />
                 </div>
@@ -82,6 +95,7 @@ const Wallet = () => {
                 amount={parseInt(amountToAdd) || 0}
                 onSuccess={handleAddMoneySuccess}
                 title="Add Money to Wallet"
+                initialMethod="UPI"
             />
         </div>
     );

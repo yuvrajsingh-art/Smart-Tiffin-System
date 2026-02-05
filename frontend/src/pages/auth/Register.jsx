@@ -4,6 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
+import useGeolocation from "../../hooks/useGeolocation";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -136,42 +137,33 @@ const Register = () => {
         }
     };
 
+    const { getLocation, reverseGeocode, loading: locationLoading } = useGeolocation();
+
     const handleAllowLocation = async () => {
-        if (!navigator.geolocation) {
-            alert("Geolocation not supported");
-            return;
-        }
         setLoadingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    const data = await res.json();
-                    const osm = data.address || {};
-                    setFormData(prev => ({
-                        ...prev,
-                        address: {
-                            country: osm.country || "India",
-                            state: osm.state || osm.region || "",
-                            city: osm.city || osm.town || "",
-                            street: osm.road || "",
-                            pincode: osm.postcode || "",
-                        }
-                    }));
-                    setShowManualAddress(true);
-                } catch (error) {
-                    alert("Could not fetch address. Enter manually.");
-                    setShowManualAddress(true);
+        try {
+            const coords = await getLocation();
+            const addr = await reverseGeocode(coords.latitude, coords.longitude);
+
+            setFormData(prev => ({
+                ...prev,
+                address: {
+                    country: addr.country,
+                    state: addr.state,
+                    city: addr.city,
+                    street: addr.street,
+                    pincode: addr.pincode,
                 }
-                setLoadingLocation(false);
-            },
-            () => {
-                alert("Location denied. Enter manually.");
-                setLoadingLocation(false);
-                setShowManualAddress(true);
-            }
-        );
+            }));
+
+            setShowManualAddress(true);
+            toast.success("Location detected accurately!");
+        } catch (err) {
+            toast.error(err || "Could not fetch address. Enter manually.");
+            setShowManualAddress(true);
+        } finally {
+            setLoadingLocation(false);
+        }
     };
 
     const getStrengthStyles = () => {

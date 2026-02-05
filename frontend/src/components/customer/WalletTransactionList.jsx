@@ -26,8 +26,8 @@ const WalletTransactionList = ({ transactions }) => {
                         >
                             <div className="flex items-center gap-4">
                                 <div className={`size-12 rounded-xl flex items-center justify-center shadow-sm ${tx.type === 'credit'
-                                        ? 'bg-green-50 text-green-600'
-                                        : 'bg-orange-50 text-primary'
+                                    ? 'bg-green-50 text-green-600'
+                                    : 'bg-orange-50 text-primary'
                                     } group-hover:scale-110 transition-transform`}>
                                     <span className="material-symbols-outlined">
                                         {tx.type === 'credit' ? 'add' : 'remove'}
@@ -35,7 +35,8 @@ const WalletTransactionList = ({ transactions }) => {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-[#2D241E] text-sm">{tx.title}</h4>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{tx.date}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{tx.source}</p>
+                                    <p className="text-[9px] font-medium text-gray-300">{tx.date}</p>
                                 </div>
                             </div>
                             <span className={`font-black text-sm ${tx.type === 'credit' ? 'text-green-600' : 'text-[#2D241E]'}`}>

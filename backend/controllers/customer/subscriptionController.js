@@ -3,6 +3,9 @@ const User = require("../../models/user.model");
 const CustomerWallet = require("../../models/customerWallet.model");
 const Transaction = require("../../models/transaction.model");
 const StoreProfile = require("../../models/storeProfile.model");
+const ProviderProfile = require("../../models/providerprofile.model");
+const Wallet = require("../../models/wallet.model");
+const DummyBank = require("../../models/dummyBank.model");
 
 // Get subscription details for management
 exports.getSubscriptionDetails = async (req, res) => {
@@ -270,60 +273,43 @@ exports.cancelSubscription = async (req, res) => {
 
         // Calculate refund amount (remaining days)
         const today = new Date();
+        const startDate = new Date(subscription.startDate);
         const endDate = new Date(subscription.endDate);
-        const remainingDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-        const dailyRate = (subscription.totalAmount || 2400) / 30; // Assuming 30 days per month
-        const refundAmount = Math.max(0, remainingDays * dailyRate);
+
+        // Accurate duration calculation
+        const totalDurationDays = subscription.durationInDays || Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) || 30;
+
+        // Remaining days (if today is before start date, refund full)
+        let remainingDays = 0;
+        if (today < startDate) {
+            remainingDays = totalDurationDays;
+        } else {
+            remainingDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+        }
+
+        // Clamp remaining days
+        remainingDays = Math.max(0, Math.min(remainingDays, totalDurationDays));
+
+        const dailyRate = (subscription.totalAmount) / totalDurationDays;
+        const refundAmount = Math.floor(remainingDays * dailyRate); // Floor to avoid decimal issues
 
         console.log(`[CANCEL REFUND] Amount: ${refundAmount}, Remaining Days: ${remainingDays}`);
 
         // Update subscription status using findByIdAndUpdate to avoid potential save() validation hooks issues
         await Subscription.findByIdAndUpdate(subscription._id, {
-            status: "cancelled",
+            status: "cancellation_requested",
             cancelledAt: new Date(),
-            cancellationReason: reason || "User requested"
+            cancellationReason: reason || "User requested",
+            refundAmount: Math.floor(refundAmount)
         });
 
-        console.log(`[CANCEL UPDATE] Subscription Cancelled`);
-
-        // Add refund to wallet
-        try {
-            let wallet = await CustomerWallet.findOne({ customer: customerId });
-            if (!wallet) {
-                console.log("[CANCEL WALLET] Creating new wallet");
-                wallet = new CustomerWallet({
-                    customer: customerId,
-                    balance: 0
-                });
-            }
-
-            wallet.balance += refundAmount;
-            await wallet.save();
-            console.log(`[CANCEL WALLET] Refund added to wallet ${wallet._id}`);
-
-            // Create refund transaction
-            const transaction = new Transaction({
-                customer: customerId,
-                type: 'credit',
-                transactionType: 'Refund',
-                amount: refundAmount,
-                description: 'Subscription cancellation refund',
-                referenceId: `CAN-${Date.now()}`,
-                status: 'Success'
-            });
-            await transaction.save();
-            console.log("[CANCEL TX] Transaction created");
-
-        } catch (walletError) {
-            console.error("[CANCEL WALLET ERROR] Error processing wallet refund:", walletError);
-            // Don't fail the entire request if refund fails
-        }
+        console.log(`[CANCEL UPDATE] Subscription Cancellation Requested. Refund Pending: ${refundAmount}`);
 
         res.json({
             success: true,
             data: {
-                refundAmount: Math.round(refundAmount),
-                message: 'Subscription cancelled successfully. Refund will be processed in 5-7 days.'
+                refundAmount: Math.floor(refundAmount),
+                message: 'Cancellation requested. Refund will be processed after Admin approval (24-48 hrs).'
             }
         });
 
@@ -331,7 +317,7 @@ exports.cancelSubscription = async (req, res) => {
         console.error("[CANCEL CRITICAL ERROR]", error);
         res.status(500).json({
             success: false,
-            message: 'Failed to cancel subscription. Please contact support.'
+            message: 'Failed to request cancellation. Please contact support.'
         });
     }
 };
@@ -350,7 +336,9 @@ exports.purchaseSubscription = async (req, res) => {
             lunchTime,
             dinnerTime,
             deliveryAddress,
-            planType
+            planType,
+            paymentMethod = 'upi',
+            transactionId
         } = req.body;
 
         const fs = require('fs');
@@ -367,7 +355,8 @@ exports.purchaseSubscription = async (req, res) => {
             planName,
             totalAmount,
             mealType,
-            planType
+            planType,
+            paymentMethod
         });
 
         // 0. Check for existing active subscription
@@ -381,6 +370,18 @@ exports.purchaseSubscription = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'You already have an active subscription. Please cancel it before purchasing a new one.'
+            });
+        }
+
+        // 0. UPI UTR Validation
+        // Normalizing payment method check to be case insensitive if needed, but current frontend sends 'UPI' or 'wallet'
+        const isUpi = paymentMethod.toLowerCase() === 'upi';
+        const isWallet = paymentMethod.toLowerCase() === 'wallet';
+
+        if (isUpi && (!transactionId || transactionId.length !== 12)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Payment verification failed: A valid 12-digit Transaction ID (UTR) is required'
             });
         }
 
@@ -404,7 +405,7 @@ exports.purchaseSubscription = async (req, res) => {
         }
         const providerUserId = store.provider;
 
-        // 2. Handle Wallet (Simulate payment gateway credit)
+        // 2. Handle Wallet 
         let wallet = await CustomerWallet.findOne({ customer: customerId });
         if (!wallet) {
             wallet = new CustomerWallet({
@@ -413,26 +414,62 @@ exports.purchaseSubscription = async (req, res) => {
             });
         }
 
-        // Simulating that the PaymentModal in frontend actually paid externally
-        // and now we credit that amount to the wallet before deducting it.
-        // This makes the "Direct Pay" flow work seamlessly.
-        wallet.balance += totalAmount;
-        await wallet.save();
+        let sourceBank = null;
 
-        // Separate credit transaction for the simulated payment
-        await Transaction.create({
-            customer: customerId,
-            type: 'credit',
-            transactionType: 'Payment Gateway',
-            amount: totalAmount,
-            description: `Payment for ${planName} via UPI`,
-            referenceId: `PGW-${Date.now()}`,
-            status: 'Success'
-        });
+        if (isWallet) {
+            // Check if sufficient balance
+            if (wallet.balance < totalAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient wallet balance. You need ₹${totalAmount - wallet.balance} more.`
+                });
+            }
+            wallet.balance -= totalAmount;
+            wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+        } else {
+            // 1. UPI / External flow (Direct Purchase) -- RESTRICTED TO DUMMY BANK
 
-        // 3. Deduct Balance (Actual Subscription Purchase)
-        wallet.balance -= totalAmount;
-        wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+            // Validate Transaction ID presence
+            if (!transactionId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Payment verification failed: Missing Transaction ID'
+                });
+            }
+
+            // Find the source bank using the provided Transaction ID (matches masterUTR or accountNumber)
+            sourceBank = await DummyBank.findOne({
+                $or: [
+                    { masterUTR: transactionId },
+                    { accountNumber: transactionId },
+                    { vpa: transactionId }
+                ]
+            });
+
+            if (!sourceBank) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid Transaction ID. No matching Bank Account found. Use STB999888777 for checks.'
+                });
+            }
+
+            // Check Bank Balance
+            if (sourceBank.balance < totalAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient balance in ${sourceBank.bankName}. Available: ₹${sourceBank.balance}`
+                });
+            }
+
+            // Deduct from Source Bank
+            sourceBank.balance -= totalAmount;
+            await sourceBank.save();
+
+            // Just update totalSpent statistics without touching wallet balance
+            wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+        }
+
+        // Save wallet state (only updates totalSpent for external payments)
         await wallet.save();
 
         // 4. Calculate End Date
@@ -469,10 +506,11 @@ exports.purchaseSubscription = async (req, res) => {
             endDate: end,
             mealType: finalMealType,
             mealTypes: finalMealTypesArr,
-            mealTypes: finalMealTypesArr,
             lunchTime,
             dinnerTime,
             deliveryAddress,
+            paymentMethod: isWallet ? 'Wallet' : 'UPI',
+            transactionId: isWallet ? null : transactionId,
             paymentStatus: "Paid",
             status: "approved",
             adminApproval: "approved"
@@ -480,7 +518,8 @@ exports.purchaseSubscription = async (req, res) => {
 
         await subscription.save();
 
-        // 6. Create Transaction Record
+        // 6. Create Transaction Record (Debit for the purchase)
+        // 6. Create Transaction Record (Debit for the purchase)
         const transaction = new Transaction({
             customer: customerId,
             provider: providerUserId,
@@ -488,12 +527,59 @@ exports.purchaseSubscription = async (req, res) => {
             transactionType: 'Subscription Purchase',
             amount: totalAmount,
             description: `Subscription for ${planName} at ${store.mess_name}`,
-            referenceId: `SUB-${subscription._id.toString().slice(-6)}`,
+            referenceId: transactionId || `SUB-${subscription._id.toString().slice(-6)}`,
             status: 'Success',
-            subscriptionId: subscription._id
+            subscriptionId: subscription._id,
+            // Add Bank Details if paid via external bank
+            bankDetails: (!isWallet && sourceBank) ? {
+                accountNumber: sourceBank.accountNumber,
+                bankName: sourceBank.bankName,
+                ifscCode: sourceBank.ifscCode
+            } : null
         });
 
         await transaction.save();
+
+        // 7. Credit Provider Wallet & Calculate Commission
+        try {
+            const providerProfile = await ProviderProfile.findOne({ user: providerUserId });
+            const commissionRate = providerProfile?.commission_rate || 15;
+            const commissionAmount = (totalAmount * commissionRate) / 100;
+            const providerEarnings = totalAmount - commissionAmount;
+
+            let providerWallet = await Wallet.findOne({ provider: providerUserId });
+            if (!providerWallet) {
+                providerWallet = new Wallet({
+                    provider: providerUserId,
+                    totalEarnings: 0,
+                    withdrawableBalance: 0,
+                    lockedAmount: 0 // Starting with 0 or a fixed hold if required
+                });
+            }
+
+            providerWallet.totalEarnings = (providerWallet.totalEarnings || 0) + providerEarnings;
+            providerWallet.withdrawableBalance = (providerWallet.withdrawableBalance || 0) + providerEarnings;
+            await providerWallet.save();
+
+            // 8. Create Provider Earning Transaction
+            const customerUser = await User.findById(customerId);
+            await Transaction.create({
+                provider: providerUserId,
+                customer: customerId,
+                type: 'credit',
+                transactionType: 'Subscription Earning',
+                amount: providerEarnings,
+                description: `Earning from ${customerUser?.fullName || 'Customer'} - ${planName}`,
+                referenceId: `ERN-${subscription._id.toString().slice(-6).toUpperCase()}`,
+                status: 'Success',
+                subscriptionId: subscription._id
+            });
+
+            console.log(`Provider Earnings Credited: ₹${providerEarnings} (Rate: ${commissionRate}%)`);
+        } catch (walletError) {
+            console.error("Error crediting provider wallet:", walletError);
+            // We don't fail the whole purchase if provider credit fails, but we log it
+        }
 
         console.log("Purchase Subscription Success!");
         res.json({

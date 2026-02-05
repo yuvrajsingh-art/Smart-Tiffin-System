@@ -88,10 +88,13 @@ const subscriptionSchema = new mongoose.Schema({
 
     paymentMethod: {
         type: String,
-        enum: ["UPI", "Cash", "Card"],
+        enum: ["UPI", "Cash", "Card", "Wallet"],
     },
-    status:
-        { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    status: {
+        type: String,
+        enum: ["pending", "approved", "rejected", "active", "cancelled", "cancellation_requested", "expired"],
+        default: "pending"
+    },
 
     adminApproval: {
         type: String,
@@ -129,7 +132,9 @@ const subscriptionSchema = new mongoose.Schema({
     }],
     upgradedAt: Date,
     cancelledAt: Date,
-    cancellationReason: String
+    cancellationReason: String,
+    refundAmount: Number, // Amount to be refunded upon cancellation
+    transactionId: String // For UPI payments
 
 }, { timestamps: true });
 

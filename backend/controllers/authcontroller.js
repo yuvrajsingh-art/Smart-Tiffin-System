@@ -237,25 +237,31 @@ exports.getProfile = async (req, res) => {
   try {
     // req.user is set by protect middleware
     if (!req.user) {
+      console.error("❌ Get Profile: req.user missing after middleware");
       return res.status(404).json({ message: "User not found" });
     }
+
+    console.log(`👤 Profile Request: ${req.user.email} (${req.user.role})`);
 
     res.status(200).json({
       user: {
         id: req.user._id,
-        name: req.user.fullName,
+        name: req.user.fullName || "User",
         role: req.user.role,
         email: req.user.email,
-        mobile: req.user.mobile,
-        address: req.user.address,
-        dietPreference: req.user.dietPreference,
-        memberSince: req.user.createdAt
+        mobile: req.user.mobile || "N/A",
+        address: req.user.address || "",
+        dietPreference: req.user.dietPreference || "Pure Veg",
+        memberSince: req.user.createdAt || new Date()
       }
     });
 
   } catch (error) {
-    console.error("Get Profile Error:", error.message);
-    res.status(500).json({ message: error.message });
+    console.error("❌ Get Profile Error:", error.message);
+    res.status(500).json({
+      message: "Internal Server Error while fetching profile",
+      error: error.message
+    });
   }
 };
 

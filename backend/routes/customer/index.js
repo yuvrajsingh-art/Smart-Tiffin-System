@@ -12,10 +12,14 @@ const subscriptionRoutes = require("./subscriptionRoutes");
 const profileRoutes = require("./profileRoutes");
 const notificationRoutes = require("./notificationRoutes");
 const supportRoutes = require("./supportRoutes");
+const bankRoutes = require("./bankRoutes");
+const razorpayRoutes = require("./razorpayRoutes");
 
 // Register all customer sub-routes
 router.use("/dashboard", dashboardRoutes);
 router.use("/wallet", walletRoutes);
+router.use("/bank", bankRoutes);
+router.use("/razorpay", razorpayRoutes);
 router.use("/menu", menuRoutes);
 router.use("/discovery", messDiscoveryRoutes); // Note: shifted under /customer for consistency
 router.use("/feedback", feedbackRoutes);

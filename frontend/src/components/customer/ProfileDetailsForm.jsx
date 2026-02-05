@@ -1,6 +1,23 @@
 import React from 'react';
+import useGeolocation from '../../hooks/useGeolocation';
 
 const ProfileDetailsForm = ({ formData, setFormData, isEditing, setIsEditing, onSave, saving }) => {
+    const { getLocation, reverseGeocode, loading: locationLoading } = useGeolocation();
+
+    const handleAutoDetect = async () => {
+        try {
+            const coords = await getLocation();
+            const addr = await reverseGeocode(coords.latitude, coords.longitude);
+
+            // Construct a flat address string or update individual fields if profile supports components
+            const fullAddr = `${addr.street}, ${addr.city} - ${addr.pincode}`;
+            setFormData({ ...formData, address: fullAddr });
+
+        } catch (err) {
+            console.error("Location detection failed:", err);
+        }
+    };
+
     return (
         <div className="flex-1 w-full glass-panel p-8 sm:p-10 rounded-[2.5rem] border border-white/60 relative shadow-xl overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -57,7 +74,19 @@ const ProfileDetailsForm = ({ formData, setFormData, isEditing, setIsEditing, on
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Delivery Address</label>
+                    <div className="flex justify-between items-center mb-1">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Delivery Address</label>
+                        {isEditing && (
+                            <button
+                                onClick={handleAutoDetect}
+                                disabled={locationLoading}
+                                className="text-[10px] font-black text-primary flex items-center gap-1 hover:underline disabled:opacity-50"
+                            >
+                                <span className={`material-symbols-outlined text-xs ${locationLoading ? 'animate-spin' : ''}`}>my_location</span>
+                                {locationLoading ? 'Detecting...' : 'Auto-Detect'}
+                            </button>
+                        )}
+                    </div>
                     <textarea
                         value={formData.address}
                         disabled={!isEditing}

@@ -2,7 +2,7 @@ const Subscription = require("../../models/subscription.model");
 const Order = require("../../models/order.model");
 const User = require("../../models/user.model");
 const Streak = require("../../models/streak.model");
-const { getWalletBalance } = require("./walletController");
+const { fetchBalance } = require("./walletController");
 const { getTodayMenu } = require("./menuController");
 const { getLiveTracking: getTrackingData } = require("./trackController");
 
@@ -26,7 +26,7 @@ exports.getCustomerDashboard = async (req, res) => {
         });
 
         // Get wallet balance from wallet controller
-        const walletData = await getWalletBalance(customerId);
+        const walletData = await fetchBalance(customerId);
         const walletBalance = walletData?.data?.balance || 0;
         const recentAddition = walletData?.data?.recentAddition || 0;
 

@@ -53,6 +53,8 @@ module.exports = {
     getPayouts: financeController.getPayouts,
     processPayout: financeController.processPayout,
     getInvoices: financeController.getInvoices,
+    getRefundRequests: financeController.getRefundRequests,
+    approveCancellation: financeController.approveCancellation,
 
     // Menus
     getPendingMenus: menuController.getPendingMenus,
