@@ -1,15 +1,29 @@
-import React from 'react';
-import ProviderSidebar from '../../components/provider/ProviderSidebar';
+ import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
+import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
+import ProviderStatsCards from '../../components/ui/Provider/Dashboard/ProviderStateCards';
+import ProviderRecentOrders from '../../components/ui/Provider/Dashboard/ProviderRecentOrders';
 
 const ProviderDashboard = () => {
+
     return (
-        <div className="flex h-screen bg-gray-50 bg-gradient-to-r from-[#fffbf0] to-[#fff9eb] ">
+        <div className="flex h-screen bg-gray-50">
             <ProviderSidebar />
-            <div className="flex-1 flex items-center justify-center">
-                <h1 className="text-2xl font-bold text-gray-400 uppercase tracking-widest">Provider Dashboard</h1>
+            <div className="flex-1 flex flex-col">
+                <ProviderHeader
+                    title="Welcome Back Chef!"
+                    subtitle=" Here's what's happening with your tiffin service today."
+                />
+                <div className="flex-1 p-6 overflow-y-auto">
+
+                    {/* Stats Cards */}
+                    <ProviderStatsCards />
+                    <div>
+                        <ProviderRecentOrders />
+                    </div>
+                </div>
             </div>
         </div>
     );
-};
+}
 
 export default ProviderDashboard;

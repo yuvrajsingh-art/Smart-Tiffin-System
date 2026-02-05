@@ -29,8 +29,8 @@ const connectDB = async () => {
     console.log('');
     console.log(`${colors.red}✗${colors.reset}  ${colors.red}${colors.bright}MongoDB Connection Failed!${colors.reset}`);
     console.log(`   ${colors.dim}Error:${colors.reset} ${colors.red}${error.message}${colors.reset}`);
+    console.log(`   ${colors.yellow}⚠${colors.reset}  ${colors.yellow}Continuing without database...${colors.reset}`);
     console.log('');
-    process.exit(1);
   }
 };
 
