@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { useAuth } from '../../context/UserContext';
+import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
 // Modular Components
@@ -25,6 +26,7 @@ const CustomerDashboard = () => {
                 }
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
+                toast.error("Failed to load dashboard. Please refresh.", { duration: 3000 });
             } finally {
                 setLoading(false);
             }

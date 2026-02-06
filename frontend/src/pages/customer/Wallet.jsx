@@ -30,6 +30,7 @@ const Wallet = () => {
             }
         } catch (error) {
             console.error("Failed to fetch wallet contents:", error);
+            toast.error("Failed to load wallet. Please refresh.", { duration: 3000 });
         } finally {
             setLoading(false);
         }

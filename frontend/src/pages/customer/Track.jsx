@@ -23,7 +23,6 @@ const Track = () => {
     const [loading, setLoading] = useState(true);
     const [trackingData, setTrackingData] = useState(null);
     const [error, setError] = useState(null);
-    const [isSimulating, setIsSimulating] = useState(false);
 
     const fetchTracking = async (showLoading = true) => {
         if (!token) return;
@@ -37,44 +36,18 @@ const Track = () => {
                 setError(null);
             }
         } catch (err) {
+            const errorMsg = err.response?.data?.message || "No active order to track";
             console.error("Error fetching tracking", err);
-            setError(err.response?.data?.message || "No active order to track");
+            setError(errorMsg);
+            if (showLoading) {
+                toast.error(errorMsg, { duration: 3000 });
+            }
         } finally {
             if (showLoading) setLoading(false);
         }
     };
 
-    const initializeTest = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.post('/api/customer/track/initialize-test', {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data.success) {
-                toast.success("Tracking system initialized!");
-                fetchTracking();
-            }
-        } catch (err) {
-            toast.error(err.response?.data?.message || "Failed to initialize");
-            setLoading(false);
-        }
-    };
 
-    const advanceStatus = async () => {
-        setIsSimulating(true);
-        try {
-            const res = await axios.post('/api/customer/track/advance-test', {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data.success) {
-                toast.success(`Advanced to: ${res.data.nextStatus}`);
-            }
-        } catch (err) {
-            toast.error("Finish point reached or error");
-        } finally {
-            setIsSimulating(false);
-        }
-    };
 
     useEffect(() => {
         if (hasActiveSubscription()) {
@@ -130,7 +103,6 @@ const Track = () => {
                 </div>
                 <h2 className="text-2xl font-black text-[#2D241E]">No Active Deliveries</h2>
                 <p className="text-[#5C4D42] mt-3 max-w-md font-medium opacity-60">You don't have any orders out for delivery right now.</p>
-                <button onClick={initializeTest} className="mt-10 px-12 py-4 bg-[#111716] text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-black transition-all">Start Test Tracking</button>
             </div>
         );
     }
@@ -226,18 +198,6 @@ const Track = () => {
                         </div>
                     </div>
 
-                </div>
-
-                {/* BOTTOM ACTION */}
-                <div className="p-8 border-t border-gray-100 bg-[#F8F9FA]/50">
-                    <button
-                        onClick={advanceStatus}
-                        disabled={isSimulating || order.status === 'delivered'}
-                        className="w-full flex items-center justify-center gap-3 py-4 bg-[#111716] text-white rounded-[1.2rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all disabled:opacity-30 active:scale-95"
-                    >
-                        {isSimulating ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : <span className="material-symbols-outlined text-lg">bolt</span>}
-                        Update Staging Protocol
-                    </button>
                 </div>
             </div>
         </div>
