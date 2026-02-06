@@ -304,6 +304,12 @@ exports.cancelSubscription = async (req, res) => {
             refundAmount: Math.floor(refundAmount)
         });
 
+        // Update User Model - Clear Active Subscription
+        await User.findByIdAndUpdate(customerId, {
+            hasActiveSubscription: false,
+            activeSubscription: null
+        });
+
         res.json({
             success: true,
             data: {
@@ -525,6 +531,12 @@ exports.purchaseSubscription = async (req, res) => {
         });
 
         await subscription.save();
+
+        // Update User Model with Active Subscription
+        await User.findByIdAndUpdate(customerId, {
+            hasActiveSubscription: true,
+            activeSubscription: subscription._id
+        });
 
         // 6. Create Transaction Record (Debit for the purchase)
         // 6. Create Transaction Record (Debit for the purchase)

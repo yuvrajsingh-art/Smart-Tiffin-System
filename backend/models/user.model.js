@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema({
     enum: ["customer", "provider", "admin"],
     required: true
   },
-   profile_image: String,
+  profile_image: String,
   // 🔹 Manual Address
   address: {
     type: String
@@ -51,15 +51,27 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   status: {
-     type: String, enum: ["active", "banned"], default: "active" 
+    type: String, enum: ["active", "banned"], default: "active"
   },
-  
+
   // Profile fields
   dietPreference: {
     type: String,
     enum: ["Pure Veg", "Non-Veg", "Jain"],
     default: "Pure Veg"
   },
+
+  // Subscription tracking (for easy DB queries)
+  activeSubscription: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'subscription',
+    default: null
+  },
+  hasActiveSubscription: {
+    type: Boolean,
+    default: false
+  },
+
   deletedAt: Date,
   deletionReason: String
 }, { timestamps: true });
