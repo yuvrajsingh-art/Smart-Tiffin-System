@@ -143,14 +143,15 @@ exports.processPayout = async (req, res) => {
 exports.getInvoices = async (req, res) => {
     try {
         const transactions = await Transaction.find({ status: 'Success' })
-            .populate('user', 'fullName')
+            .populate('customer', 'fullName')
+            .populate('provider', 'businessName')
             .sort({ createdAt: -1 })
             .limit(20);
 
         const invoices = transactions.map(t => ({
             id: `INV-${t._id.toString().slice(-6).toUpperCase()}`,
             rawId: t._id,
-            user: t.user?.fullName || 'Unknown',
+            user: t.customer?.fullName || t.provider?.businessName || 'Unknown',
             date: formatDate(t.createdAt),
             amount: `₹${t.amount}`,
             status: 'Paid',
@@ -161,5 +162,95 @@ exports.getInvoices = async (req, res) => {
     } catch (error) {
         console.error("Get Invoices Error:", error.message);
         return sendError(res, 500, "Failed to fetch invoices", error);
+    }
+};
+
+/**
+ * Get pending refund requests
+ * @route GET /api/admin/finance/refunds
+ */
+exports.getRefundRequests = async (req, res) => {
+    try {
+        const Subscription = require("../../models/subscription.model");
+        const { formatDate } = require("../../utils/dateHelper");
+
+        const refunds = await Subscription.find({ status: 'cancellation_requested' })
+            .populate('customer', 'fullName email phone')
+            .populate('provider', 'businessName')
+            .sort({ cancelledAt: -1 });
+
+        const formattedRefunds = refunds.map(sub => ({
+            id: sub._id,
+            customer: sub.customer?.fullName || 'Unknown',
+            email: sub.customer?.email,
+            phone: sub.customer?.phone,
+            planName: sub.planName,
+            refundAmount: sub.refundAmount || 0,
+            date: formatDate(sub.cancelledAt || new Date()),
+            reason: sub.cancellationReason
+        }));
+
+        return sendSuccess(res, 200, "Refund requests retrieved successfully", formattedRefunds);
+    } catch (error) {
+        console.error("Get Refunds Error:", error.message);
+        return sendError(res, 500, "Failed to fetch refund requests", error);
+    }
+};
+
+/**
+ * Approve Subscription Cancellation & Process Refund
+ * @route POST /api/admin/finance/refund/:id/approve
+ */
+exports.approveCancellation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const Subscription = require("../../models/subscription.model");
+        const CustomerWallet = require("../../models/customerWallet.model");
+
+        const subscription = await Subscription.findById(id);
+        if (!subscription) {
+            return sendError(res, 404, "Subscription not found");
+        }
+
+        if (subscription.status !== 'cancellation_requested') {
+            return sendError(res, 400, "Subscription is not in cancellation requested state");
+        }
+
+        const refundAmount = subscription.refundAmount || 0;
+        const customerId = subscription.customer;
+
+        // 1. Update Subscription Status
+        subscription.status = 'cancelled';
+        subscription.adminApproval = 'approved';
+        await subscription.save();
+
+        // 2. Credit Wallet
+        let wallet = await CustomerWallet.findOne({ customer: customerId });
+        if (!wallet) {
+            wallet = new CustomerWallet({
+                customer: customerId,
+                balance: 0
+            });
+        }
+        wallet.balance = (wallet.balance || 0) + refundAmount;
+        await wallet.save();
+
+        // 3. Create Transaction Record
+        await Transaction.create({
+            customer: customerId,
+            type: 'credit',
+            transactionType: 'Refund',
+            amount: refundAmount,
+            description: `Refund for cancelled subscription: ${subscription.planName}`,
+            referenceId: `REF-${subscription._id.toString().slice(-6).toUpperCase()}`,
+            status: 'Success',
+            subscriptionId: subscription._id
+        });
+
+        return sendSuccess(res, 200, "Cancellation approved and refund processed successfully");
+
+    } catch (error) {
+        console.error("Approve Cancellation Error:", error);
+        return sendError(res, 500, "Failed to approve cancellation", error);
     }
 };

@@ -1,4 +1,4 @@
-const { Menu } = require("../../models/menu.model");
+const Menu = require("../../models/menu.model");
 const Settings = require("../../models/settings.model"); // Import Settings
 
 exports.createOrUpdateMenu = async (req, res) => {

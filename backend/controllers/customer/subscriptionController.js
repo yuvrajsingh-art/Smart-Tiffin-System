@@ -1,13 +1,18 @@
 const Subscription = require("../../models/subscription.model");
+const logger = require("../../utils/logger");
 const User = require("../../models/user.model");
 const CustomerWallet = require("../../models/customerWallet.model");
 const Transaction = require("../../models/transaction.model");
+const StoreProfile = require("../../models/storeProfile.model");
+const ProviderProfile = require("../../models/providerprofile.model");
+const Wallet = require("../../models/wallet.model");
+const DummyBank = require("../../models/dummyBank.model");
 
 // Get subscription details for management
 exports.getSubscriptionDetails = async (req, res) => {
     try {
         const customerId = req.user._id;
-        
+
         // Get active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
@@ -16,8 +21,9 @@ exports.getSubscriptionDetails = async (req, res) => {
         }).populate('provider', 'fullName');
 
         if (!activeSubscription) {
-            return res.status(404).json({
-                success: false,
+            return res.json({
+                success: true,
+                data: null,
                 message: 'No active subscription found'
             });
         }
@@ -52,7 +58,7 @@ exports.getSubscriptionDetails = async (req, res) => {
             },
             {
                 id: "gold_weightloss",
-                name: "Gold Weight Loss", 
+                name: "Gold Weight Loss",
                 price: 5000,
                 features: "High Protein, Low Carbs",
                 tag: "Best Value",
@@ -130,9 +136,11 @@ exports.managePausedDays = async (req, res) => {
             const transaction = new Transaction({
                 customer: customerId,
                 type: 'credit',
+                transactionType: 'Refund',
                 amount: refundAmount,
                 description: `Refund for ${pausedDates.length} paused days`,
-                status: 'completed'
+                referenceId: `REF-${Date.now()}`,
+                status: 'Success'
             });
             await transaction.save();
         }
@@ -210,9 +218,11 @@ exports.upgradeSubscription = async (req, res) => {
         const transaction = new Transaction({
             customer: customerId,
             type: 'debit',
+            transactionType: 'Subscription Purchase',
             amount: upgradeAmount,
             description: `Subscription upgraded to ${newPlan.name}`,
-            status: 'completed'
+            referenceId: `UPG-${Date.now()}`,
+            status: 'Success'
         });
         await transaction.save();
 
@@ -243,6 +253,7 @@ exports.cancelSubscription = async (req, res) => {
     try {
         const customerId = req.user._id;
         const { reason } = req.body;
+        // console.log(`[CANCEL START] Customer: ${customerId}, Reason: ${reason}`);
 
         // Get active subscription
         const subscription = await Subscription.findOne({
@@ -252,26 +263,157 @@ exports.cancelSubscription = async (req, res) => {
         });
 
         if (!subscription) {
+            // console.log("[CANCEL ERROR] No active subscription found");
             return res.status(404).json({
                 success: false,
                 message: 'No active subscription found'
             });
         }
 
+        // console.log(`[CANCEL FOUND] Subscription ID: ${subscription._id}`);
+
         // Calculate refund amount (remaining days)
         const today = new Date();
+        const startDate = new Date(subscription.startDate);
         const endDate = new Date(subscription.endDate);
-        const remainingDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-        const dailyRate = (subscription.totalAmount || 2400) / 30; // Assuming 30 days per month
-        const refundAmount = Math.max(0, remainingDays * dailyRate);
 
-        // Update subscription status
-        subscription.status = "cancelled";
-        subscription.cancelledAt = new Date();
-        subscription.cancellationReason = reason || "User requested";
-        await subscription.save();
+        // Accurate duration calculation
+        const totalDurationDays = subscription.durationInDays || Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) || 30;
 
-        // Add refund to wallet
+        // Remaining days (if today is before start date, refund full)
+        let remainingDays = 0;
+        if (today < startDate) {
+            remainingDays = totalDurationDays;
+        } else {
+            remainingDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+        }
+
+        // Clamp remaining days
+        remainingDays = Math.max(0, Math.min(remainingDays, totalDurationDays));
+
+        const dailyRate = (subscription.totalAmount) / totalDurationDays;
+        const refundAmount = Math.floor(remainingDays * dailyRate); // Floor to avoid decimal issues
+
+        // console.log(`[CANCEL REFUND] Amount: ${refundAmount}, Remaining Days: ${remainingDays}`);
+
+        // Update subscription status using findByIdAndUpdate to avoid potential save() validation hooks issues
+        await Subscription.findByIdAndUpdate(subscription._id, {
+            status: "cancellation_requested",
+            cancelledAt: new Date(),
+            cancellationReason: reason || "User requested",
+            refundAmount: Math.floor(refundAmount)
+        });
+
+        res.json({
+            success: true,
+            data: {
+                refundAmount: Math.floor(refundAmount),
+                message: 'Cancellation requested. Refund will be processed after Admin approval (24-48 hrs).'
+            }
+        });
+
+    } catch (error) {
+        console.error("Cancellation Request Error:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to request cancellation. Please contact support.'
+        });
+    }
+};
+
+// Purchase new subscription
+exports.purchaseSubscription = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+        const {
+            providerId,
+            planName,
+            totalAmount,
+            durationInDays,
+            startDate,
+            mealType,
+            lunchTime,
+            dinnerTime,
+            deliveryAddress,
+            planType,
+            paymentMethod = 'upi',
+
+            transactionId
+        } = req.body;
+
+        logger.info("Subscription Purchase Initiated", {
+            customer: customerId,
+            providerId,
+            plan: planName,
+            amount: totalAmount,
+            method: paymentMethod
+        });
+
+        const fs = require('fs');
+        const logData = {
+            time: new Date().toISOString(),
+            customerId,
+            body: req.body
+        };
+        fs.appendFileSync('purchase_debug.log', JSON.stringify(logData, null, 2) + '\n');
+
+
+
+        // 0. Check for existing active subscription
+        const existingSubscription = await Subscription.findOne({
+            customer: customerId,
+            status: "approved",
+            endDate: { $gte: new Date() }
+        });
+
+        if (existingSubscription) {
+            return res.status(400).json({
+                success: false,
+                message: 'You already have an active subscription. Please cancel it before purchasing a new one.'
+            });
+        }
+
+        // 0. UPI UTR Validation
+        // Normalizing payment method check to be case insensitive if needed, but current frontend sends 'UPI' or 'wallet'
+        const isUpi = paymentMethod.toLowerCase() === 'upi';
+        const isWallet = paymentMethod.toLowerCase() === 'wallet';
+
+        if (isUpi && (!transactionId || transactionId.length !== 12)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Payment verification failed: A valid 12-digit Transaction ID (UTR) is required'
+            });
+        }
+
+        // 1. Basic Validation
+        if (!providerId || !totalAmount || !planName) {
+            logger.warn("Purchase Failed: Missing Fields", { providerId, totalAmount, planName });
+            console.log("Missing fields detected:", { providerId, totalAmount, planName });
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required subscription details'
+            });
+        }
+
+        // Find the actual provider User ID from StoreProfile 
+        // Support both provider (User ID) and _id (Store ID) to prevent 404 from frontend
+        const store = await StoreProfile.findOne({
+            $or: [
+                { provider: providerId },
+                { _id: providerId }
+            ]
+        });
+
+        if (!store) {
+            logger.warn("Purchase Failed: Store Not Found", { providerId });
+            return res.status(404).json({
+                success: false,
+                message: 'Provider store not found'
+            });
+        }
+        const providerUserId = store.provider;
+
+        // 2. Handle Wallet 
         let wallet = await CustomerWallet.findOne({ customer: customerId });
         if (!wallet) {
             wallet = new CustomerWallet({
@@ -280,31 +422,212 @@ exports.cancelSubscription = async (req, res) => {
             });
         }
 
-        wallet.balance += refundAmount;
+        let sourceBank = null;
+
+        if (isWallet) {
+            // Check if sufficient balance
+            if (wallet.balance < totalAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient wallet balance. You need ₹${totalAmount - wallet.balance} more.`
+                });
+            }
+            wallet.balance -= totalAmount;
+            wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+        } else {
+            // 1. UPI / External flow (Direct Purchase) -- RESTRICTED TO DUMMY BANK
+
+            // Validate Transaction ID presence
+            if (!transactionId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Payment verification failed: Missing Transaction ID'
+                });
+            }
+
+            // Find the source bank using the provided Transaction ID (matches masterUTR or accountNumber)
+            sourceBank = await DummyBank.findOne({
+                $or: [
+                    { masterUTR: transactionId },
+                    { accountNumber: transactionId },
+                    { vpa: transactionId }
+                ]
+            });
+
+            if (!sourceBank) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid Transaction ID. No matching Bank Account found. Use STB999888777 for checks.'
+                });
+            }
+
+            // Check Bank Balance
+            if (sourceBank.balance < totalAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient balance in ${sourceBank.bankName}. Available: ₹${sourceBank.balance}`
+                });
+            }
+
+            // Deduct from Source Bank
+            sourceBank.balance -= totalAmount;
+            await sourceBank.save();
+
+            // Just update totalSpent statistics without touching wallet balance
+            wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+        }
+
+        // Save wallet state (only updates totalSpent for external payments)
         await wallet.save();
 
-        // Create refund transaction
+        // 4. Calculate End Date
+        const start = new Date(startDate || Date.now());
+        const end = new Date(start);
+        end.setDate(start.getDate() + (durationInDays || 30));
+
+        // Create Subscription
+        // Robust mapping for mealType enum ["Lunch", "Dinner", "Both"]
+        const normalizedMealType = mealType && mealType.toLowerCase();
+        let finalMealType = "Both";
+        let finalMealTypesArr = ["lunch", "dinner"];
+
+        if (normalizedMealType === 'lunch') {
+            finalMealType = "Lunch";
+            finalMealTypesArr = ["lunch"];
+        } else if (normalizedMealType === 'dinner') {
+            finalMealType = "Dinner";
+            finalMealTypesArr = ["dinner"];
+        }
+
+        const subscription = new Subscription({
+            customer: customerId,
+            provider: providerUserId,
+            created_by: "customer",
+            planName,
+            price: totalAmount,
+            totalAmount,
+            type: durationInDays <= 7 ? "weekly" : "monthly",
+            category: (planType && planType.toLowerCase()) || "veg",
+            planType: (planType && planType.toLowerCase()) || "veg",
+            durationInDays: durationInDays || 30,
+            startDate: start,
+            endDate: end,
+            mealType: finalMealType,
+            mealTypes: finalMealTypesArr,
+            lunchTime,
+            dinnerTime,
+            deliveryAddress,
+            paymentMethod: isWallet ? 'Wallet' : 'UPI',
+            transactionId: isWallet ? null : transactionId,
+            paymentStatus: "Paid",
+            status: "approved",
+            adminApproval: "approved"
+        });
+
+        await subscription.save();
+
+        // 6. Create Transaction Record (Debit for the purchase)
+        // 6. Create Transaction Record (Debit for the purchase)
         const transaction = new Transaction({
             customer: customerId,
-            type: 'credit',
-            amount: refundAmount,
-            description: 'Subscription cancellation refund',
-            status: 'completed'
+            provider: providerUserId,
+            type: 'debit',
+            transactionType: 'Subscription Purchase',
+            amount: totalAmount,
+            description: `Subscription for ${planName} at ${store.mess_name}`,
+            referenceId: transactionId || `SUB-${subscription._id.toString().slice(-6)}`,
+            status: 'Success',
+            subscriptionId: subscription._id,
+            // Add Bank Details if paid via external bank
+            bankDetails: (!isWallet && sourceBank) ? {
+                accountNumber: sourceBank.accountNumber,
+                bankName: sourceBank.bankName,
+                ifscCode: sourceBank.ifscCode
+            } : null
         });
+
         await transaction.save();
+
+        // 7. Credit Provider Wallet & Calculate Commission
+        try {
+            const providerProfile = await ProviderProfile.findOne({ user: providerUserId });
+            const commissionRate = providerProfile?.commission_rate || 15;
+            const commissionAmount = (totalAmount * commissionRate) / 100;
+            const providerEarnings = totalAmount - commissionAmount;
+
+            let providerWallet = await Wallet.findOne({ provider: providerUserId });
+            if (!providerWallet) {
+                providerWallet = new Wallet({
+                    provider: providerUserId,
+                    totalEarnings: 0,
+                    withdrawableBalance: 0,
+                    lockedAmount: 0 // Starting with 0 or a fixed hold if required
+                });
+            }
+
+            providerWallet.totalEarnings = (providerWallet.totalEarnings || 0) + providerEarnings;
+            providerWallet.withdrawableBalance = (providerWallet.withdrawableBalance || 0) + providerEarnings;
+            await providerWallet.save();
+
+            // 8. Create Provider Earning Transaction
+            const customerUser = await User.findById(customerId);
+            await Transaction.create({
+                provider: providerUserId,
+                customer: customerId,
+                type: 'credit',
+                transactionType: 'Subscription Earning',
+                amount: providerEarnings,
+                description: `Earning from ${customerUser?.fullName || 'Customer'} - ${planName}`,
+                referenceId: `ERN-${subscription._id.toString().slice(-6).toUpperCase()}`,
+                status: 'Success',
+                subscriptionId: subscription._id
+            });
+
+
+
+            logger.info(`Provider Earnings Credited: ₹${providerEarnings} (Rate: ${commissionRate}%)`);
+        } catch (walletError) {
+            logger.error("Error crediting provider wallet:", walletError);
+            // Continue flow as subscription is already active
+        }
+
+        logger.success("Subscription Purchased Successfully", {
+            subscriptionId: subscription._id,
+            customer: customerId
+        });
 
         res.json({
             success: true,
             data: {
-                refundAmount: Math.round(refundAmount),
-                message: 'Subscription cancelled successfully. Refund will be processed in 5-7 days.'
+                subscriptionId: subscription._id,
+                newBalance: wallet.balance,
+                message: 'Subscription purchased successfully! Welcome aboard.'
             }
         });
 
     } catch (error) {
+        console.error("Purchase Subscription Error Details:");
+        console.error("Name:", error.name);
+        console.error("Message:", error.message);
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            console.error("Mongoose Validation Error:", messages);
+            return res.status(400).json({
+                success: false,
+                message: `Validation Error: ${messages.join(', ')}`
+            });
+        }
+        if (error.kind === 'ObjectId') {
+            console.error("Invalid ObjectId detected for field:", error.path);
+            return res.status(400).json({
+                success: false,
+                message: `Invalid ID format for ${error.path}`
+            });
+        }
+        console.error(error);
         res.status(500).json({
             success: false,
-            message: 'Failed to cancel subscription'
+            message: 'Failed to process subscription purchase. ' + (error.message || '')
         });
     }
 };
@@ -315,14 +638,14 @@ const generateCalendarData = (subscription) => {
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
+
     const calendar = [];
     const pausedDates = subscription.pausedDates || [];
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
         const dateString = date.toISOString().split('T')[0];
-        
+
         calendar.push({
             day,
             date: dateString,
@@ -331,7 +654,7 @@ const generateCalendarData = (subscription) => {
             isToday: date.toDateString() === today.toDateString()
         });
     }
-    
+
     return {
         month: today.toLocaleString('default', { month: 'long' }),
         year: currentYear,

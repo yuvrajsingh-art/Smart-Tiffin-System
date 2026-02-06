@@ -1,7 +1,7 @@
 const Order = require("../../models/order.model");
 const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
-const { Menu } = require("../../models/menu.model");
+const Menu = require("../../models/menu.model");
 
 // Get live tracking details for active order
 exports.getLiveTracking = async (req, res) => {
@@ -9,42 +9,41 @@ exports.getLiveTracking = async (req, res) => {
         const customerId = req.user._id;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
-        // Find today's active order
+        // Find today's active order (subscription or guest)
         const activeOrder = await Order.findOne({
             customer: customerId,
             orderDate: { $gte: today, $lt: tomorrow },
             status: { $nin: ['delivered', 'cancelled'] }
-        }).populate('menu', 'name mainDish image mealType spiceLevel')
-          .populate('provider', 'fullName');
+        }).populate({
+            path: 'subscription',
+            populate: { path: 'provider', select: 'fullName' }
+        }).populate('provider', 'fullName');
 
         if (!activeOrder) {
             return res.status(404).json({
                 success: false,
-                message: 'No active order found for today'
+                message: 'No active order found for today. Orders are usually created when you customize your meal or via daily automation.'
             });
         }
 
-        // Calculate ETA based on order status
+        // 1. Calculate realistic ETA based on actual Order.status
         const statusETA = {
-            'pending': 45,
-            'confirmed': 40,
-            'preparing': 30,
-            'cooking': 25,
-            'ready': 20,
-            'packed': 15,
+            'confirmed': 45,
+            'cooking': 30,
+            'prepared': 20,
             'out_for_delivery': 10
         };
 
         const eta = statusETA[activeOrder.status] || 15;
 
-        // Generate timeline based on order status
+        // 2. Generate timeline based on real Order status
         const timeline = generateTimeline(activeOrder);
 
-        // Get delivery partner info (mock for now)
+        // 3. Delivery Partner Info (Still mock until we have a rider app, but linked to order)
         const deliveryPartner = {
             name: "Rajesh Kumar",
             rating: 4.9,
@@ -53,20 +52,20 @@ exports.getLiveTracking = async (req, res) => {
             isOnline: true
         };
 
-        // Format order details
+        // 4. Format order details from real DB fields
         const orderDetails = {
             id: activeOrder._id,
-            orderNumber: activeOrder.orderNumber || `ST-${activeOrder._id.toString().slice(-6)}`,
+            orderNumber: activeOrder.orderNumber,
             status: activeOrder.status,
             meal: {
-                name: activeOrder.menu?.name || activeOrder.menu?.mainDish || "Special Thali",
-                image: activeOrder.menu?.image || "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200",
-                items: formatMenuItems(activeOrder.menu),
-                spiceLevel: activeOrder.menu?.spiceLevel || "Medium",
-                mealType: activeOrder.menu?.mealType || "lunch"
+                name: (activeOrder.menuItems && activeOrder.menuItems[0]?.name) || "Daily Meal Thali",
+                image: (activeOrder.menuItems && activeOrder.menuItems[0]?.image) || "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200",
+                items: activeOrder.menuItems?.map(i => i.name).join(", ") || "Main Dish, Roti, Dal, Rice",
+                spiceLevel: activeOrder.customization?.spiceLevel || "Medium",
+                mealType: activeOrder.mealType || "Lunch"
             },
             provider: activeOrder.provider?.fullName || "Provider",
-            paymentStatus: activeOrder.paymentStatus || "paid"
+            paymentStatus: activeOrder.paymentStatus || "Paid"
         };
 
         res.json({
@@ -74,18 +73,19 @@ exports.getLiveTracking = async (req, res) => {
             data: {
                 order: orderDetails,
                 eta,
-                distance: "1.2 km",
+                distance: activeOrder.status === 'out_for_delivery' ? "0.8 km" : "1.2 km",
                 timeline,
                 deliveryPartner,
                 mapData: {
-                    customerLocation: { lat: 19.0760, lng: 72.8777 }, // Mock Mumbai location
-                    deliveryLocation: { lat: 19.0820, lng: 72.8850 },
-                    route: [] // Can be populated with actual route data
+                    customerLocation: { lat: 19.0760, lng: 72.8777 },
+                    deliveryLocation: activeOrder.status === 'out_for_delivery' ? { lat: 19.0790, lng: 72.8810 } : { lat: 19.0820, lng: 72.8850 },
+                    route: []
                 }
             }
         });
 
     } catch (error) {
+        console.error("Live Tracking Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch tracking details'
@@ -153,9 +153,9 @@ exports.updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
         const { status } = req.body;
-        
+
         const validStatuses = ['pending', 'confirmed', 'preparing', 'cooking', 'ready', 'packed', 'out_for_delivery', 'delivered', 'cancelled'];
-        
+
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
                 success: false,
@@ -193,39 +193,164 @@ exports.updateOrderStatus = async (req, res) => {
     }
 };
 
-// Helper function to generate timeline
+/**
+ * Initialize a test order for the customer to track
+ * POST /api/customer/track/initialize-test
+ */
+exports.initializeTestOrder = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // 1. Check if order already exists for today
+        let order = await Order.findOne({
+            customer: customerId,
+            orderDate: { $gte: today }
+        });
+
+        if (order) {
+            // Just reset status to 'confirmed' for fresh test
+            order.status = 'confirmed';
+            order.confirmedAt = new Date();
+            order.cookingStartedAt = null;
+            order.preparedAt = null;
+            order.outForDeliveryAt = null;
+            order.deliveredAt = null;
+            await order.save();
+            return res.json({ success: true, message: "Today's order reset to 'confirmed' status", order });
+        }
+
+        // 2. Find any active subscription to get provider info
+        const subscription = await Subscription.findOne({
+            customer: customerId,
+            status: "approved"
+        });
+
+        if (!subscription) {
+            return res.status(400).json({ success: false, message: "No active subscription found to link order" });
+        }
+
+        // 3. Create a real trackable order
+        order = await Order.create({
+            customer: customerId,
+            provider: subscription.provider,
+            subscription: subscription._id,
+            orderDate: today,
+            mealType: "Lunch",
+            orderType: "subscription",
+            amount: 0,
+            paymentStatus: "Paid",
+            status: "confirmed",
+            confirmedAt: new Date(),
+            menuItems: [{
+                name: "Standard Veg Thali",
+                description: "Roti, Dal, Sabji, Rice",
+                image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200"
+            }],
+            deliveryAddress: subscription.deliveryAddress
+        });
+
+        res.json({
+            success: true,
+            message: "Test order initialized! You can now track it.",
+            order
+        });
+
+    } catch (error) {
+        console.error("Initialize Test Order Error:", error);
+        res.status(500).json({ success: false, message: "Failed to initialize test order" });
+    }
+};
+
+/**
+ * DEBUG: Advance status to next step
+ * POST /api/customer/track/advance-test
+ */
+exports.advanceTestStatus = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+        // Find latest order for this user
+        const order = await Order.findOne({ customer: customerId }).sort({ orderDate: -1 });
+
+        if (!order) return res.status(404).json({ success: false, message: "No order found" });
+
+        const statusFlow = ['confirmed', 'cooking', 'prepared', 'out_for_delivery', 'delivered'];
+        const currentIndex = statusFlow.indexOf(order.status);
+
+        if (currentIndex < statusFlow.length - 1) {
+            const nextStatus = statusFlow[currentIndex + 1];
+            order.status = nextStatus;
+
+            // Set timestamp
+            const tsMap = {
+                'cooking': 'cookingStartedAt',
+                'prepared': 'preparedAt',
+                'out_for_delivery': 'outForDeliveryAt',
+                'delivered': 'deliveredAt'
+            };
+            if (tsMap[nextStatus]) order[tsMap[nextStatus]] = new Date();
+
+            await order.save();
+
+            // Emit socket event if req.io is available
+            if (req.app.get('io')) {
+                const io = req.app.get('io');
+                io.emit('orderStatusUpdate', {
+                    orderId: order._id,
+                    status: nextStatus,
+                    timeline: generateTimeline(order)
+                });
+                console.log(`[SOCKET] Emitted status update: ${nextStatus}`);
+            }
+
+            return res.json({ success: true, nextStatus, timestamp: new Date() });
+        }
+
+        res.json({ success: false, message: "Already delivered" });
+    } catch (error) {
+        console.error("Advance Test Status Error:", error);
+        res.status(500).json({ success: false, message: "Failed to advance" });
+    }
+};
+
+// Helper function to generate timeline based on real status
 const generateTimeline = (order) => {
-    const now = new Date();
-    const orderTime = new Date(order.createdAt);
-    
     const steps = [
         {
             title: 'Order Placed',
-            time: orderTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            time: order.confirmedAt ? new Date(order.confirmedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending',
             active: true,
             done: true,
             icon: 'receipt_long'
         },
         {
-            title: 'Preparing Food',
-            time: new Date(orderTime.getTime() + 45 * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            active: ['preparing', 'cooking', 'ready', 'packed', 'out_for_delivery', 'delivered'].includes(order.status),
-            done: ['cooking', 'ready', 'packed', 'out_for_delivery', 'delivered'].includes(order.status),
-            icon: 'skillet'
+            title: 'Cooking Started',
+            time: order.cookingStartedAt ? new Date(order.cookingStartedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Wait...',
+            active: ['cooking', 'prepared', 'out_for_delivery', 'delivered'].includes(order.status),
+            done: ['cooking', 'prepared', 'out_for_delivery', 'delivered'].includes(order.status),
+            icon: 'skillet',
+            pulse: order.status === 'cooking'
+        },
+        {
+            title: 'Food Prepared',
+            time: order.preparedAt ? new Date(order.preparedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Wait...',
+            active: ['prepared', 'out_for_delivery', 'delivered'].includes(order.status),
+            done: ['prepared', 'out_for_delivery', 'delivered'].includes(order.status),
+            icon: 'soup_kitchen',
+            pulse: order.status === 'prepared'
         },
         {
             title: 'Out for Delivery',
-            time: new Date(orderTime.getTime() + 75 * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            time: order.outForDeliveryAt ? new Date(order.outForDeliveryAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Wait...',
             active: ['out_for_delivery', 'delivered'].includes(order.status),
-            done: ['delivered'].includes(order.status),
+            done: ['out_for_delivery', 'delivered'].includes(order.status),
             pulse: order.status === 'out_for_delivery',
             icon: 'moped'
         },
         {
             title: 'Delivered',
-            time: order.status === 'delivered' 
-                ? new Date(order.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                : `Est. ${new Date(orderTime.getTime() + 90 * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+            time: order.deliveredAt ? new Date(order.deliveredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Est. soon',
             active: order.status === 'delivered',
             done: order.status === 'delivered',
             icon: 'home'
@@ -238,7 +363,7 @@ const generateTimeline = (order) => {
 // Helper function to format menu items
 const formatMenuItems = (menu) => {
     if (!menu) return "Delicious meal";
-    
+
     const items = [];
     if (menu.bread?.count && menu.bread?.type) {
         items.push(`${menu.bread.count} ${menu.bread.type}`);
@@ -247,6 +372,6 @@ const formatMenuItems = (menu) => {
     if (menu.rice) items.push(menu.rice);
     if (menu.accompaniments?.salad) items.push("Salad");
     if (menu.accompaniments?.pickle) items.push("Pickle");
-    
+
     return items.length > 0 ? items.join(", ") : "Delicious meal";
 };

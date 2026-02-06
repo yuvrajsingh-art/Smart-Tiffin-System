@@ -7,10 +7,9 @@ exports.getKdsOrders = async (req, res) => {
 
     const orders = await Order.find({
       provider: providerId,
-      meal_type: "lunch", // optional (UI says Lunch Service)
-      status: { $ne: "Cancelled" }
+      status: { $nin: ["delivered", "cancelled"] }
     })
-      .populate("customer", "name")
+      .populate("customer", "fullName")
       .sort({ createdAt: 1 });
 
     const response = {
@@ -23,28 +22,25 @@ exports.getKdsOrders = async (req, res) => {
     orders.forEach(order => {
       const orderCard = {
         _id: order._id,
-        orderNo: order._id.toString().slice(-4),
-        customerName: order.customer?.name,
-        items: order.items,
+        orderNo: order.orderNumber || order._id.toString().slice(-6),
+        customerName: order.customer?.fullName,
+        items: order.menuItems,
         status: order.status,
         orderTime: order.createdAt,
-        order_type: order.order_type,
-        grandTotal: order.grandTotal
+        orderType: order.orderType,
+        quantity: order.quantity,
+        amount: order.amount,
+        paymentStatus: order.paymentStatus,
+        customization: order.customization
       };
 
-      if (order.status === "Placed") {
+      if (order.status === "confirmed") {
         response.justIn.push(orderCard);
-      }
-
-      if (["Accepted", "Preparing"].includes(order.status)) {
+      } else if (order.status === "cooking") {
         response.preparing.push(orderCard);
-      }
-
-      if (order.status === "Ready") {
+      } else if (order.status === "prepared") {
         response.ready.push(orderCard);
-      }
-
-      if (order.status === "Picked_Up") {
+      } else if (order.status === "out_for_delivery") {
         response.dispatched.push(orderCard);
       }
     });
@@ -67,31 +63,33 @@ exports.getKdsOrders = async (req, res) => {
 
 exports.acceptOrder = async (req, res) => {
   await Order.findByIdAndUpdate(req.params.id, {
-    status: "Accepted",
-    $push: { timeline: { status: "Accepted", time: new Date() } }
+    status: "cooking",
+    cookingStartedAt: new Date(),
+    $push: { timeline: { status: "cooking", time: new Date() } }
   });
 
-  res.json({ success: true, message: "Order Accepted" });
+  res.json({ success: true, message: "Order Accepted & Cooking Started" });
 };
 
 
 
 exports.markReady = async (req, res) => {
   await Order.findByIdAndUpdate(req.params.id, {
-    status: "Ready",
+    status: "prepared",
     preparedAt: new Date(),
-    $push: { timeline: { status: "Ready", time: new Date() } }
+    $push: { timeline: { status: "prepared", time: new Date() } }
   });
 
-  res.json({ success: true, message: "Order Ready" });
+  res.json({ success: true, message: "Order Ready & Prepared" });
 };
 
 
 
 exports.markDispatched = async (req, res) => {
   await Order.findByIdAndUpdate(req.params.id, {
-    status: "Picked_Up",
-    $push: { timeline: { status: "Picked_Up", time: new Date() } }
+    status: "out_for_delivery",
+    outForDeliveryAt: new Date(),
+    $push: { timeline: { status: "out_for_delivery", time: new Date() } }
   });
 
   res.json({ success: true, message: "Order Dispatched" });

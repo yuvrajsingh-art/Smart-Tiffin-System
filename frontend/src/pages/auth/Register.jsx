@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
+import useGeolocation from "../../hooks/useGeolocation";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -89,50 +92,78 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
-        console.log("Payload:", formData);
-        setTimeout(() => {
-            alert(`Welcome ${formData.name}!`);
-            navigate('/customer/dashboard');
-        }, 1000);
-    };
-
-    const handleAllowLocation = async () => {
-        if (!navigator.geolocation) {
-            alert("Geolocation not supported");
+        if (!validateForm()) {
+            toast.error("Please fill all required fields correctly.");
             return;
         }
-        setLoadingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    const data = await res.json();
-                    const osm = data.address || {};
-                    setFormData(prev => ({
-                        ...prev,
-                        address: {
-                            country: osm.country || "India",
-                            state: osm.state || osm.region || "",
-                            city: osm.city || osm.town || "",
-                            street: osm.road || "",
-                            pincode: osm.postcode || "",
-                        }
-                    }));
-                    setShowManualAddress(true);
-                } catch (error) {
-                    alert("Could not fetch address. Enter manually.");
-                    setShowManualAddress(true);
+
+        setLoadingLocation(true); // Re-using this for general loading state
+        try {
+            const endpoint = role === 'provider' ? '/api/auth/registerProvider/provider' : '/api/auth/registerCustomer/customer';
+
+            const payload = {
+                fullName: formData.name,
+                email: formData.email,
+                password: formData.password,
+                mobile: formData.phone,
+                address: `${formData.address.street}, ${formData.address.city} - ${formData.address.pincode}`,
+                latitude: 28.6139, // Default for now if location fails
+                longitude: 77.2090
+            };
+
+            const { data } = await axios.post(endpoint, payload);
+
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                // Note: UserContext will pick up the token and fetch profile
+
+                toast.success(`Welcome ${data.user.fullName}!`);
+
+                // Redirection based on role
+                if (data.user.role === 'provider') {
+                    navigate('/provider/onboarding');
+                } else {
+                    navigate('/customer/dashboard');
                 }
-                setLoadingLocation(false);
-            },
-            () => {
-                alert("Location denied. Enter manually.");
-                setLoadingLocation(false);
-                setShowManualAddress(true);
+
+                // Force reload to update context state if necessary
+                window.location.reload();
             }
-        );
+        } catch (error) {
+            console.error("Registration Error:", error);
+            toast.error(error.response?.data?.message || "Registration failed. Try again.");
+        } finally {
+            setLoadingLocation(false);
+        }
+    };
+
+    const { getLocation, reverseGeocode, loading: locationLoading } = useGeolocation();
+
+    const handleAllowLocation = async () => {
+        setLoadingLocation(true);
+        try {
+            const coords = await getLocation();
+            const addr = await reverseGeocode(coords.latitude, coords.longitude);
+
+            setFormData(prev => ({
+                ...prev,
+                address: {
+                    country: addr.country,
+                    state: addr.state,
+                    city: addr.city,
+                    street: addr.street,
+                    pincode: addr.pincode,
+                }
+            }));
+
+            setShowManualAddress(true);
+            toast.success("Location detected accurately!");
+        } catch (err) {
+            toast.error(err || "Could not fetch address. Enter manually.");
+            setShowManualAddress(true);
+        } finally {
+            setLoadingLocation(false);
+        }
     };
 
     const getStrengthStyles = () => {

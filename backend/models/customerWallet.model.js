@@ -7,33 +7,32 @@ const customerWalletSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    
+
     balance: {
         type: Number,
-        default: 0,
-        min: 0
+        default: 0
     },
-    
+
     totalAdded: {
         type: Number,
         default: 0
     },
-    
+
     totalSpent: {
         type: Number,
         default: 0
     },
-    
+
     monthlySavings: {
         type: Number,
         default: 0
     },
-    
+
     streakRewards: {
         type: Number,
         default: 0
     }
-    
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("CustomerWallet", customerWalletSchema);

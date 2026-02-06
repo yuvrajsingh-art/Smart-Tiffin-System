@@ -16,6 +16,7 @@ const AdminFinance = () => {
     const [stats, setStats] = useState({ grossRevenue: 0, totalPayouts: 0, pendingLiabilities: 0, netProfit: 0 });
     const [payouts, setPayouts] = useState([]);
     const [invoices, setInvoices] = useState([]);
+    const [refunds, setRefunds] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -24,14 +25,16 @@ const AdminFinance = () => {
 
     const fetchFinanceData = async () => {
         try {
-            const [statsRes, payoutsRes, invoicesRes] = await Promise.all([
+            const [statsRes, payoutsRes, invoicesRes, refundsRes] = await Promise.all([
                 axios.get('/api/admin/finance/stats'),
                 axios.get('/api/admin/finance/payouts'),
-                axios.get('/api/admin/finance/invoices')
+                axios.get('/api/admin/finance/invoices'),
+                axios.get('/api/admin/finance/refunds')
             ]);
             if (statsRes.data.success) setStats(statsRes.data.data);
             if (payoutsRes.data.success) setPayouts(payoutsRes.data.data);
             if (invoicesRes.data.success) setInvoices(invoicesRes.data.data);
+            if (refundsRes.data.success) setRefunds(refundsRes.data.data);
         } catch (error) {
             console.error("Finance fetch error:", error);
             toast.error("Failed to load finance data");
@@ -41,6 +44,21 @@ const AdminFinance = () => {
     };
 
     // --- Actions ---
+    const handleApproveRefund = async (id) => {
+        try {
+            toast.loading("Processing Refund...");
+            const res = await axios.post(`/api/admin/finance/refund/${id}/approve`);
+            if (res.data.success) {
+                toast.dismiss();
+                toast.success("Refund Approved & Processed");
+                fetchFinanceData(); // Refresh data
+            }
+        } catch (error) {
+            toast.dismiss();
+            toast.error(error.response?.data?.message || "Failed to approve refund");
+        }
+    };
+
     const openSettlement = (kitchen) => {
         setSelectedEntity(kitchen);
         setShowSettlement(true);
@@ -104,7 +122,7 @@ const AdminFinance = () => {
                 </div>
 
                 <div className="flex items-center gap-2 bg-white/70 backdrop-blur-xl p-1 rounded-2xl border border-white/60 shadow-lg">
-                    {['Overview', 'Payouts', 'Invoices', 'Tax'].map(t => (
+                    {['Overview', 'Payouts', 'Invoices', 'Refunds', 'Tax'].map(t => (
                         <button
                             key={t}
                             onClick={() => setActiveTab(t)}
@@ -120,6 +138,7 @@ const AdminFinance = () => {
             {activeTab === 'Overview' && <FinanceOverview stats={stats} payouts={payouts} openSettlement={openSettlement} handleViewLedger={handleViewLedger} loading={loading} />}
             {activeTab === 'Payouts' && <PayoutsTable payouts={payouts} openSettlement={openSettlement} handleBulkPayout={handleBulkPayout} loading={loading} />}
             {activeTab === 'Invoices' && <InvoicesTable invoices={invoices} openInvoice={openInvoice} loading={loading} onDownload={handleDownloadInvoice} />}
+            {activeTab === 'Refunds' && <RefundsTable refunds={refunds} onApprove={handleApproveRefund} loading={loading} />}
             {activeTab === 'Tax' && <TaxComplianceView />}
 
             {/* Modals */}
@@ -344,6 +363,63 @@ const InvoicesTable = ({ invoices, openInvoice, loading, onDownload }) => {
         </div>
     );
 };
+
+// --- Sub-Component: Refunds Table ---
+const RefundsTable = ({ refunds, onApprove, loading }) => (
+    <div className="bg-white/60 backdrop-blur-xl rounded-[2.5rem] border border-white/50 shadow-xl overflow-hidden min-h-[60vh] flex flex-col animate-slide-up">
+        <div className="p-6 border-b border-white/50">
+            <h3 className="text-lg font-bold text-[#2D241E]">Refund Requests</h3>
+        </div>
+        <div className="overflow-x-auto flex-1 custom-scrollbar">
+            <table className="w-full text-left border-collapse">
+                <thead className="bg-white/50 sticky top-0 z-10 backdrop-blur-md">
+                    <tr>
+                        <th className="px-8 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Customer</th>
+                        <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Plan</th>
+                        <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Amount</th>
+                        <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Reason</th>
+                        <th className="px-8 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100/50">
+                    {loading ? (
+                        <SkeletonLoader type="table-row" count={5} />
+                    ) : (
+                        <>
+                            {refunds && refunds.length > 0 ? refunds.map((r) => (
+                                <tr key={r.id} className="group hover:bg-white/80 transition-all">
+                                    <td className="px-8 py-5">
+                                        <p className="text-xs font-bold text-[#2D241E]">{r.customer}</p>
+                                        <p className="text-[10px] text-[#897a70]">{r.email}</p>
+                                    </td>
+                                    <td className="px-6 py-5 text-xs font-bold text-[#5C4D42]">{r.planName}</td>
+                                    <td className="px-6 py-5 text-xs font-bold text-[#2D241E]">₹{r.refundAmount}</td>
+                                    <td className="px-6 py-5">
+                                        <span className="text-[10px] font-medium text-[#897a70] max-w-[150px] block truncate" title={r.reason}>
+                                            {r.reason || "Client Request"}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-5 text-right">
+                                        <button
+                                            onClick={() => onApprove(r.id)}
+                                            className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/20"
+                                        >
+                                            Approve
+                                        </button>
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="5" className="text-center py-8 text-xs text-gray-400">No pending refund requests.</td>
+                                </tr>
+                            )}
+                        </>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    </div>
+);
 
 // --- Sub-Component: Tax Compliance (Placeholder) ---
 const TaxComplianceView = () => (
