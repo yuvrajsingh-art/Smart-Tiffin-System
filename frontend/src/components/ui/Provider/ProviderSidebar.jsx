@@ -15,12 +15,12 @@ function ProviderSidebar() {
   const [active, setActive] = useState("dashboard");
 
   const menu = [
-  { id: "dashboard", icon: <MdDashboard />, label: "Dashboard", path: "/" },
-  { id: "menu", icon: <MdOutlineRestaurantMenu />, label: "Manage Daily Menu", path: "/Provider/ManageMenu" },
-  { id: "customers", icon: <FaUserGroup />, label: "Active Customers", path: "/Provider/ActiveCustomers" },
-  { id: "delivery", icon: <CiDeliveryTruck />, label: "Delivery Status", path: "/Provider/DeliveryStatus" },
-  { id: "feedback", icon: <MdFeedback />, label: "Customer Feedback", path: "/Provider/CustomerFeedback" },
-  { id: "analytics", icon: <SiSimpleanalytics />, label: "Analytics", path: "/Provider/ProviderAnalysis" },
+  { id: "dashboard", icon: <MdDashboard />, label: "Dashboard", path: "/provider/dashboard" },
+  { id: "menu", icon: <MdOutlineRestaurantMenu />, label: "Manage Daily Menu", path: "/provider/menu" },
+  { id: "customers", icon: <FaUserGroup />, label: "Active Customers", path: "/provider/customers" },
+  { id: "delivery", icon: <CiDeliveryTruck />, label: "Delivery Status", path: "/provider/delivery" },
+  { id: "feedback", icon: <MdFeedback />, label: "Customer Feedback", path: "/provider/feedback" },
+  { id: "analytics", icon: <SiSimpleanalytics />, label: "Analytics", path: "/provider/analytics" },
 ];
 
   useEffect(() => {
@@ -28,7 +28,7 @@ function ProviderSidebar() {
     const currentMenuItem = menu.find(item => item.path === currentPath);
     if (currentMenuItem) {
       setActive(currentMenuItem.id);
-    } else if (currentPath === "/Provider/ProviderProfile") {
+    } else if (currentPath === "/provider/profile") {
       setActive("profile");
     }
   }, [location.pathname]);
@@ -56,7 +56,7 @@ function ProviderSidebar() {
     </div>
 
     <div>
-      <Link to="/Provider/ProviderProfile"
+      <Link to="/provider/profile"
         onClick={() => setActive("profile")}
         className={`flex items-center gap-2 text-xl px-4 py-2 ms-1 w-full text-start rounded-md
           ${active === "profile" ? "text-red-600 bg-red-50" : "text-gray-700 hover:bg-blue-50/60"}
