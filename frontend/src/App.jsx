@@ -24,7 +24,7 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/auth/Login';
 import RoleSelection from './pages/auth/RoleSelection';
 import Register from './pages/auth/Register';
-import ProviderOnboarding from './pages/Provider/ProviderOnboarding';
+import ProviderOnboarding from './pages/provider/ProviderOnboarding';
 
 function App() {
   return (

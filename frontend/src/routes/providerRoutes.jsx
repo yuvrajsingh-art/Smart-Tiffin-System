@@ -6,13 +6,13 @@
 import React from 'react';
 
 // Provider Pages (uppercase folder as per Radhika's structure)
-import ProviderDashboard from '../pages/Provider/ProviderDashboard';
-import ManageMenu from '../pages/Provider/ManageMenu';
-import ActiveCustomers from '../pages/Provider/ActiveCustomers';
-import DeliveryStatus from '../pages/Provider/DeliveryStatus';
-import CustomerFeedback from '../pages/Provider/CustomerFeedback';
-import ProviderAnalysis from '../pages/Provider/ProviderAnalysis';
-import ProviderProfile from '../pages/Provider/ProviderProfile';
+import ProviderDashboard from '../pages/provider/ProviderDashboard';
+import ManageMenu from '../pages/provider/ManageMenu';
+import ActiveCustomers from '../pages/provider/ActiveCustomers';
+import DeliveryStatus from '../pages/provider/DeliveryStatus';
+import CustomerFeedback from '../pages/provider/CustomerFeedback';
+import ProviderAnalysis from '../pages/provider/ProviderAnalysis';
+import ProviderProfile from '../pages/provider/ProviderProfile';
 
 // Provider route configuration
 export const providerRoutes = [
