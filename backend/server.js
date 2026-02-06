@@ -243,6 +243,13 @@ server.listen(PORT, () => {
   console.log('');
 
   // Initialize Cron Jobs
+  // Initialize Cron Jobs
   initScheduledJobs();
   console.log('Scheduled jobs initialized');
+
+  // Initialize DB Watcher (For Manual Updates)
+  const watchOrders = require('./utils/dbWatcher');
+  if (process.env.NODE_ENV !== 'production') {
+    watchOrders(io);
+  }
 });

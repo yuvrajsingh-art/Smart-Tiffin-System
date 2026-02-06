@@ -72,9 +72,6 @@ function Login() {
         e.preventDefault();
 
         if (!validateForm()) {
-            toast.error("Please fix the errors in the form", {
-                style: { background: '#2D241E', color: '#fff' }
-            });
             return;
         }
 
@@ -89,6 +86,13 @@ function Login() {
 
         } catch (error) {
             console.error("Login component error:", error);
+            if (error.response) {
+                if (error.response.status === 404) {
+                    setErrors({ email: "Email not registered" });
+                } else if (error.response.status === 401) {
+                    setErrors({ password: "Incorrect password" });
+                }
+            }
         } finally {
             setIsLoading(false);
         }
@@ -146,7 +150,7 @@ function Login() {
                         <div className="space-y-1.5">
                             <div className="flex justify-between items-center px-1">
                                 <label className="text-sm font-bold text-[#5C4D42]">Password</label>
-                                <Link to="#" className="text-xs font-bold text-primary hover:text-orange-600 transition-colors">Forgot?</Link>
+                                <Link to="/forgot-password" className="text-xs font-bold text-primary hover:text-orange-600 transition-colors">Forgot?</Link>
                             </div>
                             <div className={`relative flex flex-col group transition-all ${errors.password ? 'scale-[1.01]' : ''}`}>
                                 <span className={`material-symbols-outlined absolute left-4 top-4 transition-colors ${errors.password ? 'text-red-500' : 'text-[#2D241E]/40 group-focus-within:text-primary'}`}>lock</span>

@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
 const User = require('../models/user.model');
-require('dotenv').config({ path: '.env' });
+require('dotenv').config({ path: '../.env' });
 
-async function listUsers() {
+async function findCustomer() {
     try {
         await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/Smart-Tiffin-System');
-        const users = await User.find({}, 'fullName email role');
-        console.log(JSON.stringify(users, null, 2));
+        const user = await User.findOne({ role: 'customer' });
+        if (user) {
+            console.log(`FOUND_CUSTOMER: ${user.email}`);
+        } else {
+            console.log("NO_CUSTOMER_FOUND");
+        }
     } catch (err) {
         console.error(err);
     } finally {
@@ -14,4 +18,4 @@ async function listUsers() {
     }
 }
 
-listUsers();
+findCustomer();

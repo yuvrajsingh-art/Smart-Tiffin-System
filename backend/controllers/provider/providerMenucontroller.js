@@ -117,3 +117,18 @@ exports.getTodayMenu = async (req, res) => {
     });
   }
 };
+
+exports.getProviderMenus = async (req, res) => {
+  try {
+    const menus = await Menu.find({ provider: req.user.id }).sort({ menuDate: 1 });
+    res.json({
+      success: true,
+      data: menus
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch menus"
+    });
+  }
+};

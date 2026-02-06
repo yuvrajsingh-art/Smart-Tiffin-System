@@ -199,14 +199,14 @@ exports.loginUser = async (req, res) => {
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       logger.warn("Login Failed: User Not Found", { email: normalizedEmail });
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(404).json({ message: "Email not registered" });
     }
 
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.warn("Login Failed: Invalid Password", { email: normalizedEmail });
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Incorrect password" });
     }
 
     // Generate token
@@ -292,6 +292,90 @@ exports.signOut = async (req, res) => {
   } catch (error) {
     console.error("Sign Out Error:", error.message);
     return res.status(500).json({ message: error.message });
+  }
+};
+
+// =============================================================================
+// PASSWORD RESET (OTP BASED)
+// =============================================================================
+
+/**
+ * Forgot Password - Generate OTP
+ */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (!user) {
+      return res.status(404).json({ message: "Email not registered" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Hash OTP and save to DB
+    const crypto = require('crypto');
+    user.resetPasswordToken = crypto.createHash('sha256').update(otp).digest('hex');
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 Minutes
+
+    await user.save();
+
+    // In a real app, send email here. 
+    // For this request, we return OTP in response to show in Toast.
+    logger.info(`OTP generated for ${email}: ${otp}`);
+
+    res.status(200).json({
+      success: true,
+      message: "OTP generated",
+      otp: otp // ⚠️ DEBUG/DEMO ONLY: Returning OTP to frontend
+    });
+
+  } catch (error) {
+    logger.error("Forgot Password Error", { error: error.message });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Reset Password - Verify OTP and Set New Password
+ */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { otp, password, confirmPassword } = req.body;
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    // Hash OTP to match with DB
+    const crypto = require('crypto');
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedOtp,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Set new password
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successful! Please login."
+    });
+
+  } catch (error) {
+    logger.error("Reset Password Error", { error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 

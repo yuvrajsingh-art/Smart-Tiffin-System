@@ -9,6 +9,9 @@ const { isVerifiedProvider } = require("../../middlewares/isVerifiedProvider");
 // Create menu (provider)
 router.post("/", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, createOrUpdateMenu);
 
+// Get provider's own menus
+router.get("/", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, require("../../controllers/provider/providerMenucontroller").getProviderMenus);
+
 // Publish menu & unlock dashboard
 router.put("/publish/:id", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, publishMenu);
 

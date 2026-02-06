@@ -21,7 +21,7 @@ exports.getLiveTracking = async (req, res) => {
         }).populate({
             path: 'subscription',
             populate: { path: 'provider', select: 'fullName' }
-        }).populate('provider', 'fullName');
+        }).populate('provider', 'fullName mobile').populate('deliveryPartner', 'fullName mobile');
 
         if (!activeOrder) {
             return res.status(404).json({
@@ -43,14 +43,24 @@ exports.getLiveTracking = async (req, res) => {
         // 2. Generate timeline based on real Order status
         const timeline = generateTimeline(activeOrder);
 
-        // 3. Delivery Partner Info (Still mock until we have a rider app, but linked to order)
-        const deliveryPartner = {
-            name: "Rajesh Kumar",
-            rating: 4.9,
-            phone: "+91 98765 43210",
-            image: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200",
+        // 3. Delivery Partner Info (Real DB Data)
+        let deliveryPartner = {
+            name: activeOrder.provider?.fullName || "Restaurant Staff",
+            rating: 4.8,
+            phone: activeOrder.provider?.mobile || "",
+            image: "https://cdn-icons-png.flaticon.com/512/3023/3023758.png", // Default delivery icon
             isOnline: true
         };
+
+        if (activeOrder.deliveryPartner) {
+            deliveryPartner = {
+                name: activeOrder.deliveryPartner.fullName,
+                rating: 4.9,
+                phone: activeOrder.deliveryPartner.mobile,
+                image: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png", // Rider icon
+                isOnline: true
+            };
+        }
 
         // 4. Format order details from real DB fields
         const orderDetails = {

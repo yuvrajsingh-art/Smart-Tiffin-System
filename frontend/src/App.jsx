@@ -24,6 +24,8 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/auth/Login';
 import RoleSelection from './pages/auth/RoleSelection';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import ProviderOnboarding from './pages/provider/ProviderOnboarding';
 
 function App() {
@@ -39,6 +41,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/role-selection" element={<RoleSelection />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Customer Routes - Sumit's Domain */}
               <Route

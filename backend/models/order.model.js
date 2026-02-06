@@ -13,6 +13,11 @@ const orderSchema = new mongoose.Schema({
         required: true
     },
 
+    deliveryPartner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    },
+
     subscription: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "subscription",

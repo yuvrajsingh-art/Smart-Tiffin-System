@@ -17,7 +17,9 @@ const {
     providerCustomer,
     signOut,
     googleAuth,
-    getProfile
+    getProfile,
+    forgotPassword,
+    resetPassword
 } = require("../controllers/authcontroller");
 
 // Import authentication middleware
@@ -41,6 +43,12 @@ router.post("/logout", signOut);
 
 // POST /api/auth/google-auth - Google OAuth login
 router.post("/google-auth", googleAuth);
+
+// POST /api/auth/forgot-password - Generate OTP
+router.post("/forgot-password", forgotPassword);
+
+// POST /api/auth/reset-password - Verify OTP & Reset
+router.post("/reset-password", resetPassword);
 
 // =============================================================================
 // PROTECTED ROUTES (Authentication required)
