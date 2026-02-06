@@ -3,23 +3,31 @@ const ProviderProfile = require("../../models/providerprofile.model");
 /* STEP 1 – IDENTITY */
 exports.saveIdentity = async (req, res) => {
   try {
-    const { messName, ownerName, phone, logo } = req.body;
+    const { messName, ownerName, phone, logo, address, city, pincode } = req.body;
 
     const profile = await ProviderProfile.findOneAndUpdate(
       { user: req.user.id },
       {
-        user: req.user.id,
-        messName,
-        ownerName,
-        phone,
-        logo,
-        onboardingStep: 2
+        $set: {
+          user: req.user.id,
+          messName,
+          ownerName,
+          phone,
+          profileImage: logo,
+          "location.type": "Point",
+          "location.coordinates": [75.8577, 22.7196], // Default Indore
+          "location.address": address || "Pending",
+          "location.city": city || "Pending",
+          "location.pincode": pincode || "000000",
+          onboardingStep: 2
+        }
       },
       { new: true, upsert: true }
     );
 
     res.json({ message: "Identity saved", profile });
   } catch (err) {
+    console.error("❌ Onboarding Identity Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -32,15 +40,18 @@ exports.saveLegal = async (req, res) => {
     const profile = await ProviderProfile.findOneAndUpdate(
       { user: req.user.id },
       {
-        fssaiNumber,
-        fssaiCertificate,
-        onboardingStep: 3
+        $set: {
+          fssaiNumber,
+          fssaiCertificate,
+          onboardingStep: 3
+        }
       },
       { new: true }
     );
 
     res.json({ message: "Legal details saved", profile });
   } catch (err) {
+    console.error("❌ Onboarding Legal Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -59,20 +70,20 @@ exports.saveOperations = async (req, res) => {
     const profile = await ProviderProfile.findOneAndUpdate(
       { user: req.user.id },
       {
-        address,
-        location: {
-          type: "Point",
-          coordinates: [longitude, latitude]
-        },
-        deliveryRadius,
-        orderCutoffTime,
-        onboardingStep: 4
+        $set: {
+          "location.coordinates": [longitude, latitude],
+          "location.address": address, // Update with precise address
+          deliveryRadius,
+          orderCutoffTime,
+          onboardingStep: 4
+        }
       },
       { new: true }
     );
 
     res.json({ message: "Operations saved", profile });
   } catch (err) {
+    console.error("❌ Onboarding Operations Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -85,18 +96,41 @@ exports.saveBanking = async (req, res) => {
     const profile = await ProviderProfile.findOneAndUpdate(
       { user: req.user.id },
       {
-        bankDetails: {
-          accountHolderName,
-          accountNumber,
-          ifscCode
-        },
-        isOnboardingComplete: true
+        $set: {
+          bankDetails: {
+            accountHolderName,
+            accountNumber,
+            ifscCode
+          },
+          isOnboardingComplete: true
+        }
       },
       { new: true }
     );
 
+    // Sync to StoreProfile so it appears in Discovery
+    const StoreProfile = require("../../models/storeProfile.model");
+    await StoreProfile.findOneAndUpdate(
+      { provider: req.user.id },
+      {
+        $set: {
+          provider: req.user.id,
+          mess_name: profile.messName,
+          contact_number: profile.phone,
+          description: profile.description,
+          "address.street": profile.location.address,
+          "address.city": profile.location.city,
+          "address.pincode": profile.location.pincode,
+          "location.coordinates": profile.location.coordinates,
+          is_active: true
+        }
+      },
+      { upsert: true }
+    );
+
     res.json({ message: "Onboarding completed 🎉", profile });
   } catch (err) {
+    console.error("❌ Onboarding Banking Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 };

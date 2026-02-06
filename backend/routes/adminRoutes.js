@@ -34,6 +34,7 @@ const {
 
     // Provider Management
     getProviders,
+    addProvider,
     verifyProvider,
     toggleProviderStatus,
     updateProvider,
@@ -44,6 +45,8 @@ const {
     getPayouts,
     processPayout,
     getInvoices,
+    approveCancellation,
+    getRefundRequests,
 
     // Menu Management
     getPendingMenus,
@@ -134,6 +137,9 @@ router.put("/orders/:id/rider", protect, authorizeRoles("admin"), assignRider);
 // GET /api/admin/providers - Get all providers
 router.get("/providers", protect, authorizeRoles("admin"), getProviders);
 
+// POST /api/admin/providers - Add new provider
+router.post("/providers", protect, authorizeRoles("admin"), addProvider);
+
 // PUT /api/admin/providers/:id - Update provider
 router.put("/providers/:id", protect, authorizeRoles("admin"), updateProvider);
 
@@ -161,6 +167,12 @@ router.get("/finance/invoices", protect, authorizeRoles("admin"), getInvoices);
 
 // POST /api/admin/finance/payout/:id - Process payout
 router.post("/finance/payout/:id", protect, authorizeRoles("admin"), processPayout);
+
+// GET /api/admin/finance/refunds - Get refund requests [NEW]
+router.get("/finance/refunds", protect, authorizeRoles("admin"), getRefundRequests);
+
+// POST /api/admin/finance/refund/:id/approve - Approve cancellation refund [NEW]
+router.post("/finance/refund/:id/approve", protect, authorizeRoles("admin"), approveCancellation);
 
 // GET /api/admin/finance/invoice/:id/download - Download invoice PDF [NEW]
 router.get("/finance/invoice/:id/download", protect, authorizeRoles("admin"), generateInvoicePDF);

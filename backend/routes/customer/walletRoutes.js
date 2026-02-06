@@ -7,11 +7,11 @@ const {
     getWalletBalance
 } = require("../../controllers/customer/walletController");
 
-const { protect } = require("../../middleware/authMiddleware.middleware");
+const { protect, customerOnly } = require("../../middleware/authMiddleware.middleware");
 
 // Wallet routes
-router.get("/", protect, getWalletDetails);
-router.get("/balance", protect, getWalletBalance);
-router.post("/add-money", protect, addMoneyToWallet);
+router.get("/", protect, customerOnly, getWalletDetails);
+router.get("/balance", protect, customerOnly, getWalletBalance);
+router.post("/add-money", protect, customerOnly, addMoneyToWallet);
 
 module.exports = router;

@@ -1,15 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/UserContext';
+import { toast } from 'react-hot-toast';
+import axios from 'axios';
+
+// Modular Components
+import LiveTracker from '../../components/customer/LiveTracker';
+import TodaysMenuCard from '../../components/customer/TodaysMenuCard';
+import WalletCard from '../../components/customer/WalletCard';
 
 const CustomerDashboard = () => {
     const { hasActiveSubscription, subscription } = useSubscription();
-    // For manual testing, you can force isActive to true if needed, or rely on context
-    const isActive = hasActiveSubscription();
+    const [dashboardData, setDashboardData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
+    const userName = user?.name || dashboardData?.userName || 'Customer';
 
-    const [trackerState] = useState(2); // 1: Prep, 2: Cooking, 3: Packed, 4: Out, 5: Delivered
-    const userName = localStorage.getItem('userName') || 'Student';
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const { data } = await axios.get('/api/customer/dashboard');
+                if (data.success) {
+                    setDashboardData(data.data);
+                }
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+                toast.error("Failed to load dashboard. Please refresh.", { duration: 3000 });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    const isActive = hasActiveSubscription();
     const isImpersonating = localStorage.getItem('impersonationMode') === 'true';
+
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+    );
 
     return (
         <div className="w-full mx-auto flex flex-col gap-6 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
@@ -27,7 +59,6 @@ const CustomerDashboard = () => {
                     <button
                         onClick={() => {
                             localStorage.removeItem('impersonationMode');
-                            localStorage.removeItem('userName');
                             localStorage.setItem('userRole', 'admin');
                             window.history.back();
                         }}
@@ -63,100 +94,22 @@ const CustomerDashboard = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                        {/* Left Col: Live Status */}
+                        {/* Left Col: Live Status & Menu */}
                         <div className="lg:col-span-2 space-y-6">
-
-                            {/* Live Tracker Card */}
-                            <section className="glass-panel p-6 rounded-[2rem] relative overflow-hidden group border border-white/60 shadow-xl">
-                                {/* bg blobs */}
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100/50 rounded-full blur-3xl pointer-events-none"></div>
-
-                                <div className="relative z-10">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div>
-                                            <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 block">Live Status</span>
-                                            <h2 className="text-xl font-black text-[#2D241E]">Lunch is Cooking 🍳</h2>
-                                        </div>
-                                        <div className="bg-white/50 backdrop-blur-md px-4 py-2 rounded-xl border border-white/60 text-right">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase">Estimated Arrival</p>
-                                            <p className="text-base font-black text-[#2D241E]">12:45 PM</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Progress Bar */}
-                                    <div className="relative h-2.5 bg-gray-100 rounded-full mb-8 overflow-hidden">
-                                        <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-400 to-primary w-[45%] rounded-full shadow-[0_0_15px_rgba(234,88,12,0.5)] animate-pulse"></div>
-                                    </div>
-
-                                    {/* Steps */}
-                                    <div className="flex justify-between px-2 relative">
-                                        {['Prep', 'Cooking', 'Packed', 'On Way', 'Delivered'].map((step, idx) => (
-                                            <div key={step} className="flex flex-col items-center gap-2 z-10">
-                                                <div className={`size-9 rounded-full flex items-center justify-center border-4 transition-all duration-500 ${idx + 1 <= trackerState ? 'border-primary bg-white text-primary scale-110 shadow-lg' : 'border-gray-100 bg-gray-50 text-gray-300'}`}>
-                                                    <span className="material-symbols-outlined text-[16px] font-bold">
-                                                        {idx === 0 ? 'kitchen' : idx === 1 ? 'skillet' : idx === 2 ? 'package_2' : idx === 3 ? 'moped' : 'check'}
-                                                    </span>
-                                                </div>
-                                                <span className={`text-[9px] font-bold uppercase tracking-wider ${idx + 1 <= trackerState ? 'text-[#2D241E]' : 'text-gray-300'}`}>{step}</span>
-                                            </div>
-                                        ))}
-                                        {/* Connecting Line (Visual only, behind dots) */}
-                                        <div className="absolute top-4 left-0 w-full h-0.5 bg-gray-100 -z-10"></div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Today's Menu */}
-                            <div className="glass-panel p-5 rounded-[2rem] border border-white/60">
-                                <div className="flex justify-between items-center mb-5">
-                                    <h3 className="text-base font-black text-[#2D241E]">Today's Menu</h3>
-                                    <Link to="/customer/menu" className="text-primary text-xs font-bold hover:underline">View Full Week</Link>
-                                </div>
-                                <div className="flex gap-4 overflow-x-auto pb-2">
-                                    {/* Lunch */}
-                                    <div className="min-w-[180px] bg-orange-50/50 p-4 rounded-2xl border border-orange-100 flex-1 relative overflow-hidden">
-                                        <span className="bg-white/80 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-orange-600 absolute top-3 right-3">Lunch</span>
-                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">🍛</div>
-                                        <h4 className="font-bold text-[#2D241E] text-sm">Paneer Masala Thali</h4>
-                                        <p className="text-[10px] text-[#5C4D42] mt-1">3 Rotis, Jeera Rice, Dal Fry</p>
-                                    </div>
-                                    {/* Dinner */}
-                                    <div className="min-w-[180px] bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex-1 relative overflow-hidden opacity-60">
-                                        <span className="bg-white/80 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-blue-600 absolute top-3 right-3">Dinner</span>
-                                        <div className="size-9 rounded-full bg-white flex items-center justify-center text-lg mb-3 shadow-sm">🌙</div>
-                                        <h4 className="font-bold text-[#2D241E] text-sm">Light Khichdi Kadhi</h4>
-                                        <p className="text-[10px] text-[#5C4D42] mt-1">With Papad & Pickle</p>
-                                    </div>
-                                </div>
-                            </div>
-
+                            <LiveTracker dashboardData={dashboardData} />
+                            <TodaysMenuCard
+                                todaysMenu={dashboardData?.todaysMenu}
+                                lunchTime={dashboardData?.lunchTime}
+                                dinnerTime={dashboardData?.dinnerTime}
+                            />
                         </div>
 
                         {/* Right Col: Wallet & Actions */}
                         <div className="space-y-6">
-
-                            {/* Wallet Balance Card (NEW) */}
-                            <div className="p-6 rounded-[2rem] bg-[#2D241E] text-white relative overflow-hidden shadow-xl group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <span className="material-symbols-outlined text-7xl">account_balance_wallet</span>
-                                </div>
-
-                                <div className="relative z-10">
-                                    <h3 className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">Wallet Balance</h3>
-                                    <div className="flex items-baseline gap-1 mb-4">
-                                        <span className="text-2xl font-bold">₹2,450</span>
-                                        <span className="text-[10px] font-bold text-green-400">+₹500 added</span>
-                                    </div>
-
-                                    <Link to="/customer/wallet" className="flex items-center justify-between bg-white/10 hover:bg-white/20 p-3 rounded-xl transition-all border border-white/5">
-                                        <span className="text-xs font-bold flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-sm">add_card</span>
-                                            Add Money
-                                        </span>
-                                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                                    </Link>
-                                </div>
-                            </div>
+                            <WalletCard
+                                balance={dashboardData?.walletBalance}
+                                recentAddition={dashboardData?.recentAddition}
+                            />
 
                             {/* Quick Actions Grid */}
                             <div>
@@ -180,11 +133,11 @@ const CustomerDashboard = () => {
                             {/* Streak/Reward (Gamification) */}
                             <div className="glass-panel p-5 rounded-[2rem] flex items-center gap-4 border-2 border-orange-100 bg-orange-50/30">
                                 <div className="size-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl font-black">
-                                    🔥
+                                    {(dashboardData?.streak > 0) ? "🔥" : "❄️"}
                                 </div>
                                 <div>
-                                    <h4 className="font-black text-[#2D241E]">12 Day Streak!</h4>
-                                    <p className="text-xs text-[#5C4D42] font-medium">You saved ₹120 this month via easy-ti.</p>
+                                    <h4 className="font-black text-[#2D241E]">{dashboardData?.streak || 0} Day Streak!</h4>
+                                    <p className="text-xs text-[#5C4D42] font-medium">Keep ordering to grow your streak.</p>
                                 </div>
                             </div>
 

@@ -1,71 +1,97 @@
-import React, { useState } from 'react';
-import { useSubscription } from '../../context/SubscriptionContext';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import BackgroundBlobs from '../../components/common/BackgroundBlobs';
-import PageHeader from '../../components/common/PageHeader';
+import axios from 'axios';
+import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/UserContext';
+import {
+    BackgroundBlobs,
+    PageHeader
+} from '../../components/common';
+import {
+    HistoryStats,
+    HistoryList
+} from '../../components/customer';
+import { HistorySkeleton } from '../../components/common';
 
 const History = () => {
     const { hasActiveSubscription } = useSubscription();
-    const [activeTab, setActiveTab] = useState('Meals'); // Meals, Wallet, Plans
+    const { token } = useAuth();
+    const [activeTab, setActiveTab] = useState('Meals');
     const [filter, setFilter] = useState('All');
+
+    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState({
+        Meals: [],
+        Wallet: [],
+        Plans: []
+    });
+
+    const [stats, setStats] = useState({
+        Meals: [],
+        Wallet: [],
+        Plans: []
+    });
+
+    const fetchData = async (tab, currentFilter) => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const endpointMap = {
+                'Meals': `/api/customer/history/meals${currentFilter !== 'All' ? `?filter=${currentFilter}` : ''}`,
+                'Wallet': '/api/customer/history/wallet',
+                'Plans': '/api/customer/history/plans'
+            };
+
+            const res = await axios.get(endpointMap[tab], {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.data.success) {
+                const fetchedData = res.data.data;
+                setData(prev => ({
+                    ...prev,
+                    [tab]: tab === 'Meals' ? fetchedData.mealsHistory :
+                        tab === 'Wallet' ? fetchedData.walletHistory :
+                            fetchedData.plansHistory
+                }));
+                setStats(prev => ({
+                    ...prev,
+                    [tab]: fetchedData.stats
+                }));
+            }
+        } catch (error) {
+            console.error(`Error fetching ${tab} history`, error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (hasActiveSubscription()) {
+            fetchData(activeTab, filter);
+        }
+    }, [activeTab, filter, token, hasActiveSubscription]);
 
     if (!hasActiveSubscription()) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6 animate-[fadeIn_0.5s_ease-out] px-4">
-                <div className="size-24 bg-gray-100 rounded-full flex items-center justify-center shadow-inner">
-                    <span className="material-symbols-outlined text-4xl text-gray-400">lock</span>
+                <BackgroundBlobs />
+                <div className="size-24 bg-gray-100 rounded-full flex items-center justify-center shadow-inner relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-200 to-transparent"></div>
+                    <span className="material-symbols-outlined text-4xl text-gray-400 relative z-10">lock</span>
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold text-[#2D241E]">History Locked</h2>
-                    <p className="text-[#5C4D42] mt-2 max-w-md mx-auto font-medium">
+                    <h2 className="text-2xl font-black text-[#2D241E]">History Locked</h2>
+                    <p className="text-[#5C4D42] mt-2 max-w-md mx-auto font-medium leading-relaxed">
                         Order history and transaction logs are only available for active subscribers.
                     </p>
                 </div>
-                <Link to="/customer/find-mess" className="px-8 py-3 bg-[#2D241E] text-white rounded-xl font-bold shadow-lg hover:translate-y-px transition-all">
+                <Link to="/customer/find-mess" className="px-8 py-3 bg-[#111716] text-white rounded-xl font-bold shadow-xl hover:scale-105 transition-all">
                     Find a Mess
                 </Link>
             </div>
         );
     }
-
-    // Mock Data
-    const mealsHistory = [
-        { id: 'M1', date: "Today, 12:30 PM", type: "Lunch", item: "Paneer Thali", mess: "Krishna Veg Mess", status: "Delivered", icon: "lunch_dining", orderId: "#ST-1024" },
-        { id: 'M2', date: "Yesterday, 8:00 PM", type: "Dinner", item: "Veg Pulao", mess: "Krishna Veg Mess", status: "Delivered", icon: "dinner_dining", orderId: "#ST-1021" },
-        { id: 'M3', date: "22 Jan, 12:30 PM", type: "Lunch", item: "Chicken Curry", mess: "Delhi Tadka", status: "Skipped", icon: "block", orderId: "#ST-1018" },
-        { id: 'M4', date: "21 Jan, 8:00 PM", type: "Dinner", item: "Aloo Paratha", mess: "Krishna Veg Mess", status: "Delivered", icon: "dinner_dining", orderId: "#ST-1015" },
-    ];
-
-    const walletHistory = [
-        { id: 'W1', date: "Today, 10:00 AM", title: "Money Added", amount: "+₹2,000", type: "Credit", status: "Success", icon: "add_card" },
-        { id: 'W2', date: "22 Jan, 01:00 PM", title: "Meal Refund", amount: "+₹120", type: "Credit", status: "Success", icon: "account_balance_wallet" },
-        { id: 'W3', date: "20 Jan, 09:00 AM", title: "Plan Upgrade", amount: "-₹800", type: "Debit", status: "Success", icon: "upgrade" },
-        { id: 'W4', date: "15 Jan, 08:30 PM", title: "Guest Tiffin", amount: "-₹150", type: "Debit", status: "Success", icon: "group" },
-    ];
-
-    const plansHistory = [
-        { id: 'P1', date: "Today", title: "Plan Upgraded", detail: "Standard Veg → Premium Non-Veg", status: "Completed", icon: "auto_awesome" },
-        { id: 'P2', date: "22 Jan", title: "Meal Paused", detail: "Lunch skipped for Jan 24-25", status: "Scheduled", icon: "pause_circle" },
-        { id: 'P3', date: "01 Jan", title: "New Subscription", detail: "Krishna Veg Mess (Standard Veg)", status: "Active", icon: "verified" },
-    ];
-
-    const stats = {
-        Meals: [
-            { label: 'Total Meals', value: '42', icon: 'restaurant' },
-            { label: 'Skipped', value: '3', icon: 'block', color: 'text-red-500' },
-            { label: 'Current Mess', value: 'Krishna Veg', icon: 'location_on' },
-        ],
-        Wallet: [
-            { label: 'Balance', value: '₹1,450', icon: 'payments' },
-            { label: 'Cashback', value: '₹240', icon: 'redeem', color: 'text-green-600' },
-            { label: 'Spent', value: '₹4,200', icon: 'analytics' },
-        ],
-        Plans: [
-            { label: 'Active Plan', value: 'Premium', icon: 'star', color: 'text-orange-500' },
-            { label: 'Expiring', value: 'in 6 days', icon: 'timer' },
-            { label: 'Loyalty', value: 'Silver', icon: 'military_tech' },
-        ]
-    };
 
     const tabs = [
         { name: 'Meals', icon: 'restaurant_menu' },
@@ -75,21 +101,16 @@ const History = () => {
 
     return (
         <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
-
-            {/* Background Blobs */}
             <BackgroundBlobs />
-
-            {/* Header */}
             <PageHeader title="Activity History" />
 
-            {/* Navigation Tabs (Glass) */}
-            <div className="flex p-1.5 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl mb-8 max-w-md">
+            <div className="flex p-1.5 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl mb-8 max-w-md shadow-sm">
                 {tabs.map((tab) => (
                     <button
                         key={tab.name}
                         onClick={() => { setActiveTab(tab.name); setFilter('All'); }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs transition-all duration-300 ${activeTab === tab.name
-                            ? 'bg-[#2D241E] text-white shadow-lg shadow-black/10'
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all duration-300 ${activeTab === tab.name
+                            ? 'bg-[#2D241E] text-white shadow-lg'
                             : 'text-[#5C4D42] hover:bg-white/50'
                             }`}
                     >
@@ -99,109 +120,39 @@ const History = () => {
                 ))}
             </div>
 
-            {/* Stats Cards Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-                {stats[activeTab].map((stat, i) => (
-                    <div key={i} className="glass-panel p-5 rounded-2xl border border-white/60 flex items-center gap-4 hover:translate-y-[-2px] transition-all cursor-default">
-                        <div className="size-12 rounded-xl bg-white/80 shadow-sm flex items-center justify-center text-primary">
-                            <span className="material-symbols-outlined">{stat.icon}</span>
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase tracking-widest font-bold text-gray-400">{stat.label}</p>
-                            <p className={`text-xl font-bold ${stat.color || 'text-[#2D241E]'}`}>{stat.value}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            {loading ? (
+                <HistorySkeleton />
+            ) : (
+                <>
+                    <HistoryStats stats={stats[activeTab]} />
 
-            {/* Main Content Area */}
-            <div className="space-y-4">
-                {/* Section Header with Filter (Only for Meals for now) */}
-                <div className="flex justify-between items-center mb-2 px-2">
-                    <h2 className="font-bold text-[#2D241E] opacity-40 uppercase tracking-[0.2em] text-[10px]">
-                        Recent {activeTab} Activity
-                    </h2>
-                    {activeTab === 'Meals' && (
-                        <div className="flex gap-2">
-                            {['All', 'Delivered', 'Skipped'].map(f => (
-                                <button
-                                    key={f}
-                                    onClick={() => setFilter(f)}
-                                    className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${filter === f ? 'bg-primary text-white shadow-md' : 'bg-white/40 text-gray-400 hover:bg-white'
-                                        }`}
-                                >
-                                    {f}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Unified List Rendering */}
-                {activeTab === 'Meals' && mealsHistory.filter(m => filter === 'All' || m.status === filter).map(item => (
-                    <div key={item.id} className="group glass-panel p-5 rounded-[2.5rem] border border-white/60 flex items-center justify-between hover:bg-white transition-all cursor-pointer">
-                        <div className="flex items-center gap-5">
-                            <div className={`size-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${item.status === 'Skipped' ? 'bg-red-50 text-red-500' : 'bg-orange-50 text-orange-600'
-                                }`}>
-                                <span className="material-symbols-outlined">{item.icon}</span>
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-bold text-[#2D241E] text-base">{item.item}</h3>
-                                    <span className="text-[10px] font-bold text-gray-300">({item.orderId})</span>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center mb-6 px-2">
+                            <h2 className="font-black text-[#2D241E] opacity-30 uppercase tracking-[0.2em] text-[10px]">
+                                Recent {activeTab} Activity
+                            </h2>
+                            {activeTab === 'Meals' && (
+                                <div className="flex gap-2 p-1 bg-white/40 rounded-full border border-white/60">
+                                    {['All', 'Delivered', 'Skipped'].map(f => (
+                                        <button
+                                            key={f}
+                                            onClick={() => setFilter(f)}
+                                            className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${filter === f
+                                                ? 'bg-primary text-white shadow-md'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                                }`}
+                                        >
+                                            {f}
+                                        </button>
+                                    ))}
                                 </div>
-                                <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                                    <span className="text-primary">{item.mess}</span>
-                                    <span>•</span>
-                                    <span className="uppercase">{item.type}</span>
-                                    <span>•</span>
-                                    <span>{item.date}</span>
-                                </div>
-                            </div>
+                            )}
                         </div>
-                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider outline outline-1 ${item.status === 'Skipped' ? 'bg-red-50 text-red-500 outline-red-100' : 'bg-green-50 text-green-600 outline-green-100'
-                            }`}>
-                            {item.status}
-                        </span>
-                    </div>
-                ))}
 
-                {activeTab === 'Wallet' && walletHistory.map(item => (
-                    <div key={item.id} className="group glass-panel p-5 rounded-[2.5rem] border border-white/60 flex items-center justify-between hover:bg-white transition-all">
-                        <div className="flex items-center gap-5">
-                            <div className={`size-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${item.type === 'Credit' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-primary'
-                                }`}>
-                                <span className="material-symbols-outlined">{item.icon}</span>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-[#2D241E] text-base mb-1">{item.title}</h3>
-                                <p className="text-xs font-bold text-gray-400">{item.date}</p>
-                            </div>
-                        </div>
-                        <p className={`font-bold text-lg ${item.type === 'Credit' ? 'text-green-600' : 'text-[#2D241E]'}`}>
-                            {item.amount}
-                        </p>
+                        <HistoryList activeTab={activeTab} data={data[activeTab]} />
                     </div>
-                ))}
-
-                {activeTab === 'Plans' && plansHistory.map(item => (
-                    <div key={item.id} className="group glass-panel p-5 rounded-[2.5rem] border border-white/60 flex items-center justify-between hover:bg-white transition-all">
-                        <div className="flex items-center gap-5">
-                            <div className="size-14 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl shadow-sm border border-gray-100">
-                                <span className="material-symbols-outlined text-[#2D241E]">{item.icon}</span>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-[#2D241E] text-base mb-1">{item.title}</h3>
-                                <p className="text-xs font-bold text-gray-400 mb-1">{item.detail}</p>
-                                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{item.date}</p>
-                            </div>
-                        </div>
-                        <span className="px-4 py-1.5 rounded-full bg-[#2D241E] text-white text-[10px] font-bold uppercase tracking-wider">
-                            {item.status}
-                        </span>
-                    </div>
-                ))}
-            </div>
+                </>
+            )}
         </div>
     );
 };

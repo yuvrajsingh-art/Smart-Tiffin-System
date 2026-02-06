@@ -12,23 +12,26 @@ export const UserProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     // ================= AXIOS INTERCEPTORS =================
-    // Isse har API request mein auth token apne aap chala jayega
     useEffect(() => {
+        // Request interceptor to add token
         const requestInterceptor = axios.interceptors.request.use(
             (config) => {
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
+                const currentToken = localStorage.getItem('token');
+                if (currentToken) {
+                    config.headers.Authorization = `Bearer ${currentToken}`;
                 }
                 return config;
             },
             (error) => Promise.reject(error)
         );
 
+        // Response interceptor to handle 401s
         const responseInterceptor = axios.interceptors.response.use(
             (response) => response,
             (error) => {
-                if (error.response?.status === 401) {
-                    // Token expire ho gaya ya galat hai, logout kardein
+                // If unauthorized and not already on login page
+                if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
+                    console.warn("Unauthorized access detected. Redirecting to login...");
                     logout();
                     toast.error("Session expired. Please login again.");
                 }
@@ -40,7 +43,7 @@ export const UserProvider = ({ children }) => {
             axios.interceptors.request.eject(requestInterceptor);
             axios.interceptors.response.eject(responseInterceptor);
         };
-    }, [token]);
+    }, []); // Run only once on mount, using localStorage in interceptor for latest value
 
     // ================= SESSION VERIFICATION =================
     // App load hote hi check karein ki user authenticated hai ya nahi
@@ -72,7 +75,8 @@ export const UserProvider = ({ children }) => {
 
             if (data.token) {
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('userRole', data.user.role);
+                // We shouldn't store name/role in localStorage as per user request
+                // The user object in state will be the source of truth
                 setToken(data.token);
                 setUser(data.user);
 
@@ -98,7 +102,6 @@ export const UserProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
         setToken(null);
         setUser(null);
         toast.success("Logged out successfully");

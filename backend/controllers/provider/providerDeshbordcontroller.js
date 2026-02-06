@@ -11,17 +11,17 @@ exports.getProviderDashboard = async (req, res) => {
 
     const ordersToPrep = await Order.countDocuments({
       provider: providerId,
-      status: { $in: ["Placed", "Accepted"] }
+      status: { $in: ["confirmed", "cooking"] }
     });
 
     const readyForPickup = await Order.countDocuments({
       provider: providerId,
-      status: "Ready"
+      status: "prepared"
     });
 
     const outForDelivery = await Order.countDocuments({
       provider: providerId,
-      status: "Picked_Up"
+      status: "out_for_delivery"
     });
 
     /* ---------------- TODAY REVENUE ---------------- */
@@ -32,15 +32,15 @@ exports.getProviderDashboard = async (req, res) => {
     const revenueAgg = await Order.aggregate([
       {
         $match: {
-          provider: req.user._id,
-          status: "Delivered",
+          provider: providerId,
+          status: "delivered",
           createdAt: { $gte: startOfDay }
         }
       },
       {
         $group: {
           _id: "$paymentMethod",
-          amount: { $sum: "$grandTotal" }
+          amount: { $sum: "$amount" }
         }
       }
     ]);

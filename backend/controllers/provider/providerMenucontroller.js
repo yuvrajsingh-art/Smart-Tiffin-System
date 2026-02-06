@@ -1,4 +1,4 @@
-const  Menu  = require("../../models/menu.model");
+const Menu = require("../../models/menu.model");
 const Settings = require("../../models/settings.model"); // Import Settings
 console.log("Menu model 👉", Menu);
 console.log("Settings model 👉", Settings);

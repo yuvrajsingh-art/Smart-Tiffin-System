@@ -9,7 +9,7 @@ const subscriptionSchema = new mongoose.Schema({
 
     created_by: {
         type: String,
-        enum: ["admin", "provider"],
+        enum: ["admin", "provider", "customer"],
         required: true
     },
     provider: {
@@ -55,12 +55,29 @@ const subscriptionSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-   
+
 
     mealType: {
         type: String,
         enum: ["Lunch", "Dinner", "Both"],
         required: true
+    },
+
+    lunchTime: {
+        type: String,
+        default: "12:30 PM"
+    },
+
+    dinnerTime: {
+        type: String,
+        default: "08:30 PM"
+    },
+
+    deliveryAddress: {
+        street: String,
+        city: String,
+        pincode: String,
+        phone: String
     },
 
     paymentStatus: {
@@ -71,20 +88,24 @@ const subscriptionSchema = new mongoose.Schema({
 
     paymentMethod: {
         type: String,
-        enum: ["UPI", "Cash", "Card"],
+        enum: ["UPI", "Cash", "Card", "Wallet"],
     },
-    status:
-        { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    status: {
+        type: String,
+        enum: ["pending", "approved", "rejected", "active", "cancelled", "cancellation_requested", "expired"],
+        default: "pending"
+    },
 
     adminApproval: {
-         type: String, 
-         enum: ["pending", "approved", "rejected"], 
-         default: "approved" },
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "approved"
+    },
 
     pauseFrom: Date,
     pauseTo: Date,
     pauseReason: String,
-    
+
     // New fields for subscription management
     pausedDates: [String], // Array of date strings (YYYY-MM-DD)
     planType: {
@@ -92,6 +113,18 @@ const subscriptionSchema = new mongoose.Schema({
         enum: ["veg", "non-veg", "jain"],
         default: "veg"
     },
+    skippedMeals: [{
+        date: String, // YYYY-MM-DD
+        mealType: {
+            type: String,
+            enum: ["lunch", "dinner"]
+        },
+        refundAmount: Number,
+        skippedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     totalAmount: Number,
     mealTypes: [{
         type: String,
@@ -99,7 +132,9 @@ const subscriptionSchema = new mongoose.Schema({
     }],
     upgradedAt: Date,
     cancelledAt: Date,
-    cancellationReason: String
+    cancellationReason: String,
+    refundAmount: Number, // Amount to be refunded upon cancellation
+    transactionId: String // For UPI payments
 
 }, { timestamps: true });
 

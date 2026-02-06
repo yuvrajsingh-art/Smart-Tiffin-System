@@ -1,221 +1,206 @@
 import React, { useState, useEffect } from 'react';
-import { useSubscription } from '../../context/SubscriptionContext';
-import BackgroundBlobs from '../../components/common/BackgroundBlobs';
-import PageHeader from '../../components/common/PageHeader';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/UserContext';
+import { useSocket } from '../../context/SocketContext';
+import {
+    PageHeader
+} from '../../components/common';
+import {
+    LiveTrackingMap,
+    DeliveryPartnerCard,
+    OrderTimeline
+} from '../../components/customer';
+import { TrackSkeleton } from '../../components/common';
 
 const Track = () => {
     const { hasActiveSubscription } = useSubscription();
-    const [eta, setEta] = useState(15);
-    const [showDetails, setShowDetails] = useState(true); // Collapsible state
+    const { token } = useAuth();
+    const { socket } = useSocket();
 
-    // Mock live countdown
+    const [loading, setLoading] = useState(true);
+    const [trackingData, setTrackingData] = useState(null);
+    const [error, setError] = useState(null);
+
+    const fetchTracking = async (showLoading = true) => {
+        if (!token) return;
+        if (showLoading) setLoading(true);
+        try {
+            const res = await axios.get('/api/customer/track/live', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setTrackingData(res.data.data);
+                setError(null);
+            }
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || "No active order to track";
+            console.error("Error fetching tracking", err);
+            setError(errorMsg);
+            if (showLoading) {
+                toast.error(errorMsg, { duration: 3000 });
+            }
+        } finally {
+            if (showLoading) setLoading(false);
+        }
+    };
+
+
+
     useEffect(() => {
-        const timer = setInterval(() => {
-            setEta(prev => Math.max(0, prev - 1));
-        }, 60000); // Decrease every minute
-        return () => clearInterval(timer);
-    }, []);
+        if (hasActiveSubscription()) {
+            fetchTracking();
+        } else {
+            setLoading(false);
+        }
+    }, [token, hasActiveSubscription]);
+
+    useEffect(() => {
+        if (socket) {
+            socket.on('orderStatusUpdate', (data) => {
+                setTrackingData(prev => ({
+                    ...prev,
+                    order: { ...prev.order, status: data.status },
+                    timeline: data.timeline,
+                }));
+                toast.success(`Order Status: ${data.status.replace('_', ' ')}`, {
+                    icon: '🛵',
+                    style: {
+                        borderRadius: '1rem',
+                        background: '#111716',
+                        color: '#fff',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                    }
+                });
+            });
+            return () => socket.off('orderStatusUpdate');
+        }
+    }, [socket]);
 
     if (!hasActiveSubscription()) {
         return (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6 animate-[fadeIn_0.5s_ease-out] px-4">
-                <div className="size-24 bg-gray-100 rounded-full flex items-center justify-center shadow-inner">
-                    <span className="material-symbols-outlined text-4xl text-gray-400">lock</span>
+            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6 bg-[#F8F9FA]">
+                <div className="size-20 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mb-6 border border-primary/10 shadow-inner">
+                    <span className="material-symbols-outlined text-primary text-4xl">lock_open</span>
                 </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-[#2D241E]">Feature Locked</h2>
-                    <p className="text-[#5C4D42] mt-2 max-w-md mx-auto font-medium">
-                        Delivery tracking is only available for active subscribers. Please subscribe to a plan first.
-                    </p>
-                </div>
-                <Link to="/customer/find-mess" className="px-8 py-3 bg-[#2D241E] text-white rounded-xl font-bold shadow-lg hover:translate-y-px transition-all">
-                    Find a Mess
-                </Link>
+                <h2 className="text-2xl font-black text-[#2D241E]">Tracking Locked</h2>
+                <p className="text-[#5C4D42] mt-2 max-w-sm font-medium opacity-70">Please subscribe to a plan to access real-time delivery tracking.</p>
+                <Link to="/customer/find-mess" className="mt-8 px-10 py-3.5 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all">Find a Mess</Link>
             </div>
         );
     }
 
+    if (loading) return <div className="p-6 bg-[#F8F9FA]"><TrackSkeleton /></div>;
+
+    if (error || !trackingData) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6 bg-[#F8F9FA]">
+                <div className="size-24 bg-white rounded-[3rem] flex items-center justify-center mb-8 border border-gray-100 shadow-xl">
+                    <span className="material-symbols-outlined text-5xl text-gray-200">route</span>
+                </div>
+                <h2 className="text-2xl font-black text-[#2D241E]">No Active Deliveries</h2>
+                <p className="text-[#5C4D42] mt-3 max-w-md font-medium opacity-60">You don't have any orders out for delivery right now.</p>
+            </div>
+        );
+    }
+
+    const { order, eta, distance, timeline, deliveryPartner } = trackingData;
+
     return (
+        <div className="w-full min-h-[calc(100vh-80px)] bg-[#FDFCFB] flex flex-col lg:flex-row animate-[fadeIn_0.5s_ease-out]">
 
-        <div className="w-full mx-auto space-y-6 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
+            {/* LEFT: COMMAND CENTER (65%) */}
+            <div className="flex-[0.65] p-6 lg:p-10 flex flex-col h-[60vh] lg:h-auto">
+                <div className="flex-1 bg-white rounded-[3.5rem] border border-gray-100 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.06)] overflow-hidden relative group">
+                    <LiveTrackingMap
+                        eta={eta}
+                        distance={distance}
+                        deliveryPartner={deliveryPartner}
+                        orderStatus={order.status}
+                        mapData={trackingData.mapData}
+                    />
 
-            {/* Background Blobs (Standardized) */}
-            <BackgroundBlobs />
-
-            <PageHeader
-                title="Live Tracking"
-                backText="Back"
-                rightElement={
-                    <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-2 animate-pulse">
-                        <span className="size-2 bg-green-600 rounded-full"></span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Order Active</span>
-                    </div>
-                }
-            />
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Left Column: Map & Status */}
-                <div className="lg:col-span-2 space-y-6">
-
-                    {/* Visual Map Placeholder */}
-                    <div className="relative h-64 md:h-80 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white group">
-                        <img
-                            src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop"
-                            alt="Map View"
-                            className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-[2s] contrast-125"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#2D241E]/90 via-transparent to-black/10"></div>
-
-                        {/* Radar Effect */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                            <div className="size-[250px] border border-primary/20 rounded-full animate-[ping_3s_linear_infinite]"></div>
-                            <div className="size-[150px] border border-primary/30 rounded-full animate-[ping_3s_linear_infinite_0.5s] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                        </div>
-
-                        {/* Live Floating Elements */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                            <div className="relative group/marker cursor-pointer">
-                                <div className="size-14 bg-primary/30 rounded-full animate-ping absolute inset-0"></div>
-                                <div className="size-14 bg-white rounded-full flex items-center justify-center shadow-2xl relative z-10 border-4 border-white transition-transform group-hover/marker:scale-110">
-                                    <span className="material-symbols-outlined text-2xl text-primary">two_wheeler</span>
-                                </div>
-                                {/* Marker Tooltip */}
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-[#2D241E] text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover/marker:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                    Rajesh is on the way!
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#2D241E]"></div>
-                                </div>
+                    {/* MINIMAL LIVE INDICATOR */}
+                    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-[1001]">
+                        <div className="bg-white/90 backdrop-blur-md px-8 py-3.5 rounded-full shadow-2xl border border-white/50 flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <span className="size-2.5 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(244,114,22,0.8)]"></span>
+                                <span className="text-[10px] font-black text-[#2D241E] uppercase tracking-widest">Live Pursuit</span>
                             </div>
+                            <div className="w-px h-4 bg-gray-200"></div>
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{order.status.replace('_', ' ')}</span>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        {/* Bottom Stats */}
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white flex justify-between items-end bg-gradient-to-t from-black/50 to-transparent">
+            {/* RIGHT: DETAIL INTELLIGENCE (35%) */}
+            <div className="flex-[0.35] bg-white border-l border-gray-100 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.02)] relative z-10">
+                <div className="p-10 flex-1 overflow-y-auto no-scrollbar space-y-12">
+
+                    {/* SECTION 1: IDENTITY & STATUS */}
+                    <div>
+                        <div className="flex items-center justify-between mb-8">
                             <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="size-2 rounded-full bg-green-500 animate-pulse"></span>
-                                    <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Estimated Arrival</p>
-                                </div>
-                                <h3 className="text-4xl font-bold tracking-tighter">{eta}<span className="text-xl ml-1 align-baseline opacity-80">mins</span></h3>
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-2 leading-none">Subscription Feed</h3>
+                                <h2 className="text-3xl font-black text-[#2D241E] tracking-tight">#{order.orderNumber}</h2>
                             </div>
                             <div className="text-right">
-                                <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Distance</p>
-                                <h3 className="text-2xl font-bold">1.2 km</h3>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ETA</p>
+                                <p className="text-2xl font-black text-primary tracking-tighter">{eta} MIN</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/5">
+                                    <span className="material-symbols-outlined text-2xl">local_shipping</span>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-[#2D241E]/40 uppercase tracking-widest leading-none mb-1">Current Protocol</p>
+                                    <h4 className="text-sm font-black text-[#2D241E] uppercase tracking-tight">{order.status.replace('_', ' ')}</h4>
+                                </div>
+                            </div>
+                            <span className="material-symbols-outlined text-primary/20 text-3xl">trending_flat</span>
+                        </div>
+                    </div>
+
+                    {/* SECTION 2: DELIVERY PARTNER */}
+                    <div>
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-6 leading-none border-b border-gray-50 pb-4">Fleet Specialist</h3>
+                        <div className="flex items-center gap-6">
+                            <div className="size-16 rounded-[1.5rem] overflow-hidden border-2 border-white shadow-lg shrink-0">
+                                <img src={deliveryPartner.image} className="w-full h-full object-cover" alt="Rider" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="text-lg font-black text-[#2D241E] leading-none mb-2">{deliveryPartner.name}</h4>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-md">⭐ {deliveryPartner.rating}</span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ECO-TIFFIN RIDER</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <a href={`tel:${deliveryPartner.phone}`} className="size-10 bg-[#111716] text-white rounded-xl flex items-center justify-center hover:bg-black transition-all shadow-md">
+                                    <span className="material-symbols-outlined text-lg">call</span>
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    {/* Collapsible Order Details */}
-                    <div className="glass-panel rounded-[2rem] border border-white/60 overflow-hidden transition-all duration-300">
-                        <button
-                            onClick={() => setShowDetails(!showDetails)}
-                            className="w-full flex items-center justify-between p-5 hover:bg-white/40 transition-colors"
-                        >
-                            <h3 className="font-bold text-[#2D241E] text-base flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary text-lg">receipt_long</span>
-                                Order Details
-                            </h3>
-                            <span className={`material-symbols-outlined text-[#2D241E] transition-transform duration-300 ${showDetails ? 'rotate-180' : ''}`}>expand_more</span>
-                        </button>
-
-                        {showDetails && (
-                            <div className="px-5 pb-5 animate-[fadeIn_0.2s]">
-                                <div className="flex gap-4 items-center p-3 bg-white/50 rounded-2xl border border-white hover:border-orange-100 transition-colors">
-                                    <div className="size-16 rounded-xl overflow-hidden shrink-0 shadow-sm">
-                                        <img src="https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200" className="w-full h-full object-cover" alt="Food" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start">
-                                            <h4 className="font-bold text-[#2D241E] text-sm">Paneer Butter Masala Thali</h4>
-                                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[9px] font-black uppercase tracking-wider">Paid</span>
-                                        </div>
-                                        <p className="text-xs text-[#5C4D42] opacity-80 mt-1">3 Rotis, Dal Fry, Jeera Rice, Salad, Pickle</p>
-                                        <div className="flex gap-2 mt-2">
-                                            <span className="text-[9px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded border border-orange-100 font-bold">Medium Spicy</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                </div>
-
-                {/* Right Column: Timeline & Driver */}
-                <div className="space-y-6">
-
-                    {/* Driver Card */}
-                    <div className="glass-panel p-6 rounded-[2.5rem] border border-white/60 bg-gradient-to-br from-white/80 to-orange-50/50 shadow-lg relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <span className="material-symbols-outlined text-6xl">delivery_dining</span>
-                        </div>
-
-                        <div className="flex gap-4 items-center mb-6 relative z-10">
-                            <div className="size-16 rounded-full p-1 border-2 border-primary relative shadow-md">
-                                <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200" className="w-full h-full object-cover rounded-full" alt="Driver" />
-                                <div className="absolute bottom-0 right-0 size-5 bg-green-500 border-2 border-white rounded-full"></div>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-[#2D241E] text-xl leading-none">Rajesh Kumar</h4>
-                                <div className="flex items-center gap-1 mt-1.5">
-                                    <span className="bg-[#2D241E] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">4.9 ★</span>
-                                    <span className="text-xs font-bold text-[#5C4D42] opacity-60">• Delivery Partner</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 relative z-10">
-                            <button className="py-3 rounded-xl bg-[#2D241E] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group/btn">
-                                <span className="material-symbols-outlined text-lg group-hover/btn:animate-shake">call</span>
-                                Call
-                            </button>
-                            <button className="py-3 rounded-xl bg-white text-[#2D241E] border border-gray-200 font-bold text-sm shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined text-lg">chat</span>
-                                Message
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Timeline */}
-                    <div className="glass-panel p-8 rounded-[2.5rem] border border-white/60 relative overflow-hidden">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="font-bold text-[#2D241E] text-lg">Timeline</h3>
-                            <button onClick={() => window.location.reload()} className="text-primary text-xs font-bold hover:underline flex items-center gap-1">
-                                <span className="material-symbols-outlined text-sm">refresh</span> Refresh
-                            </button>
-                        </div>
-
-                        <div className="relative ml-2 space-y-0 pb-2">
-                            {/* Connecting Line Vertical */}
-                            <div className="absolute top-4 bottom-4 left-[7px] w-0.5 bg-gray-100 rounded-full"></div>
-                            {/* Active Line Progress (Mock) */}
-                            <div className="absolute top-4 h-[60%] left-[7px] w-0.5 bg-gradient-to-b from-green-500 to-primary rounded-full"></div>
-
-                            {/* Steps */}
-                            {[
-                                { title: 'Order Placed', time: '10:30 AM', active: true, done: true, icon: 'receipt_long' },
-                                { title: 'Preparing Food', time: '11:15 AM', active: true, done: true, icon: 'skillet' },
-                                { title: 'Out for Delivery', time: '12:45 PM', active: true, done: false, pulse: true, icon: 'moped' },
-                                { title: 'Delivered', time: 'Est. 01:00 PM', active: false, done: false, icon: 'home' }
-                            ].map((step, idx) => (
-                                <div key={idx} className={`relative pl-10 pb-10 last:pb-0 group ${step.active ? '' : 'opacity-50'}`}>
-                                    {/* Icon Marker */}
-                                    <div className={`absolute -left-0 top-0 size-4 rounded-full border-2 border-white shadow-sm z-10 transition-all duration-500 ${step.done ? 'bg-green-500 scale-110' : step.pulse ? 'bg-primary animate-pulse scale-125' : 'bg-gray-200'}`}></div>
-
-                                    <div className={`p-4 rounded-2xl border transition-all duration-300 ${step.pulse ? 'bg-orange-50 border-orange-100 shadow-md translate-x-2' : 'bg-transparent border-transparent'}`}>
-                                        <h4 className={`text-sm font-bold flex items-center gap-2 ${step.active ? 'text-[#2D241E]' : 'text-gray-400'}`}>
-                                            {step.title}
-                                            {step.pulse && <span className="flex size-2 rounded-full bg-primary animate-ping"></span>}
-                                        </h4>
-                                        <p className="text-[10px] font-bold text-[#5C4D42] opacity-60 mt-1 font-mono">{step.time}</p>
-                                    </div>
-                                </div>
-                            ))}
+                    {/* SECTION 3: JOURNEY LOG */}
+                    <div>
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-8 leading-none border-b border-gray-50 pb-4">Mission Timeline</h3>
+                        <div className="max-h-[300px] overflow-y-auto no-scrollbar">
+                            <OrderTimeline timeline={timeline} onRefresh={() => fetchTracking(false)} />
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

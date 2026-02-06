@@ -43,6 +43,7 @@ module.exports = {
 
     // Providers
     getProviders: providerController.getProviders,
+    addProvider: providerController.addProvider,
     verifyProvider: providerController.verifyProvider,
     toggleProviderStatus: providerController.toggleProviderStatus,
     updateProvider: providerController.updateProvider,
@@ -53,6 +54,8 @@ module.exports = {
     getPayouts: financeController.getPayouts,
     processPayout: financeController.processPayout,
     getInvoices: financeController.getInvoices,
+    getRefundRequests: financeController.getRefundRequests,
+    approveCancellation: financeController.approveCancellation,
 
     // Menus
     getPendingMenus: menuController.getPendingMenus,

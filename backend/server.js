@@ -89,6 +89,13 @@ app.use(cors({
 
 // Parse JSON request bodies
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Debug Middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Request Logger - Log all API requests in development
 const requestLogger = require('./middleware/requestLogger.middleware');
@@ -114,6 +121,9 @@ const storeProfileRoutes = require("./routes/provider/storeProfileRoutes");
 // Admin routes
 const adminRoutes = require("./routes/adminRoutes");
 
+// Customer routes consolidated
+const customerRoutes = require("./routes/customer");
+
 // =============================================================================
 // ROUTES REGISTRATION
 // =============================================================================
@@ -138,6 +148,10 @@ app.use("/api/provider-store", storeProfileRoutes);
 
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);
+
+// Customer endpoints: /api/customer/* and /api/discovery/*
+app.use("/api/customer", customerRoutes);
+app.use("/api/discovery", require("./routes/customer/messDiscoveryRoutes"));
 
 // =============================================================================
 // CONSOLE COLORS & STYLING
@@ -171,6 +185,10 @@ const log = {
   error: (msg) => console.log(`${colors.red}✗${colors.reset}  ${msg}`),
   server: (msg) => console.log(`${colors.magenta}◉${colors.reset}  ${msg}`),
 };
+
+// =============================================================================
+// START SERVER
+// =============================================================================
 
 // =============================================================================
 // START SERVER
@@ -226,6 +244,5 @@ server.listen(PORT, () => {
 
   // Initialize Cron Jobs
   initScheduledJobs();
-  log.success('Scheduled jobs initialized');
-  console.log('');
+  console.log('Scheduled jobs initialized');
 });

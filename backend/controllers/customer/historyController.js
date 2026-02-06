@@ -2,7 +2,7 @@ const Order = require("../../models/order.model");
 const Transaction = require("../../models/transaction.model");
 const Subscription = require("../../models/subscription.model");
 const User = require("../../models/user.model");
-const { Menu } = require("../../models/menu.model");
+const Menu = require("../../models/menu.model");
 
 // Get meals history
 exports.getMealsHistory = async (req, res) => {
@@ -36,15 +36,15 @@ exports.getMealsHistory = async (req, res) => {
             const orderDate = new Date(order.orderDate);
             const isToday = orderDate.toDateString() === new Date().toDateString();
             const isYesterday = orderDate.toDateString() === new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
-            
+
             let dateString;
             if (isToday) {
                 dateString = `Today, ${orderDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
             } else if (isYesterday) {
                 dateString = `Yesterday, ${orderDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
             } else {
-                dateString = orderDate.toLocaleDateString('en-US', { 
-                    day: 'numeric', 
+                dateString = orderDate.toLocaleDateString('en-US', {
+                    day: 'numeric',
                     month: 'short',
                     hour: '2-digit',
                     minute: '2-digit'
@@ -120,13 +120,13 @@ exports.getWalletHistory = async (req, res) => {
         const walletHistory = transactions.map(transaction => {
             const transactionDate = new Date(transaction.createdAt);
             const isToday = transactionDate.toDateString() === new Date().toDateString();
-            
+
             let dateString;
             if (isToday) {
                 dateString = `Today, ${transactionDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
             } else {
-                dateString = transactionDate.toLocaleDateString('en-US', { 
-                    day: 'numeric', 
+                dateString = transactionDate.toLocaleDateString('en-US', {
+                    day: 'numeric',
                     month: 'short',
                     hour: '2-digit',
                     minute: '2-digit'
@@ -177,8 +177,8 @@ exports.getWalletHistory = async (req, res) => {
         ]);
 
         const currentBalance = (creditTransactions[0]?.total || 0) - (debitTransactions[0]?.total || 0);
-        const cashback = await Transaction.countDocuments({ 
-            customer: customerId, 
+        const cashback = await Transaction.countDocuments({
+            customer: customerId,
             type: 'credit',
             description: { $regex: /cashback|refund/i }
         }) * 20; // Approximate cashback
@@ -233,8 +233,8 @@ exports.getPlansHistory = async (req, res) => {
 
         subscriptions.forEach(subscription => {
             const createdDate = new Date(subscription.createdAt);
-            const dateString = createdDate.toLocaleDateString('en-US', { 
-                day: 'numeric', 
+            const dateString = createdDate.toLocaleDateString('en-US', {
+                day: 'numeric',
                 month: 'short'
             });
 
@@ -306,21 +306,21 @@ exports.getPlansHistory = async (req, res) => {
         const loyaltyLevel = totalSubscriptionsCount >= 5 ? 'Gold' : totalSubscriptionsCount >= 2 ? 'Silver' : 'Bronze';
 
         const stats = [
-            { 
-                label: 'Active Plan', 
-                value: currentSubscription?.planName || 'None', 
-                icon: 'star', 
-                color: currentSubscription ? 'text-orange-500' : 'text-gray-400' 
+            {
+                label: 'Active Plan',
+                value: currentSubscription?.planName || 'None',
+                icon: 'star',
+                color: currentSubscription ? 'text-orange-500' : 'text-gray-400'
             },
-            { 
-                label: 'Expiring', 
-                value: daysRemaining > 0 ? `in ${daysRemaining} days` : 'Expired', 
-                icon: 'timer' 
+            {
+                label: 'Expiring',
+                value: daysRemaining > 0 ? `in ${daysRemaining} days` : 'Expired',
+                icon: 'timer'
             },
-            { 
-                label: 'Loyalty', 
-                value: loyaltyLevel, 
-                icon: 'military_tech' 
+            {
+                label: 'Loyalty',
+                value: loyaltyLevel,
+                icon: 'military_tech'
             }
         ];
 

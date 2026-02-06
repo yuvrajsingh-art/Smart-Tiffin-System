@@ -8,10 +8,122 @@
 
 const User = require("../../models/user.model");
 const Provider = require("../../models/providerprofile.model");
+const StoreProfile = require("../../models/storeProfile.model");
+const bcrypt = require("bcryptjs");
 
 const { sendSuccess, sendError } = require("../../utils/responseHelper");
-const { isValidObjectId } = require("../../utils/validationHelper");
+const { isValidObjectId, isValidEmail, isValidMobile, validateRequired } = require("../../utils/validationHelper");
 const { createLog } = require("./helpers");
+
+/**
+ * Add new provider with complete profile
+ * @route POST /api/admin/providers
+ */
+exports.addProvider = async (req, res) => {
+    try {
+        const {
+            // User Fields
+            fullName, email, password, mobile, userAddress,
+            // Provider Profile Fields
+            messName, ownerName, phone, fssaiNumber, commission_rate,
+            bankDetails, // { accountHolderName, accountNumber, ifscCode }
+            location,    // { address, city, pincode, coordinates: [lng, lat] }
+            // Store Profile Fields
+            cuisines, lunch_start, lunch_end, dinner_start, dinner_end,
+            monthlyPrice, weeklyPrice, delivery_radius_km, store_address
+        } = req.body;
+
+        // 1. Basic Validation
+        const requiredFields = ['fullName', 'email', 'password', 'mobile', 'messName'];
+        const validation = validateRequired(req.body, requiredFields);
+        if (!validation.valid) {
+            return sendError(res, 400, `Missing required fields: ${validation.missing.join(', ')}`);
+        }
+
+        if (!isValidEmail(email)) return sendError(res, 400, "Invalid email format");
+        if (!isValidMobile(mobile)) return sendError(res, 400, "Invalid mobile number format");
+
+        // 2. Check Existence
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) return sendError(res, 400, "User with this email already exists");
+
+        // 3. Create User Account
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await User.create({
+            fullName,
+            email: email.toLowerCase(),
+            password: hashedPassword,
+            mobile,
+            address: userAddress || location?.address || "",
+            role: 'provider',
+            isVerified: true,
+            status: 'active'
+        });
+
+        // 4. Create Provider Profile
+        const newProviderProfile = await Provider.create({
+            user: newUser._id,
+            messName,
+            ownerName: ownerName || fullName,
+            phone: phone || mobile,
+            fssaiNumber,
+            commission_rate: commission_rate || 15,
+            bankDetails: bankDetails || {},
+            location: {
+                type: "Point",
+                coordinates: location?.coordinates || [0, 0],
+                address: location?.address || userAddress || "",
+                city: location?.city || "",
+                pincode: location?.pincode || ""
+            },
+            isOnboardingComplete: true,
+            onboardingStep: 4,
+            isActive: true
+        });
+
+        // 5. Create Store Profile
+        await StoreProfile.create({
+            provider: newUser._id,
+            mess_name: messName,
+            contact_number: phone || mobile,
+            cuisines: cuisines || ["Thali"],
+            lunch_start: lunch_start || "11:00 AM",
+            lunch_end: lunch_end || "03:00 PM",
+            dinner_start: dinner_start || "07:00 PM",
+            dinner_end: dinner_end || "11:00 PM",
+            monthlyPrice: monthlyPrice || 3500,
+            weeklyPrice: weeklyPrice || 900,
+            delivery_radius_km: delivery_radius_km || 5,
+            address: {
+                street: store_address?.street || location?.address || "",
+                city: store_address?.city || location?.city || "",
+                state: store_address?.state || "",
+                pincode: store_address?.pincode || location?.pincode || "",
+                landmark: store_address?.landmark || ""
+            },
+            is_active: true
+        });
+
+        // 6. Log Action
+        await createLog(
+            'PROVIDER_REGISTERED',
+            `Admin registered new provider: ${messName} (${fullName})`,
+            req.user.id,
+            'add_business',
+            'text-indigo-600'
+        );
+
+        return sendSuccess(res, 201, "Provider registered successfully with full profiles", {
+            userId: newUser._id,
+            email: newUser.email,
+            messName: messName
+        });
+
+    } catch (error) {
+        console.error("Admin Add Provider Error:", error);
+        return sendError(res, 500, "Failed to register provider", error.message);
+    }
+};
 
 /**
  * Get all providers with filters
