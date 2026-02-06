@@ -24,6 +24,7 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/auth/Login';
 import RoleSelection from './pages/auth/RoleSelection';
 import Register from './pages/auth/Register';
+import ProviderOnboarding from './pages/Provider/ProviderOnboarding';
 
 function App() {
   return (
@@ -52,6 +53,16 @@ function App() {
                   <Route key={index} path={route.path} element={route.element} />
                 ))}
               </Route>
+
+              {/* Standalone Provider Onboarding (No Layout) */}
+              <Route
+                path="/provider/onboarding"
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <ProviderOnboarding />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Provider Routes - Radhika's Domain */}
               <Route

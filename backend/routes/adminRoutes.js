@@ -34,6 +34,7 @@ const {
 
     // Provider Management
     getProviders,
+    addProvider,
     verifyProvider,
     toggleProviderStatus,
     updateProvider,
@@ -135,6 +136,9 @@ router.put("/orders/:id/rider", protect, authorizeRoles("admin"), assignRider);
 
 // GET /api/admin/providers - Get all providers
 router.get("/providers", protect, authorizeRoles("admin"), getProviders);
+
+// POST /api/admin/providers - Add new provider
+router.post("/providers", protect, authorizeRoles("admin"), addProvider);
 
 // PUT /api/admin/providers/:id - Update provider
 router.put("/providers/:id", protect, authorizeRoles("admin"), updateProvider);

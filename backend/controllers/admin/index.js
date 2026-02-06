@@ -43,6 +43,7 @@ module.exports = {
 
     // Providers
     getProviders: providerController.getProviders,
+    addProvider: providerController.addProvider,
     verifyProvider: providerController.verifyProvider,
     toggleProviderStatus: providerController.toggleProviderStatus,
     updateProvider: providerController.updateProvider,

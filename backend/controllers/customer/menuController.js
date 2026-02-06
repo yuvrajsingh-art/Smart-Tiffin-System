@@ -4,6 +4,7 @@ const Subscription = require("../../models/subscription.model");
 const CustomerWallet = require("../../models/customerWallet.model");
 const Transaction = require("../../models/transaction.model");
 const { createNotification } = require("../../utils/notificationService");
+const logger = require("../../utils/logger");
 
 // Get weekly menu for customer
 exports.getWeeklyMenu = async (req, res) => {
@@ -17,10 +18,11 @@ exports.getWeeklyMenu = async (req, res) => {
             endDate: { $gte: new Date() }
         }).populate('provider', 'fullName');
 
-        if (!activeSubscription) {
+        if (!activeSubscription || !activeSubscription.provider) {
+            logger.warn("Menu Fetch Failed: No Active Subscription or Provider", { customerId });
             return res.status(404).json({
                 success: false,
-                message: 'No active subscription found'
+                message: 'No active subscription found or provider is missing'
             });
         }
 
@@ -110,13 +112,14 @@ exports.getWeeklyMenu = async (req, res) => {
             success: true,
             data: {
                 menuData,
-                providerName: activeSubscription.provider.fullName,
+                providerName: activeSubscription.provider?.fullName || "Missing Provider",
                 subscriptionId: activeSubscription._id,
                 skippedMeals: activeSubscription.skippedMeals || []
             }
         });
 
     } catch (error) {
+        logger.error("Error in getWeeklyMenu:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch weekly menu'
@@ -307,8 +310,9 @@ exports.getTodayMenu = async (req, res) => {
             endDate: { $gte: new Date() }
         }).populate('provider', 'fullName');
 
-        if (!activeSubscription) {
-            return res.status(404).json({ success: false, message: "No active subscription found" });
+        if (!activeSubscription || !activeSubscription.provider) {
+            logger.warn("Today Menu Fetch Failed: No Active Subscription or Provider", { customerId });
+            return res.status(404).json({ success: false, message: "No active subscription found or provider is missing" });
         }
 
         const providerId = activeSubscription.provider._id;
@@ -350,12 +354,13 @@ exports.getTodayMenu = async (req, res) => {
             data: {
                 lunch: formatMenu(lunchMenu),
                 dinner: formatMenu(dinnerMenu),
-                providerName: activeSubscription.provider.fullName,
+                providerName: activeSubscription.provider?.fullName || "Missing Provider",
                 skippedMeals: activeSubscription.skippedMeals || []
             }
         });
 
     } catch (error) {
+        logger.error("Error in getTodayMenu:", error);
         res.status(500).json({ success: false, message: "Failed to fetch today's menu" });
     }
 };

@@ -55,9 +55,10 @@ exports.registerCustomer = async (req, res) => {
     }
 
     // Check if user already exists
-    const userExist = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+    const userExist = await User.findOne({ email: normalizedEmail });
     if (userExist) {
-      logger.warn("Register Failed: Duplicate User", { email });
+      logger.warn("Register Failed: Duplicate User", { email: normalizedEmail });
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -67,7 +68,7 @@ exports.registerCustomer = async (req, res) => {
     // Prepare user data
     const userData = {
       fullName,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       mobile,
       role: "customer",
@@ -125,7 +126,8 @@ exports.providerCustomer = async (req, res) => {
     }
 
     // Check if user already exists
-    const userExist = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+    const userExist = await User.findOne({ email: normalizedEmail });
     if (userExist) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -136,7 +138,7 @@ exports.providerCustomer = async (req, res) => {
     // Prepare user data
     const userData = {
       fullName,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       mobile,
       role: "provider",
@@ -190,17 +192,20 @@ exports.providerCustomer = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    logger.auth("Login Attempt", { email });
+    const normalizedEmail = email.toLowerCase().trim();
+    logger.auth("Login Attempt", { email: normalizedEmail });
 
     // Check user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
+      logger.warn("Login Failed: User Not Found", { email: normalizedEmail });
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      logger.warn("Login Failed: Invalid Password", { email: normalizedEmail });
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
