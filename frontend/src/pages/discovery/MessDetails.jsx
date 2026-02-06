@@ -108,8 +108,21 @@ const MessDetails = () => {
                                                 )}
 
                                                 <div className="w-14 h-14 rounded-2xl bg-[#2D241E] text-white flex flex-col items-center justify-center shadow-lg shrink-0 group-hover:scale-105 transition-transform">
-                                                    <span className="text-[10px] font-bold opacity-60 uppercase tracking-wider">{day.substring(0, 3)}</span>
-                                                    <span className="font-black text-lg">{idx + 24}</span>
+                                                    <span className="text-[10px] font-bold opacity-60 uppercase tracking-wider">{day}</span>
+                                                    <span className="font-black text-lg">
+                                                        {(() => {
+                                                            const today = new Date();
+                                                            const currentDay = today.getDay();
+                                                            const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+                                                            const monday = new Date(today);
+                                                            monday.setDate(today.getDate() + mondayOffset);
+
+                                                            const targetDate = new Date(monday);
+                                                            const dayIndex = menuDays.indexOf(day);
+                                                            targetDate.setDate(monday.getDate() + dayIndex);
+                                                            return targetDate.getDate();
+                                                        })()}
+                                                    </span>
                                                 </div>
 
                                                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">

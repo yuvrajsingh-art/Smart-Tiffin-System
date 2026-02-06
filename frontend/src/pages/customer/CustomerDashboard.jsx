@@ -115,7 +115,7 @@ const CustomerDashboard = () => {
                             <div>
                                 <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Quick Actions</h3>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <Link to="/customer/pause" className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-100 transition-all group">
+                                    <Link to="/customer/manage-subscription" className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-100 transition-all group">
                                         <div className="size-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                                             <span className="material-symbols-outlined text-lg">pause</span>
                                         </div>

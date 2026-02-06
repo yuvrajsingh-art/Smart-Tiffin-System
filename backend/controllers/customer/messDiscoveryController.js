@@ -116,7 +116,7 @@ exports.getPopularLocations = async (req, res) => {
 
         res.json({
             success: true,
-            data: popularCities.length > 0 ? popularCities : ["Pune", "Mumbai", "Delhi", "Bangalore"] // Sensible defaults if DB empty
+            data: popularCities.length > 0 ? popularCities : ["Indore", "Pune", "Mumbai", "Delhi"] // Sensible defaults if DB empty
         });
 
     } catch (error) {

@@ -278,7 +278,9 @@ exports.cancelSubscription = async (req, res) => {
         const endDate = new Date(subscription.endDate);
 
         // Accurate duration calculation
-        const totalDurationDays = subscription.durationInDays || Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) || 30;
+        const validStartDate = subscription.startDate ? new Date(subscription.startDate) : new Date();
+        const validEndDate = subscription.endDate ? new Date(subscription.endDate) : new Date();
+        const totalDurationDays = subscription.durationInDays || Math.ceil((validEndDate - validStartDate) / (1000 * 60 * 60 * 24)) || 30;
 
         // Remaining days (if today is before start date, refund full)
         let remainingDays = 0;
@@ -291,7 +293,8 @@ exports.cancelSubscription = async (req, res) => {
         // Clamp remaining days
         remainingDays = Math.max(0, Math.min(remainingDays, totalDurationDays));
 
-        const dailyRate = (subscription.totalAmount) / totalDurationDays;
+        const amountToDivide = subscription.totalAmount || subscription.price || 0;
+        const dailyRate = amountToDivide / (totalDurationDays || 30);
         const refundAmount = Math.floor(remainingDays * dailyRate); // Floor to avoid decimal issues
 
         // console.log(`[CANCEL REFUND] Amount: ${refundAmount}, Remaining Days: ${remainingDays}`);
@@ -301,7 +304,7 @@ exports.cancelSubscription = async (req, res) => {
             status: "cancellation_requested",
             cancelledAt: new Date(),
             cancellationReason: reason || "User requested",
-            refundAmount: Math.floor(refundAmount)
+            refundAmount: isNaN(refundAmount) ? 0 : Math.floor(refundAmount)
         });
 
         // Update User Model - Clear Active Subscription
