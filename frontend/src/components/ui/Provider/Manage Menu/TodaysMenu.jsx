@@ -1,50 +1,64 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { deleteMenuItem, getTodayMenu, toggleMenuAvailability } from '../../../../services/ProviderService';
+ console.log("TodaysMenu component loaded");
 
 const TodaysMenu = () => {
-  const [menuItems, setMenuItems] = useState([
-    {
-      id: 1,
-      name: 'Lunch Special',
-      price: 80,
-      description: 'A balanced nutritious afternoon meal',
-      item_name: {
-        item1: 'Roti',
-        item2: 'Paneer Sabji',
-        item3: 'Dal Fry',
-        item4: 'Steamed Rice',
-      },
-      cal: '740 kcal',
-      type: 'Pure Veg',
-      image: '/assets/panner.png',
-      available: true,
-    },
-    {
-      id: 2,
-      name: 'Dinner Special',
-      price: 70,
-      description: 'Light yet fulfilling evening meal',
-      item_name: {
-        item1: 'Tawa Roti',
-        item2: 'Mix Veg Sabji',
-        item3: 'Dal Tadka',
-        item4: 'Jeera Rice',
-      },
-      cal: '740 kcal',
-      type: 'Pure Veg',
-      image: '/assets/mixveg.png',
-      available: true,
-    },
-  ]);
+  const [menuItems, setMenuItems] = useState([]);
+  true,
 
-  const toggleAvailability = (id) => {
-    setMenuItems(menuItems.map(item =>
-      item.id === id ? { ...item, available: !item.available } : item
-    ));
-  };
+  useEffect(() => {
+  const today = new Date().toLocaleString("en-US", { weekday: "short" });
 
-  const deleteItem = (id) => {
-    setMenuItems(menuItems.filter(item => item.id !== id));
-  };
+  getTodayMenu()
+    .then((res) => {
+            console.log("RAW DATA FROM API 👉", res.data.data);
+
+      const filteredMenu = res.data.data.filter(item => {
+        const isToday =
+          item.availableDays?.includes(today);
+
+        const isLunchOrDinner =
+          item.mealType === "lunch" || item.mealType === "dinner";
+
+        return isToday && isLunchOrDinner;
+      });
+
+      setMenuItems(filteredMenu);
+    })
+    .catch((err) => {
+      console.error("Error fetching menu", err);
+    });
+}, []);
+
+
+   
+const toggleAvailability = (id) => {
+  toggleMenuAvailability(id)
+    .then(() => {
+      setMenuItems((prev) =>
+        prev.map(item =>
+          item._id === id
+            ? { ...item, isAvailable: !item.isAvailable }
+            : item
+        )
+      );
+    })
+    .catch(() => alert("Failed to update availability"));
+};
+
+  
+const deleteItem = (id) => {
+  deleteMenuItem(id)
+    .then(() => {
+      setMenuItems(menuItems.filter(item => item._id !== id));
+    })
+    .catch(() => alert("Delete failed"));
+};
+const todayStart = new Date();
+todayStart.setHours(0, 0, 0, 0);
+
+const todayEnd = new Date();
+todayEnd.setHours(23, 59, 59, 999);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -54,7 +68,7 @@ const TodaysMenu = () => {
         <div className="flex flex-col gap-6 ">
           {menuItems.map((item) => (
             <div
-              key={item.id}
+              key={item._id}
               className="flex bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden"
             >
               {/* Image */}
@@ -111,28 +125,28 @@ const TodaysMenu = () => {
                 <div className="flex justify-between items-center mt-4">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium
-                      ${item.available
+                      ${item.isAvailable
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                       }`}
                   >
-                    {item.available ? 'Available' : 'Unavailable'}
+                    {item.isAvailable ? 'Available' : 'Unavailable'}
                   </span>
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => toggleAvailability(item.id)}
+                      onClick={() => toggleAvailability(item._id)}
                       className={`px-3 py-1.5 rounded-md text-xs font-medium transition
-                        ${item.available
+                        ${item.isAvailable
                           ? 'bg-red-100 text-red-700 hover:bg-red-200'
                           : 'bg-green-100 text-green-700 hover:bg-green-200'
                         }`}
                     >
-                      {item.available ? 'Disable' : 'Enable'}
+                      {item.isAvailable ? 'Disable' : 'Enable'}
                     </button>
 
                     <button
-                      onClick={() => deleteItem(item.id)}
+                      onClick={() => deleteItem(item._id)}
                       className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-xs font-medium transition"
                     >
                       Delete

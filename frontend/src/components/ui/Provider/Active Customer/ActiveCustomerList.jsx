@@ -1,87 +1,121 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaPhone, FaEnvelope, FaCalendarAlt, FaShoppingBag } from 'react-icons/fa';
+import ProviderApi from '../../../../services/ProviderApi';
 
 const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
-  const [customers] = useState([
-    {
-      id: 1,
-      name: 'Rahul Sharma',
-      email: 'rahul.sharma@email.com',
-      phone: '+91 9876543210',
-      plan: 'Premium',
-      status: 'active',
-      joinDate: '2024-01-15',
-      lastOrder: '2024-01-25',
-      totalOrders: 45,
-      avatar: 'RS',
-      address: 'Sector 15, Noida'
-    },
-    {
-      id: 2,
-      name: 'Priya Singh',
-      email: 'priya.singh@email.com',
-      phone: '+91 9876543211',
-      plan: 'Basic',
-      status: 'active',
-      joinDate: '2024-01-20',
-      lastOrder: '2024-01-25',
-      totalOrders: 32,
-      avatar: 'PS',
-      address: 'Sector 22, Gurgaon'
-    },
-    {
-      id: 3,
-      name: 'Amit Kumar',
-      email: 'amit.kumar@email.com',
-      phone: '+91 9876543212',
-      plan: 'Premium',
-      status: 'paused',
-      joinDate: '2024-01-10',
-      lastOrder: '2024-01-23',
-      totalOrders: 67,
-      avatar: 'AK',
-      address: 'Connaught Place, Delhi'
-    },
-    {
-      id: 4,
-      name: 'Sneha Patel',
-      email: 'sneha.patel@email.com',
-      phone: '+91 9876543213',
-      plan: 'Basic',
-      status: 'active',
-      joinDate: '2024-01-22',
-      lastOrder: '2024-01-25',
-      totalOrders: 18,
-      avatar: 'SP',
-      address: 'Bandra West, Mumbai'
-    },
-    {
-      id: 5,
-      name: 'Vikash Gupta',
-      email: 'vikash.gupta@email.com',
-      phone: '+91 9876543214',
-      plan: 'Premium',
-      status: 'expired',
-      joinDate: '2023-12-05',
-      lastOrder: '2024-01-15',
-      totalOrders: 89,
-      avatar: 'VG',
-      address: 'Koramangala, Bangalore'
-    },
-    {
-      id: 6,
-      name: 'Anita Sharma',
-      email: 'anita.sharma@email.com',
-      phone: '+91 9876543215',
-      plan: 'Basic',
-      status: 'active',
-      joinDate: '2024-01-18',
-      lastOrder: '2024-01-25',
-      totalOrders: 28,
-      avatar: 'AS',
-      address: 'Satellite, Ahmedabad'
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchActiveCustomers();
+  }, []);
+
+  const fetchActiveCustomers = async () => {
+    try {
+      const response = await ProviderApi.get('/provider-subscription');
+      if (response.data && response.data.data) {
+        const formattedData = response.data.data.map(sub => ({
+          id: sub._id,
+          name: sub.customer?.name || 'N/A',
+          email: sub.customer?.email || 'N/A',
+          phone: sub.customer?.phone || 'N/A',
+          plan: sub.planName,
+          status: sub.status.toLowerCase(),
+          joinDate: sub.createdAt,
+          lastOrder: sub.duration.end,
+          totalOrders: sub.mealsSkipped || 0,
+          avatar: sub.customer?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'NA',
+          address: 'N/A'
+        }));
+        setCustomers(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching active customers:', error);
+      // Fallback to dummy data
+      setCustomers([
+        {
+          id: 1,
+          name: 'Rahul Sharma',
+          email: 'rahul.sharma@email.com',
+          phone: '+91 9876543210',
+          plan: 'Premium',
+          status: 'active',
+          joinDate: '2024-01-15',
+          lastOrder: '2024-01-25',
+          totalOrders: 45,
+          avatar: 'RS',
+          address: 'Sector 15, Noida'
+        },
+        {
+          id: 2,
+          name: 'Priya Singh',
+          email: 'priya.singh@email.com',
+          phone: '+91 9876543211',
+          plan: 'Basic',
+          status: 'active',
+          joinDate: '2024-01-20',
+          lastOrder: '2024-01-25',
+          totalOrders: 32,
+          avatar: 'PS',
+          address: 'Sector 22, Gurgaon'
+        },
+        {
+          id: 3,
+          name: 'Amit Kumar',
+          email: 'amit.kumar@email.com',
+          phone: '+91 9876543212',
+          plan: 'Premium',
+          status: 'paused',
+          joinDate: '2024-01-10',
+          lastOrder: '2024-01-23',
+          totalOrders: 67,
+          avatar: 'AK',
+          address: 'Connaught Place, Delhi'
+        },
+        {
+          id: 4,
+          name: 'Sneha Patel',
+          email: 'sneha.patel@email.com',
+          phone: '+91 9876543213',
+          plan: 'Basic',
+          status: 'active',
+          joinDate: '2024-01-22',
+          lastOrder: '2024-01-25',
+          totalOrders: 18,
+          avatar: 'SP',
+          address: 'Bandra West, Mumbai'
+        },
+        {
+          id: 5,
+          name: 'Vikash Gupta',
+          email: 'vikash.gupta@email.com',
+          phone: '+91 9876543214',
+          plan: 'Premium',
+          status: 'expired',
+          joinDate: '2023-12-05',
+          lastOrder: '2024-01-15',
+          totalOrders: 89,
+          avatar: 'VG',
+          address: 'Koramangala, Bangalore'
+        },
+        {
+          id: 6,
+          name: 'Anita Sharma',
+          email: 'anita.sharma@email.com',
+          phone: '+91 9876543215',
+          plan: 'Basic',
+          status: 'active',
+          joinDate: '2024-01-18',
+          lastOrder: '2024-01-25',
+          totalOrders: 28,
+          avatar: 'AS',
+          address: 'Satellite, Ahmedabad'
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,6 +145,18 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
       year: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -90,11 +92,30 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-        console.log("Payload:", formData);
-        setTimeout(() => {
-            alert(`Welcome ${formData.name}!`);
-            navigate('/customer/dashboard');
-        }, 1000);
+        
+        try {
+            const endpoint = role === 'provider' 
+                ? 'http://localhost:5000/api/auth/registerProvider/provider'
+                : 'http://localhost:5000/api/auth/registerCustomer/customer';
+            
+            const payload = {
+                fullName: formData.name,
+                email: formData.email,
+                password: formData.password,
+                mobile: formData.phone,
+                address: `${formData.address.street}, ${formData.address.city}, ${formData.address.pincode}`
+            };
+            
+            const response = await axios.post(endpoint, payload);
+            
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                toast.success(`Welcome ${formData.name}!`);
+                navigate(role === 'provider' ? '/provider/dashboard' : '/customer/dashboard');
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Registration failed');
+        }
     };
 
     const handleAllowLocation = async () => {

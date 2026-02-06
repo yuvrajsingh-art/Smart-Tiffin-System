@@ -1,22 +1,30 @@
-const { Menu } = require("../../models/menu.model");
+const  Menu  = require("../../models/menu.model");
 const Settings = require("../../models/settings.model"); // Import Settings
+console.log("Menu model 👉", Menu);
+console.log("Settings model 👉", Settings);
 
 exports.createOrUpdateMenu = async (req, res) => {
   try {
     const {
-      menuDate,
-      mealType,
-      mainDish,
-      sabjiDry,
-      dal,
-      rice,
-      bread,
-      accompaniments,
-      isSpecialThali,
-      specialThaliPrice,
-      addOns,
-      operationalStatus
-    } = req.body;
+  name,
+  price,
+  category,
+  type,
+  menuDate,
+  mealType,
+  mainDish,
+  sabjiDry,
+  dal,
+  rice,
+  bread,
+  accompaniments,
+  isSpecialThali,
+  specialThaliPrice,
+  addOns,
+  operationalStatus,
+  image,
+  description
+} = req.body;
 
     // --- CUT-OFF VALIDATION [NEW] ---
     const settings = await Settings.findOne();
@@ -46,25 +54,31 @@ exports.createOrUpdateMenu = async (req, res) => {
     }
 
     const menu = await Menu.findOneAndUpdate(
-      {
-        provider: req.user.id,
-        menuDate,
-        mealType
-      },
-      {
-        mainDish,
-        sabjiDry,
-        dal,
-        rice,
-        bread,
-        accompaniments,
-        isSpecialThali,
-        specialThaliPrice,
-        addOns,
-        operationalStatus
-      },
-      { new: true, upsert: true }
-    );
+  {
+    provider: req.user.id,
+    menuDate,
+    mealType
+  },
+  {
+    name,
+    price,
+    category,
+    type,
+    image,
+    description,
+    mainDish,
+    sabjiDry,
+    dal,
+    rice,
+    bread,
+    accompaniments,
+    isSpecialThali,
+    specialThaliPrice,
+    addOns,
+    operationalStatus
+  },
+  { new: true, upsert: true }
+);
 
     res.json({
       success: true,
@@ -91,18 +105,17 @@ exports.publishMenu = async (req, res) => {
   });
 };
 
-
 exports.getTodayMenu = async (req, res) => {
   try {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const today = new Date().toLocaleString("en-US", {
+      weekday: "long",
+      timeZone: "Asia/Kolkata"
+    });
 
     const menus = await Menu.find({
       isPublished: true,
-      menuDate: { $gte: start, $lte: end }
+      availableDays: today,
+      mealType: { $in: ["lunch", "dinner"] }
     }).populate("provider", "fullName email");
 
     res.json({
@@ -110,6 +123,7 @@ exports.getTodayMenu = async (req, res) => {
       count: menus.length,
       data: menus
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,

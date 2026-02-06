@@ -95,7 +95,7 @@ function App() {
   //             <Route
   //               path="/Provider"
   //               element={
-  //                 <ProtectedRoute allowedRoles={['Provider']}>
+  //                 <ProtectedRoute allowedRoles={['provider']}>
   //                   <DashboardLayout />
   //                 </ProtectedRoute>
   //               }
@@ -141,16 +141,15 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        
-          <Route path="/" element={<ProviderDashboard />} />
-          <Route path="/Provider/ManageMenu" element={<ManageMenu />} />
-          <Route path="/Provider/ActiveCustomers" element={<ActiveCustomers />} />
-          <Route path="/Provider/DeliveryStatus" element={<DeliveryStatus />} />
-          <Route path="/Provider/CustomerFeedback" element={<CustomerFeedback />} />
-          <Route path="/Provider/ProviderAnalysis" element={<ProviderAnalysis />} />
-          <Route path="/Provider/ProviderProfile" element={<ProviderProfile />} />
-       </Routes>
-    </BrowserRouter>
+        <Route path="/" element={<ProviderDashboard />} />
+        <Route path="/Provider/ManageMenu" element={<ManageMenu />} />
+        <Route path="/Provider/ActiveCustomers" element={<ActiveCustomers />} />
+        <Route path="/Provider/DeliveryStatus" element={<DeliveryStatus />} />
+        <Route path="/Provider/CustomerFeedback" element={<CustomerFeedback />} />
+        <Route path="/Provider/ProviderAnalysis" element={<ProviderAnalysis />} />
+        <Route path="/Provider/ProviderProfile" element={<ProviderProfile />} />
+     </Routes>
+  </BrowserRouter>
   )
 
 

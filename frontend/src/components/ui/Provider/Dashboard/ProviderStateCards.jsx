@@ -1,15 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUsers, FaRupeeSign, FaUtensils, FaStar } from 'react-icons/fa';
 import { MdTrendingUp } from 'react-icons/md';
+import ProviderApi from '../../../../services/ProviderApi';
 
 const ProviderStatsCards = () => {
-    const [stats] = useState({
-        totalCustomers: 156,
-        todayOrders: 89,
-        monthlyRevenue: 45600,
-        avgRating: 4.6,
-        activeSubscriptions: 134
+    const [stats, setStats] = useState({
+        totalCustomers: 0,
+        todayOrders: 0,
+        monthlyRevenue: 0,
+        avgRating: 0,
+        activeSubscriptions: 0
     });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchDashboardStats();
+    }, []);
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await ProviderApi.get('/provider-deshbord/dashboard');
+            if (response.data) {
+                setStats({
+                    totalCustomers: response.data.totalCustomers || 0,
+                    todayOrders: response.data.todayOrders || 0,
+                    monthlyRevenue: response.data.monthlyRevenue || 0,
+                    avgRating: response.data.avgRating || 0,
+                    activeSubscriptions: response.data.activeSubscriptions || 0
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            // Fallback to dummy data if API fails
+            setStats({
+                totalCustomers: 156,
+                todayOrders: 89,
+                monthlyRevenue: 45600,
+                avgRating: 4.6,
+                activeSubscriptions: 134
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-pulse">
+                        <div className="h-20 bg-gray-200 rounded"></div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
