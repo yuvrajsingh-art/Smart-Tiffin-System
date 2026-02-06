@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { useAuth } from '../../context/UserContext';
+import { useSocket } from '../../context/SocketContext';
 import {
-    BackgroundBlobs,
     PageHeader
 } from '../../components/common';
 import {
@@ -17,14 +18,16 @@ import { TrackSkeleton } from '../../components/common';
 const Track = () => {
     const { hasActiveSubscription } = useSubscription();
     const { token } = useAuth();
+    const { socket } = useSocket();
 
     const [loading, setLoading] = useState(true);
     const [trackingData, setTrackingData] = useState(null);
     const [error, setError] = useState(null);
-    const [showDetails, setShowDetails] = useState(true);
+    const [isSimulating, setIsSimulating] = useState(false);
 
-    const fetchTracking = async () => {
+    const fetchTracking = async (showLoading = true) => {
         if (!token) return;
+        if (showLoading) setLoading(true);
         try {
             const res = await axios.get('/api/customer/track/live', {
                 headers: { Authorization: `Bearer ${token}` }
@@ -37,64 +40,97 @@ const Track = () => {
             console.error("Error fetching tracking", err);
             setError(err.response?.data?.message || "No active order to track");
         } finally {
+            if (showLoading) setLoading(false);
+        }
+    };
+
+    const initializeTest = async () => {
+        try {
+            setLoading(true);
+            const res = await axios.post('/api/customer/track/initialize-test', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                toast.success("Tracking system initialized!");
+                fetchTracking();
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to initialize");
             setLoading(false);
+        }
+    };
+
+    const advanceStatus = async () => {
+        setIsSimulating(true);
+        try {
+            const res = await axios.post('/api/customer/track/advance-test', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                toast.success(`Advanced to: ${res.data.nextStatus}`);
+            }
+        } catch (err) {
+            toast.error("Finish point reached or error");
+        } finally {
+            setIsSimulating(false);
         }
     };
 
     useEffect(() => {
         if (hasActiveSubscription()) {
             fetchTracking();
-            const interval = setInterval(fetchTracking, 30000);
-            return () => clearInterval(interval);
+        } else {
+            setLoading(false);
         }
     }, [token, hasActiveSubscription]);
 
+    useEffect(() => {
+        if (socket) {
+            socket.on('orderStatusUpdate', (data) => {
+                setTrackingData(prev => ({
+                    ...prev,
+                    order: { ...prev.order, status: data.status },
+                    timeline: data.timeline,
+                }));
+                toast.success(`Order Status: ${data.status.replace('_', ' ')}`, {
+                    icon: '🛵',
+                    style: {
+                        borderRadius: '1rem',
+                        background: '#111716',
+                        color: '#fff',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                    }
+                });
+            });
+            return () => socket.off('orderStatusUpdate');
+        }
+    }, [socket]);
+
     if (!hasActiveSubscription()) {
         return (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6 animate-[fadeIn_0.5s_ease-out] px-4">
-                <BackgroundBlobs />
-                <div className="size-24 bg-gray-100 rounded-full flex items-center justify-center shadow-inner relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-200 to-transparent"></div>
-                    <span className="material-symbols-outlined text-4xl text-gray-400 relative z-10">lock</span>
+            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6 bg-[#F8F9FA]">
+                <div className="size-20 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mb-6 border border-primary/10 shadow-inner">
+                    <span className="material-symbols-outlined text-primary text-4xl">lock_open</span>
                 </div>
-                <div>
-                    <h2 className="text-2xl font-black text-[#2D241E]">Feature Locked</h2>
-                    <p className="text-[#5C4D42] mt-2 max-w-md mx-auto font-medium leading-relaxed">
-                        Delivery tracking is only available for active subscribers. Please subscribe to a plan first.
-                    </p>
-                </div>
-                <Link to="/customer/find-mess" className="px-8 py-3 bg-[#111716] text-white rounded-xl font-bold shadow-xl hover:scale-105 transition-all">
-                    Find a Mess
-                </Link>
+                <h2 className="text-2xl font-black text-[#2D241E]">Tracking Locked</h2>
+                <p className="text-[#5C4D42] mt-2 max-w-sm font-medium opacity-70">Please subscribe to a plan to access real-time delivery tracking.</p>
+                <Link to="/customer/find-mess" className="mt-8 px-10 py-3.5 bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all">Find a Mess</Link>
             </div>
         );
     }
 
-    if (loading) {
-        return (
-            <div className="w-full pb-20 px-4">
-                <PageHeader title="Live Tracking" />
-                <TrackSkeleton />
-            </div>
-        );
-    }
+    if (loading) return <div className="p-6 bg-[#F8F9FA]"><TrackSkeleton /></div>;
 
     if (error || !trackingData) {
         return (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6 animate-[fadeIn_0.5s_ease-out] px-4">
-                <BackgroundBlobs />
-                <div className="size-24 bg-orange-50 rounded-full flex items-center justify-center shadow-inner border order-orange-100">
-                    <span className="material-symbols-outlined text-4xl text-primary">moped</span>
+            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6 bg-[#F8F9FA]">
+                <div className="size-24 bg-white rounded-[3rem] flex items-center justify-center mb-8 border border-gray-100 shadow-xl">
+                    <span className="material-symbols-outlined text-5xl text-gray-200">route</span>
                 </div>
-                <div>
-                    <h2 className="text-2xl font-black text-[#2D241E]">No Active Delivery</h2>
-                    <p className="text-[#5C4D42] mt-2 max-w-md mx-auto font-medium leading-relaxed">
-                        {error || "Your next meal isn't out for delivery yet. Check back during meal hours!"}
-                    </p>
-                </div>
-                <Link to="/customer/dashboard" className="px-8 py-3 bg-[#2D241E] text-white rounded-xl font-bold shadow-xl hover:scale-105 transition-all">
-                    Go to Dashboard
-                </Link>
+                <h2 className="text-2xl font-black text-[#2D241E]">No Active Deliveries</h2>
+                <p className="text-[#5C4D42] mt-3 max-w-md font-medium opacity-60">You don't have any orders out for delivery right now.</p>
+                <button onClick={initializeTest} className="mt-10 px-12 py-4 bg-[#111716] text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-black transition-all">Start Test Tracking</button>
             </div>
         );
     }
@@ -102,64 +138,106 @@ const Track = () => {
     const { order, eta, distance, timeline, deliveryPartner } = trackingData;
 
     return (
-        <div className="w-full mx-auto space-y-6 animate-[fadeIn_0.5s_ease-out] pb-20 px-4 relative">
-            <BackgroundBlobs />
-            <PageHeader
-                title="Live Tracking"
-                rightElement={
-                    <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full flex items-center gap-2 border border-green-200 shadow-sm">
-                        <span className="size-2 bg-green-600 rounded-full animate-pulse"></span>
-                        <span className="text-[10px] font-black uppercase tracking-widest">{order.status.replace('_', ' ')}</span>
-                    </div>
-                }
-            />
+        <div className="w-full min-h-[calc(100vh-80px)] bg-[#FDFCFB] flex flex-col lg:flex-row animate-[fadeIn_0.5s_ease-out]">
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+            {/* LEFT: COMMAND CENTER (65%) */}
+            <div className="flex-[0.65] p-6 lg:p-10 flex flex-col h-[60vh] lg:h-auto">
+                <div className="flex-1 bg-white rounded-[3.5rem] border border-gray-100 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.06)] overflow-hidden relative group">
                     <LiveTrackingMap
                         eta={eta}
                         distance={distance}
                         deliveryPartner={deliveryPartner}
+                        orderStatus={order.status}
+                        mapData={trackingData.mapData}
                     />
 
-                    <div className="glass-panel rounded-[2rem] border border-white/60 overflow-hidden transition-all duration-300 shadow-sm bg-white/20">
-                        <button
-                            onClick={() => setShowDetails(!showDetails)}
-                            className="w-full flex items-center justify-between p-6 hover:bg-white/40 transition-colors"
-                        >
-                            <h3 className="font-black text-[#2D241E] text-sm uppercase tracking-widest flex items-center gap-3">
-                                <span className="material-symbols-outlined text-primary">receipt_long</span>
-                                Order Summary
-                            </h3>
-                            <span className={`material-symbols-outlined text-[#2D241E] transition-transform duration-500 ${showDetails ? 'rotate-180' : ''}`}>expand_circle_down</span>
-                        </button>
-
-                        {showDetails && (
-                            <div className="px-6 pb-6 animate-[slideDown_0.3s_ease-out]">
-                                <div className="flex gap-5 items-center p-5 bg-white/80 rounded-3xl border border-white shadow-sm">
-                                    <div className="size-20 rounded-2xl overflow-hidden shrink-0 shadow-md">
-                                        <img src={order.meal.image} className="w-full h-full object-cover transform hover:scale-110 transition-transform" alt="Food" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <h4 className="font-black text-[#2D241E] text-lg leading-tight">{order.meal.name}</h4>
-                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm">{order.paymentStatus}</span>
-                                        </div>
-                                        <p className="text-xs font-bold text-[#5C4D42] opacity-60 line-clamp-1">{order.meal.items}</p>
-                                        <div className="flex gap-2 mt-3">
-                                            <span className="text-[9px] bg-orange-50 text-orange-700 px-2.5 py-1 rounded-md border border-orange-100 font-black uppercase tracking-wider shadow-sm">{order.meal.spiceLevel}</span>
-                                            <span className="text-[9px] bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md border border-blue-100 font-black uppercase tracking-wider shadow-sm">{order.meal.mealType}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                    {/* MINIMAL LIVE INDICATOR */}
+                    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-[1001]">
+                        <div className="bg-white/90 backdrop-blur-md px-8 py-3.5 rounded-full shadow-2xl border border-white/50 flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <span className="size-2.5 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(244,114,22,0.8)]"></span>
+                                <span className="text-[10px] font-black text-[#2D241E] uppercase tracking-widest">Live Pursuit</span>
                             </div>
-                        )}
+                            <div className="w-px h-4 bg-gray-200"></div>
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{order.status.replace('_', ' ')}</span>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div className="space-y-6">
-                    <DeliveryPartnerCard deliveryPartner={deliveryPartner} />
-                    <OrderTimeline timeline={timeline} onRefresh={fetchTracking} />
+            {/* RIGHT: DETAIL INTELLIGENCE (35%) */}
+            <div className="flex-[0.35] bg-white border-l border-gray-100 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.02)] relative z-10">
+                <div className="p-10 flex-1 overflow-y-auto no-scrollbar space-y-12">
+
+                    {/* SECTION 1: IDENTITY & STATUS */}
+                    <div>
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-2 leading-none">Subscription Feed</h3>
+                                <h2 className="text-3xl font-black text-[#2D241E] tracking-tight">#{order.orderNumber}</h2>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ETA</p>
+                                <p className="text-2xl font-black text-primary tracking-tighter">{eta} MIN</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/5">
+                                    <span className="material-symbols-outlined text-2xl">local_shipping</span>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-[#2D241E]/40 uppercase tracking-widest leading-none mb-1">Current Protocol</p>
+                                    <h4 className="text-sm font-black text-[#2D241E] uppercase tracking-tight">{order.status.replace('_', ' ')}</h4>
+                                </div>
+                            </div>
+                            <span className="material-symbols-outlined text-primary/20 text-3xl">trending_flat</span>
+                        </div>
+                    </div>
+
+                    {/* SECTION 2: DELIVERY PARTNER */}
+                    <div>
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-6 leading-none border-b border-gray-50 pb-4">Fleet Specialist</h3>
+                        <div className="flex items-center gap-6">
+                            <div className="size-16 rounded-[1.5rem] overflow-hidden border-2 border-white shadow-lg shrink-0">
+                                <img src={deliveryPartner.image} className="w-full h-full object-cover" alt="Rider" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="text-lg font-black text-[#2D241E] leading-none mb-2">{deliveryPartner.name}</h4>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-md">⭐ {deliveryPartner.rating}</span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ECO-TIFFIN RIDER</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <a href={`tel:${deliveryPartner.phone}`} className="size-10 bg-[#111716] text-white rounded-xl flex items-center justify-center hover:bg-black transition-all shadow-md">
+                                    <span className="material-symbols-outlined text-lg">call</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION 3: JOURNEY LOG */}
+                    <div>
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-8 leading-none border-b border-gray-50 pb-4">Mission Timeline</h3>
+                        <div className="max-h-[300px] overflow-y-auto no-scrollbar">
+                            <OrderTimeline timeline={timeline} onRefresh={() => fetchTracking(false)} />
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* BOTTOM ACTION */}
+                <div className="p-8 border-t border-gray-100 bg-[#F8F9FA]/50">
+                    <button
+                        onClick={advanceStatus}
+                        disabled={isSimulating || order.status === 'delivered'}
+                        className="w-full flex items-center justify-center gap-3 py-4 bg-[#111716] text-white rounded-[1.2rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all disabled:opacity-30 active:scale-95"
+                    >
+                        {isSimulating ? <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : <span className="material-symbols-outlined text-lg">bolt</span>}
+                        Update Staging Protocol
+                    </button>
                 </div>
             </div>
         </div>
