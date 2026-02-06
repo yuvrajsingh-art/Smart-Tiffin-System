@@ -57,8 +57,7 @@ const userSchema = new mongoose.Schema({
   // Profile fields
   dietPreference: {
     type: String,
-    enum: ["Pure Veg", "Non-Veg", "Jain"],
-    default: "Pure Veg"
+    enum: ["Pure Veg", "Non-Veg", "Jain"]
   },
 
   // Subscription tracking (for easy DB queries)

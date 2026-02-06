@@ -532,10 +532,18 @@ exports.purchaseSubscription = async (req, res) => {
 
         await subscription.save();
 
-        // Update User Model with Active Subscription
+        // Update User Model with Active Subscription & Diet Preference
+        const dietMap = {
+            'veg': 'Pure Veg',
+            'non-veg': 'Non-Veg',
+            'jain': 'Jain'
+        };
+        const userDietPreference = dietMap[(planType && planType.toLowerCase()) || 'veg'] || 'Pure Veg';
+
         await User.findByIdAndUpdate(customerId, {
             hasActiveSubscription: true,
-            activeSubscription: subscription._id
+            activeSubscription: subscription._id,
+            dietPreference: userDietPreference
         });
 
         // 6. Create Transaction Record (Debit for the purchase)

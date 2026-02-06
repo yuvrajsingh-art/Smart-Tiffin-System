@@ -29,10 +29,19 @@ async function syncSubscriptions() {
         console.log(`🔍 Found ${activeSubscriptions.length} active subscriptions.`);
 
         let updatedCount = 0;
+        const dietMap = {
+            'veg': 'Pure Veg',
+            'non-veg': 'Non-Veg',
+            'jain': 'Jain'
+        };
+
         for (const sub of activeSubscriptions) {
+            const userDietPreference = dietMap[(sub.planType && sub.planType.toLowerCase()) || 'veg'] || 'Pure Veg';
+
             await User.findByIdAndUpdate(sub.customer, {
                 hasActiveSubscription: true,
-                activeSubscription: sub._id
+                activeSubscription: sub._id,
+                dietPreference: userDietPreference
             });
             updatedCount++;
         }
