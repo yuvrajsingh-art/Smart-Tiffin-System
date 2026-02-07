@@ -170,6 +170,7 @@ const ManageSubscription = () => {
                 />
 
                 <SubscriptionCalendar
+                
                     days={days}
                     today={today}
                     selectedDays={selectedDays}
