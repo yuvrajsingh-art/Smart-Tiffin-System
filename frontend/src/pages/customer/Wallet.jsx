@@ -78,15 +78,34 @@ const Wallet = () => {
         }
     };
 
-    const handleSetPin = async (pin) => {
+    const [pinFlow, setPinFlow] = useState('verify');
+    const [oldPinValue, setOldPinValue] = useState('');
+
+    const handleSetPin = async (pinValue) => {
         try {
-            const { data } = await axios.post('/api/customer/wallet/set-pin', { pin });
+            if (isPinSet && pinFlow === 'verify') {
+                await axios.post('/api/customer/wallet/verify-pin', { pin: pinValue });
+                setOldPinValue(pinValue);
+                setPinFlow('set');
+                toast.success("Now enter your new PIN");
+                return;
+            }
+
+            const { data } = await axios.post('/api/customer/wallet/set-pin', {
+                pin: pinValue,
+                oldPin: isPinSet ? oldPinValue : undefined
+            });
+
             if (data.success) {
                 setIsPinSet(true);
-                toast.success('PIN set successfully!');
+                toast.success(isPinSet ? 'PIN updated successfully!' : 'PIN set successfully!');
+                setShowPinModal(false);
+                setPinFlow('verify');
+                setOldPinValue('');
             }
         } catch (error) {
-            throw new Error(error.response?.data?.message || 'Failed to set PIN');
+            toast.error(error.response?.data?.message || 'Operation failed');
+            if (pinFlow === 'verify') throw new Error("Incorrect current PIN");
         }
     };
 
@@ -247,10 +266,13 @@ const Wallet = () => {
 
             <PinModal
                 isOpen={showPinModal}
-                onClose={() => setShowPinModal(false)}
+                onClose={() => {
+                    setShowPinModal(false);
+                    setPinFlow('verify');
+                }}
                 onSuccess={handleSetPin}
-                title={isPinSet ? "Update PIN" : "Set Transaction PIN"}
-                subtitle={isPinSet ? "Change your 4-digit security PIN" : "Choose a 4-digit PIN for security"}
+                title={isPinSet ? (pinFlow === 'verify' ? "Verify Current PIN" : "Setup New PIN") : "Set Transaction PIN"}
+                subtitle={isPinSet ? (pinFlow === 'verify' ? "Enter current 4-digit PIN" : "Enter new 4-digit PIN") : "Choose a 4-digit PIN for security"}
                 isSetting={true}
             />
 
