@@ -64,6 +64,10 @@ const customerSchema = new mongoose.Schema({
     totalSpent: {
         type: Number,
         default: 0
+    },
+    securitySettings: {
+        enhancedEncryption: { type: Boolean, default: false },
+        loginAlerts: { type: Boolean, default: true }
     }
 }, { timestamps: true });
 

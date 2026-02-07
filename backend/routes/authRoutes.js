@@ -19,7 +19,8 @@ const {
     googleAuth,
     getProfile,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    updatePassword
 } = require("../controllers/authcontroller");
 
 // Import authentication middleware
@@ -49,6 +50,9 @@ router.post("/forgot-password", forgotPassword);
 
 // POST /api/auth/reset-password - Verify OTP & Reset
 router.post("/reset-password", resetPassword);
+
+// POST /api/auth/update-password - Update password from profile
+router.post("/update-password", protect, updatePassword);
 
 // =============================================================================
 // PROTECTED ROUTES (Authentication required)

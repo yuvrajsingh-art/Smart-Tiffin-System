@@ -346,6 +346,40 @@ exports.forgotPassword = async (req, res) => {
 };
 
 /**
+ * Update Password (from profile)
+ */
+exports.updatePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect old password" });
+    }
+
+    // Hash and save new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password updated successfully"
+    });
+
+  } catch (error) {
+    logger.error("updatePassword Error:", error);
+    res.status(500).json({ message: "Failed to update password" });
+  }
+};
+
+/**
  * Reset Password - Verify OTP and Set New Password
  */
 exports.resetPassword = async (req, res) => {

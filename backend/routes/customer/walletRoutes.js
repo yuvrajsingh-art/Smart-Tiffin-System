@@ -8,7 +8,8 @@ const {
     setTransactionPin,
     updateWalletSettings,
     getWalletStats,
-    getWalletStatement
+    getWalletStatement,
+    verifyPinEndpoint
 } = require("../../controllers/customer/walletController");
 
 const { protect, customerOnly } = require("../../middleware/authMiddleware.middleware");
@@ -23,6 +24,7 @@ router.post("/add-money", protect, customerOnly, validate('addMoney'), addMoneyT
 
 // PIN & Settings routes
 router.post("/set-pin", protect, customerOnly, setTransactionPin);
+router.post("/verify-pin", protect, customerOnly, verifyPinEndpoint);
 router.post("/update-settings", protect, customerOnly, updateWalletSettings);
 
 module.exports = router;

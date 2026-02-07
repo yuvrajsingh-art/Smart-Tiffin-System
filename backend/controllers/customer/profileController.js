@@ -2,9 +2,12 @@ const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
 const Transaction = require("../../models/transaction.model");
 const Order = require("../../models/order.model");
+const PDFDocument = require("pdfkit");
 const logger = require("../../utils/logger");
+const bcrypt = require("bcryptjs");
 
 const Customer = require("../../models/customer.model");
+const { verifyPin } = require("./walletController");
 
 // Get customer profile data
 exports.getProfile = async (req, res) => {
@@ -306,13 +309,81 @@ exports.getProfileSummary = async (req, res) => {
     }
 };
 
-// Delete account
+// Export all user data as PDF
+exports.exportUserData = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+
+        const user = await User.findById(customerId);
+        const customer = await Customer.findOne({ user: customerId });
+        const subscriptions = await Subscription.find({ customer: customerId });
+        const transactions = await Transaction.find({ customer: customerId }).sort({ createdAt: -1 });
+
+        const doc = new PDFDocument({ margin: 40 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=my-data-${Date.now()}.pdf`);
+        doc.pipe(res);
+
+        // Header
+        doc.rect(0, 0, 612, 100).fill('#2D241E');
+        doc.fillColor('#FFFFFF').fontSize(20).font('Helvetica-Bold').text('MY DATA REPORT', 40, 40);
+        doc.fontSize(10).font('Helvetica').text('Smart Tiffin System - Personal Information Record', 40, 65);
+
+        // Profile Section
+        doc.fillColor('#2D241E').fontSize(14).font('Helvetica-Bold').text('Profile Details', 40, 130);
+        doc.fontSize(10).font('Helvetica').fillColor('#555555');
+        doc.text(`Full Name: ${user.fullName}`, 40, 155);
+        doc.text(`Email: ${user.email}`, 40, 170);
+        doc.text(`Mobile: ${user.mobile}`, 40, 185);
+        doc.text(`Member Since: ${user.createdAt.toLocaleDateString()}`, 40, 200);
+
+        // Subscription History
+        doc.fillColor('#2D241E').fontSize(14).font('Helvetica-Bold').text('Subscription History', 40, 240);
+        let y = 265;
+        subscriptions.forEach((sub, i) => {
+            if (y > 700) { doc.addPage(); y = 50; }
+            doc.fontSize(9).font('Helvetica').fillColor('#555555')
+                .text(`${i + 1}. Plan ID: ${sub.planId} | Status: ${sub.status} | Period: ${sub.startDate.toLocaleDateString()} to ${sub.endDate.toLocaleDateString()}`, 40, y);
+            y += 15;
+        });
+
+        // Wallet Activity (Last 10)
+        doc.fillColor('#2D241E').fontSize(14).font('Helvetica-Bold').text('Recent Wallet Activity', 40, y + 20);
+        y += 45;
+        transactions.slice(0, 10).forEach((tx, i) => {
+            if (y > 700) { doc.addPage(); y = 50; }
+            doc.fontSize(9).font('Helvetica').fillColor('#555555')
+                .text(`${new Date(tx.createdAt).toLocaleDateString()} | ${tx.type.toUpperCase()} | ₹${tx.amount} | ${tx.description}`, 40, y);
+            y += 15;
+        });
+
+        doc.fillColor('#999999').fontSize(8).text('This report contains all personal information stored in our system as per your request.', 40, 750, { align: 'center', width: 512 });
+
+        doc.end();
+
+    } catch (error) {
+        logger.error("exportUserData Error:", error);
+        res.status(500).json({ success: false, message: 'Failed to export data' });
+    }
+};
+
+// Delete account with PIN verification and scrubbing
 exports.deleteAccount = async (req, res) => {
     try {
         const customerId = req.user._id;
-        const { reason } = req.body;
+        const { reason, pin } = req.body;
 
-        // Check for active subscriptions
+        if (!pin) {
+            return res.status(400).json({ success: false, message: 'Transaction PIN is required' });
+        }
+
+        // 1. Verify PIN
+        const pinCheck = await verifyPin(customerId, pin);
+        if (!pinCheck.success) {
+            return res.status(401).json({ success: false, message: pinCheck.message });
+        }
+
+        // 2. Check for active subscriptions
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
             status: 'approved',
@@ -326,17 +397,31 @@ exports.deleteAccount = async (req, res) => {
             });
         }
 
-        // Soft delete - mark as inactive
+        // 3. Scrub and soft-delete
+        // We "Scrub" PII (Personal Identifiable Information) but keep record for finance/audit
+        const scrubbedName = "Deleted User " + customerId.toString().slice(-4);
+        const scrubbedEmail = `deleted_${customerId}@smarttiffin.com`;
+        const scrubbedMobile = "0000000000";
+
         await User.findByIdAndUpdate(customerId, {
+            fullName: scrubbedName,
+            email: scrubbedEmail,
+            mobile: scrubbedMobile,
             status: 'inactive',
             deletedAt: new Date(),
             deletionReason: reason || 'User requested'
         });
 
+        // Also scrub customer profile addresses
+        await Customer.findOneAndUpdate({ user: customerId }, {
+            addresses: [],
+            profileImage: ""
+        });
+
         res.json({
             success: true,
             data: {
-                message: 'Account deleted successfully'
+                message: 'Account deleted and data anonymized successfully'
             }
         });
 
@@ -345,6 +430,38 @@ exports.deleteAccount = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to delete account'
+        });
+    }
+};
+
+// Update security settings
+exports.updateSecuritySettings = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+        const { enhancedEncryption, loginAlerts } = req.body;
+
+        const customer = await Customer.findOneAndUpdate(
+            { user: customerId },
+            {
+                $set: {
+                    'securitySettings.enhancedEncryption': enhancedEncryption,
+                    'securitySettings.loginAlerts': loginAlerts
+                }
+            },
+            { new: true, upsert: true }
+        );
+
+        res.json({
+            success: true,
+            data: customer.securitySettings,
+            message: 'Security settings updated successfully'
+        });
+
+    } catch (error) {
+        logger.error("updateSecuritySettings Error:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update security settings'
         });
     }
 };

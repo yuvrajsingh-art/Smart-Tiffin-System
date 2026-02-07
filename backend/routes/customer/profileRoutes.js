@@ -6,7 +6,9 @@ const {
     updateProfile,
     uploadProfileImage,
     getProfileSummary,
-    deleteAccount
+    deleteAccount,
+    exportUserData,
+    updateSecuritySettings
 } = require("../../controllers/customer/profileController");
 
 const { protect } = require("../../middleware/authMiddleware.middleware");
@@ -14,8 +16,10 @@ const { protect } = require("../../middleware/authMiddleware.middleware");
 // Profile routes
 router.get("/", protect, getProfile);
 router.put("/update", protect, updateProfile);
-router.put("/upload-image", protect, uploadProfileImage);
+router.post("/upload-image", protect, uploadProfileImage);
 router.get("/summary", protect, getProfileSummary);
-router.delete("/delete", protect, deleteAccount);
+router.get("/export-data", protect, exportUserData);
+router.post("/delete-account", protect, deleteAccount);
+router.post("/security-settings", protect, updateSecuritySettings);
 
 module.exports = router;

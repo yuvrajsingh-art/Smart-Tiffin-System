@@ -647,3 +647,39 @@ exports.getWalletStatement = async (req, res) => {
         });
     }
 };
+
+// Helper to verify PIN
+const verifyPin = async (customerId, pin) => {
+    try {
+        const wallet = await CustomerWallet.findOne({ customer: customerId });
+        if (!wallet || !wallet.transactionPin) {
+            return { success: false, message: 'Transaction PIN is not set' };
+        }
+
+        const isMatch = await bcrypt.compare(pin, wallet.transactionPin);
+        if (!isMatch) {
+            return { success: false, message: 'Incorrect Transaction PIN' };
+        }
+
+        return { success: true };
+    } catch (error) {
+        logger.error("verifyPin Error:", error);
+        return { success: false, message: 'PIN verification failed' };
+    }
+};
+
+exports.verifyPin = verifyPin;
+
+// Endpoint for PIN verification
+exports.verifyPinEndpoint = async (req, res) => {
+    try {
+        const result = await verifyPin(req.user._id, req.body.pin);
+        if (result.success) {
+            res.json({ success: true, message: 'PIN verified' });
+        } else {
+            res.status(401).json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Verification error' });
+    }
+};
