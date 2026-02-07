@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const ProfileAvatarCard = ({ name, id, diet, onLogout, onEditAvatar, profileImage }) => {
+const ProfileAvatarCard = ({ name, id, diet, onLogout, onEditAvatar, profileImage, activeTab, setActiveTab }) => {
     return (
         <div className="w-full lg:w-1/3 space-y-4 lg:sticky lg:top-8">
             <div className="glass-panel p-5 rounded-[2rem] border border-white/60 flex flex-col items-center text-center relative overflow-hidden shadow-lg">
@@ -38,19 +38,34 @@ const ProfileAvatarCard = ({ name, id, diet, onLogout, onEditAvatar, profileImag
 
             {/* Quick Menu */}
             <div className="glass-panel p-4 rounded-[1.5rem] border border-white/60 space-y-2">
-                <Link to="/customer/wallet" className="w-full flex items-center justify-between p-2.5 hover:bg-white/50 rounded-lg transition-colors group">
+                <button
+                    onClick={() => setActiveTab('details')}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg transition-colors group ${activeTab === 'details' ? 'bg-orange-50/80 shadow-inner' : 'hover:bg-white/50'}`}
+                >
+                    <div className="flex items-center gap-3">
+                        <span className={`material-symbols-outlined text-xl transition-colors ${activeTab === 'details' ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`}>person</span>
+                        <span className={`font-bold text-xs transition-colors ${activeTab === 'details' ? 'text-[#2D241E]' : 'text-[#2D241E]'}`}>Personal Details</span>
+                    </div>
+                    {activeTab === 'details' && <span className="material-symbols-outlined text-primary text-xs font-black">check</span>}
+                </button>
+
+                <Link to="/customer/wallet" className="w-full flex items-center justify-between p-2.5 hover:bg-white/50 rounded-lg transition-colors group text-left">
                     <div className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-gray-400 group-hover:text-primary text-xl">account_balance_wallet</span>
                         <span className="font-bold text-[#2D241E] text-xs">Wallet Settings</span>
                     </div>
-                    <span className="material-symbols-outlined text-gray-300 text-xs">arrow_forward_ios</span>
+                    <span className="material-symbols-outlined text-gray-300 text-xs text-right">arrow_forward_ios</span>
                 </Link>
-                <button className="w-full flex items-center justify-between p-2.5 hover:bg-white/50 rounded-lg transition-colors group">
+
+                <button
+                    onClick={() => setActiveTab('security')}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg transition-colors group ${activeTab === 'security' ? 'bg-blue-50/80 shadow-inner' : 'hover:bg-white/50'}`}
+                >
                     <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-gray-400 group-hover:text-primary text-xl">shield</span>
-                        <span className="font-bold text-[#2D241E] text-xs">Security & Privacy</span>
+                        <span className={`material-symbols-outlined text-xl transition-colors ${activeTab === 'security' ? 'text-blue-500' : 'text-gray-400 group-hover:text-primary'}`}>shield</span>
+                        <span className={`font-bold text-xs transition-colors ${activeTab === 'security' ? 'text-[#2D241E]' : 'text-[#2D241E]'}`}>Security & Privacy</span>
                     </div>
-                    <span className="material-symbols-outlined text-gray-300 text-xs">arrow_forward_ios</span>
+                    {activeTab === 'security' && <span className="material-symbols-outlined text-blue-500 text-xs font-black">check</span>}
                 </button>
                 <button
                     onClick={onLogout}
