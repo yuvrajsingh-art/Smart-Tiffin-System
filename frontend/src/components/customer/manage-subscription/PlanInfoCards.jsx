@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PlanInfoCards = ({ selectedDaysCount, onUpgrade, onCancel, expiryDate }) => {
+const PlanInfoCards = ({ selectedDaysCount, onUpgrade, onCancel, onSave, expiryDate, loading }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
@@ -45,8 +45,19 @@ const PlanInfoCards = ({ selectedDaysCount, onUpgrade, onCancel, expiryDate }) =
                         </div>
                     </div>
                 </div>
-                <button onClick={() => alert('Changes Saved!')} className="w-full py-2 bg-[#2D241E] text-white rounded-xl font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all text-xs">
-                    Save Changes
+                <button
+                    onClick={onSave}
+                    disabled={loading}
+                    className="w-full py-2 bg-[#2D241E] text-white rounded-xl font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all text-xs disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {loading ? (
+                        <>
+                            <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            Saving...
+                        </>
+                    ) : (
+                        'Save Changes'
+                    )}
                 </button>
             </div>
 

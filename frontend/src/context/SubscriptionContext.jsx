@@ -33,7 +33,9 @@ export const SubscriptionProvider = ({ children }) => {
                     expiryDate: new Date(subData.endDate),
                     mealTypes: subData.mealTypes,
                     lunchTime: subData.lunchTime,
-                    dinnerTime: subData.dinnerTime
+                    dinnerTime: subData.dinnerTime,
+                    pausedDates: subData.pausedDates,
+                    upgradePlans: data.data.upgradePlans || []
                 });
             } else {
                 setSubscription(null);

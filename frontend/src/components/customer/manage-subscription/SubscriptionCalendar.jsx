@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SubscriptionCalendar = ({ days, today, selectedDays, toggleDay }) => {
+const SubscriptionCalendar = ({ days, today, selectedDays, toggleDay, isCutoffExceeded }) => {
     return (
         <div className="glass-panel p-5 rounded-[2rem] border border-white/60 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-5 opacity-5 pointer-events-none">
@@ -21,26 +21,34 @@ const SubscriptionCalendar = ({ days, today, selectedDays, toggleDay }) => {
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
                         <div key={`${d}-${i}`} className="text-center text-[10px] font-black text-gray-400 uppercase py-1">{d}</div>
                     ))}
-                    {days.map(day => (
-                        <button
-                            key={day}
-                            onClick={() => toggleDay(day)}
-                            className={`
-                                h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-200 relative group
-                                ${selectedDays.includes(day)
-                                    ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md shadow-red-500/30'
-                                    : 'bg-white/40 text-[#5C4D42] hover:bg-white border border-white/50 hover:border-white hover:shadow-sm'
-                                }
-                            `}
-                        >
-                            {day}
-                            {selectedDays.includes(day) && (
-                                <span className="absolute top-0.5 right-0.5 size-2.5 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                    <span className="material-symbols-outlined text-[7px] text-red-500 font-bold">close</span>
-                                </span>
-                            )}
-                        </button>
-                    ))}
+                    {days.map(day => {
+                        const isPast = day < today.getDate() && today.getMonth() === new Date().getMonth();
+                        const isTomorrow = day === today.getDate() + 1 && today.getMonth() === new Date().getMonth();
+                        const isDisabled = isPast || (isTomorrow && isCutoffExceeded);
+
+                        return (
+                            <button
+                                key={day}
+                                onClick={() => toggleDay(day)}
+                                disabled={isDisabled}
+                                className={`
+                                    h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-200 relative group
+                                    ${isDisabled ? 'opacity-30 cursor-not-allowed bg-gray-100 text-gray-400' : ''}
+                                    ${selectedDays.includes(day)
+                                        ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-md shadow-red-500/30'
+                                        : !isDisabled ? 'bg-white/40 text-[#5C4D42] hover:bg-white border border-white/50 hover:border-white hover:shadow-sm' : ''
+                                    }
+                                `}
+                            >
+                                {day}
+                                {selectedDays.includes(day) && (
+                                    <span className="absolute top-0.5 right-0.5 size-2.5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                        <span className="material-symbols-outlined text-[7px] text-red-500 font-bold">close</span>
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>

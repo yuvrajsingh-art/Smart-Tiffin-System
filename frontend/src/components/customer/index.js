@@ -20,3 +20,5 @@ export { default as ProfileAvatarCard } from './ProfileAvatarCard';
 export { default as ProfileDetailsForm } from './ProfileDetailsForm';
 export { default as RatingForm } from './RatingForm';
 export { default as FeedbackHistoryList } from './FeedbackHistoryList';
+export { default as InvoiceModal } from './InvoiceModal';
+export { default as MealTicketModal } from './MealTicketModal';

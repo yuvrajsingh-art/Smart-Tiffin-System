@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/UserContext';
+import { toast } from 'react-hot-toast';
 
 // Modular Components
 import SubscriptionCalendar from '../../components/customer/manage-subscription/SubscriptionCalendar';
@@ -11,6 +13,7 @@ import PaymentModal from '../../components/common/PaymentModal';
 
 const ManageSubscription = () => {
     const { hasActiveSubscription, subscription, fetchSubscription } = useSubscription();
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     // Calendar & Selection Logic
@@ -38,6 +41,42 @@ const ManageSubscription = () => {
             setSelectedDays(pausedDayNumbers);
         }
     }, [subscription]);
+
+    const handlePauseSubscription = async () => {
+        setLoadingPause(true);
+        try {
+            // Convert selected day numbers back to dates for the current month
+            const year = today.getFullYear();
+            const month = today.getMonth();
+
+            const pausedDates = selectedDays.map(day => {
+                const date = new Date(year, month, day);
+                // Adjust for timezone offset to avoid previous day issues
+                date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                return date.toISOString().split('T')[0];
+            });
+
+            const { data } = await axios.put('/api/customer/subscription/pause', {
+                pausedDates
+            });
+
+            if (data.success) {
+                setSuccessData({
+                    title: 'Subscription Updated',
+                    sub: data.data.message || 'Your schedule has been updated.'
+                });
+                setShowSuccessModal(true);
+                fetchSubscription();
+            }
+        } catch (error) {
+            console.error("Pause update failed:", error);
+            const msg = error.response?.data?.message || "Failed to update subscription";
+            // Use toast
+            toast.error(msg);
+        } finally {
+            setLoadingPause(false);
+        }
+    };
 
     const toggleDay = (day) => {
         if (day < today.getDate() && today.getMonth() === new Date().getMonth()) return;
@@ -68,7 +107,8 @@ const ManageSubscription = () => {
     const handlePaymentSuccess = async (details) => {
         try {
             const { data } = await axios.put('/api/customer/subscription/upgrade', {
-                newPlanName: selectedUpgradePlan?.name || 'Premium Non-Veg'
+                planId: selectedUpgradePlan?.id, // Send ID, not name
+                paymentDetails: details
             });
             if (data.success) {
                 setShowPaymentModal(false);
@@ -105,10 +145,18 @@ const ManageSubscription = () => {
             </div>
 
             <div className="flex flex-col gap-1 mb-6 pt-4 max-w-5xl mx-auto">
-                <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit">
-                    <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
-                </Link>
-                <h1 className="text-xl font-black text-[#2D241E]">Manage Subscription</h1>
+                <div className="flex justify-between items-end">
+                    <div>
+                        <Link to="/customer/dashboard" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1 w-fit">
+                            <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Dashboard
+                        </Link>
+                        <h1 className="text-xl font-black text-[#2D241E]">Manage Subscription</h1>
+                    </div>
+                    <Link to="/customer/history" className="text-xs font-bold text-[#5C4D42] bg-white/50 hover:bg-white px-3 py-2 rounded-xl border border-white/60 transition-all flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg">history</span>
+                        View History
+                    </Link>
+                </div>
             </div>
 
             <div className="flex flex-col gap-6 max-w-5xl mx-auto">
@@ -116,7 +164,9 @@ const ManageSubscription = () => {
                     selectedDaysCount={selectedDays.length}
                     onUpgrade={() => setShowUpgradeModal(true)}
                     onCancel={() => setShowCancelModal(true)}
+                    onSave={handlePauseSubscription}
                     expiryDate={subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}
+                    loading={loadingPause}
                 />
 
                 <SubscriptionCalendar
@@ -124,6 +174,7 @@ const ManageSubscription = () => {
                     today={today}
                     selectedDays={selectedDays}
                     toggleDay={toggleDay}
+                    isCutoffExceeded={new Date().getHours() >= 20}
                 />
             </div>
 
@@ -133,10 +184,16 @@ const ManageSubscription = () => {
                 handleCancelSubscription={handleCancelSubscription}
                 showUpgradeModal={showUpgradeModal}
                 setShowUpgradeModal={setShowUpgradeModal}
-                initiateUpgradePayment={(amt) => { setUpgradeAmount(amt); setShowUpgradeModal(false); setShowPaymentModal(true); }}
+                initiateUpgradePayment={(amt, plan) => {
+                    setUpgradeAmount(amt);
+                    setSelectedUpgradePlan(plan);
+                    setShowUpgradeModal(false);
+                    setShowPaymentModal(true);
+                }}
                 showSuccessModal={showSuccessModal}
                 setShowSuccessModal={setShowSuccessModal}
                 successData={successData}
+                upgradePlans={subscription?.upgradePlans || []}
             />
 
             <PaymentModal
@@ -145,6 +202,9 @@ const ManageSubscription = () => {
                 amount={upgradeAmount}
                 onSuccess={handlePaymentSuccess}
                 title="Pay for Upgrade"
+                showWallet={true}
+                walletBalance={user?.walletBalance || 0}
+                showPayLater={true}
             />
         </div>
     );

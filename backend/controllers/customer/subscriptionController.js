@@ -43,7 +43,8 @@ exports.getSubscriptionDetails = async (req, res) => {
             status: activeSubscription.status,
             provider: activeSubscription.provider?.fullName || "Provider",
             mealTypes: activeSubscription.mealTypes || ["lunch", "dinner"],
-            daysRemaining: Math.ceil((new Date(activeSubscription.endDate) - new Date()) / (1000 * 60 * 60 * 24))
+            daysRemaining: Math.ceil((new Date(activeSubscription.endDate) - new Date()) / (1000 * 60 * 60 * 24)),
+            pausedDates: activeSubscription.pausedDates || []
         };
 
         // Available upgrade plans
@@ -86,6 +87,7 @@ exports.getSubscriptionDetails = async (req, res) => {
 };
 
 // Pause/unpause specific days
+// Pause/unpause specific days
 exports.managePausedDays = async (req, res) => {
     try {
         const customerId = req.user._id;
@@ -97,6 +99,60 @@ exports.managePausedDays = async (req, res) => {
                 message: 'Invalid paused dates format'
             });
         }
+
+        // Validate dates are in the future
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const validDates = pausedDates.filter(dateStr => {
+            const d = new Date(dateStr);
+            d.setHours(0, 0, 0, 0);
+            return d > today;
+        });
+
+        if (validDates.length !== pausedDates.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'You can only pause future dates.'
+            });
+        }
+
+        // --- REAL LIFE ENHANCEMENT: PAUSE LIMITS ---
+
+        // 1. Cut-off Time Check (8 PM)
+        // If it's after 8 PM, you cannot pause for "Tomorrow"
+        const currentHour = new Date().getHours();
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        if (currentHour >= 20) {
+            const isPausingTomorrow = validDates.some(dateStr => {
+                const d = new Date(dateStr);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime() === tomorrow.getTime();
+            });
+
+            if (isPausingTomorrow) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cut-off time exceeded. You cannot pause for tomorrow after 8 PM.'
+                });
+            }
+        }
+
+        // 2. Max Pause Limit (5 Days)
+        // Check total paused days (existing + new unique ones) or just total selected
+        // Since validDates REPLACES the old list, we simply check its length.
+        const MAX_PAUSE_LIMIT = 5;
+        if (validDates.length > MAX_PAUSE_LIMIT) {
+            return res.status(400).json({
+                success: false,
+                message: `You can pause a maximum of ${MAX_PAUSE_LIMIT} days per month.`
+            });
+        }
+
+        // -------------------------------------------
 
         // Get active subscription
         const subscription = await Subscription.findOne({
@@ -112,35 +168,29 @@ exports.managePausedDays = async (req, res) => {
             });
         }
 
+        // Calculate newly added paused days (to calculate refund)
+        // We need to know which dates are NEWLY paused to issue refund for them
+        const previousPausedDates = subscription.pausedDates || [];
+        const newPausedDays = validDates.filter(d => !previousPausedDates.includes(d));
+
         // Update paused dates
-        subscription.pausedDates = pausedDates;
+        subscription.pausedDates = validDates;
         await subscription.save();
 
-        // Calculate refund amount
-        const refundAmount = pausedDates.length * 80;
+        // Calculate refund amount for NEWLY paused days only
+        const refundAmount = newPausedDays.length * 80;
 
-        // Add refund to wallet if there are paused days
+        // Create PENDING transaction for refund (Requires Admin Approval)
         if (refundAmount > 0) {
-            let wallet = await CustomerWallet.findOne({ customer: customerId });
-            if (!wallet) {
-                wallet = new CustomerWallet({
-                    customer: customerId,
-                    balance: 0
-                });
-            }
-
-            wallet.balance += refundAmount;
-            await wallet.save();
-
-            // Create transaction record
             const transaction = new Transaction({
                 customer: customerId,
                 type: 'credit',
                 transactionType: 'Refund',
                 amount: refundAmount,
-                description: `Refund for ${pausedDates.length} paused days`,
-                referenceId: `REF-${Date.now()}`,
-                status: 'Success'
+                description: `Refund for ${newPausedDays.length} days paused. Pending Approval.`,
+                referenceId: `REF-PAUSE-${Date.now()}`,
+                status: 'Pending', // Marked as Pending
+                subscriptionId: subscription._id
             });
             await transaction.save();
         }
@@ -148,13 +198,16 @@ exports.managePausedDays = async (req, res) => {
         res.json({
             success: true,
             data: {
-                pausedDays: pausedDates.length,
+                pausedDays: validDates.length,
                 refundAmount,
-                message: 'Paused days updated successfully'
+                message: refundAmount > 0
+                    ? `Paused successfully. Refund of ₹${refundAmount} will be credited after Admin approval.`
+                    : 'Subscription updated successfully.'
             }
         });
 
     } catch (error) {
+        console.error("Manage Paused Days Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to update paused days'
@@ -207,6 +260,27 @@ exports.upgradeSubscription = async (req, res) => {
         // Calculate upgrade amount
         const upgradeAmount = newPlan.price - (currentSubscription.totalAmount || 2400);
 
+        // --- PAYMENT PROCESSING ---
+        const method = paymentDetails?.method?.toUpperCase() || 'UPI';
+        let transactionStatus = 'Success';
+
+        if (method === 'WALLET') {
+            const wallet = await CustomerWallet.findOne({ customer: customerId });
+            if (!wallet || wallet.balance < upgradeAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient wallet balance. You need ₹${upgradeAmount - (wallet?.balance || 0)} more.`
+                });
+            }
+            // Deduct balance
+            wallet.balance -= upgradeAmount;
+            wallet.totalSpent = (wallet.totalSpent || 0) + upgradeAmount;
+            await wallet.save();
+        } else if (method === 'PAY_LATER') {
+            transactionStatus = 'Pending';
+        }
+        // For UPI/CARD verify transaction ID if needed, but assuming frontend validated
+
         // Update subscription
         currentSubscription.planName = newPlan.name;
         currentSubscription.planType = newPlan.type;
@@ -218,11 +292,12 @@ exports.upgradeSubscription = async (req, res) => {
         const transaction = new Transaction({
             customer: customerId,
             type: 'debit',
-            transactionType: 'Subscription Purchase',
+            transactionType: 'Subscription Upgrade', // More specific
             amount: upgradeAmount,
-            description: `Subscription upgraded to ${newPlan.name}`,
-            referenceId: `UPG-${Date.now()}`,
-            status: 'Success'
+            description: `Subscription upgraded to ${newPlan.name} via ${method}`,
+            referenceId: method === 'UPI' ? paymentDetails.transactionId : (method === 'WALLET' ? `UPG-WAL-${Date.now()}` : `UPG-PAYL-${Date.now()}`),
+            status: transactionStatus,
+            paymentMethod: method
         });
         await transaction.save();
 
@@ -386,6 +461,7 @@ exports.purchaseSubscription = async (req, res) => {
         // Normalizing payment method check to be case insensitive if needed, but current frontend sends 'UPI' or 'wallet'
         const isUpi = paymentMethod.toLowerCase() === 'upi';
         const isWallet = paymentMethod.toLowerCase() === 'wallet';
+        const isPayLater = paymentMethod.toUpperCase() === 'PAY_LATER';
 
         if (isUpi && (!transactionId || transactionId.length !== 12)) {
             return res.status(400).json({
@@ -443,6 +519,9 @@ exports.purchaseSubscription = async (req, res) => {
             }
             wallet.balance -= totalAmount;
             wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+        } else if (isPayLater) {
+            // Skip payment processing for Pay Later
+            logger.info(`Pay Later selected for customer ${customerId}`);
         } else {
             // 1. UPI / External flow (Direct Purchase) -- RESTRICTED TO DUMMY BANK
 
@@ -526,9 +605,9 @@ exports.purchaseSubscription = async (req, res) => {
             lunchTime,
             dinnerTime,
             deliveryAddress,
-            paymentMethod: isWallet ? 'Wallet' : 'UPI',
-            transactionId: isWallet ? null : transactionId,
-            paymentStatus: "Paid",
+            paymentMethod: isWallet ? 'Wallet' : (isPayLater ? 'Pay Later' : 'UPI'),
+            transactionId: isWallet || isPayLater ? null : transactionId,
+            paymentStatus: isPayLater ? "Pending" : "Paid",
             status: "approved",
             adminApproval: "approved"
         });
@@ -559,7 +638,7 @@ exports.purchaseSubscription = async (req, res) => {
             amount: totalAmount,
             description: `Subscription for ${planName} at ${store.mess_name}`,
             referenceId: transactionId || `SUB-${subscription._id.toString().slice(-6)}`,
-            status: 'Success',
+            status: isPayLater ? 'Pending' : 'Success',
             subscriptionId: subscription._id,
             // Add Bank Details if paid via external bank
             bankDetails: (!isWallet && sourceBank) ? {

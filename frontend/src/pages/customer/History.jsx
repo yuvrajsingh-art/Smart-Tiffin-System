@@ -9,7 +9,9 @@ import {
 } from '../../components/common';
 import {
     HistoryStats,
-    HistoryList
+    HistoryList,
+    InvoiceModal,
+    MealTicketModal
 } from '../../components/customer';
 import { HistorySkeleton } from '../../components/common';
 
@@ -22,15 +24,19 @@ const History = () => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState({
         Meals: [],
-        Wallet: [],
+        Transactions: [],
         Plans: []
     });
 
     const [stats, setStats] = useState({
         Meals: [],
-        Wallet: [],
+        Transactions: [],
         Plans: []
     });
+
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const [selectedMeal, setSelectedMeal] = useState(null);
+    const [user] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
 
     const fetchData = async (tab, currentFilter) => {
         if (!token) return;
@@ -38,7 +44,7 @@ const History = () => {
         try {
             const endpointMap = {
                 'Meals': `/api/customer/history/meals${currentFilter !== 'All' ? `?filter=${currentFilter}` : ''}`,
-                'Wallet': '/api/customer/history/wallet',
+                'Transactions': '/api/customer/history/wallet',
                 'Plans': '/api/customer/history/plans'
             };
 
@@ -51,7 +57,7 @@ const History = () => {
                 setData(prev => ({
                     ...prev,
                     [tab]: tab === 'Meals' ? fetchedData.mealsHistory :
-                        tab === 'Wallet' ? fetchedData.walletHistory :
+                        tab === 'Transactions' ? fetchedData.walletHistory :
                             fetchedData.plansHistory
                 }));
                 setStats(prev => ({
@@ -95,7 +101,7 @@ const History = () => {
 
     const tabs = [
         { name: 'Meals', icon: 'restaurant_menu' },
-        { name: 'Wallet', icon: 'account_balance_wallet' },
+        { name: 'Transactions', icon: 'receipt_long' },
         { name: 'Plans', icon: 'settings_suggest' }
     ];
 
@@ -149,10 +155,28 @@ const History = () => {
                             )}
                         </div>
 
-                        <HistoryList activeTab={activeTab} data={data[activeTab]} />
+                        <HistoryList
+                            activeTab={activeTab}
+                            data={data[activeTab]}
+                            onViewInvoice={(transaction) => setSelectedTransaction(transaction)}
+                            onViewMeal={(meal) => setSelectedMeal(meal)}
+                        />
                     </div>
                 </>
             )}
+
+            <InvoiceModal
+                isOpen={!!selectedTransaction}
+                onClose={() => setSelectedTransaction(null)}
+                transaction={selectedTransaction}
+                user={user}
+            />
+
+            <MealTicketModal
+                isOpen={!!selectedMeal}
+                onClose={() => setSelectedMeal(null)}
+                meal={selectedMeal}
+            />
         </div>
     );
 };

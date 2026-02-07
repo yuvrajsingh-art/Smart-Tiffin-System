@@ -23,7 +23,6 @@ exports.getMealsHistory = async (req, res) => {
 
         // Get orders with pagination
         const orders = await Order.find(filterQuery)
-            .populate('menu', 'name mainDish image mealType')
             .populate('provider', 'fullName')
             .sort({ orderDate: -1 })
             .skip(skip)
@@ -51,14 +50,16 @@ exports.getMealsHistory = async (req, res) => {
                 });
             }
 
+            const menuItem = order.menuItems && order.menuItems.length > 0 ? order.menuItems[0] : null;
+
             return {
                 id: order._id,
                 date: dateString,
-                type: order.menu?.mealType === 'lunch' ? 'Lunch' : 'Dinner',
-                item: order.menu?.name || order.menu?.mainDish || 'Special Thali',
+                type: order.mealType || (menuItem?.mealType === 'lunch' ? 'Lunch' : 'Dinner'),
+                item: menuItem?.name || 'Standard Meal',
                 mess: order.provider?.fullName || 'Provider',
                 status: order.status === 'delivered' ? 'Delivered' : order.status === 'cancelled' ? 'Skipped' : 'Pending',
-                icon: order.status === 'cancelled' ? 'block' : (order.menu?.mealType === 'lunch' ? 'lunch_dining' : 'dinner_dining'),
+                icon: order.status === 'cancelled' ? 'block' : (order.mealType?.toLowerCase() === 'lunch' ? 'lunch_dining' : 'dinner_dining'),
                 orderId: order.orderNumber || `#ST-${order._id.toString().slice(-4)}`
             };
         });
@@ -108,8 +109,17 @@ exports.getWalletHistory = async (req, res) => {
         const { page = 1, limit = 20 } = req.query;
         const skip = (page - 1) * limit;
 
-        // Get transactions
+        // Get transactions with populated details
         const transactions = await Transaction.find({ customer: customerId })
+            .populate({
+                path: 'orderId',
+                select: 'orderNumber menuItems mealType'
+            })
+            .populate({
+                path: 'subscriptionId',
+                select: 'planName provider',
+                populate: { path: 'provider', select: 'fullName' }
+            })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
@@ -133,35 +143,39 @@ exports.getWalletHistory = async (req, res) => {
                 });
             }
 
-            // Map transaction types to frontend format
-            const typeMap = {
-                'credit': 'Credit',
-                'debit': 'Debit'
-            };
-
-            const iconMap = {
-                'Money added to wallet': 'add_card',
-                'Refund for': 'account_balance_wallet',
-                'Subscription upgraded': 'upgrade',
-                'Guest meal': 'group'
-            };
-
+            // Determine Title and Icon based on properties
+            let title = transaction.description || 'Transaction';
+            let subtitle = transaction.referenceId;
             let icon = 'payments';
-            for (const [key, value] of Object.entries(iconMap)) {
-                if (transaction.description?.includes(key)) {
-                    icon = value;
-                    break;
-                }
+
+            if (transaction.orderId) {
+                const menuItem = transaction.orderId.menuItems && transaction.orderId.menuItems.length > 0 ? transaction.orderId.menuItems[0] : null;
+                title = `Order: ${menuItem?.name || transaction.orderId.mealType || 'Meal'}`;
+                subtitle = transaction.orderId.orderNumber;
+                icon = 'restaurant';
+            } else if (transaction.subscriptionId) {
+                title = `Subscription: ${transaction.subscriptionId.planName}`;
+                subtitle = transaction.subscriptionId.provider?.fullName || 'Provider';
+                icon = 'card_membership';
+            } else if (transaction.transactionType === 'Wallet Topup') {
+                title = 'Wallet Topup';
+                icon = 'add_card';
+            } else if (transaction.transactionType === 'Refund') {
+                title = 'Refund Processed';
+                icon = 'currency_exchange';
             }
 
             return {
                 id: transaction._id,
                 date: dateString,
-                title: transaction.description || 'Transaction',
-                amount: `${transaction.type === 'credit' ? '+' : '-'}₹${transaction.amount.toLocaleString()}`,
-                type: typeMap[transaction.type] || 'Transaction',
-                status: transaction.status === 'completed' ? 'Success' : 'Pending',
-                icon
+                title: title,
+                subtitle: subtitle,
+                amount: transaction.amount,
+                type: transaction.type === 'credit' ? 'Credit' : 'Debit',
+                status: transaction.status,
+                icon,
+                isPending: transaction.status === 'Pending',
+                isFailed: transaction.status === 'Failed'
             };
         });
 

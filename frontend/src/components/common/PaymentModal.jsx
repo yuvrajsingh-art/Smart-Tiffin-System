@@ -4,7 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import axios from 'axios';
 import { RazorpayMock } from './index';
 
-const PaymentModal = ({ isOpen, onClose, amount, onSuccess, title = "Complete Payment", initialMethod = 'UPI' }) => {
+const PaymentModal = ({ isOpen, onClose, amount, onSuccess, title = "Complete Payment", initialMethod = 'UPI', showWallet = false, walletBalance = 0, showPayLater = true }) => {
     // Default 'online' to 'UPI' if passed from unified selection
     const [paymentMethod, setPaymentMethod] = useState(initialMethod === 'online' ? 'UPI' : initialMethod);
 
@@ -152,21 +152,67 @@ const PaymentModal = ({ isOpen, onClose, amount, onSuccess, title = "Complete Pa
                             <div className="h-px bg-gray-200 flex-1"></div>
                         </div>
 
+
+                        {/* Wallet Option */}
+                        {showWallet && (
+                            <button
+                                onClick={() => {
+                                    if (walletBalance >= amount) {
+                                        setPaymentMethod('WALLET');
+                                        setShowConfirmation(true);
+                                    }
+                                }}
+                                disabled={processing || walletBalance < amount}
+                                className={`flex items-center gap-3 px-6 py-3 rounded-xl border-2 transition-all group w-full ${walletBalance >= amount ? 'border-dashed border-gray-200 hover:border-green-300 hover:bg-green-50/50' : 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'}`}
+                            >
+                                <span className="material-symbols-outlined text-gray-400 group-hover:text-green-500">account_balance_wallet</span>
+                                <div className="text-left flex-1">
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-[10px] font-black text-[#2D241E] uppercase tracking-tight group-hover:text-green-600">Smart Wallet</p>
+                                        <span className={`text-[10px] font-bold ${walletBalance >= amount ? 'text-green-600' : 'text-red-400'}`}>₹{walletBalance}</span>
+                                    </div>
+                                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
+                                        {walletBalance >= amount ? 'Instant Payment' : 'Insufficient Balance'}
+                                    </p>
+                                </div>
+                            </button>
+                        )}
+
                         {/* Secondary Option: Other Methods */}
-                        <button
-                            onClick={() => {
-                                setPaymentMethod('CARD');
-                                setShowConfirmation(true);
-                            }}
-                            disabled={processing}
-                            className="flex items-center gap-3 px-6 py-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
-                        >
-                            <span className="material-symbols-outlined text-gray-400 group-hover:text-blue-500">credit_card</span>
-                            <div className="text-left">
-                                <p className="text-[10px] font-black text-[#2D241E] uppercase tracking-tight group-hover:text-blue-600">Cards & Netbanking</p>
-                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Secure Razorpay Gateway</p>
-                            </div>
-                        </button>
+                        <div className="grid grid-cols-2 gap-3 w-full">
+                            <button
+                                onClick={() => {
+                                    setPaymentMethod('CARD');
+                                    setShowConfirmation(true);
+                                }}
+                                disabled={processing}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+                            >
+                                <span className="material-symbols-outlined text-gray-400 group-hover:text-blue-500">credit_card</span>
+                                <div className="text-left">
+                                    <p className="text-[10px] font-black text-[#2D241E] uppercase tracking-tight group-hover:text-blue-600">Online</p>
+                                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Cards/Netbanking</p>
+                                </div>
+                            </button>
+
+                            {/* Pay Later Option */}
+                            {showPayLater && (
+                                <button
+                                    onClick={() => {
+                                        setPaymentMethod('PAY_LATER');
+                                        setShowConfirmation(true);
+                                    }}
+                                    disabled={processing}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-300 hover:bg-orange-50/50 transition-all group"
+                                >
+                                    <span className="material-symbols-outlined text-gray-400 group-hover:text-orange-500">avg_time</span>
+                                    <div className="text-left">
+                                        <p className="text-[10px] font-black text-[#2D241E] uppercase tracking-tight group-hover:text-orange-600">Pay Later</p>
+                                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Unpaid Bill</p>
+                                    </div>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     // Confirmation View
