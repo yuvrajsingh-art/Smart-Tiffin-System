@@ -15,6 +15,12 @@ exports.getLiveTracking = async (req, res) => {
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
 
+        // DEBUG LOGGING
+        logger.info(`Tracking Request for ${customerId}`, {
+            rangeStart: today.toISOString(),
+            rangeEnd: tomorrow.toISOString()
+        });
+
         // Find today's active order (subscription or guest)
         const activeOrder = await Order.findOne({
             customer: customerId,
@@ -24,6 +30,13 @@ exports.getLiveTracking = async (req, res) => {
             path: 'subscription',
             populate: { path: 'provider', select: 'fullName' }
         }).populate('provider', 'fullName mobile').populate('deliveryPartner', 'fullName mobile');
+
+        logger.info("Tracking Result", {
+            found: !!activeOrder,
+            orderId: activeOrder?._id,
+            status: activeOrder?.status,
+            orderDate: activeOrder?.orderDate
+        });
 
         if (!activeOrder) {
             return res.status(404).json({
@@ -70,7 +83,11 @@ exports.getLiveTracking = async (req, res) => {
                 mealType: activeOrder.mealType || "Lunch"
             },
             provider: activeOrder.provider?.fullName || "Provider",
-            paymentStatus: activeOrder.paymentStatus || "Paid"
+            paymentStatus: activeOrder.paymentStatus || "Paid",
+            amount: activeOrder.amount,
+            paymentMethod: activeOrder.paymentMethod,
+            orderType: activeOrder.orderType,
+            quantity: activeOrder.quantity
         };
 
         res.json({

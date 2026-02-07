@@ -109,11 +109,39 @@ const Track = () => {
 
                 {/* header */}
                 <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+
                     <div>
-                        <h1 className="text-2xl font-black text-[#2D241E]">Live Tracking</h1>
-                        <p className="text-sm text-[#5C4D42] font-medium opacity-60">Order #{order.orderNumber}</p>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-black text-[#2D241E]">Live Tracking</h1>
+                            {order.orderType === 'guest' ? (
+                                <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider rounded-md border border-purple-200">
+                                    Guest Order
+                                </span>
+                            ) : (
+                                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded-md border border-orange-200">
+                                    Subscription
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-sm text-[#5C4D42] font-medium opacity-60">Order #{order.orderNumber} • {order.quantity} Item{order.quantity > 1 ? 's' : ''}</p>
                     </div>
                 </div>
+
+                {/* COD ALERT - Only for Pending Cash Orders */}
+                {order.paymentStatus === 'Pending' && order.paymentMethod === 'Cash' && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl shadow-sm animate-[pulse_3s_infinite]">
+                        <div className="flex items-start">
+                            <span className="material-symbols-outlined text-yellow-600 mr-3">payments</span>
+                            <div>
+                                <h3 className="font-bold text-yellow-800">Cash Payment Pending</h3>
+                                <p className="text-sm text-yellow-700 mt-0.5">
+                                    Amount to Pay: <span className="font-black text-lg">₹{order.amount}</span>
+                                </p>
+                                <p className="text-xs text-yellow-600 mt-1 opacity-80">Please keep cash ready for the delivery partner.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 1. DASHBOARD STYLE TRACKER CARD */}
                 <section className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden group border border-white/60 shadow-[0_20px_40px_-10px_rgba(255,87,36,0.1)]">
