@@ -1,72 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProviderSidebar from "../../components/ui/Provider/ProviderSidebar";
 import { FaMapMarkerAlt, FaClock, FaPhone, FaCheck, FaTruck, FaUtensils } from 'react-icons/fa';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
 import StatusCard from '../../components/ui/Provider/DelieveryStatus.jsx/StatusCard';
 import FilterTabs from '../../components/ui/Provider/DelieveryStatus.jsx/FilterTabs';
 import ProviderDeliveryCards from '../../components/ui/Provider/DelieveryStatus.jsx/ProviderDeliveryCards';
+import ProviderApi from '../../services/ProviderApi';
 
 
 function DeliveryStatus() {
-    const [deliveries] = useState([
-        {
-            id: 1,
-            orderId: 'ORD001',
-            customer: 'Rahul Sharma',
-            phone: '+91 9876543210',
-            address: 'Sector 15, Noida, UP',
-            items: ['Lunch Special', 'Extra Roti'],
-            status: 'preparing',
-            orderTime: '12:30 PM',
-            estimatedDelivery: '1:15 PM',
-            rider: null,
-            amount: 85
-        },
-        {
-            id: 2,
-            orderId: 'ORD002',
-            customer: 'Priya Singh',
-            phone: '+91 9876543211',
-            address: 'Sector 22, Gurgaon, HR',
-            items: ['Dinner Special'],
-            status: 'out_for_delivery',
-            orderTime: '7:45 PM',
-            estimatedDelivery: '8:30 PM',
-            rider: 'Suresh Kumar',
-            riderPhone: '+91 9876543220',
-            amount: 70
-        },
-        {
-            id: 3,
-            orderId: 'ORD003',
-            customer: 'Amit Kumar',
-            phone: '+91 9876543212',
-            address: 'Connaught Place, Delhi',
-            items: ['Lunch Special', 'Curd'],
-            status: 'delivered',
-            orderTime: '1:15 PM',
-            estimatedDelivery: '2:00 PM',
-            deliveredTime: '1:55 PM',
-            rider: 'Rajesh Yadav',
-            riderPhone: '+91 9876543221',
-            amount: 90
-        },
-        {
-            id: 4,
-            orderId: 'ORD004',
-            customer: 'Sneha Patel',
-            phone: '+91 9876543213',
-            address: 'Bandra West, Mumbai, MH',
-            items: ['Dinner Special', 'Extra Dal'],
-            status: 'ready_for_pickup',
-            orderTime: '8:00 PM',
-            estimatedDelivery: '8:45 PM',
-            rider: null,
-            amount: 80
-        }
-    ]);
-
+    const [deliveries, setDeliveries] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+
+    useEffect(() => {
+        fetchDeliveries();
+    }, []);
+
+    const fetchDeliveries = async () => {
+        try {
+            const response = await ProviderApi.get('/provider-kds/kds-1');
+            console.log('KDS Response:', response.data);
+            if (response.data && response.data.data) {
+                const allOrders = [
+                    ...response.data.data.justIn.map(o => ({ ...o, status: 'preparing' })),
+                    ...response.data.data.preparing.map(o => ({ ...o, status: 'preparing' })),
+                    ...response.data.data.ready.map(o => ({ ...o, status: 'ready_for_pickup' })),
+                    ...response.data.data.dispatched.map(o => ({ ...o, status: 'out_for_delivery' }))
+                ];
+                
+                const formattedDeliveries = allOrders.map(order => ({
+                    id: order._id,
+                    orderId: order.orderNo,
+                    customer: order.customerName || 'N/A',
+                    phone: 'N/A',
+                    address: 'N/A',
+                    items: order.items?.map(i => i.name) || [],
+                    status: order.status,
+                    orderTime: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                    estimatedDelivery: 'N/A',
+                    rider: null,
+                    amount: order.amount || 0
+                }));
+                setDeliveries(formattedDeliveries);
+            }
+        } catch (error) {
+            console.error('Error fetching deliveries:', error);
+            setDeliveries([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const filteredDeliveries = deliveries.filter(delivery => {
         if (filter === 'all') return true;
@@ -124,32 +108,40 @@ function DeliveryStatus() {
                     subtitle="  Here's what's happening with your tiffin service today."
                 />
 
-                {/* Status Summary Cards */}
-                <StatusCard statusCounts={statusCounts} />
-
-
-                {/* Filter Tabs */}
-                <FilterTabs
-                    filter={filter}
-                    deliveries={deliveries}
-                    setFilter={setFilter}
-                    statusCounts={statusCounts}
-                />
-
-                {/* Delivery Cards */}
-                <ProviderDeliveryCards 
-                getStatusIcon={getStatusIcon} 
-                getStatusText={getStatusText}
-                filteredDeliveries={filteredDeliveries}
-                 getStatusColor={getStatusColor}
-                />
-                {/* Empty State */}
-                {filteredDeliveries.length === 0 && (
-                    <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
-                        <div className="text-6xl mb-4">🚚</div>
-                        <h3 className="text-xl font-semibold text-gray-800 mb-2">No Deliveries Found</h3>
-                        <p className="text-gray-600">No orders match the selected filter</p>
+                {loading ? (
+                    <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
                     </div>
+                ) : (
+                    <>
+                        {/* Status Summary Cards */}
+                        <StatusCard statusCounts={statusCounts} />
+
+                        {/* Filter Tabs */}
+                        <FilterTabs
+                            filter={filter}
+                            deliveries={deliveries}
+                            setFilter={setFilter}
+                            statusCounts={statusCounts}
+                        />
+
+                        {/* Delivery Cards */}
+                        <ProviderDeliveryCards 
+                            getStatusIcon={getStatusIcon} 
+                            getStatusText={getStatusText}
+                            filteredDeliveries={filteredDeliveries}
+                            getStatusColor={getStatusColor}
+                        />
+                        
+                        {/* Empty State */}
+                        {filteredDeliveries.length === 0 && (
+                            <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
+                                <div className="text-6xl mb-4">🚚</div>
+                                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Deliveries Found</h3>
+                                <p className="text-gray-600">No orders match the selected filter</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

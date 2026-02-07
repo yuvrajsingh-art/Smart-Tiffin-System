@@ -15,4 +15,28 @@ router.put("/publish/:id", authMiddleware.protect, authMiddleware.authorizeRoles
 // Get today's published menu
 router.get("/today", getTodayMenu);
 
+// Delete menu item
+router.delete("/:id", authMiddleware.protect, async (req, res) => {
+  try {
+    const Menu = require("../../models/menu.model");
+    await Menu.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "Menu deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Toggle menu availability
+router.patch("/:id/toggle", authMiddleware.protect, async (req, res) => {
+  try {
+    const Menu = require("../../models/menu.model");
+    const menu = await Menu.findById(req.params.id);
+    menu.isAvailable = !menu.isAvailable;
+    await menu.save();
+    res.json({ success: true, data: menu });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

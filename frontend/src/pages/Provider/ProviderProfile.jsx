@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProviderSidebar from "../../components/ui/Provider/ProviderSidebar";
 import { FaEdit, FaSave, FaTimes, FaCamera, FaStore, FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock, FaStar } from 'react-icons/fa';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
@@ -8,38 +8,89 @@ import OperatingHours from '../../components/ui/Provider/Profile/OperatingHours'
 import ProfilePicture from '../../components/ui/Provider/Profile/ProfilePicture';
 import RatingReviews from '../../components/ui/Provider/Profile/RatingReviews';
 import BuisnessDetails from '../../components/ui/Provider/Profile/BuisnessDetails';
+import ProviderApi from '../../services/ProviderApi';
 
 function ProviderProfile() {
     const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [profileData, setProfileData] = useState({
-        businessName: 'Tasty Tiffin Service',
-        ownerName: 'Rajesh Kumar',
-        email: 'rajesh@tastytiffin.com',
-        phone: '+91 9876543210',
-        address: 'Shop No. 15, Sector 22, Gurgaon, Haryana - 122001',
-        description: 'We provide fresh, homemade tiffin services with authentic Indian flavors. Our kitchen maintains the highest hygiene standards and uses only fresh ingredients.',
-        operatingHours: {
-            open: '08:00',
-            close: '22:00'
-        },
-        cuisineTypes: ['North Indian', 'South Indian', 'Gujarati', 'Punjabi'],
-        specialties: ['Dal Rice', 'Roti Sabzi', 'Biryani', 'Thali'],
-        rating: 4.6,
-        totalReviews: 234,
-        established: '2020',
-        licenseNumber: 'FSSAI-12345678901234'
+        businessName: '',
+        ownerName: '',
+        email: '',
+        phone: '',
+        address: '',
+        description: '',
+        operatingHours: { open: '08:00', close: '22:00' },
+        cuisineTypes: [],
+        specialties: [],
+        rating: 0,
+        totalReviews: 0,
+        established: '',
+        licenseNumber: ''
     });
 
     const [editData, setEditData] = useState({ ...profileData });
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const fetchProfile = async () => {
+        try {
+            const response = await ProviderApi.get('/provider-store');
+            console.log('Profile Response:', response.data);
+            if (response.data && response.data.profile) {
+                const profile = response.data.profile;
+                const formatted = {
+                    businessName: profile.messName || profile.businessName || '',
+                    ownerName: profile.ownerName || '',
+                    email: profile.email || profile.contactEmail || '',
+                    phone: profile.phone || profile.contactPhone || '',
+                    address: profile.address || '',
+                    description: profile.description || '',
+                    operatingHours: {
+                        open: profile.kitchenTimings?.open || '08:00',
+                        close: profile.kitchenTimings?.close || '22:00'
+                    },
+                    cuisineTypes: profile.cuisineTypes || [],
+                    specialties: profile.specialties || [],
+                    rating: profile.rating || 0,
+                    totalReviews: profile.totalReviews || 0,
+                    established: profile.established || '',
+                    licenseNumber: profile.fssaiLicense || profile.licenseNumber || ''
+                };
+                setProfileData(formatted);
+                setEditData(formatted);
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleEdit = () => {
         setIsEditing(true);
         setEditData({ ...profileData });
     };
 
-    const handleSave = () => {
-        setProfileData({ ...editData });
-        setIsEditing(false);
+    const handleSave = async () => {
+        try {
+            await ProviderApi.put('/provider-store', {
+                messName: editData.businessName,
+                contactEmail: editData.email,
+                contactPhone: editData.phone,
+                address: editData.address,
+                description: editData.description,
+                cuisineTypes: editData.cuisineTypes,
+                specialties: editData.specialties
+            });
+            setProfileData({ ...editData });
+            setIsEditing(false);
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            alert('Failed to save profile');
+        }
     };
 
     const handleCancel = () => {
@@ -103,40 +154,48 @@ function ProviderProfile() {
                     </div>
                 </div>
 
-                {/* Stats Cards */}
-                <StateCards />
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Main Profile Info */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Business Information */}
-                        <ProviderInformation
-                            isEditing={isEditing}
-                            profileData={profileData}
-
-                        />
-
-                        {/* Operating Hours */}
-                        <OperatingHours
-                            isEditing={isEditing}
-                            profileData={profileData}
-                        />
+                {loading ? (
+                    <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
                     </div>
+                ) : (
+                    <>
+                        {/* Stats Cards */}
+                        <StateCards />
 
-                    {/* Sidebar Info */}
-                    <div className="space-y-6">
-                        {/* Profile Picture */}
-                        <ProfilePicture />
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Main Profile Info */}
+                            <div className="lg:col-span-2 space-y-6">
+                                {/* Business Information */}
+                                <ProviderInformation
+                                    isEditing={isEditing}
+                                    profileData={profileData}
 
-                        {/* Rating & Reviews */}
+                                />
 
-                        <RatingReviews
-                            profileData={profileData} />
-                        {/* Business Details */}
-                        
-                        <BuisnessDetails profileData={profileData}/>
-                    </div>
-                </div>
+                                {/* Operating Hours */}
+                                <OperatingHours
+                                    isEditing={isEditing}
+                                    profileData={profileData}
+                                />
+                            </div>
+
+                            {/* Sidebar Info */}
+                            <div className="space-y-6">
+                                {/* Profile Picture */}
+                                <ProfilePicture />
+
+                                {/* Rating & Reviews */}
+
+                                <RatingReviews
+                                    profileData={profileData} />
+                                {/* Business Details */}
+                                
+                                <BuisnessDetails profileData={profileData}/>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

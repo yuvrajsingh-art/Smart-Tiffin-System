@@ -13,19 +13,20 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
   const fetchActiveCustomers = async () => {
     try {
       const response = await ProviderApi.get('/provider-subscription');
+      console.log('Subscription API Response:', response.data);
       if (response.data && response.data.data) {
         const formattedData = response.data.data.map(sub => ({
           id: sub._id,
-          name: sub.customer?.name || 'N/A',
+          name: sub.customer?.fullName || sub.customer?.name || 'N/A',
           email: sub.customer?.email || 'N/A',
-          phone: sub.customer?.phone || 'N/A',
-          plan: sub.planName,
+          phone: sub.customer?.phone || sub.customer?.mobile || 'N/A',
+          plan: sub.planName || sub.planType || 'N/A',
           status: sub.status.toLowerCase(),
           joinDate: sub.createdAt,
-          lastOrder: sub.duration.end,
+          lastOrder: sub.duration?.end || sub.endDate,
           totalOrders: sub.mealsSkipped || 0,
-          avatar: sub.customer?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'NA',
-          address: 'N/A'
+          avatar: (sub.customer?.fullName || sub.customer?.name || 'NA').split(' ').map(n => n[0]).join('').toUpperCase(),
+          address: sub.customer?.address || 'N/A'
         }));
         setCustomers(formattedData);
       }

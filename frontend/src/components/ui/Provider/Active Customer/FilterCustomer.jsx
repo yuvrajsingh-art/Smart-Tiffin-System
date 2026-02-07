@@ -1,7 +1,7 @@
 import { FaSearch } from "react-icons/fa";
 import { FaFilter, FaPlus } from "react-icons/fa6";
 
-function FilterCustomer({searchTerm,filterStatus,setSearchTerm}){
+function FilterCustomer({searchTerm,filterStatus,setSearchTerm,setFilterStatus,setShowAddForm}){
 return(
     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
             <div className="flex flex-col md:flex-row gap-4 items-center">

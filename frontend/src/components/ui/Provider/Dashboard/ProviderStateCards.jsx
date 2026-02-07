@@ -20,13 +20,14 @@ const ProviderStatsCards = () => {
     const fetchDashboardStats = async () => {
         try {
             const response = await ProviderApi.get('/provider-deshbord/dashboard');
-            if (response.data) {
+            if (response.data && response.data.data) {
+                const data = response.data.data;
                 setStats({
-                    totalCustomers: response.data.totalCustomers || 0,
-                    todayOrders: response.data.todayOrders || 0,
-                    monthlyRevenue: response.data.monthlyRevenue || 0,
-                    avgRating: response.data.avgRating || 0,
-                    activeSubscriptions: response.data.activeSubscriptions || 0
+                    totalCustomers: data.businessHealth?.activeSubscribers || 0,
+                    todayOrders: data.liveOperations?.ordersToPrep || 0,
+                    monthlyRevenue: data.businessHealth?.todayRevenue || 0,
+                    avgRating: data.rating?.average || 0,
+                    activeSubscriptions: data.businessHealth?.activeSubscribers || 0
                 });
             }
         } catch (error) {

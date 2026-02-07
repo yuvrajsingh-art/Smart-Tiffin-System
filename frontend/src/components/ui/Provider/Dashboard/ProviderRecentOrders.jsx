@@ -13,9 +13,26 @@ function ProviderRecentOrders() {
 
     const fetchRecentOrders = async () => {
         try {
-            const response = await ProviderApi.get('/provider-kds');
-            if (response.data && response.data.orders) {
-                setRecentOrders(response.data.orders);
+            const response = await ProviderApi.get('/provider-kds/kds-1');
+            if (response.data && response.data.data) {
+                const allOrders = [
+                    ...response.data.data.justIn,
+                    ...response.data.data.preparing,
+                    ...response.data.data.ready,
+                    ...response.data.data.dispatched
+                ];
+                const formattedOrders = allOrders.slice(0, 6).map(order => ({
+                    id: order._id,
+                    customer: order.customerName || 'N/A',
+                    phone: 'N/A',
+                    item: order.items?.map(i => i.name).join(', ') || 'N/A',
+                    quantity: order.quantity || 1,
+                    time: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                    status: order.status === 'confirmed' ? 'Confirmed' : order.status === 'cooking' ? 'Preparing' : order.status === 'prepared' ? 'Ready' : 'Out for Delivery',
+                    amount: order.amount || 0,
+                    orderDate: 'Today'
+                }));
+                setRecentOrders(formattedOrders);
             }
         } catch (error) {
             console.error('Error fetching recent orders:', error);

@@ -27,7 +27,9 @@ const ActiveCustomers = () => {
           {/* Search and Filter */}
           <FilterCustomer searchTerm={searchTerm} 
           filterStatus={filterStatus}
-          setSearchTerm={setSearchTerm}/>
+          setSearchTerm={setSearchTerm}
+          setFilterStatus={setFilterStatus}
+          setShowAddForm={setShowAddForm}/>
 
           {/* Customer List */}
           <ActiveCustomerList 
