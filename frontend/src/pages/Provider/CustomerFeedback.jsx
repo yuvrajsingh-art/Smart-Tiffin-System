@@ -1,12 +1,11 @@
+import { useState, useEffect } from "react";
 import ProviderSidebar from "../../components/ui/Provider/ProviderSidebar";
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
 import FeedbackStateCards from '../../components/ui/Provider/CustomerFeedback/FeedbackStateCards';
-import { useState, useEffect } from "react";
 import FeedbackRatingDistribution from "../../components/ui/Provider/CustomerFeedback/FeedbackRatingDistribution";
 import FeedbackFiltereReviews from "../../components/ui/Provider/CustomerFeedback/FeedbackFilterReviews";
 import FeedackCards from "../../components/ui/Provider/CustomerFeedback/FeedbackCards";
 import ProviderApi from '../../services/ProviderApi';
-
 
 function CustomerFeedback() {
     const [feedbacks, setFeedbacks] = useState([]);
@@ -62,8 +61,6 @@ function CustomerFeedback() {
         return true;
     });
 
-
-
     const getRatingColor = (rating) => {
         if (rating >= 4) return 'text-green-600';
         if (rating >= 3) return 'text-yellow-600';
@@ -71,63 +68,51 @@ function CustomerFeedback() {
     };
 
     const handleReply = (feedbackId) => {
-        // Here you would typically send the reply to your backend
         console.log(`Replying to feedback ${feedbackId}: ${replyText}`);
         setReplyingTo(null);
         setReplyText('');
     };
 
-
-
-
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-[#FFFBF5]">
             <ProviderSidebar />
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 flex flex-col">
                 <ProviderHeader
-                    title="Welcome Back Chef!"
-                    subtitle="  Here's what's happening with your tiffin service today."
+                    title="Customer Feedback"
+                    subtitle="View and respond to customer reviews"
                 />
-
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Stats Cards */}
-                        <div >
-                            <FeedbackStateCards feedbacks={feedbacks} />
+                <div className="flex-1 p-6 overflow-y-auto">
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
                         </div>
-                        {/* RatingDistribution Tabs */}
-
-                        <FeedbackRatingDistribution feedbacks={feedbacks} />
-
-                        {/* Filter Tabs */}
-                        <FeedbackFiltereReviews feedbacks={feedbacks} />
-
-                        {/* Feedback Cards */}
-                        <FeedackCards
-                            feedbacks={filteredFeedbacks}
-                            replyingTo={replyingTo}
-                            setReplyingTo={setReplyingTo}
-                            replyText={replyText}
-                            setReplyText={setReplyText}
-                            handleReply={handleReply}
-                            getRatingColor={getRatingColor} />
-                        {/* Empty State */}
-                        {filteredFeedbacks.length === 0 && (
-                            <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
-                                <div className="text-6xl mb-4">💬</div>
-                                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Feedback Found</h3>
-                                <p className="text-gray-600">No reviews match the selected filter</p>
-                            </div>
-                        )}
-                    </>
-                )}
+                    ) : (
+                        <>
+                            <FeedbackStateCards feedbacks={feedbacks} />
+                            <FeedbackRatingDistribution feedbacks={feedbacks} />
+                            <FeedbackFiltereReviews feedbacks={feedbacks} />
+                            <FeedackCards
+                                feedbacks={filteredFeedbacks}
+                                replyingTo={replyingTo}
+                                setReplyingTo={setReplyingTo}
+                                replyText={replyText}
+                                setReplyText={setReplyText}
+                                handleReply={handleReply}
+                                getRatingColor={getRatingColor}
+                            />
+                            {filteredFeedbacks.length === 0 && (
+                                <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
+                                    <div className="text-6xl mb-4">💬</div>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No Feedback Found</h3>
+                                    <p className="text-gray-600">No reviews match the selected filter</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
-export default CustomerFeedback; 
+export default CustomerFeedback;

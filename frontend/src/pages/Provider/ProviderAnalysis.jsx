@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import ProviderSidebar from "../../components/ui/Provider/ProviderSidebar";
-import { MdDeliveryDining, MdRestaurant, } from 'react-icons/md';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
 import AnalysisCards from '../../components/ui/Provider/Analysis/AnalysisCards';
 import DailyPerformanceAnalysis from '../../components/ui/Provider/Analysis/DailyPerformanceAnalysis';
@@ -73,68 +72,55 @@ function ProviderAnalysis() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-[#FFFBF5]">
             <ProviderSidebar />
-            <div className="flex-1 p-6 overflow-y-auto">
-                {/* Header */} <ProviderHeader />
-                <div className="flex justify-between items-center mb-6">
-
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setTimeRange('week')}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${timeRange === 'week'
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
+            <div className="flex-1 flex flex-col">
+                <ProviderHeader
+                    title="Analytics"
+                    subtitle="Track your business performance and insights"
+                />
+                <div className="flex-1 p-6 overflow-y-auto">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setTimeRange('week')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${timeRange === 'week'
+                                    ? 'bg-orange-500 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100'
                                 }`}
-                        >
-                            This Week
-                        </button>
-                        <button
-                            onClick={() => setTimeRange('month')}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${timeRange === 'month'
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            >
+                                This Week
+                            </button>
+                            <button
+                                onClick={() => setTimeRange('month')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${timeRange === 'month'
+                                    ? 'bg-orange-500 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100'
                                 }`}
-                        >
-                            This Month
-                        </button>
+                            >
+                                This Month
+                            </button>
+                        </div>
                     </div>
+
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                        </div>
+                    ) : (
+                        <>
+                            <AnalysisCards analyticsData={analyticsData} timeRange={timeRange} />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <DailyPerformanceAnalysis timeRange={timeRange} currentData={analyticsData[timeRange]} />
+                                <TopSellingAnalysis topItems={topItems} />
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <CustomerInsight />
+                                <DeliveryPerformance deliveryStats={deliveryStats} />
+                            </div>
+                        </>
+                    )}
                 </div>
-
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Key Metrics */}
-                        <AnalysisCards
-                            analyticsData={analyticsData}
-                            timeRange={timeRange}
-                        />
-                        {/* Charts Section */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                            {/* Daily Performance Chart */}
-                            <DailyPerformanceAnalysis
-                                timeRange={timeRange}
-                                currentData={analyticsData[timeRange]} />
-
-                            {/* Top Selling Items */}
-                            <TopSellingAnalysis
-                                topItems={topItems} />
-                        </div>
-
-                        {/* Customer & Delivery Insights */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Customer Insights */}
-                            <CustomerInsight />
-
-                            {/* Delivery Performance */}
-                           <DeliveryPerformance
-                           deliveryStats={deliveryStats}/>
-                        </div>
-                    </>
-                )}
             </div>
         </div>
     );

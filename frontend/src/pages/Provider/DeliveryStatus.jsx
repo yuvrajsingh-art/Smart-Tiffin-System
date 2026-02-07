@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import ProviderSidebar from "../../components/ui/Provider/ProviderSidebar";
-import { FaMapMarkerAlt, FaClock, FaPhone, FaCheck, FaTruck, FaUtensils } from 'react-icons/fa';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
+import { FaCheck, FaTruck, FaUtensils, FaClock } from 'react-icons/fa';
 import StatusCard from '../../components/ui/Provider/DelieveryStatus.jsx/StatusCard';
 import FilterTabs from '../../components/ui/Provider/DelieveryStatus.jsx/FilterTabs';
 import ProviderDeliveryCards from '../../components/ui/Provider/DelieveryStatus.jsx/ProviderDeliveryCards';
 import ProviderApi from '../../services/ProviderApi';
-
 
 function DeliveryStatus() {
     const [deliveries, setDeliveries] = useState([]);
@@ -99,50 +98,43 @@ function DeliveryStatus() {
     const statusCounts = getStatusCounts();
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-[#FFFBF5]">
             <ProviderSidebar />
-            <div className="flex-1 p-6 overflow-y-auto">
-                {/* Header */}
+            <div className="flex-1 flex flex-col">
                 <ProviderHeader
-                    title="Welcome Back Chef!"
-                    subtitle="  Here's what's happening with your tiffin service today."
+                    title="Delivery Status"
+                    subtitle="Track and manage all your delivery orders"
                 />
-
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Status Summary Cards */}
-                        <StatusCard statusCounts={statusCounts} />
-
-                        {/* Filter Tabs */}
-                        <FilterTabs
-                            filter={filter}
-                            deliveries={deliveries}
-                            setFilter={setFilter}
-                            statusCounts={statusCounts}
-                        />
-
-                        {/* Delivery Cards */}
-                        <ProviderDeliveryCards 
-                            getStatusIcon={getStatusIcon} 
-                            getStatusText={getStatusText}
-                            filteredDeliveries={filteredDeliveries}
-                            getStatusColor={getStatusColor}
-                        />
-                        
-                        {/* Empty State */}
-                        {filteredDeliveries.length === 0 && (
-                            <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
-                                <div className="text-6xl mb-4">🚚</div>
-                                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Deliveries Found</h3>
-                                <p className="text-gray-600">No orders match the selected filter</p>
-                            </div>
-                        )}
-                    </>
-                )}
+                <div className="flex-1 p-6 overflow-y-auto">
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                        </div>
+                    ) : (
+                        <>
+                            <StatusCard statusCounts={statusCounts} />
+                            <FilterTabs
+                                filter={filter}
+                                deliveries={deliveries}
+                                setFilter={setFilter}
+                                statusCounts={statusCounts}
+                            />
+                            <ProviderDeliveryCards 
+                                getStatusIcon={getStatusIcon} 
+                                getStatusText={getStatusText}
+                                filteredDeliveries={filteredDeliveries}
+                                getStatusColor={getStatusColor}
+                            />
+                            {filteredDeliveries.length === 0 && (
+                                <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
+                                    <div className="text-6xl mb-4">🚚</div>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No Deliveries Found</h3>
+                                    <p className="text-gray-600">No orders match the selected filter</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );

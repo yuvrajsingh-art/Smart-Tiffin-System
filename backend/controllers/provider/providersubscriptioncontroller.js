@@ -4,6 +4,7 @@ const Subscription = require("../../models/subscription.model");
 exports.getSubscribers = async (req, res) => {
   try {
     const providerId = req.user._id;
+    console.log('getSubscribers - Provider ID:', providerId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -14,6 +15,9 @@ exports.getSubscribers = async (req, res) => {
     })
       .populate("customer", "name phone email")
       .sort({ createdAt: -1 });
+
+    console.log('Found subscriptions:', subscriptions.length);
+    console.log('Subscriptions:', subscriptions);
 
     const data = subscriptions.map(sub => {
       let status = "Active";

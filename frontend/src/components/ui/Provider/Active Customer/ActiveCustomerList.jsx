@@ -14,20 +14,27 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
     try {
       const response = await ProviderApi.get('/provider-subscription');
       console.log('Subscription API Response:', response.data);
+      console.log('Response data field:', response.data.data);
+      console.log('Response count:', response.data.count);
+      
       if (response.data && response.data.data) {
-        const formattedData = response.data.data.map(sub => ({
-          id: sub._id,
-          name: sub.customer?.fullName || sub.customer?.name || 'N/A',
-          email: sub.customer?.email || 'N/A',
-          phone: sub.customer?.phone || sub.customer?.mobile || 'N/A',
-          plan: sub.planName || sub.planType || 'N/A',
-          status: sub.status.toLowerCase(),
-          joinDate: sub.createdAt,
-          lastOrder: sub.duration?.end || sub.endDate,
-          totalOrders: sub.mealsSkipped || 0,
-          avatar: (sub.customer?.fullName || sub.customer?.name || 'NA').split(' ').map(n => n[0]).join('').toUpperCase(),
-          address: sub.customer?.address || 'N/A'
-        }));
+        const formattedData = response.data.data.map(sub => {
+          console.log('Processing subscription:', sub);
+          return {
+            id: sub._id,
+            name: sub.customer?.fullName || sub.customer?.name || 'N/A',
+            email: sub.customer?.email || 'N/A',
+            phone: sub.customer?.phone || sub.customer?.mobile || 'N/A',
+            plan: sub.planName || sub.planType || 'N/A',
+            status: sub.status.toLowerCase(),
+            joinDate: sub.createdAt,
+            lastOrder: sub.endDate || sub.duration?.end,
+            totalOrders: sub.skippedMeals?.length || 0,
+            avatar: (sub.customer?.fullName || sub.customer?.name || 'NA').split(' ').map(n => n[0]).join('').toUpperCase(),
+            address: sub.deliveryAddress?.fullAddress || sub.customer?.address || 'N/A'
+          };
+        });
+        console.log('Formatted customers:', formattedData);
         setCustomers(formattedData);
       }
     } catch (error) {
