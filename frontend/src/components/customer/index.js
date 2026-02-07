@@ -26,4 +26,5 @@ export { default as RatingForm } from './RatingForm';
 export { default as FeedbackHistoryList } from './FeedbackHistoryList';
 export { default as InvoiceModal } from './InvoiceModal';
 export { default as MealTicketModal } from './MealTicketModal';
-export { default as AvatarSelectorModal } from './AvatarSelectorModal'; 
+export { default as AvatarSelectorModal } from './AvatarSelectorModal';
+export { default as SecurityPrivacyForm } from './SecurityPrivacyForm';

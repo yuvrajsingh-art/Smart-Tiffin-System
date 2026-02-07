@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/UserContext';
 import axios from 'axios';
-import { ProfileStats, ProfileAvatarCard, ProfileDetailsForm, AvatarSelectorModal } from '../../components/customer';
+import { ProfileStats, ProfileAvatarCard, ProfileDetailsForm, AvatarSelectorModal, SecurityPrivacyForm } from '../../components/customer';
 import {
     ProfileSkeleton,
     BackgroundBlobs,
@@ -15,6 +15,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [activeTab, setActiveTab] = useState('details'); // 'details' or 'security'
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -34,7 +35,8 @@ const Profile = () => {
                 spiceLevel: user.spiceLevel || 'Medium',
                 sweetTooth: user.sweetTooth || false,
                 memberSince: user.memberSince ? new Date(user.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Oct 2025',
-                profileImage: user.profile_image
+                profileImage: user.profile_image,
+                securitySettings: user.securitySettings || { enhancedEncryption: false, loginAlerts: true }
             });
             setLoading(false);
         }
@@ -81,18 +83,28 @@ const Profile = () => {
                     id={`ST-${user?.id?.slice(-6)?.toUpperCase() || 'USER'}`}
                     diet={formData.diet}
                     profileImage={formData.profileImage}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
                     onLogout={() => setShowLogoutModal(true)}
                     onEditAvatar={() => setShowAvatarModal(true)}
                 />
 
-                <ProfileDetailsForm
-                    formData={formData}
-                    setFormData={setFormData}
-                    isEditing={isEditing}
-                    setIsEditing={setIsEditing}
-                    onSave={handleSave}
-                    saving={saving}
-                />
+                {activeTab === 'details' ? (
+                    <ProfileDetailsForm
+                        formData={formData}
+                        setFormData={setFormData}
+                        isEditing={isEditing}
+                        setIsEditing={setIsEditing}
+                        onSave={handleSave}
+                        saving={saving}
+                    />
+                ) : (
+                    <SecurityPrivacyForm
+                        user={user}
+                        securitySettings={formData.securitySettings}
+                        onSettingsUpdate={(newSettings) => setFormData({ ...formData, securitySettings: newSettings })}
+                    />
+                )}
             </div>
 
             {/* Avatar Selector Modal */}
