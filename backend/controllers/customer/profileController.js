@@ -2,12 +2,13 @@ const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
 const Transaction = require("../../models/transaction.model");
 const Order = require("../../models/order.model");
+const logger = require("../../utils/logger");
 
 // Get customer profile data
 exports.getProfile = async (req, res) => {
     try {
         const customerId = req.user._id;
-        
+
         // Get user details
         const user = await User.findById(customerId);
         if (!user) {
@@ -25,19 +26,19 @@ exports.getProfile = async (req, res) => {
         const totalSpent = totalSpentResult[0]?.total || 0;
 
         // Calculate loyalty level based on total subscriptions
-        const totalSubscriptions = await Subscription.countDocuments({ 
-            customer: customerId, 
-            status: 'approved' 
+        const totalSubscriptions = await Subscription.countDocuments({
+            customer: customerId,
+            status: 'approved'
         });
-        
+
         let loyaltyLevel = 'Bronze';
         if (totalSubscriptions >= 5) loyaltyLevel = 'Gold';
         else if (totalSubscriptions >= 2) loyaltyLevel = 'Silver';
 
         // Member since date
-        const memberSince = user.createdAt.toLocaleDateString('en-US', { 
-            month: 'short', 
-            year: 'numeric' 
+        const memberSince = user.createdAt.toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric'
         });
 
         // Profile stats
@@ -71,6 +72,7 @@ exports.getProfile = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("getProfile Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch profile data'
@@ -94,11 +96,11 @@ exports.updateProfile = async (req, res) => {
 
         // Check if email is already taken by another user
         if (email !== req.user.email) {
-            const existingUser = await User.findOne({ 
-                email, 
-                _id: { $ne: customerId } 
+            const existingUser = await User.findOne({
+                email,
+                _id: { $ne: customerId }
             });
-            
+
             if (existingUser) {
                 return res.status(400).json({
                     success: false,
@@ -144,6 +146,7 @@ exports.updateProfile = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("updateProfile Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to update profile'
@@ -167,7 +170,7 @@ exports.uploadProfileImage = async (req, res) => {
         // Update profile image
         const updatedUser = await User.findByIdAndUpdate(
             customerId,
-            { 
+            {
                 profile_image: imageUrl,
                 updatedAt: new Date()
             },
@@ -190,6 +193,7 @@ exports.uploadProfileImage = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("uploadProfileImage Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to upload profile image'
@@ -201,7 +205,7 @@ exports.uploadProfileImage = async (req, res) => {
 exports.getProfileSummary = async (req, res) => {
     try {
         const customerId = req.user._id;
-        
+
         const user = await User.findById(customerId);
         if (!user) {
             return res.status(404).json({
@@ -229,9 +233,9 @@ exports.getProfileSummary = async (req, res) => {
             profileImage: user.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.fullName}`,
             hasActiveSubscription: !!activeSubscription,
             recentOrdersCount,
-            memberSince: user.createdAt.toLocaleDateString('en-US', { 
-                month: 'short', 
-                year: 'numeric' 
+            memberSince: user.createdAt.toLocaleDateString('en-US', {
+                month: 'short',
+                year: 'numeric'
             })
         };
 
@@ -241,6 +245,7 @@ exports.getProfileSummary = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("getProfileSummary Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch profile summary'
@@ -283,6 +288,7 @@ exports.deleteAccount = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("deleteAccount Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to delete account'

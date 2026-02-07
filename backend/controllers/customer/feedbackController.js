@@ -3,6 +3,7 @@ const Review = require("../../models/review.model");
 const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
 const Menu = require("../../models/menu.model");
+const logger = require("../../utils/logger");
 
 // Get feedback stats and recent meal for feedback
 exports.getFeedbackData = async (req, res) => {
@@ -82,6 +83,7 @@ exports.getFeedbackData = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("getFeedbackData Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch feedback data'
@@ -155,6 +157,7 @@ exports.submitFeedback = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("submitFeedback Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to submit feedback'
@@ -213,6 +216,7 @@ exports.getFeedbackHistory = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("getFeedbackHistory Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch feedback history'
@@ -236,6 +240,7 @@ exports.getFeedbackTags = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("getFeedbackTags Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch feedback tags'
@@ -286,6 +291,7 @@ exports.updateFeedback = async (req, res) => {
         });
 
     } catch (error) {
+        logger.error("updateFeedback Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to update feedback'

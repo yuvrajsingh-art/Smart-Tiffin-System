@@ -117,6 +117,7 @@ const subscriptionRoutes = require("./routes/provider/subscriptionRoutes");
 const walletRoutes = require("./routes/provider/walletRoutes");
 const reviewTriageRoutes = require("./routes/provider/reviewTriageRoutes");
 const storeProfileRoutes = require("./routes/provider/storeProfileRoutes");
+const providerOrderRoutes = require("./routes/provider/providerOrderRoutes");
 
 // Admin routes
 const adminRoutes = require("./routes/adminRoutes");
@@ -145,6 +146,7 @@ app.use("/api/provider-subscription", subscriptionRoutes);
 app.use("/api/provider-wallet", walletRoutes);
 app.use("/api/provider-reviews", reviewTriageRoutes);
 app.use("/api/provider-store", storeProfileRoutes);
+app.use("/api/provider-orders", providerOrderRoutes);  // NEW: Order management
 
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);

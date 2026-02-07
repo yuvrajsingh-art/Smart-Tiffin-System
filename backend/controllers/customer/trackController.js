@@ -2,6 +2,8 @@ const Order = require("../../models/order.model");
 const User = require("../../models/user.model");
 const Subscription = require("../../models/subscription.model");
 const Menu = require("../../models/menu.model");
+const logger = require("../../utils/logger");
+const { ORDER_STATUS, MAP, IMAGES } = require("../../config/constants");
 
 // Get live tracking details for active order
 exports.getLiveTracking = async (req, res) => {
@@ -30,15 +32,8 @@ exports.getLiveTracking = async (req, res) => {
             });
         }
 
-        // 1. Calculate realistic ETA based on actual Order.status
-        const statusETA = {
-            'confirmed': 45,
-            'cooking': 30,
-            'prepared': 20,
-            'out_for_delivery': 10
-        };
-
-        const eta = statusETA[activeOrder.status] || 15;
+        // 1. Calculate realistic ETA based on actual Order.status (from constants)
+        const eta = ORDER_STATUS.ETA[activeOrder.status] || 15;
 
         // 2. Generate timeline based on real Order status
         const timeline = generateTimeline(activeOrder);
@@ -48,7 +43,7 @@ exports.getLiveTracking = async (req, res) => {
             name: activeOrder.provider?.fullName || "Restaurant Staff",
             rating: 4.8,
             phone: activeOrder.provider?.mobile || "",
-            image: "https://cdn-icons-png.flaticon.com/512/3023/3023758.png", // Default delivery icon
+            image: IMAGES.DELIVERY.RESTAURANT,
             isOnline: true
         };
 
@@ -57,7 +52,7 @@ exports.getLiveTracking = async (req, res) => {
                 name: activeOrder.deliveryPartner.fullName,
                 rating: 4.9,
                 phone: activeOrder.deliveryPartner.mobile,
-                image: "https://cdn-icons-png.flaticon.com/512/1995/1995493.png", // Rider icon
+                image: IMAGES.DELIVERY.PARTNER,
                 isOnline: true
             };
         }
@@ -69,7 +64,7 @@ exports.getLiveTracking = async (req, res) => {
             status: activeOrder.status,
             meal: {
                 name: (activeOrder.menuItems && activeOrder.menuItems[0]?.name) || "Daily Meal Thali",
-                image: (activeOrder.menuItems && activeOrder.menuItems[0]?.image) || "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200",
+                image: (activeOrder.menuItems && activeOrder.menuItems[0]?.image) || IMAGES.MENU.LUNCH_VEG,
                 items: activeOrder.menuItems?.map(i => i.name).join(", ") || "Main Dish, Roti, Dal, Rice",
                 spiceLevel: activeOrder.customization?.spiceLevel || "Medium",
                 mealType: activeOrder.mealType || "Lunch"
@@ -86,16 +81,19 @@ exports.getLiveTracking = async (req, res) => {
                 distance: activeOrder.status === 'out_for_delivery' ? "0.8 km" : "1.2 km",
                 timeline,
                 deliveryPartner,
+                // Get coordinates from subscription delivery address or use default
                 mapData: {
-                    customerLocation: { lat: 19.0760, lng: 72.8777 },
-                    deliveryLocation: activeOrder.status === 'out_for_delivery' ? { lat: 19.0790, lng: 72.8810 } : { lat: 19.0820, lng: 72.8850 },
+                    customerLocation: activeOrder.subscription?.deliveryAddress?.coordinates || MAP.DEFAULT_CENTER,
+                    deliveryLocation: activeOrder.status === 'out_for_delivery'
+                        ? { lat: MAP.DEFAULT_CENTER.lat + 0.003, lng: MAP.DEFAULT_CENTER.lng + 0.003 }
+                        : { lat: MAP.DEFAULT_CENTER.lat + 0.006, lng: MAP.DEFAULT_CENTER.lng + 0.007 },
                     route: []
                 }
             }
         });
 
     } catch (error) {
-        console.error("Live Tracking Error:", error);
+        logger.error("getLiveTracking Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch tracking details'

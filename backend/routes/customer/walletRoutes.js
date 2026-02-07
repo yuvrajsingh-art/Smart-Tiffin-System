@@ -8,10 +8,11 @@ const {
 } = require("../../controllers/customer/walletController");
 
 const { protect, customerOnly } = require("../../middleware/authMiddleware.middleware");
+const { validate } = require("../../middleware/validateInput");
 
 // Wallet routes
 router.get("/", protect, customerOnly, getWalletDetails);
 router.get("/balance", protect, customerOnly, getWalletBalance);
-router.post("/add-money", protect, customerOnly, addMoneyToWallet);
+router.post("/add-money", protect, customerOnly, validate('addMoney'), addMoneyToWallet);
 
 module.exports = router;

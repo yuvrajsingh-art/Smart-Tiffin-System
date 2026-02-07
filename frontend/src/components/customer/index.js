@@ -7,6 +7,7 @@ export { default as SubscriptionModals } from './manage-subscription/Subscriptio
 export { default as MealTimelineItem } from './MealTimelineItem';
 export { default as PreferenceModal } from './PreferenceModal';
 export { default as GuestMealStickyBar } from './GuestMealStickyBar';
+export { default as GuestMealModal } from './GuestMealModal';
 export { default as WalletBalanceCard } from './WalletBalanceCard';
 export { default as WalletTransactionList } from './WalletTransactionList';
 export { default as HistoryStats } from './HistoryStats';

@@ -2,6 +2,7 @@ const CustomerWallet = require("../../models/customerWallet.model");
 const Transaction = require("../../models/transaction.model");
 const User = require("../../models/user.model");
 const DummyBank = require("../../models/dummyBank.model");
+const logger = require("../../utils/logger");
 
 /**
  * Helper to get or create the shared Master Bank Account
@@ -49,7 +50,7 @@ const fetchBalance = async (customerId) => {
             }
         };
     } catch (error) {
-        console.error("fetchBalance error:", error);
+        logger.error("fetchBalance Error:", error);
         return {
             success: false,
             data: { balance: 0, recentAddition: 0 }
@@ -111,7 +112,7 @@ exports.getWalletDetails = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error fetching wallet details:", error);
+        logger.error("getWalletDetails Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch wallet details'
@@ -202,7 +203,7 @@ exports.addMoneyToWallet = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Top-up error:", error);
+        logger.error("addMoneyToWallet Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to add money'
