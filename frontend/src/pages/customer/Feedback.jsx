@@ -1,128 +1,192 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../../context/UserContext';
 import { useSubscription } from '../../context/SubscriptionContext';
-import { RatingForm, FeedbackHistoryList } from '../../components/customer';
+import { toast } from 'react-hot-toast';
 import {
-    FeedbackSkeleton,
     BackgroundBlobs,
     PageHeader
 } from '../../components/common';
-import feedbackService from '../../services/feedbackService';
+import {
+    RatingForm,
+    FeedbackHistoryList
+} from '../../components/customer';
 
 const Feedback = () => {
+    const { token } = useAuth();
     const { hasActiveSubscription } = useSubscription();
-    const [rating, setRating] = useState(5);
+
+    const [loading, setLoading] = useState(true);
+    const [currentMeal, setCurrentMeal] = useState(null);
+    const [stats, setStats] = useState([]);
+    const [history, setHistory] = useState([]);
+    const [availableTags, setAvailableTags] = useState([]);
+
+    // Form State
+    const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [selectedTags, setSelectedTags] = useState([]);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // Data states
-    const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState([]);
-    const [currentMeal, setCurrentMeal] = useState(null);
-    const [feedbackHistory, setFeedbackHistory] = useState([]);
-    const [availableTags, setAvailableTags] = useState([]);
-    const [error, setError] = useState(null);
-
-    // Fetch initial data
     useEffect(() => {
-        const fetchData = async () => {
-            if (!hasActiveSubscription()) return;
-            setLoading(true);
-            try {
-                const dashboardRes = await feedbackService.getFeedbackData();
-                if (dashboardRes.success) {
-                    setStats(dashboardRes.data.stats);
-                    setCurrentMeal(dashboardRes.data.currentMeal);
-                }
-                const historyRes = await feedbackService.getFeedbackHistory();
-                if (historyRes.success) setFeedbackHistory(historyRes.data.feedbackHistory);
-                const tagsRes = await feedbackService.getFeedbackTags();
-                if (tagsRes.success) setAvailableTags(tagsRes.data.tags);
-            } catch (err) {
-                setError("Failed to load feedback data");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [hasActiveSubscription]);
+        if (token && hasActiveSubscription()) {
+            fetchFeedbackData();
+            fetchHistory();
+            fetchTags();
+        } else {
+            setLoading(false);
+        }
+    }, [token, hasActiveSubscription]);
 
-    const toggleTag = (tag) => {
-        setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!currentMeal) return setError("No meal available to review");
+    const fetchFeedbackData = async () => {
         try {
-            const res = await feedbackService.submitFeedback({ orderId: currentMeal.orderId, rating, comment, tags: selectedTags });
-            if (res.success) {
-                setShowSuccessModal(true);
-                setRating(5); setComment(''); setSelectedTags([]);
-                const historyRes = await feedbackService.getFeedbackHistory();
-                if (historyRes.success) setFeedbackHistory(historyRes.data.feedbackHistory);
+            const res = await axios.get('/api/customer/feedback/data', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setCurrentMeal(res.data.data.currentMeal);
+                setStats(res.data.data.stats);
             }
-        } catch (err) {
-            setError("Something went wrong");
-            setTimeout(() => setError(null), 3000);
+        } catch (error) {
+            console.error('Error fetching feedback data:', error);
         }
     };
 
-    if (!hasActiveSubscription()) return (
-        <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
-            <div className="size-24 bg-gray-100 rounded-full flex items-center justify-center"><span className="material-symbols-outlined text-4xl text-gray-400">lock</span></div>
-            <h2 className="text-2xl font-black">Feature Locked</h2>
-            <Link to="/customer/find-mess" className="px-8 py-3 bg-[#2D241E] text-white rounded-xl font-bold">Find a Mess</Link>
-        </div>
-    );
+    const fetchHistory = async () => {
+        try {
+            const res = await axios.get('/api/customer/feedback/history', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setHistory(res.data.data.feedbackHistory);
+            }
+        } catch (error) {
+            console.error('Error fetching history:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchTags = async () => {
+        try {
+            const res = await axios.get('/api/customer/feedback/tags', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setAvailableTags(res.data.data.tags);
+            }
+        } catch (error) {
+            console.error('Error fetching tags:', error);
+        }
+    };
+
+    const toggleTag = (tag) => {
+        if (selectedTags.includes(tag)) {
+            setSelectedTags(prev => prev.filter(t => t !== tag));
+        } else {
+            if (selectedTags.length < 3) {
+                setSelectedTags(prev => [...prev, tag]);
+            } else {
+                toast.error('You can select up to 3 tags');
+            }
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (rating === 0) {
+            toast.error('Please give a rating');
+            return;
+        }
+
+        try {
+            const payload = {
+                orderId: currentMeal.orderId,
+                rating,
+                comment,
+                tags: selectedTags
+            };
+
+            const res = await axios.post('/api/customer/feedback/submit', payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.data.success) {
+                toast.success('Feedback submitted successfully!');
+                setCurrentMeal(null); // Hide form
+                setRating(0);
+                setComment('');
+                setSelectedTags([]);
+                fetchHistory(); // Refresh history
+                fetchFeedbackData(); // Refresh stats
+            }
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            toast.error(error.response?.data?.message || 'Failed to submit feedback');
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="max-w-7xl mx-auto p-4 animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="h-64 bg-gray-200 rounded-3xl"></div>
+                    <div className="h-64 bg-gray-200 rounded-3xl lg:col-span-2"></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
             <BackgroundBlobs />
-            <PageHeader title="Meal Feedback" />
+            <PageHeader title="Your Feedback" />
 
-            {error && <div className="mb-6 mx-auto max-w-lg bg-red-50 text-red-600 px-4 py-3 rounded-xl text-center text-sm font-bold">{error}</div>}
+            {/* Stats Section */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+                {stats.map((stat, idx) => (
+                    <div key={idx} className="glass-panel p-4 rounded-2xl border border-white/60 text-center">
+                        <span className={`material-symbols-outlined text-2xl mb-1 ${stat.color || 'text-[#2D241E]'}`}>
+                            {stat.icon}
+                        </span>
+                        <p className="text-2xl font-black text-[#2D241E]">{stat.value}</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
+                    </div>
+                ))}
+            </div>
 
-            {loading ? (
-                <FeedbackSkeleton />
-            ) : (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-                        {stats.map((stat, i) => (
-                            <div key={i} className="glass-panel p-5 rounded-2xl flex items-center gap-4">
-                                <span className="material-symbols-outlined text-primary">{stat.icon}</span>
-                                <div><p className="text-[10px] text-gray-400 font-black uppercase">{stat.label}</p><p className="text-xl font-black">{stat.value}</p></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                {/* Left Column: Rating Form */}
+                <div className="lg:col-span-1 space-y-8 sticky top-24">
+                    {currentMeal ? (
+                        <RatingForm
+                            currentMeal={currentMeal}
+                            rating={rating}
+                            setRating={setRating}
+                            comment={comment}
+                            setComment={setComment}
+                            availableTags={availableTags}
+                            selectedTags={selectedTags}
+                            toggleTag={toggleTag}
+                            onSubmit={handleSubmit}
+                        />
+                    ) : (
+                        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/60 text-center opacity-80">
+                            <div className="inline-block p-4 rounded-full bg-green-50 text-green-600 mb-4">
+                                <span className="material-symbols-outlined text-4xl">check_circle</span>
                             </div>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                        <div className="lg:col-span-3">
-                            <RatingForm
-                                currentMeal={currentMeal} rating={rating} setRating={setRating}
-                                comment={comment} setComment={setComment} availableTags={availableTags}
-                                selectedTags={selectedTags} toggleTag={toggleTag} onSubmit={handleSubmit}
-                            />
+                            <h3 className="text-xl font-black text-[#2D241E]">All Caught Up!</h3>
+                            <p className="text-sm font-medium text-gray-400 mt-2">
+                                You have reviewed all your recent delivered meals. Check back after your next delivery.
+                            </p>
                         </div>
-                        <FeedbackHistoryList history={feedbackHistory} />
-                    </div>
-                </>
-            )}
+                    )}
+                </div>
 
-            {showSuccessModal && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-lg" onClick={() => setShowSuccessModal(false)}></div>
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl relative z-10 text-center">
-                        <div className="size-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl"><span className="material-symbols-outlined text-white text-4xl">thumb_up</span></div>
-                        <h3 className="text-2xl font-black mb-2">Thank You!</h3>
-                        <button onClick={() => setShowSuccessModal(false)} className="w-full py-4 bg-[#2D241E] text-white rounded-[1.5rem] font-bold">Continue eating</button>
-                    </div>
-                </div>,
-                document.body
-            )}
+                {/* Right Column: History */}
+                <FeedbackHistoryList history={history} />
+            </div>
         </div>
     );
 };
+
 export default Feedback;
