@@ -38,6 +38,8 @@ const genToken = (user) => {
 // REGISTRATION
 // =============================================================================
 
+const Customer = require("../models/customer.model");
+
 /**
  * Register a new customer
  * Required fields: fullName, email, password, mobile
@@ -72,19 +74,25 @@ exports.registerCustomer = async (req, res) => {
       password: hashedPassword,
       mobile,
       role: "customer",
-      address
+      // Removed address and location from User model in new architecture, 
+      // but keeping them for now if we want backward compatibility or just ignoring them here 
+      // and putting them in Customer model.
+      // Actually, User model still has address field in Mongoose? 
+      // I should put address in Customer model now.
     };
-
-    // Add location if provided
-    if (latitude && longitude) {
-      userData.location = {
-        type: "Point",
-        coordinates: [longitude, latitude]
-      };
-    }
 
     // Create user
     const user = await User.create(userData);
+
+    // Create Customer Profile
+    const customerData = {
+      user: user._id,
+      dietPreference: "Pure Veg", // Default
+      addresses: address ? [{ label: 'Home', line: address, isDefault: true }] : []
+    };
+
+    const customer = await Customer.create(customerData);
+
     logger.auth("Register Success", { id: user._id, role: "customer" });
     const token = genToken(user);
 

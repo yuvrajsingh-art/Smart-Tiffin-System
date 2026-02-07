@@ -31,6 +31,30 @@ const customerWalletSchema = new mongoose.Schema({
     streakRewards: {
         type: Number,
         default: 0
+    },
+
+    transactionPin: {
+        type: String, // Hashed PIN
+        default: null
+    },
+
+    settings: {
+        autoRecharge: {
+            type: Boolean,
+            default: false
+        },
+        thresholdAmount: {
+            type: Number,
+            default: 200
+        },
+        rechargeAmount: {
+            type: Number,
+            default: 500
+        },
+        lowBalanceAlert: {
+            type: Boolean,
+            default: true
+        }
     }
 
 }, { timestamps: true });

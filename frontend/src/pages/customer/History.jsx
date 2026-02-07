@@ -129,14 +129,41 @@ const History = () => {
             {loading ? (
                 <HistorySkeleton />
             ) : (
-                <>
+                <div className="space-y-4">
                     <HistoryStats stats={stats[activeTab]} />
 
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center mb-6 px-2">
-                            <h2 className="font-black text-[#2D241E] opacity-30 uppercase tracking-[0.2em] text-[10px]">
-                                Recent {activeTab} Activity
-                            </h2>
+                    <div className="flex justify-between items-center mb-6 px-2">
+                        <h2 className="font-black text-[#2D241E] opacity-30 uppercase tracking-[0.2em] text-[10px]">
+                            Recent {activeTab} Activity
+                        </h2>
+                        <div className="flex items-center gap-3">
+                            {activeTab === 'Transactions' && (
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const response = await axios.get('/api/customer/wallet/statement?format=pdf', {
+                                                responseType: 'blob',
+                                                headers: { Authorization: `Bearer ${token}` }
+                                            });
+                                            const url = window.URL.createObjectURL(new Blob([response.data]));
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            link.setAttribute('download', `wallet-statement-${Date.now()}.pdf`);
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            link.remove();
+                                            toast.success('PDF Statement exported!');
+                                        } catch (error) {
+                                            console.error("Export failed:", error);
+                                            toast.error("Failed to export statements");
+                                        }
+                                    }}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#2D241E] text-white text-[10px] font-black rounded-xl hover:bg-black transition-all shadow-xl shadow-black/10 active:scale-95 group"
+                                >
+                                    <span className="material-symbols-outlined text-[16px] group-hover:translate-y-[-1px] transition-transform">download</span>
+                                    EXPORT
+                                </button>
+                            )}
                             {activeTab === 'Meals' && (
                                 <div className="flex gap-2 p-1 bg-white/40 rounded-full border border-white/60">
                                     {['All', 'Delivered', 'Skipped'].map(f => (
@@ -154,15 +181,15 @@ const History = () => {
                                 </div>
                             )}
                         </div>
-
-                        <HistoryList
-                            activeTab={activeTab}
-                            data={data[activeTab]}
-                            onViewInvoice={(transaction) => setSelectedTransaction(transaction)}
-                            onViewMeal={(meal) => setSelectedMeal(meal)}
-                        />
                     </div>
-                </>
+
+                    <HistoryList
+                        activeTab={activeTab}
+                        data={data[activeTab]}
+                        onViewInvoice={(transaction) => setSelectedTransaction(transaction)}
+                        onViewMeal={(meal) => setSelectedMeal(meal)}
+                    />
+                </div>
             )}
 
             <InvoiceModal
@@ -177,7 +204,7 @@ const History = () => {
                 onClose={() => setSelectedMeal(null)}
                 meal={selectedMeal}
             />
-        </div>
+        </div >
     );
 };
 

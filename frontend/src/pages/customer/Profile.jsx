@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/UserContext';
 import axios from 'axios';
-import { ProfileStats, ProfileAvatarCard, ProfileDetailsForm } from '../../components/customer';
+import { ProfileStats, ProfileAvatarCard, ProfileDetailsForm, AvatarSelectorModal } from '../../components/customer';
 import {
     ProfileSkeleton,
     BackgroundBlobs,
@@ -17,9 +17,10 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showAvatarModal, setShowAvatarModal] = useState(false);
 
     const [formData, setFormData] = useState({
-        name: '', phone: '', email: '', address: '', diet: 'Pure Veg', memberSince: ''
+        name: '', phone: '', email: '', address: '', diet: 'Pure Veg', spiceLevel: 'Medium', sweetTooth: false, memberSince: ''
     });
 
     useEffect(() => {
@@ -30,7 +31,10 @@ const Profile = () => {
                 phone: user.mobile || '',
                 address: user.address || '',
                 diet: user.dietPreference || 'Pure Veg',
-                memberSince: user.memberSince ? new Date(user.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Oct 2025'
+                spiceLevel: user.spiceLevel || 'Medium',
+                sweetTooth: user.sweetTooth || false,
+                memberSince: user.memberSince ? new Date(user.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Oct 2025',
+                profileImage: user.profile_image
             });
             setLoading(false);
         }
@@ -74,8 +78,11 @@ const Profile = () => {
             <div className="flex flex-col lg:flex-row gap-8 items-start">
                 <ProfileAvatarCard
                     name={formData.name}
+                    id={`ST-${user?.id?.slice(-6)?.toUpperCase() || 'USER'}`}
                     diet={formData.diet}
+                    profileImage={formData.profileImage}
                     onLogout={() => setShowLogoutModal(true)}
+                    onEditAvatar={() => setShowAvatarModal(true)}
                 />
 
                 <ProfileDetailsForm
@@ -87,6 +94,26 @@ const Profile = () => {
                     saving={saving}
                 />
             </div>
+
+            {/* Avatar Selector Modal */}
+            <AvatarSelectorModal
+                isOpen={showAvatarModal}
+                onClose={() => setShowAvatarModal(false)}
+                currentAvatar={formData.profileImage}
+                onSelect={async (newAvatar) => {
+                    // Optimistic update
+                    setFormData(prev => ({ ...prev, profileImage: newAvatar }));
+
+                    try {
+                        // Backend requires 'imageUrl'
+                        await axios.post('/api/customer/profile/upload-image', { imageUrl: newAvatar });
+                        setShowAvatarModal(false);
+                    } catch (error) {
+                        console.error("Failed to update avatar", error);
+                        // Revert on failure if needed (skipped for simplicity)
+                    }
+                }}
+            />
 
             {/* Success Modal */}
             {

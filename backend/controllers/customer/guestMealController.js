@@ -53,18 +53,17 @@ exports.bookGuestMeal = async (req, res) => {
             const method = (paymentMethod || 'wallet').toLowerCase();
 
             if (method === 'wallet') {
-                // WALLET PAYMENT
-                const wallet = await CustomerWallet.findOne({ customer: customerId });
-                if (!wallet || wallet.balance < totalCost) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `Insufficient wallet balance. Need ₹${totalCost}, have ₹${wallet?.balance || 0}`
-                    });
-                }
+                const debitResult = await debitWallet(
+                    customerId,
+                    totalCost,
+                    `Guest ${mealType} meal x${quantity}`,
+                    `GUEST-${Date.now().toString().slice(-6)}`,
+                    'Order Payment'
+                );
 
-                // Deduct from wallet
-                wallet.balance -= totalCost;
-                await wallet.save();
+                if (!debitResult.success) {
+                    return res.status(400).json({ success: false, message: debitResult.message });
+                }
 
                 finalPaymentMethod = "Wallet";
                 paymentStatus = "Paid";
@@ -110,22 +109,24 @@ exports.bookGuestMeal = async (req, res) => {
                 paymentStatus = "Paid";
             }
 
-            // Create Transaction Record
-            await Transaction.create({
-                customer: customerId,
-                provider: subscription.provider,
-                amount: totalCost,
-                type: "debit",
-                transactionType: "Order Payment",
-                referenceId: transactionId || `GUEST-${Date.now().toString().slice(-6)}`,
-                status: "Success",
-                description: `Guest ${mealType} meal x${quantity} (${finalPaymentMethod})`,
-                subscriptionId: subscription._id,
-                bankDetails: sourceBank ? {
-                    bankName: sourceBank.bankName,
-                    accountNumber: sourceBank.accountNumber
-                } : null
-            });
+            // Create Transaction Record ONLY for UPI (Wallet is handled by debitWallet)
+            if (method === 'upi') {
+                await Transaction.create({
+                    customer: customerId,
+                    provider: subscription.provider,
+                    amount: totalCost,
+                    type: "debit",
+                    transactionType: "Order Payment",
+                    referenceId: transactionId || `GUEST-${Date.now().toString().slice(-6)}`,
+                    status: "Success",
+                    description: `Guest ${mealType} meal x${quantity} (UPI)`,
+                    subscriptionId: subscription._id,
+                    bankDetails: sourceBank ? {
+                        bankName: sourceBank.bankName,
+                        accountNumber: sourceBank.accountNumber
+                    } : null
+                });
+            }
         }
 
         // 4. Create Guest Order

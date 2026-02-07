@@ -7,6 +7,7 @@ const StoreProfile = require("../../models/storeProfile.model");
 const ProviderProfile = require("../../models/providerprofile.model");
 const Wallet = require("../../models/wallet.model");
 const DummyBank = require("../../models/dummyBank.model");
+const { debitWallet } = require("./walletController");
 
 // Get subscription details for management
 exports.getSubscriptionDetails = async (req, res) => {
@@ -265,17 +266,17 @@ exports.upgradeSubscription = async (req, res) => {
         let transactionStatus = 'Success';
 
         if (method === 'WALLET') {
-            const wallet = await CustomerWallet.findOne({ customer: customerId });
-            if (!wallet || wallet.balance < upgradeAmount) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Insufficient wallet balance. You need ₹${upgradeAmount - (wallet?.balance || 0)} more.`
-                });
+            const debitResult = await debitWallet(
+                customerId,
+                upgradeAmount,
+                `Subscription upgraded to ${newPlan.name}`,
+                `UPG-WAL-${Date.now()}`,
+                'Subscription Upgrade'
+            );
+
+            if (!debitResult.success) {
+                return res.status(400).json({ success: false, message: debitResult.message });
             }
-            // Deduct balance
-            wallet.balance -= upgradeAmount;
-            wallet.totalSpent = (wallet.totalSpent || 0) + upgradeAmount;
-            await wallet.save();
         } else if (method === 'PAY_LATER') {
             transactionStatus = 'Pending';
         }
@@ -288,18 +289,20 @@ exports.upgradeSubscription = async (req, res) => {
         currentSubscription.upgradedAt = new Date();
         await currentSubscription.save();
 
-        // Create transaction record for upgrade payment
-        const transaction = new Transaction({
-            customer: customerId,
-            type: 'debit',
-            transactionType: 'Subscription Upgrade', // More specific
-            amount: upgradeAmount,
-            description: `Subscription upgraded to ${newPlan.name} via ${method}`,
-            referenceId: method === 'UPI' ? paymentDetails.transactionId : (method === 'WALLET' ? `UPG-WAL-${Date.now()}` : `UPG-PAYL-${Date.now()}`),
-            status: transactionStatus,
-            paymentMethod: method
-        });
-        await transaction.save();
+        // Create transaction record ONLY for Non-Wallet payments (Wallet handled by debitWallet)
+        if (method !== 'WALLET') {
+            const transaction = new Transaction({
+                customer: customerId,
+                type: 'debit',
+                transactionType: 'Subscription Upgrade', // More specific
+                amount: upgradeAmount,
+                description: `Subscription upgraded to ${newPlan.name} via ${method}`,
+                referenceId: method === 'UPI' ? paymentDetails.transactionId : `UPG-PAYL-${Date.now()}`,
+                status: transactionStatus,
+                paymentMethod: method
+            });
+            await transaction.save();
+        }
 
         res.json({
             success: true,
@@ -510,15 +513,17 @@ exports.purchaseSubscription = async (req, res) => {
         let sourceBank = null;
 
         if (isWallet) {
-            // Check if sufficient balance
-            if (wallet.balance < totalAmount) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Insufficient wallet balance. You need ₹${totalAmount - wallet.balance} more.`
-                });
+            const debitResult = await debitWallet(
+                customerId,
+                totalAmount,
+                `Subscription for ${planName}`,
+                `SUB-${Date.now().toString().slice(-6)}`,
+                'Subscription Purchase'
+            );
+
+            if (!debitResult.success) {
+                return res.status(400).json({ success: false, message: debitResult.message });
             }
-            wallet.balance -= totalAmount;
-            wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
         } else if (isPayLater) {
             // Skip payment processing for Pay Later
             logger.info(`Pay Later selected for customer ${customerId}`);
@@ -628,27 +633,28 @@ exports.purchaseSubscription = async (req, res) => {
             dietPreference: userDietPreference
         });
 
-        // 6. Create Transaction Record (Debit for the purchase)
-        // 6. Create Transaction Record (Debit for the purchase)
-        const transaction = new Transaction({
-            customer: customerId,
-            provider: providerUserId,
-            type: 'debit',
-            transactionType: 'Subscription Purchase',
-            amount: totalAmount,
-            description: `Subscription for ${planName} at ${store.mess_name}`,
-            referenceId: transactionId || `SUB-${subscription._id.toString().slice(-6)}`,
-            status: isPayLater ? 'Pending' : 'Success',
-            subscriptionId: subscription._id,
-            // Add Bank Details if paid via external bank
-            bankDetails: (!isWallet && sourceBank) ? {
-                accountNumber: sourceBank.accountNumber,
-                bankName: sourceBank.bankName,
-                ifscCode: sourceBank.ifscCode
-            } : null
-        });
+        // 6. Create Transaction Record ONLY for Non-Wallet (Wallet handled by debitWallet)
+        if (!isWallet) {
+            const transaction = new Transaction({
+                customer: customerId,
+                provider: providerUserId,
+                type: 'debit',
+                transactionType: 'Subscription Purchase',
+                amount: totalAmount,
+                description: `Subscription for ${planName} at ${store.mess_name}`,
+                referenceId: transactionId || `SUB-${subscription._id.toString().slice(-6)}`,
+                status: isPayLater ? 'Pending' : 'Success',
+                subscriptionId: subscription._id,
+                // Add Bank Details if paid via external bank
+                bankDetails: (!isWallet && sourceBank) ? {
+                    accountNumber: sourceBank.accountNumber,
+                    bankName: sourceBank.bankName,
+                    ifscCode: sourceBank.ifscCode
+                } : null
+            });
 
-        await transaction.save();
+            await transaction.save();
+        }
 
         // 7. Credit Provider Wallet & Calculate Commission
         try {

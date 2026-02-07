@@ -4,6 +4,8 @@ const Transaction = require("../../models/transaction.model");
 const Order = require("../../models/order.model");
 const logger = require("../../utils/logger");
 
+const Customer = require("../../models/customer.model");
+
 // Get customer profile data
 exports.getProfile = async (req, res) => {
     try {
@@ -18,6 +20,19 @@ exports.getProfile = async (req, res) => {
             });
         }
 
+        // Get Customer details
+        let customer = await Customer.findOne({ user: customerId });
+
+        // AUTO-MIGRATION: If customer profile doesn't exist (old user), create it from User data
+        if (!customer && user.role === 'customer') {
+            customer = await Customer.create({
+                user: user._id,
+                dietPreference: user.dietPreference || 'Pure Veg',
+                addresses: user.address ? [{ label: 'Home', line: user.address, isDefault: true }] : [],
+                activeSubscription: user.activeSubscription
+            });
+        }
+
         // Calculate total spent
         const totalSpentResult = await Transaction.aggregate([
             { $match: { customer: customerId, type: 'debit' } },
@@ -25,7 +40,8 @@ exports.getProfile = async (req, res) => {
         ]);
         const totalSpent = totalSpentResult[0]?.total || 0;
 
-        // Calculate loyalty level based on total subscriptions
+        // Calculate loyalty level based on total subscriptions: USING CUSTOMER MODEL NOW?
+        // Subscription model links to `customer` (User ID). So this stays same.
         const totalSubscriptions = await Subscription.countDocuments({
             customer: customerId,
             status: 'approved'
@@ -54,8 +70,11 @@ exports.getProfile = async (req, res) => {
             name: user.fullName,
             email: user.email,
             phone: user.mobile,
-            address: user.address || '',
-            diet: user.dietPreference || 'Pure Veg',
+            // Address: Return default address for backward compatibility or first address
+            address: customer?.addresses?.find(a => a.isDefault)?.line || customer?.addresses?.[0]?.line || '',
+            diet: customer?.dietPreference || 'Pure Veg',
+            spiceLevel: customer?.foodPreferences?.spiceLevel || 'Medium',
+            sweetTooth: customer?.foodPreferences?.sweetTooth || false,
             memberSince,
             profileImage: user.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.fullName}`,
             studentId: `#ST-${user._id.toString().slice(-6).toUpperCase()}`,
@@ -109,15 +128,13 @@ exports.updateProfile = async (req, res) => {
             }
         }
 
-        // Update user profile
+        // Update User (Common Data)
         const updatedUser = await User.findByIdAndUpdate(
             customerId,
             {
                 fullName: name,
                 mobile: phone,
                 email,
-                address: address || '',
-                dietPreference: diet || 'Pure Veg',
                 updatedAt: new Date()
             },
             { new: true }
@@ -130,6 +147,39 @@ exports.updateProfile = async (req, res) => {
             });
         }
 
+        // Update Customer (Specific Data)
+        // Extract label from address string if present [Home] ...
+        let addressLine = address;
+        let addressLabel = 'Home';
+        const labelMatch = address.match(/^\[(.*?)\]\s*(.*)/);
+        if (labelMatch) {
+            addressLabel = labelMatch[1];
+            addressLine = labelMatch[2];
+        }
+
+        // Extract food preferences from request or use defaults
+        const { spiceLevel, sweetTooth, allergies } = req.body;
+
+        const updatedCustomer = await Customer.findOneAndUpdate(
+            { user: customerId },
+            {
+                dietPreference: diet || 'Pure Veg',
+                // For now, replacing the addresses array with single entry to match frontend behavior 
+                // until we have full address management UI
+                addresses: [{
+                    label: addressLabel,
+                    line: addressLine,
+                    isDefault: true
+                }],
+                foodPreferences: {
+                    spiceLevel: spiceLevel || 'Medium',
+                    sweetTooth: sweetTooth || false,
+                    allergies: allergies || []
+                }
+            },
+            { new: true, upsert: true } // Create if not exists
+        );
+
         res.json({
             success: true,
             data: {
@@ -138,8 +188,11 @@ exports.updateProfile = async (req, res) => {
                     name: updatedUser.fullName,
                     email: updatedUser.email,
                     phone: updatedUser.mobile,
-                    address: updatedUser.address,
-                    diet: updatedUser.dietPreference
+                    address: updatedCustomer.addresses[0]?.line ? `[${updatedCustomer.addresses[0].label}] ${updatedCustomer.addresses[0].line}` : '',
+                    diet: updatedCustomer.dietPreference,
+                    // Return new fields
+                    spiceLevel: updatedCustomer.foodPreferences?.spiceLevel,
+                    sweetTooth: updatedCustomer.foodPreferences?.sweetTooth,
                 },
                 message: 'Profile updated successfully'
             }
