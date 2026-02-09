@@ -77,26 +77,27 @@ exports.getWeeklyMenu = async (req, res) => {
             const dayName = days[menuDate.getDay()];
 
             if (menuData[dayName]) {
-                // Formatted items string - prioritize new items array
-                let itemsString = "";
-                if (menu.items && menu.items.length > 0) {
-                    itemsString = menu.items.map(i => i.name).join(", ");
-                } else {
-                    const legacyItems = [];
-                    if (menu.bread?.count) legacyItems.push(`${menu.bread.count} ${menu.bread.type}`);
-                    if (menu.rice) legacyItems.push(menu.rice);
-                    if (menu.dal) legacyItems.push(menu.dal);
-                    if (menu.mainDish) legacyItems.push(menu.mainDish);
-                    if (menu.sabjiDry) legacyItems.push(menu.sabjiDry);
-                    itemsString = legacyItems.join(", ");
-                }
+                // Unified formatter for Customer response
+                const formatForCustomer = (menu) => {
+                    if (!menu) return null;
+                    const itemsString = Array.isArray(menu.items) && menu.items.length > 0
+                        ? menu.items.map(i => i.name).join(', ')
+                        : (menu.description || 'Standard meal');
 
-                menuData[dayName][menu.mealType] = {
-                    title: menu.menuLabel || menu.name || "Regular Menu",
-                    items: itemsString || menu.description || "Balanced meal",
-                    cal: menu.calories || calculateCalories(menu),
-                    img: menu.image || getDefaultImage(menu.mealType, menu.type)
+                    return {
+                        id: menu._id,
+                        name: menu.menuLabel || menu.name,
+                        items: itemsString,
+                        itemsArray: menu.items || [],
+                        calories: menu.calories || 650,
+                        price: menu.price || 0,
+                        type: menu.type || "Veg",
+                        image: menu.image || getDefaultImage(menu.mealType, menu.type),
+                        emoji: menu.mealType === 'lunch' ? "🍛" : "🌙"
+                    };
                 };
+
+                menuData[dayName][menu.mealType] = formatForCustomer(menu);
             }
         });
 
@@ -326,25 +327,19 @@ exports.getTodayMenu = async (req, res) => {
         const formatMenu = (menu) => {
             if (!menu) return null;
 
-            let itemsString = "";
-            if (menu.items && menu.items.length > 0) {
-                itemsString = menu.items.map(i => i.name).join(", ");
-            } else {
-                const legacyItems = [];
-                if (menu.bread?.count) legacyItems.push(`${menu.bread.count} ${menu.bread.type}`);
-                if (menu.rice) legacyItems.push(menu.rice);
-                if (menu.dal) legacyItems.push(menu.dal);
-                if (menu.mainDish) legacyItems.push(menu.mainDish);
-                itemsString = legacyItems.join(", ");
-            }
+            const itemsString = Array.isArray(menu.items) && menu.items.length > 0
+                ? menu.items.map(i => i.name).join(', ')
+                : menu.description || 'Standard meal';
 
             return {
-                name: menu.menuLabel || menu.name || "Today's Special",
-                items: itemsString || menu.description,
-                emoji: menu.mealType === 'lunch' ? "🍛" : "🌙",
-                calories: menu.calories || calculateCalories(menu),
-                spiceLevel: menu.spiceLevel || "Medium",
-                type: menu.type || "Veg"
+                name: menu.menuLabel || menu.name,
+                items: itemsString,
+                itemsArray: menu.items || [],
+                calories: menu.calories || 0,
+                price: menu.price || 0,
+                type: menu.type || "Veg",
+                image: menu.image || null,
+                emoji: menu.mealType === 'lunch' ? "🍛" : "🌙"
             };
         };
 
@@ -389,26 +384,35 @@ exports.getPublicMenu = async (req, res) => {
             approvalStatus: "Approved"
         }).sort({ menuDate: 1, mealType: 1 });
 
-        const menuData = {};
+        // Unified formatter for Customer response
+        const formatForCustomer = (menu) => {
+            if (!menu) return null;
+            const itemsString = Array.isArray(menu.items) && menu.items.length > 0
+                ? menu.items.map(i => i.name).join(', ')
+                : (menu.description || 'Standard meal');
+
+            return {
+                name: menu.menuLabel || menu.name,
+                items: itemsString,
+                calories: menu.calories || 650,
+                price: menu.price || 0,
+                type: menu.type || "Veg",
+                image: menu.image || null,
+                emoji: menu.mealType === 'lunch' ? "🍛" : "🌙"
+            };
+        };
+
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const menuData = {};
         days.forEach(day => {
-            menuData[day] = { lunch: "Menu Not Available", dinner: "Menu Not Available", badges: [] };
+            menuData[day] = { lunch: null, dinner: null, badges: [] };
         });
 
         weeklyMenus.forEach(menu => {
             const menuDate = new Date(menu.menuDate);
             const dayName = days[menuDate.getDay()];
             if (menuData[dayName]) {
-                let itemsString = "";
-                if (menu.items && menu.items.length > 0) {
-                    itemsString = menu.items.map(i => i.name).join(", ");
-                } else {
-                    const legacyItems = [];
-                    if (menu.mainDish) legacyItems.push(menu.mainDish);
-                    if (menu.sabjiDry) legacyItems.push(menu.sabjiDry);
-                    itemsString = legacyItems.join(", ");
-                }
-                menuData[dayName][menu.mealType] = itemsString || menu.menuLabel || menu.name;
+                menuData[dayName][menu.mealType] = formatForCustomer(menu);
 
                 // Use menuLabel as a badge if tags aren't present
                 if (menu.tags && menu.tags.length > 0) {

@@ -125,20 +125,53 @@ const MessDetails = () => {
                                                     </span>
                                                 </div>
 
-                                                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="material-symbols-outlined text-[16px] text-orange-500">sunny</span>
-                                                            <p className="text-[10px] text-[#5C4D42]/80 font-black uppercase tracking-wider">Lunch</p>
+                                                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                                    {/* Lunch Section */}
+                                                    <div className="bg-white/40 p-3 rounded-2xl border border-white/60">
+                                                        <div className="flex items-center justify-between mb-1.5">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-[16px] text-orange-500">sunny</span>
+                                                                <p className="text-[10px] text-[#5C4D42]/80 font-black uppercase tracking-wider">Lunch</p>
+                                                            </div>
+                                                            {menuData[day]?.lunch?.price && (
+                                                                <span className="text-[11px] font-black text-primary">₹{menuData[day].lunch.price}</span>
+                                                            )}
                                                         </div>
-                                                        <p className="text-sm font-bold text-[#2D241E] group-hover:text-primary transition-colors">{menuData[day]?.lunch || "Not Available"}</p>
+                                                        {menuData[day]?.lunch ? (
+                                                            <>
+                                                                <p className="text-sm font-bold text-[#2D241E] group-hover:text-primary transition-colors line-clamp-1">{menuData[day].lunch.name}</p>
+                                                                <div className="flex items-center justify-between mt-1">
+                                                                    <p className="text-[10px] text-[#5C4D42]/60 font-medium truncate flex-1 pr-2">{menuData[day].lunch.items}</p>
+                                                                    <span className="text-[9px] font-bold text-gray-400 shrink-0">{menuData[day].lunch.calories} kcal</span>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-400 italic">Not Available</p>
+                                                        )}
                                                     </div>
-                                                    <div className="container-type-normal">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="material-symbols-outlined text-[16px] text-indigo-500">dark_mode</span>
-                                                            <p className="text-[10px] text-[#5C4D42]/80 font-black uppercase tracking-wider">Dinner</p>
+
+                                                    {/* Dinner Section */}
+                                                    <div className="bg-white/40 p-3 rounded-2xl border border-white/60">
+                                                        <div className="flex items-center justify-between mb-1.5">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-[16px] text-indigo-500">dark_mode</span>
+                                                                <p className="text-[10px] text-[#5C4D42]/80 font-black uppercase tracking-wider">Dinner</p>
+                                                            </div>
+                                                            {menuData[day]?.dinner?.price && (
+                                                                <span className="text-[11px] font-black text-indigo-600">₹{menuData[day].dinner.price}</span>
+                                                            )}
                                                         </div>
-                                                        <p className="text-sm font-bold text-[#2D241E] opacity-90">{menuData[day]?.dinner || "Not Available"}</p>
+                                                        {menuData[day]?.dinner ? (
+                                                            <>
+                                                                <p className="text-sm font-bold text-[#2D241E] opacity-90 line-clamp-1">{menuData[day].dinner.name}</p>
+                                                                <div className="flex items-center justify-between mt-1">
+                                                                    <p className="text-[10px] text-[#5C4D42]/60 font-medium truncate flex-1 pr-2">{menuData[day].dinner.items}</p>
+                                                                    <span className="text-[9px] font-bold text-gray-400 shrink-0">{menuData[day].dinner.calories} kcal</span>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-400 italic">Not Available</p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

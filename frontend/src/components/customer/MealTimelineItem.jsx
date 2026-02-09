@@ -40,40 +40,16 @@ const MealTimelineItem = ({
                 </div>
 
                 <div className="size-24 rounded-2xl overflow-hidden shrink-0 shadow-sm relative group-hover:scale-105 transition-transform duration-500">
-                    <img src={menu?.img || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=200'} className="w-full h-full object-cover" alt={type} />
+                    <img src={menu?.image || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=200'} className="w-full h-full object-cover" alt={type} />
                 </div>
 
                 <div className="flex-1 min-w-0 text-center sm:text-left w-full space-y-2">
-                    <div>
-                        <p className="text-xs text-[#5C4D42] font-medium leading-relaxed line-clamp-2 mt-1 opacity-80">{menu?.items}</p>
-
-                        {/* Show Preferences if set */}
-                        {(preferences?.spice !== 'Medium' || preferences?.note || preferences?.extras?.extraRoti > 0 || preferences?.extras?.extraRice) && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                                {preferences?.spice !== 'Medium' && (
-                                    <span className="text-[9px] font-bold bg-white text-orange-600 px-2 py-0.5 rounded border border-orange-100">
-                                        {preferences?.spice} Spice
-                                    </span>
-                                )}
-                                {preferences?.extras?.extraRoti > 0 && (
-                                    <span className="text-[9px] font-bold bg-white text-primary px-2 py-0.5 rounded border border-primary/20 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[10px]">bakery_dining</span>
-                                        +{preferences.extras.extraRoti} Roti
-                                    </span>
-                                )}
-                                {preferences?.extras?.extraRice && (
-                                    <span className="text-[9px] font-bold bg-white text-blue-600 px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[10px]">rice_bowl</span>
-                                        + Rice
-                                    </span>
-                                )}
-                                {preferences?.note && (
-                                    <span className="text-[9px] font-bold bg-white text-gray-500 px-2 py-0.5 rounded border border-gray-100 truncate max-w-[150px]">
-                                        "{preferences?.note}"
-                                    </span>
-                                )}
-                            </div>
-                        )}
+                    <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                            <h3 className="text-lg font-black text-[#2D241E] truncate">{menu?.name || (type === 'lunch' ? 'Lunch Special' : 'Dinner Special')}</h3>
+                            <p className="text-xs text-[#5C4D42] font-medium leading-relaxed line-clamp-2 mt-0.5 opacity-80">{menu?.items}</p>
+                        </div>
+                        <span className="text-base font-black text-primary ml-4 shrink-0">₹{menu?.price || '--'}</span>
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
@@ -81,7 +57,7 @@ const MealTimelineItem = ({
                             <span className="size-1.5 rounded-full bg-green-500"></span> Veg
                         </span>
                         <span className="text-[10px] font-bold bg-white text-gray-500 px-2.5 py-1 rounded-lg border border-gray-100 flex items-center gap-1.5 shadow-sm">
-                            <span className="material-symbols-outlined text-[10px] text-orange-400">local_fire_department</span> {menu?.cal} cal
+                            <span className="material-symbols-outlined text-[10px] text-orange-400">local_fire_department</span> {menu?.calories || 0} kcal
                         </span>
                     </div>
 
@@ -89,7 +65,7 @@ const MealTimelineItem = ({
                         <div className="flex items-center gap-1.5 mt-1 bg-red-50/50 px-3 py-1.5 rounded-xl border border-red-100/30 w-fit animate-[fadeIn_0.5s]">
                             <span className="material-symbols-outlined text-red-500 text-[14px]">lock</span>
                             <span className="text-[9px] font-black text-red-500/80 uppercase tracking-widest leading-none">
-                                Cutoff Reached ({type === 'lunch' ? '10 AM' : '4 PM'})
+                                Cutoff Reached ({type === 'lunch' ? '10:30 AM' : '5:00 PM'})
                             </span>
                         </div>
                     )}

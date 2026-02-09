@@ -34,15 +34,21 @@ const TodaysMenuCard = ({ todaysMenu, lunchTime, dinnerTime }) => {
                         <div className="size-10 rounded-full bg-white flex items-center justify-center text-xl mb-3 shadow-sm group-hover/menu:scale-110 transition-transform">
                             {todaysMenu.lunch?.emoji || "🍱"}
                         </div>
-                        <h4 className="font-bold text-[#2D241E] text-sm mb-1">
-                            {todaysMenu.lunch?.name || "Not Set"}
-                        </h4>
-                        <p className="text-[10px] text-[#5C4D42] font-medium leading-relaxed mb-3">
+                        <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-[#2D241E] text-sm truncate pr-2">
+                                {todaysMenu.lunch?.name || "Not Set"}
+                            </h4>
+                            <span className="text-xs font-black text-primary">₹{todaysMenu.lunch?.price || '--'}</span>
+                        </div>
+                        <p className="text-[10px] text-[#5C4D42] font-medium leading-relaxed mb-2 line-clamp-2 min-h-[2.5em]">
                             {todaysMenu.lunch?.items || "Menu details pending"}
                         </p>
                         <div className="flex items-center justify-between mt-auto">
+                            <div className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px] text-orange-400">local_fire_department</span>
+                                <span className="text-[10px] font-bold text-gray-400">{todaysMenu.lunch?.calories || 0} kcal</span>
+                            </div>
                             <span className="text-[10px] font-black text-primary/60">{lunchTime}</span>
-                            <span className="material-symbols-outlined text-sm text-[#2D241E]/20">more_horiz</span>
                         </div>
                     </div>
 
@@ -59,17 +65,23 @@ const TodaysMenuCard = ({ todaysMenu, lunchTime, dinnerTime }) => {
                             ${new Date().getHours() >= 15 ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'}`}>Dinner</span>
 
                         <div className="size-10 rounded-full bg-white flex items-center justify-center text-xl mb-3 shadow-sm group-hover/menu:scale-110 transition-transform">
-                            {todaysMenu.dinner?.emoji || "🍛"}
+                            {todaysMenu.dinner?.emoji || "🌙"}
                         </div>
-                        <h4 className="font-bold text-[#2D241E] text-sm mb-1">
-                            {todaysMenu.dinner?.name || "Not Set"}
-                        </h4>
-                        <p className="text-[10px] text-[#5C4D42] font-medium leading-relaxed mb-3">
+                        <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-bold text-[#2D241E] text-sm truncate pr-2">
+                                {todaysMenu.dinner?.name || "Not Set"}
+                            </h4>
+                            <span className="text-xs font-black text-indigo-600">₹{todaysMenu.dinner?.price || '--'}</span>
+                        </div>
+                        <p className="text-[10px] text-[#5C4D42] font-medium leading-relaxed mb-2 line-clamp-2 min-h-[2.5em]">
                             {todaysMenu.dinner?.items || "Menu details pending"}
                         </p>
                         <div className="flex items-center justify-between mt-auto">
+                            <div className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px] text-indigo-400">local_fire_department</span>
+                                <span className="text-[10px] font-bold text-gray-400">{todaysMenu.dinner?.calories || 0} kcal</span>
+                            </div>
                             <span className="text-[10px] font-black text-indigo-400/60">{dinnerTime}</span>
-                            <span className="material-symbols-outlined text-sm text-[#2D241E]/20">more_horiz</span>
                         </div>
                     </div>
                 </div>

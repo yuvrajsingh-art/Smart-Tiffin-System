@@ -486,29 +486,39 @@ const Menu = () => {
                                 {/* Meals Grid */}
                                 <div className="grid grid-cols-2 gap-3">
                                     {/* Lunch */}
-                                    <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-orange-100">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-lg">🌞</span>
-                                            <span className="text-xs font-bold text-orange-600 uppercase">Lunch</span>
+                                    <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-orange-100 h-full flex flex-col">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg">🌞</span>
+                                                <span className="text-xs font-bold text-orange-600 uppercase">Lunch</span>
+                                            </div>
+                                            {dayMenu?.lunch?.price && (
+                                                <span className="text-xs font-black text-primary">₹{dayMenu.lunch.price}</span>
+                                            )}
                                         </div>
                                         <p className="text-sm font-semibold text-gray-800 line-clamp-1">
-                                            {dayMenu?.lunch?.title || 'Not Available'}
+                                            {dayMenu?.lunch?.name || 'Not Available'}
                                         </p>
-                                        <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                        <p className="text-[10px] text-gray-500 line-clamp-2 mt-1 flex-1">
                                             {dayMenu?.lunch?.items || 'Menu not set'}
                                         </p>
                                     </div>
 
                                     {/* Dinner */}
-                                    <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-indigo-100">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-lg">🌙</span>
-                                            <span className="text-xs font-bold text-indigo-600 uppercase">Dinner</span>
+                                    <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-indigo-100 h-full flex flex-col">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg">🌙</span>
+                                                <span className="text-xs font-bold text-indigo-600 uppercase">Dinner</span>
+                                            </div>
+                                            {dayMenu?.dinner?.price && (
+                                                <span className="text-xs font-black text-indigo-600">₹{dayMenu.dinner.price}</span>
+                                            )}
                                         </div>
                                         <p className="text-sm font-semibold text-gray-800 line-clamp-1">
-                                            {dayMenu?.dinner?.title || 'Not Available'}
+                                            {dayMenu?.dinner?.name || 'Not Available'}
                                         </p>
-                                        <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                        <p className="text-[10px] text-gray-500 line-clamp-2 mt-1 flex-1">
                                             {dayMenu?.dinner?.items || 'Menu not set'}
                                         </p>
                                     </div>
@@ -626,7 +636,7 @@ const Menu = () => {
             )}
 
             <div className="mt-8 text-center flex flex-col items-center gap-2">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 inline-block px-4 py-1 rounded-full">Updates allowed till 10 AM</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 inline-block px-4 py-1 rounded-full">Updates allowed till 10:30 AM (Lunch) & 5:00 PM (Dinner)</p>
                 <Link to="/customer/manage-subscription" className="text-xs font-bold text-primary hover:underline">Want to pause for multiple days?</Link>
             </div>
 
