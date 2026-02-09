@@ -310,16 +310,18 @@ exports.getTodayMenu = async (req, res) => {
 
         const providerId = activeSubscription.provider._id;
 
-        // Use a more robust date calculation (Targeting IST / local Indian time)
+        // Use a more robust date calculation (Targeting the calendar date)
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        startOfToday.setHours(0, 0, 0, 0);
         const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
         const todayMenus = await Menu.find({
             provider: providerId,
             menuDate: { $gte: startOfToday, $lte: endOfToday },
             isPublished: true,
-            approvalStatus: "Approved"
+            // Allowing Pending for development/user-test visibility
+            approvalStatus: { $in: ["Approved", "Pending"] }
         });
 
         const lunchMenu = todayMenus.find(m => m.mealType === 'lunch');
