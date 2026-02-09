@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getTodayMenu } from '../../../../services/ProviderService';
 import ProviderApi from '../../../../services/ProviderApi';
+import AddItem from './AddItem';
 
 const WeeklyPlan = () => {
   const [weeklyMenu, setWeeklyMenu] = useState({
@@ -16,7 +17,12 @@ const WeeklyPlan = () => {
   const [selectedDay, setSelectedDay] = useState('Monday');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState({ 
-    name: '', 
+    item1: '',
+    item2: '',
+    item3: '',
+    item4: '',
+    calories: '',
+    image: '',
     price: '', 
     mealType: 'lunch',
     category: 'Thali',
@@ -75,10 +81,13 @@ const WeeklyPlan = () => {
   };
 
   const handleAddItem = async () => {
-    if (newItem.name && newItem.price) {
+    if (newItem.item1 && newItem.price) {
       try {
         const menuData = {
-          name: newItem.name,
+          name: `${newItem.item1}, ${newItem.item2}, ${newItem.item3}, ${newItem.item4}`.replace(/, ,/g, ',').replace(/,\s*$/, ''),
+          items: [newItem.item1, newItem.item2, newItem.item3, newItem.item4].filter(Boolean),
+          calories: parseInt(newItem.calories) || 0,
+          image: newItem.image,
           price: parseInt(newItem.price),
           mealType: newItem.mealType,
           category: newItem.category,
@@ -93,10 +102,9 @@ const WeeklyPlan = () => {
         const response = await ProviderApi.post('/provider-menus', menuData);
         console.log('Response:', response.data);
         
-        // Refresh the weekly menu
         await fetchWeeklyMenu();
         
-        setNewItem({ name: '', price: '', mealType: 'lunch', category: 'Thali', type: 'Veg', description: '' });
+        setNewItem({ item1: '', item2: '', item3: '', item4: '', calories: '', image: '', price: '', mealType: 'lunch', category: 'Thali', type: 'Veg', description: '' });
         setShowAddForm(false);
         alert('Menu item added successfully!');
       } catch (error) {
@@ -157,72 +165,13 @@ const WeeklyPlan = () => {
 
         {/* Add Item Form */}
         {showAddForm && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Add Item to {selectedDay}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Item Name"
-                value={newItem.name}
-                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-              <input
-                type="number"
-                placeholder="Price (₹)"
-                value={newItem.price}
-                onChange={(e) => setNewItem({...newItem, price: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-              <select
-                value={newItem.mealType}
-                onChange={(e) => setNewItem({...newItem, mealType: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="lunch">Lunch</option>
-                <option value="dinner">Dinner</option>
-              </select>
-              <select
-                value={newItem.type}
-                onChange={(e) => setNewItem({...newItem, type: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="Veg">Veg</option>
-                <option value="Non-Veg">Non-Veg</option>
-                <option value="Egg">Egg</option>
-              </select>
-              <select
-                value={newItem.category}
-                onChange={(e) => setNewItem({...newItem, category: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="Thali">Thali</option>
-                <option value="Bowl">Bowl</option>
-                <option value="Combo">Combo</option>
-              </select>
-              <input
-                type="text"
-                placeholder="Description (optional)"
-                value={newItem.description}
-                onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={handleAddItem}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-              >
-                Add Item
-              </button>
-              <button
-                onClick={() => setShowAddForm(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          <AddItem
+            selectedDay={selectedDay}
+            newItem={newItem}
+            setNewItem={setNewItem}
+            handleAddItem={handleAddItem}
+            onCancel={() => setShowAddForm(false)}
+          />
         )}
 
         {loading ? (
