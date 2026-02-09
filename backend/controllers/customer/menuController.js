@@ -300,7 +300,7 @@ exports.getTodayMenu = async (req, res) => {
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
             status: "approved",
-            endDate: { $gte: new Date() }
+            endDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
         }).populate('provider', 'fullName');
 
         if (!activeSubscription || !activeSubscription.provider) {
@@ -323,6 +323,11 @@ exports.getTodayMenu = async (req, res) => {
             // Allowing Pending for development/user-test visibility
             approvalStatus: { $in: ["Approved", "Pending"] }
         });
+
+        console.log(`[MENU_DEBUG] Customer: ${customerId}, Provider: ${providerId}`);
+        console.log(`[MENU_DEBUG] Date Range: ${startOfToday.toISOString()} to ${endOfToday.toISOString()}`);
+        console.log(`[MENU_DEBUG] Found Menus: ${todayMenus.length}`);
+
 
         const lunchMenu = todayMenus.find(m => m.mealType === 'lunch');
         const dinnerMenu = todayMenus.find(m => m.mealType === 'dinner');
