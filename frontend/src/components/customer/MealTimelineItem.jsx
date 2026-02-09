@@ -48,13 +48,42 @@ const MealTimelineItem = ({
                         <div className="flex-1">
                             <h3 className="text-lg font-black text-[#2D241E] truncate">{menu?.name || (type === 'lunch' ? 'Lunch Special' : 'Dinner Special')}</h3>
                             <p className="text-xs text-[#5C4D42] font-medium leading-relaxed line-clamp-2 mt-0.5 opacity-80">{menu?.items}</p>
+
+                            {/* Restored Preferences Display */}
+                            {(preferences?.spice !== 'Medium' || preferences?.note || preferences?.extras?.extraRoti > 0 || preferences?.extras?.extraRice) && (
+                                <div className="mt-2 flex flex-wrap gap-1 justify-center sm:justify-start">
+                                    {preferences?.spice !== 'Medium' && (
+                                        <span className="text-[9px] font-bold bg-white text-orange-600 px-2 py-0.5 rounded border border-orange-100 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[10px]">local_fire_department</span>
+                                            {preferences?.spice} Spice
+                                        </span>
+                                    )}
+                                    {preferences?.extras?.extraRoti > 0 && (
+                                        <span className="text-[9px] font-bold bg-white text-primary px-2 py-0.5 rounded border border-primary/20 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[10px]">bakery_dining</span>
+                                            +{preferences.extras.extraRoti} Roti
+                                        </span>
+                                    )}
+                                    {preferences?.extras?.extraRice && (
+                                        <span className="text-[9px] font-bold bg-white text-blue-600 px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[10px]">rice_bowl</span>
+                                            + Rice
+                                        </span>
+                                    )}
+                                    {preferences?.note && (
+                                        <span className="text-[9px] font-bold bg-white text-gray-500 px-2 py-0.5 rounded border border-gray-100 italic truncate max-w-[150px]">
+                                            "{preferences?.note}"
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <span className="text-base font-black text-primary ml-4 shrink-0">₹{menu?.price || '--'}</span>
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                         <span className="text-[10px] font-bold bg-white text-green-700 px-2.5 py-1 rounded-lg border border-green-100 flex items-center gap-1.5 shadow-sm">
-                            <span className="size-1.5 rounded-full bg-green-500"></span> Veg
+                            <span className="material-symbols-outlined text-sm text-green-500">fiber_manual_record</span> Veg
                         </span>
                         <span className="text-[10px] font-bold bg-white text-gray-500 px-2.5 py-1 rounded-lg border border-gray-100 flex items-center gap-1.5 shadow-sm">
                             <span className="material-symbols-outlined text-[10px] text-orange-400">local_fire_department</span> {menu?.calories || 0} kcal

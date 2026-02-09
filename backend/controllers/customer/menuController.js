@@ -309,14 +309,15 @@ exports.getTodayMenu = async (req, res) => {
         }
 
         const providerId = activeSubscription.provider._id;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+
+        // Use a more robust date calculation (Targeting IST / local Indian time)
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
         const todayMenus = await Menu.find({
             provider: providerId,
-            menuDate: { $gte: today, $lt: tomorrow },
+            menuDate: { $gte: startOfToday, $lte: endOfToday },
             isPublished: true,
             approvalStatus: "Approved"
         });
