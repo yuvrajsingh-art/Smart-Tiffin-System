@@ -21,6 +21,18 @@ const menuSchema = new mongoose.Schema({
   description: String,
   image: String,
 
+  // Meal items array (e.g. ["Roti (4)", "Paneer Sabji", "Dal Fry", "Steamed Rice"])
+  items: [{
+    name: { type: String, required: true },
+    color: { type: String, default: "green" } // green, orange, yellow, etc.
+  }],
+
+  // Nutritional info
+  calories: { type: Number, default: 0 },
+
+  // Menu label (e.g. "STANDARD LUNCH", "PREMIUM DINNER")
+  menuLabel: { type: String },
+
   category: {
     type: String,
     enum: ["Thali", "Bowl", "Combo", "Bread", "Curry"],
@@ -39,17 +51,21 @@ const menuSchema = new mongoose.Schema({
     required: true
   },
 
+  // For weekly planning - which day this menu is for
+  menuDate: { type: Date },
+
   availableDays: [{
     type: String,
     enum: [
-      "Monday","Tuesday","Wednesday",
-      "Thursday","Friday","Saturday","Sunday"
+      "Monday", "Tuesday", "Wednesday",
+      "Thursday", "Friday", "Saturday", "Sunday"
     ],
     required: true
   }],
 
   isAvailable: { type: Boolean, default: true },
   isPublished: { type: Boolean, default: false },
+  isHoliday: { type: Boolean, default: false },
 
   approvalStatus: {
     type: String,
@@ -59,10 +75,8 @@ const menuSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-menuSchema.index(
-  { provider: 1, mealType: 1, availableDays: 1 },
-  { unique: true }
-);
+// Simplified index for performance
+menuSchema.index({ provider: 1, mealType: 1, menuDate: 1 });
 
 
 

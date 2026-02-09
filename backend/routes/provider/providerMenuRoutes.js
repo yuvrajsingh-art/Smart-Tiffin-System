@@ -1,13 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
-const { createOrUpdateMenu, publishMenu, getTodayMenu } = require("../../controllers/provider/providerMenucontroller");
+const { createMenu, updateMenu, publishMenu, getTodayMenu, getMenuHistory } = require("../../controllers/provider/providerMenucontroller");
 
 const authMiddleware = require("../../middleware/authMiddleware.middleware");
 const { isVerifiedProvider } = require("../../middlewares/isVerifiedProvider");
 
 // Create menu (provider)
-router.post("/", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, createOrUpdateMenu);
+router.post("/", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, createMenu);
+
+// Update menu (provider)
+router.put("/:id", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, updateMenu);
 
 // Get provider's own menus
 router.get("/", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, require("../../controllers/provider/providerMenucontroller").getProviderMenus);
@@ -16,7 +19,10 @@ router.get("/", authMiddleware.protect, authMiddleware.authorizeRoles("provider"
 router.put("/publish/:id", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, publishMenu);
 
 // Get today's published menu
-router.get("/today", getTodayMenu);
+router.get("/today", authMiddleware.protect, getTodayMenu);
+
+// Get menu history
+router.get("/history", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), getMenuHistory);
 
 // Delete menu item
 router.delete("/:id", authMiddleware.protect, async (req, res) => {

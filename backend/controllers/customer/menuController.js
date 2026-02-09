@@ -77,32 +77,24 @@ exports.getWeeklyMenu = async (req, res) => {
             const dayName = days[menuDate.getDay()];
 
             if (menuData[dayName]) {
-                const menuItems = [];
-
-                // Build menu items string
-                if (menu.bread?.count && menu.bread?.type) {
-                    menuItems.push(`${menu.bread.count} ${menu.bread.type}`);
-                }
-                if (menu.rice) menuItems.push(menu.rice);
-                if (menu.dal) menuItems.push(menu.dal);
-                if (menu.mainDish) menuItems.push(menu.mainDish);
-                if (menu.sabjiDry) menuItems.push(menu.sabjiDry);
-
-                // Add accompaniments
-                const accompaniments = [];
-                if (menu.accompaniments?.salad) accompaniments.push("Salad");
-                if (menu.accompaniments?.pickle) accompaniments.push("Pickle");
-                if (menu.accompaniments?.papad) accompaniments.push("Papad");
-                if (menu.accompaniments?.raita) accompaniments.push("Raita");
-
-                if (accompaniments.length > 0) {
-                    menuItems.push(...accompaniments);
+                // Formatted items string - prioritize new items array
+                let itemsString = "";
+                if (menu.items && menu.items.length > 0) {
+                    itemsString = menu.items.map(i => i.name).join(", ");
+                } else {
+                    const legacyItems = [];
+                    if (menu.bread?.count) legacyItems.push(`${menu.bread.count} ${menu.bread.type}`);
+                    if (menu.rice) legacyItems.push(menu.rice);
+                    if (menu.dal) legacyItems.push(menu.dal);
+                    if (menu.mainDish) legacyItems.push(menu.mainDish);
+                    if (menu.sabjiDry) legacyItems.push(menu.sabjiDry);
+                    itemsString = legacyItems.join(", ");
                 }
 
                 menuData[dayName][menu.mealType] = {
-                    title: menu.name || menu.mainDish || "Special Thali",
-                    items: menuItems.join(", ") || menu.description || "Delicious meal",
-                    cal: calculateCalories(menu),
+                    title: menu.menuLabel || menu.name || "Regular Menu",
+                    items: itemsString || menu.description || "Balanced meal",
+                    cal: menu.calories || calculateCalories(menu),
                     img: menu.image || getDefaultImage(menu.mealType, menu.type)
                 };
             }
@@ -333,17 +325,24 @@ exports.getTodayMenu = async (req, res) => {
 
         const formatMenu = (menu) => {
             if (!menu) return null;
-            const items = [];
-            if (menu.bread?.count) items.push(`${menu.bread.count} ${menu.bread.type}`);
-            if (menu.rice) items.push(menu.rice);
-            if (menu.dal) items.push(menu.dal);
-            if (menu.mainDish) items.push(menu.mainDish);
+
+            let itemsString = "";
+            if (menu.items && menu.items.length > 0) {
+                itemsString = menu.items.map(i => i.name).join(", ");
+            } else {
+                const legacyItems = [];
+                if (menu.bread?.count) legacyItems.push(`${menu.bread.count} ${menu.bread.type}`);
+                if (menu.rice) legacyItems.push(menu.rice);
+                if (menu.dal) legacyItems.push(menu.dal);
+                if (menu.mainDish) legacyItems.push(menu.mainDish);
+                itemsString = legacyItems.join(", ");
+            }
 
             return {
-                name: menu.name || menu.mainDish || "Special Thali",
-                items: items.join(", "),
+                name: menu.menuLabel || menu.name || "Today's Special",
+                items: itemsString || menu.description,
                 emoji: menu.mealType === 'lunch' ? "🍛" : "🌙",
-                calories: calculateCalories(menu),
+                calories: menu.calories || calculateCalories(menu),
                 spiceLevel: menu.spiceLevel || "Medium",
                 type: menu.type || "Veg"
             };
@@ -400,11 +399,23 @@ exports.getPublicMenu = async (req, res) => {
             const menuDate = new Date(menu.menuDate);
             const dayName = days[menuDate.getDay()];
             if (menuData[dayName]) {
-                const items = [];
-                if (menu.mainDish) items.push(menu.mainDish);
-                if (menu.sabjiDry) items.push(menu.sabjiDry);
-                menuData[dayName][menu.mealType] = items.join(", ") || menu.name;
-                if (menu.tags) menuData[dayName].badges = menu.tags;
+                let itemsString = "";
+                if (menu.items && menu.items.length > 0) {
+                    itemsString = menu.items.map(i => i.name).join(", ");
+                } else {
+                    const legacyItems = [];
+                    if (menu.mainDish) legacyItems.push(menu.mainDish);
+                    if (menu.sabjiDry) legacyItems.push(menu.sabjiDry);
+                    itemsString = legacyItems.join(", ");
+                }
+                menuData[dayName][menu.mealType] = itemsString || menu.menuLabel || menu.name;
+
+                // Use menuLabel as a badge if tags aren't present
+                if (menu.tags && menu.tags.length > 0) {
+                    menuData[dayName].badges = menu.tags;
+                } else if (menu.menuLabel) {
+                    menuData[dayName].badges = [menu.menuLabel];
+                }
             }
         });
 
@@ -416,6 +427,8 @@ exports.getPublicMenu = async (req, res) => {
 
 // Helper function to calculate calories
 const calculateCalories = (menu) => {
+    if (menu.calories) return menu.calories;
+
     let calories = 0;
     if (menu.bread?.count) calories += menu.bread.count * 80;
     if (menu.rice) calories += 200;
