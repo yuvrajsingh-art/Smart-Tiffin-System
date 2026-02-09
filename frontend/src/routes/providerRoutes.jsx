@@ -14,6 +14,7 @@ import CustomerFeedback from '../pages/Provider/CustomerFeedback';
 import ProviderAnalysis from '../pages/Provider/ProviderAnalysis';
 import ProviderProfile from '../pages/Provider/ProviderProfile';
 import ProviderRevenue from '../pages/Provider/ProviderRevenue';
+import Notification from '../components/ui/Provider/Notification';
 
 // Provider route configuration
 export const providerRoutes = [
@@ -25,6 +26,7 @@ export const providerRoutes = [
     { path: "feedback", element: <CustomerFeedback /> },
     { path: "analytics", element: <ProviderAnalysis /> },
     { path: "profile", element: <ProviderProfile /> },
+    { path: "notifications", element: <Notification /> },
 ];
 
 export default providerRoutes;

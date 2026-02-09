@@ -1,6 +1,6 @@
 import { FaClock } from "react-icons/fa6"
 
-function OperatingHours({isEditing,profileData} ) {
+function OperatingHours({isEditing, profileData, editData, handleOperatingHoursChange}) {
     return(
         <>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -18,7 +18,7 @@ function OperatingHours({isEditing,profileData} ) {
                                             ) : (
                                                 <div className="flex items-center gap-2">
                                                     <FaClock className="text-gray-400" />
-                                                    <p className="text-gray-800">{profileData.operatingHours.open} AM</p>
+                                                    <p className="text-gray-800">{profileData.operatingHours.open} </p>
                                                 </div>
                                             )}
                                         </div>
@@ -34,7 +34,7 @@ function OperatingHours({isEditing,profileData} ) {
                                             ) : (
                                                 <div className="flex items-center gap-2">
                                                     <FaClock className="text-gray-400" />
-                                                    <p className="text-gray-800">{profileData.operatingHours.close} PM</p>
+                                                    <p className="text-gray-800">{profileData.operatingHours.close} </p>
                                                 </div>
                                             )}
                                         </div>
