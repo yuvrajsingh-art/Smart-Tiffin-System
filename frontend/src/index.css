@@ -52,8 +52,7 @@ body {
   filter: blur(80px);
   z-index: -1;
   opacity: 0.3;
-  /* Reduced opacity for lighter feel */
-  animation: float 10s infinite ease-in-out;
+  /* Removed float animation for a stable, proper look */
 }
 
 .blob-primary {

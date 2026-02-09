@@ -60,15 +60,15 @@ exports.getWeeklyMenu = async (req, res) => {
         days.forEach(day => {
             menuData[day] = {
                 lunch: {
-                    name: "Lunch Special",
-                    items: "Please check with provider",
+                    name: "Chef's Lunch Special",
+                    items: "Signature delights being prepared by the chef...",
                     calories: 0,
                     price: 0,
                     image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200"
                 },
                 dinner: {
-                    name: "Dinner Special",
-                    items: "Please check with provider",
+                    name: "Chef's Dinner Special",
+                    items: "Signature delights being prepared by the chef...",
                     calories: 0,
                     price: 0,
                     image: "https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200"

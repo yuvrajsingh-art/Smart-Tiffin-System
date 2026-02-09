@@ -357,8 +357,7 @@ const Menu = () => {
     );
 
     return (
-        <div className="w-full pb-20 animate-[fadeIn_0.5s_ease-out] px-4 relative">
-            <BackgroundBlobs />
+        <div className="w-full pb-20 px-4 relative">
 
             {/* Header with View Toggle */}
             <div className="flex flex-col gap-4 pt-4 mb-6">
@@ -382,7 +381,7 @@ const Menu = () => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setShowGuestModal(true)}
-                            className="bg-primary text-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2 transition-all animate-[pulse_3s_infinite]"
+                            className="bg-primary text-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2 transition-all"
                         >
                             <span className="material-symbols-outlined text-sm">group_add</span>
                             Book Guest
@@ -441,9 +440,9 @@ const Menu = () => {
                 </div>
             )}
 
-            {/* Week View - Grid */}
+            {/* Week View - Simplified Grid (No Animations) */}
             {viewMode === 'week' && (
-                <div className="mt-4 space-y-4">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Day Cards */}
                     {days.map((day, idx) => {
                         const isToday = idx === todayIndex;
@@ -454,152 +453,88 @@ const Menu = () => {
                             <div
                                 key={day}
                                 onClick={() => setSelectedDay(day)}
-                                className={`rounded-2xl p-4 border-2 transition-all cursor-pointer ${isSelected
-                                    ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-primary shadow-lg ring-2 ring-primary/30'
+                                className={`bg-white p-6 rounded-[2rem] border transition-colors cursor-pointer relative overflow-hidden ${isSelected
+                                    ? 'border-primary ring-2 ring-primary/5 shadow-md'
                                     : isToday
-                                        ? 'bg-orange-50/50 border-orange-200'
-                                        : 'bg-white border-gray-100 hover:border-gray-300'
+                                        ? 'border-orange-200 bg-orange-50/10'
+                                        : 'border-gray-100 hover:border-gray-200'
                                     }`}
                             >
                                 {/* Day Header */}
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-lg font-black ${isSelected ? 'text-primary' : isToday ? 'text-orange-600' : 'text-gray-800'}`}>
-                                            {day}
-                                        </span>
-                                        {isToday && (
-                                            <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                                TODAY
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`size-10 rounded-xl flex items-center justify-center font-black ${isSelected ? 'bg-primary text-white shadow-sm' : isToday ? 'bg-orange-100 text-orange-600' : 'bg-gray-50 text-gray-400 border border-gray-100'}`}>
+                                            {day.slice(0, 3)}
+                                        </div>
+                                        <div>
+                                            <span className={`text-md font-black block leading-none ${isSelected ? 'text-[#2D241E]' : 'text-gray-700'}`}>
+                                                {day}
                                             </span>
-                                        )}
-                                        {isSelected && !isToday && (
-                                            <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                                SELECTED
-                                            </span>
-                                        )}
+                                            {isToday && (
+                                                <span className="text-[8px] font-black text-orange-500 uppercase tracking-widest mt-0.5 block">Active</span>
+                                            )}
+                                        </div>
                                     </div>
                                     {isSelected && (
-                                        <span className="text-xs text-primary font-bold">👇 Book guests below</span>
+                                        <div className="bg-primary/5 p-1 rounded-lg">
+                                            <span className="material-symbols-outlined text-sm text-primary">check_circle</span>
+                                        </div>
                                     )}
                                 </div>
 
-                                {/* Meals Grid */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    {/* Lunch */}
-                                    <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-orange-100 h-full flex flex-col">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg">🌞</span>
-                                                <span className="text-xs font-bold text-orange-600 uppercase">Lunch</span>
+                                {/* Meals Stack */}
+                                <div className="space-y-4">
+                                    {/* Lunch Segment */}
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 w-1 bg-orange-500 rounded-full"></div>
+                                        <div className="bg-gray-50 p-4 rounded-xl ml-3">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest flex items-center gap-1">
+                                                    <span className="text-sm">🌞</span> Lunch
+                                                </span>
+                                                {dayMenu?.lunch?.price > 0 && (
+                                                    <span className="text-[11px] font-black text-primary">₹{dayMenu.lunch.price}</span>
+                                                )}
                                             </div>
-                                            {dayMenu?.lunch?.price && (
-                                                <span className="text-xs font-black text-primary">₹{dayMenu.lunch.price}</span>
-                                            )}
+                                            <h4 className="text-sm font-black text-[#2D241E] truncate">
+                                                {dayMenu?.lunch?.name || "Chef's Lunch Special"}
+                                            </h4>
+                                            <p className="text-[10px] text-[#5C4D42] font-medium opacity-70 italic mt-0.5 leading-relaxed">
+                                                {dayMenu?.lunch?.items || "Signature delights being prepared..."}
+                                            </p>
                                         </div>
-                                        <p className="text-sm font-semibold text-gray-800 line-clamp-1">
-                                            {dayMenu?.lunch?.name || 'Not Available'}
-                                        </p>
-                                        <p className="text-[10px] text-gray-500 line-clamp-2 mt-1 flex-1">
-                                            {dayMenu?.lunch?.items || 'Menu not set'}
-                                        </p>
                                     </div>
 
-                                    {/* Dinner */}
-                                    <div className="bg-white/80 backdrop-blur rounded-xl p-3 border border-indigo-100 h-full flex flex-col">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg">🌙</span>
-                                                <span className="text-xs font-bold text-indigo-600 uppercase">Dinner</span>
+                                    {/* Dinner Segment */}
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 w-1 bg-indigo-500 rounded-full"></div>
+                                        <div className="bg-gray-50 p-4 rounded-xl ml-3">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1">
+                                                    <span className="text-sm">🌙</span> Dinner
+                                                </span>
+                                                {dayMenu?.dinner?.price > 0 && (
+                                                    <span className="text-[11px] font-black text-indigo-700">₹{dayMenu.dinner.price}</span>
+                                                )}
                                             </div>
-                                            {dayMenu?.dinner?.price && (
-                                                <span className="text-xs font-black text-indigo-600">₹{dayMenu.dinner.price}</span>
-                                            )}
+                                            <h4 className="text-sm font-black text-[#2D241E] truncate">
+                                                {dayMenu?.dinner?.name || "Chef's Dinner Special"}
+                                            </h4>
+                                            <p className="text-[10px] text-[#5C4D42] font-medium opacity-70 italic mt-0.5 leading-relaxed">
+                                                {dayMenu?.dinner?.items || "Signature delights being prepared..."}
+                                            </p>
                                         </div>
-                                        <p className="text-sm font-semibold text-gray-800 line-clamp-1">
-                                            {dayMenu?.dinner?.name || 'Not Available'}
-                                        </p>
-                                        <p className="text-[10px] text-gray-500 line-clamp-2 mt-1 flex-1">
-                                            {dayMenu?.dinner?.items || 'Menu not set'}
-                                        </p>
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
-
-                    {/* Guest Booking Section for Selected Day - HIDDEN, moved to Modal */}
-                    <div className="hidden">
-                        <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-primary">group_add</span>
-                            Book Guests for {selectedDay}
-                            {selectedDay === days[todayIndex] && <span className="text-xs font-bold text-orange-500">(Today)</span>}
-                        </h3>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* Lunch Guest */}
-                            <div className="bg-white rounded-xl p-4 border border-orange-100">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-2xl">🌞</span>
-                                        <span className="font-bold text-gray-800">Lunch</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => updateGuestCount('lunch', -1)}
-                                            className="size-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200"
-                                        >
-                                            -
-                                        </button>
-                                        <span className="text-xl font-black text-primary w-8 text-center">
-                                            {guestCounts.lunch}
-                                        </span>
-                                        <button
-                                            onClick={() => updateGuestCount('lunch', 1)}
-                                            className="size-8 bg-primary text-white rounded-full flex items-center justify-center font-bold hover:bg-primary/90"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Dinner Guest */}
-                            <div className="bg-white rounded-xl p-4 border border-indigo-100">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-2xl">🌙</span>
-                                        <span className="font-bold text-gray-800">Dinner</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => updateGuestCount('dinner', -1)}
-                                            className="size-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200"
-                                        >
-                                            -
-                                        </button>
-                                        <span className="text-xl font-black text-primary w-8 text-center">
-                                            {guestCounts.dinner}
-                                        </span>
-                                        <button
-                                            onClick={() => updateGuestCount('dinner', 1)}
-                                            className="size-8 bg-primary text-white rounded-full flex items-center justify-center font-bold hover:bg-primary/90"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p className="text-xs text-gray-500 mt-3 text-center">
-                            ₹150 per guest meal • Add guests and click sticky bar to book
-                        </p>
-                    </div>
                 </div>
             )}
+
             {/* Booked Guest Meals Section */}
             {guestOrders.filter(o => o.status !== 'cancelled').length > 0 && (
-                <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
+                <div className="mt-6 bg-gray-50 rounded-2xl p-4 border border-gray-100">
                     <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                         👥 Your Guest Meals
                     </h3>

@@ -14,11 +14,14 @@ exports.getSubscriptionDetails = async (req, res) => {
     try {
         const customerId = req.user._id;
 
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
         // Get active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
             status: "approved",
-            endDate: { $gte: new Date() }
+            endDate: { $gte: startOfToday }
         }).populate('provider', 'fullName');
 
         if (!activeSubscription) {

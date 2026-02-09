@@ -6,6 +6,7 @@ import { useSubscription } from '../../context/SubscriptionContext';
 import { useAuth } from '../../context/UserContext';
 import { useSocket } from '../../context/SocketContext';
 import { TrackSkeleton } from '../../components/common';
+import LiveTrackingMap from '../../components/customer/LiveTrackingMap';
 
 const Track = () => {
     const { hasActiveSubscription } = useSubscription();
@@ -142,6 +143,23 @@ const Track = () => {
                         </div>
                     </div>
                 )}
+
+                {/* 0. MAP VIEW (Premium Addition) */}
+                <div className="h-[300px] sm:h-[400px] w-full bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-xl relative group">
+                    <LiveTrackingMap
+                        eta={eta}
+                        distance={trackingData.distance}
+                        deliveryPartner={deliveryPartner}
+                        orderStatus={order.status}
+                        mapData={trackingData.mapData}
+                    />
+                    <div className="absolute top-4 left-4 z-[400]">
+                        <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/60 shadow-lg text-[9px] font-black uppercase tracking-widest text-[#2D241E] flex items-center gap-2">
+                            <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
+                            Real-time GPS
+                        </div>
+                    </div>
+                </div>
 
                 {/* 1. DASHBOARD STYLE TRACKER CARD */}
                 <section className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden group border border-white/60 shadow-[0_20px_40px_-10px_rgba(255,87,36,0.1)]">
