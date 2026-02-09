@@ -1,16 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaEye, FaPhone, FaUtensils } from "react-icons/fa6";
 import { IoTime } from "react-icons/io5";
+import ProviderApi from "../../../../services/ProviderApi";
 
-function ProviderRecentOrders( ) {
-     const [recentOrders] = useState([
-        { id: 1, customer: 'Rahul Sharma', phone: '+91 9876543210', item: 'Lunch Special', quantity: 2, time: '12:30 PM', status: 'Delivered', amount: 160, orderDate: 'Today' },
-        { id: 2, customer: 'Priya Singh', phone: '+91 9876543211', item: 'Dinner Special', quantity: 1, time: '7:45 PM', status: 'Preparing', amount: 70, orderDate: 'Today' },
-        { id: 3, customer: 'Amit Kumar', phone: '+91 9876543212', item: 'Lunch Special', quantity: 1, time: '1:15 PM', status: 'Out for Delivery', amount: 80, orderDate: 'Today' },
-        { id: 4, customer: 'Sneha Patel', phone: '+91 9876543213', item: 'Dinner Special', quantity: 3, time: '8:00 PM', status: 'Delivered', amount: 210, orderDate: 'Yesterday' },
-        { id: 5, customer: 'Vikash Yadav', phone: '+91 9876543214', item: 'Breakfast Special', quantity: 1, time: '8:30 AM', status: 'Confirmed', amount: 50, orderDate: 'Today' },
-        { id: 6, customer: 'Anita Sharma', phone: '+91 9876543215', item: 'Lunch Special', quantity: 2, time: '12:45 PM', status: 'Cancelled', amount: 160, orderDate: 'Today' }
-    ]);
+function ProviderRecentOrders() {
+    const [recentOrders, setRecentOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchRecentOrders();
+    }, []);
+
+    const fetchRecentOrders = async () => {
+        try {
+            const response = await ProviderApi.get('/provider-kds/kds-1');
+            if (response.data && response.data.data) {
+                const allOrders = [
+                    ...response.data.data.justIn,
+                    ...response.data.data.preparing,
+                    ...response.data.data.ready,
+                    ...response.data.data.dispatched
+                ];
+                const formattedOrders = allOrders.slice(0, 6).map(order => ({
+                    id: order._id,
+                    customer: order.customerName || 'N/A',
+                    phone: 'N/A',
+                    item: order.items?.map(i => i.name).join(', ') || 'N/A',
+                    quantity: order.quantity || 1,
+                    time: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                    status: order.status === 'confirmed' ? 'Confirmed' : order.status === 'cooking' ? 'Preparing' : order.status === 'prepared' ? 'Ready' : 'Out for Delivery',
+                    amount: order.amount || 0,
+                    orderDate: 'Today'
+                }));
+                setRecentOrders(formattedOrders);
+            }
+        } catch (error) {
+            console.error('Error fetching recent orders:', error);
+            // Fallback to dummy data
+            setRecentOrders([
+                { id: 1, customer: 'Rahul Sharma', phone: '+91 9876543210', item: 'Lunch Special', quantity: 2, time: '12:30 PM', status: 'Delivered', amount: 160, orderDate: 'Today' },
+                { id: 2, customer: 'Priya Singh', phone: '+91 9876543211', item: 'Dinner Special', quantity: 1, time: '7:45 PM', status: 'Preparing', amount: 70, orderDate: 'Today' },
+                { id: 3, customer: 'Amit Kumar', phone: '+91 9876543212', item: 'Lunch Special', quantity: 1, time: '1:15 PM', status: 'Out for Delivery', amount: 80, orderDate: 'Today' },
+                { id: 4, customer: 'Sneha Patel', phone: '+91 9876543213', item: 'Dinner Special', quantity: 3, time: '8:00 PM', status: 'Delivered', amount: 210, orderDate: 'Yesterday' },
+                { id: 5, customer: 'Vikash Yadav', phone: '+91 9876543214', item: 'Breakfast Special', quantity: 1, time: '8:30 AM', status: 'Confirmed', amount: 50, orderDate: 'Today' },
+                { id: 6, customer: 'Anita Sharma', phone: '+91 9876543215', item: 'Lunch Special', quantity: 2, time: '12:45 PM', status: 'Cancelled', amount: 160, orderDate: 'Today' }
+            ]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -22,6 +60,19 @@ function ProviderRecentOrders( ) {
             default: return 'bg-gray-100 text-gray-800';
         }
     };
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="animate-pulse space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-20 bg-gray-200 rounded"></div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return(
         <>
         

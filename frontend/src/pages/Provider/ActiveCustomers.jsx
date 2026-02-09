@@ -3,7 +3,7 @@ import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
 import ActiveCustomerList from '../../components/ui/Provider/Active Customer/ActiveCustomerList';
 import AddCustomerForm from '../../components/ui/Provider/Active Customer/AddCustomerForm';
- import FilterCustomer from '../../components/ui/Provider/Active Customer/FilterCustomer';
+import FilterCustomer from '../../components/ui/Provider/Active Customer/FilterCustomer';
 
 const ActiveCustomers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,11 +12,10 @@ const ActiveCustomers = () => {
 
   const handleAddCustomer = (customerData) => {
     console.log('New customer:', customerData);
-    // Add customer logic here
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-[#FFFBF5]">
       <ProviderSidebar />
       <div className="flex-1 flex flex-col">
         <ProviderHeader 
@@ -25,15 +24,19 @@ const ActiveCustomers = () => {
         />
         <div className="flex-1 p-6 overflow-y-auto">
           {/* Search and Filter */}
-          <FilterCustomer searchTerm={searchTerm} 
-          filterStatus={filterStatus}
-          setSearchTerm={setSearchTerm}/>
+          <FilterCustomer 
+            searchTerm={searchTerm} 
+            filterStatus={filterStatus}
+            setSearchTerm={setSearchTerm}
+            setFilterStatus={setFilterStatus}
+            setShowAddForm={setShowAddForm}
+          />
 
           {/* Customer List */}
           <ActiveCustomerList 
-          searchTerm={searchTerm} 
-          filterStatus={filterStatus}
-           />
+            searchTerm={searchTerm} 
+            filterStatus={filterStatus}
+          />
         </div>
       </div>
 
@@ -48,5 +51,3 @@ const ActiveCustomers = () => {
 };
 
 export default ActiveCustomers;
-
-                

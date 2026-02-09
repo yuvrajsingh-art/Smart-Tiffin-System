@@ -1,84 +1,131 @@
-import { useState, useEffect } from "react";
- import { MdDashboard, MdOutlineRestaurantMenu } from "react-icons/md";
-import { FaUserGroup } from "react-icons/fa6";
-import { CiDeliveryTruck } from "react-icons/ci";
-import { MdFeedback } from "react-icons/md";
-import { SiSimpleanalytics } from "react-icons/si";
-import { FaUser } from "react-icons/fa";
-import { IoIosLogOut } from "react-icons/io";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import Logo from "../../common/Logo.jsx";
+import { createPortal } from "react-dom";
+import { useAuth } from "../../../context/UserContext";
 
+const SidebarItem = ({ icon, label, path, active }) => (
+  <Link
+    to={path}
+    className={`
+      flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition-all duration-300 group
+      ${
+        active
+          ? "bg-orange-100/60 text-primary font-semibold shadow-sm ring-1 ring-primary/10"
+          : "text-[#5C4D42] font-medium hover:bg-white/60 hover:text-primary hover:shadow-sm"
+      }
+    `}
+  >
+    <span className="material-symbols-outlined text-[18px]">{icon}</span>
+    <span className="text-xs font-bold tracking-wide">{label}</span>
+  </Link>
+);
 
 function ProviderSidebar() {
   const location = useLocation();
-  const [active, setActive] = useState("dashboard");
+  const { logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const menu = [
-  { id: "dashboard", icon: <MdDashboard />, label: "Dashboard", path: "/" },
-  { id: "menu", icon: <MdOutlineRestaurantMenu />, label: "Manage Daily Menu", path: "/Provider/ManageMenu" },
-  { id: "customers", icon: <FaUserGroup />, label: "Active Customers", path: "/Provider/ActiveCustomers" },
-  { id: "delivery", icon: <CiDeliveryTruck />, label: "Delivery Status", path: "/Provider/DeliveryStatus" },
-  { id: "feedback", icon: <MdFeedback />, label: "Customer Feedback", path: "/Provider/CustomerFeedback" },
-  { id: "analytics", icon: <SiSimpleanalytics />, label: "Analytics", path: "/Provider/ProviderAnalysis" },
-];
+    { icon: "dashboard", label: "Dashboard", path: "/provider/dashboard" },
+    { icon: "restaurant_menu", label: "Manage Daily Menu", path: "/provider/menu" },
+    { icon: "group", label: "Active Customers", path: "/provider/customers" },
+    { icon: "local_shipping", label: "Delivery Status", path: "/provider/delivery" },
+    { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" },
+    { icon: "analytics", label: "Analytics", path: "/provider/analytics" },
+  ];
 
-  useEffect(() => {
-    const currentPath = location.pathname;
-    const currentMenuItem = menu.find(item => item.path === currentPath);
-    if (currentMenuItem) {
-      setActive(currentMenuItem.id);
-    } else if (currentPath === "/Provider/ProviderProfile") {
-      setActive("profile");
-    }
-  }, [location.pathname]);
-
+  const handleLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+  };
 
   return (
-   <div className="w-64 h-screen shadow-md p-4 bg-[#fffdf9]">
-  <Logo />
+    <>
+      <aside className="w-64 h-full glass-sidebar flex flex-col flex-shrink-0 z-10 relative transition-all duration-300">
+        <div className="h-20 flex items-center gap-3 px-6">
+          <div className="size-8 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <span className="material-symbols-outlined text-[18px]">
+              lunch_dining
+            </span>
+          </div>
+          <span className="text-base font-bold tracking-tight text-[#2D241E]">
+            Smart Tiffin
+          </span>
+        </div>
 
-  <div className="flex flex-col justify-between mt-7 h-[calc(100vh-88px)]">
-    <div  >
-      {menu.map((item) => (
-        <Link
-          key={item.id}
-           to={item.path} 
-          onClick={() => setActive(item.id)}
-          className={`flex items-center gap-2 text-xl px-4 py-2 ms-1 w-full text-start rounded-md
-            ${active === item.id ? "text-red-600 bg-red-50" : "text-gray-700 hover:bg-blue-50/60"}
-          `}
-        >
-          {item.icon}
-          <span>{item.label}</span>
-        </Link>
-      ))}
-    </div>
+        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+          {menu.map((item) => (
+            <SidebarItem
+              key={item.path}
+              {...item}
+              active={location.pathname === item.path}
+            />
+          ))}
+          <div className="my-4 h-px bg-orange-100 w-full"></div>
+        </nav>
 
-    <div>
-      <Link to="/Provider/ProviderProfile"
-        onClick={() => setActive("profile")}
-        className={`flex items-center gap-2 text-xl px-4 py-2 ms-1 w-full text-start rounded-md
-          ${active === "profile" ? "text-red-600 bg-red-50" : "text-gray-700 hover:bg-blue-50/60"}
-        `}
-      >
-        <FaUser />
-        Profile
-      </Link>
+        <div className="p-3 border-t border-orange-100/50 space-y-1 bg-white/30">
+          <Link
+            to="/provider/profile"
+            className="flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-[#5C4D42] font-medium hover:bg-white/80 hover:text-primary transition-all group"
+          >
+            <span className="material-symbols-outlined text-[18px]">person</span>
+            <span className="text-xs font-bold tracking-wide">Profile</span>
+          </Link>
 
-      <button
-        onClick={() => setActive("logout")}
-        className={`flex items-center gap-2 text-xl px-4 py-2 ms-1 w-full text-start rounded-md
-          ${active === "logout" ? "text-red-600 bg-red-50" : "text-red-600 hover:bg-red-50"}
-        `}
-      >
-        <IoIosLogOut />
-        Logout
-      </button>
-    </div>
-  </div>
-</div>
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-red-500 font-medium hover:bg-red-50 hover:text-red-600 transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              logout
+            </span>
+            <span className="text-xs font-bold tracking-wide">Logout</span>
+          </button>
+        </div>
+      </aside>
 
+      {showLogoutModal &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-[#2D241E]/90 backdrop-blur-lg"
+              onClick={() => setShowLogoutModal(false)}
+            ></div>
+
+            <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl relative z-10 text-center">
+              <div className="flex flex-col items-center">
+                <div className="size-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6">
+                  <span className="material-symbols-outlined text-4xl">
+                    logout
+                  </span>
+                </div>
+
+                <h3 className="text-2xl font-black mb-2">Logout?</h3>
+                <p className="text-sm mb-8 opacity-80">
+                  Are you sure you want to log out of your account?
+                </p>
+
+                <div className="flex gap-3 w-full">
+                  <button
+                    onClick={() => setShowLogoutModal(false)}
+                    className="flex-1 py-4 bg-gray-100 rounded-[1.5rem] font-bold text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex-1 py-4 bg-red-500 text-white rounded-[1.5rem] font-bold text-sm"
+                  >
+                    Yes, Log out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 

@@ -1,87 +1,129 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaPhone, FaEnvelope, FaCalendarAlt, FaShoppingBag } from 'react-icons/fa';
+import ProviderApi from '../../../../services/ProviderApi';
 
 const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
-  const [customers] = useState([
-    {
-      id: 1,
-      name: 'Rahul Sharma',
-      email: 'rahul.sharma@email.com',
-      phone: '+91 9876543210',
-      plan: 'Premium',
-      status: 'active',
-      joinDate: '2024-01-15',
-      lastOrder: '2024-01-25',
-      totalOrders: 45,
-      avatar: 'RS',
-      address: 'Sector 15, Noida'
-    },
-    {
-      id: 2,
-      name: 'Priya Singh',
-      email: 'priya.singh@email.com',
-      phone: '+91 9876543211',
-      plan: 'Basic',
-      status: 'active',
-      joinDate: '2024-01-20',
-      lastOrder: '2024-01-25',
-      totalOrders: 32,
-      avatar: 'PS',
-      address: 'Sector 22, Gurgaon'
-    },
-    {
-      id: 3,
-      name: 'Amit Kumar',
-      email: 'amit.kumar@email.com',
-      phone: '+91 9876543212',
-      plan: 'Premium',
-      status: 'paused',
-      joinDate: '2024-01-10',
-      lastOrder: '2024-01-23',
-      totalOrders: 67,
-      avatar: 'AK',
-      address: 'Connaught Place, Delhi'
-    },
-    {
-      id: 4,
-      name: 'Sneha Patel',
-      email: 'sneha.patel@email.com',
-      phone: '+91 9876543213',
-      plan: 'Basic',
-      status: 'active',
-      joinDate: '2024-01-22',
-      lastOrder: '2024-01-25',
-      totalOrders: 18,
-      avatar: 'SP',
-      address: 'Bandra West, Mumbai'
-    },
-    {
-      id: 5,
-      name: 'Vikash Gupta',
-      email: 'vikash.gupta@email.com',
-      phone: '+91 9876543214',
-      plan: 'Premium',
-      status: 'expired',
-      joinDate: '2023-12-05',
-      lastOrder: '2024-01-15',
-      totalOrders: 89,
-      avatar: 'VG',
-      address: 'Koramangala, Bangalore'
-    },
-    {
-      id: 6,
-      name: 'Anita Sharma',
-      email: 'anita.sharma@email.com',
-      phone: '+91 9876543215',
-      plan: 'Basic',
-      status: 'active',
-      joinDate: '2024-01-18',
-      lastOrder: '2024-01-25',
-      totalOrders: 28,
-      avatar: 'AS',
-      address: 'Satellite, Ahmedabad'
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchActiveCustomers();
+  }, []);
+
+  const fetchActiveCustomers = async () => {
+    try {
+      const response = await ProviderApi.get('/provider-subscription');
+      console.log('Subscription API Response:', response.data);
+      console.log('Response data field:', response.data.data);
+      console.log('Response count:', response.data.count);
+      
+      if (response.data && response.data.data) {
+        const formattedData = response.data.data.map(sub => {
+          console.log('Processing subscription:', sub);
+          return {
+            id: sub._id,
+            name: sub.customer?.fullName || sub.customer?.name || 'N/A',
+            email: sub.customer?.email || 'N/A',
+            phone: sub.customer?.phone || sub.customer?.mobile || 'N/A',
+            plan: sub.planName || sub.planType || 'N/A',
+            status: sub.status.toLowerCase(),
+            joinDate: sub.createdAt,
+            lastOrder: sub.endDate || sub.duration?.end,
+            totalOrders: sub.skippedMeals?.length || 0,
+            avatar: (sub.customer?.fullName || sub.customer?.name || 'NA').split(' ').map(n => n[0]).join('').toUpperCase(),
+            address: sub.deliveryAddress?.fullAddress || sub.customer?.address || 'N/A'
+          };
+        });
+        console.log('Formatted customers:', formattedData);
+        setCustomers(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching active customers:', error);
+      // Fallback to dummy data
+      setCustomers([
+        {
+          id: 1,
+          name: 'Rahul Sharma',
+          email: 'rahul.sharma@email.com',
+          phone: '+91 9876543210',
+          plan: 'Premium',
+          status: 'active',
+          joinDate: '2024-01-15',
+          lastOrder: '2024-01-25',
+          totalOrders: 45,
+          avatar: 'RS',
+          address: 'Sector 15, Noida'
+        },
+        {
+          id: 2,
+          name: 'Priya Singh',
+          email: 'priya.singh@email.com',
+          phone: '+91 9876543211',
+          plan: 'Basic',
+          status: 'active',
+          joinDate: '2024-01-20',
+          lastOrder: '2024-01-25',
+          totalOrders: 32,
+          avatar: 'PS',
+          address: 'Sector 22, Gurgaon'
+        },
+        {
+          id: 3,
+          name: 'Amit Kumar',
+          email: 'amit.kumar@email.com',
+          phone: '+91 9876543212',
+          plan: 'Premium',
+          status: 'paused',
+          joinDate: '2024-01-10',
+          lastOrder: '2024-01-23',
+          totalOrders: 67,
+          avatar: 'AK',
+          address: 'Connaught Place, Delhi'
+        },
+        {
+          id: 4,
+          name: 'Sneha Patel',
+          email: 'sneha.patel@email.com',
+          phone: '+91 9876543213',
+          plan: 'Basic',
+          status: 'active',
+          joinDate: '2024-01-22',
+          lastOrder: '2024-01-25',
+          totalOrders: 18,
+          avatar: 'SP',
+          address: 'Bandra West, Mumbai'
+        },
+        {
+          id: 5,
+          name: 'Vikash Gupta',
+          email: 'vikash.gupta@email.com',
+          phone: '+91 9876543214',
+          plan: 'Premium',
+          status: 'expired',
+          joinDate: '2023-12-05',
+          lastOrder: '2024-01-15',
+          totalOrders: 89,
+          avatar: 'VG',
+          address: 'Koramangala, Bangalore'
+        },
+        {
+          id: 6,
+          name: 'Anita Sharma',
+          email: 'anita.sharma@email.com',
+          phone: '+91 9876543215',
+          plan: 'Basic',
+          status: 'active',
+          joinDate: '2024-01-18',
+          lastOrder: '2024-01-25',
+          totalOrders: 28,
+          avatar: 'AS',
+          address: 'Satellite, Ahmedabad'
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,6 +153,18 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
       year: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
