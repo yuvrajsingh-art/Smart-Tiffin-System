@@ -23,7 +23,7 @@ const ProviderStatsCards = () => {
             if (response.data && response.data.data) {
                 const data = response.data.data;
                 setStats({
-                    totalCustomers: data.businessHealth?.activeSubscribers || 0,
+                    totalCustomers: data.businessHealth?.totalCustomers || 0,
                     todayOrders: data.liveOperations?.ordersToPrep || 0,
                     monthlyRevenue: data.businessHealth?.todayRevenue || 0,
                     avgRating: data.rating?.average || 0,

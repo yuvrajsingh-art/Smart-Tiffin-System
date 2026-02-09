@@ -55,6 +55,13 @@ exports.getProviderDashboard = async (req, res) => {
       if (r._id === "Cash") cash += r.amount;
     });
 
+    /* ---------------- TOTAL CUSTOMERS (ALL: Active + Expired) ---------------- */
+
+    const uniqueCustomerIds = await Subscription.distinct("customer", {
+      provider: providerId
+    });
+    const totalCustomers = uniqueCustomerIds.length;
+
     /* ---------------- ACTIVE SUBSCRIPTIONS ---------------- */
 
     const activeSubscribers = await Subscription.countDocuments({
@@ -101,7 +108,8 @@ exports.getProviderDashboard = async (req, res) => {
           todayRevenue: totalRevenue,
           online,
           cash,
-          activeSubscribers
+          activeSubscribers,
+          totalCustomers
         },
 
         rating: {

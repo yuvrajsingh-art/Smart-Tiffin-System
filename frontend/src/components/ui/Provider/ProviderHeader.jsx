@@ -22,12 +22,8 @@ const ProviderHeader = ({ title, subtitle }) => {
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      // Fallback dummy data
-      setNotifications([
-        { _id: 1, message: "New subscription from customer", createdAt: new Date(), read: false },
-        { _id: 2, message: "Payment received ₹450", createdAt: new Date(), read: false },
-        { _id: 3, message: "Customer feedback received", createdAt: new Date(), read: true }
-      ]);
+      // Empty state when API fails - no dummy data
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -81,9 +77,8 @@ const ProviderHeader = ({ title, subtitle }) => {
                   {notifications.length > 0 ? notifications.map((notification) => (
                     <div
                       key={notification._id}
-                      className={`p-4 border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${
-                        !notification.read ? 'bg-orange-50/30' : ''
-                      }`}
+                      className={`p-4 border-b border-gray-50 hover:bg-gray-50/50 transition-colors ${!notification.read ? 'bg-orange-50/30' : ''
+                        }`}
                     >
                       <p className="text-sm text-[#2D241E] font-medium">{notification.message}</p>
                       <p className="text-xs text-[#5C4D42] mt-1">{formatTimeAgo(notification.createdAt)}</p>
