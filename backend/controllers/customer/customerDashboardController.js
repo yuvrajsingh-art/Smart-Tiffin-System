@@ -11,6 +11,7 @@ exports.getCustomerDashboard = async (req, res) => {
     try {
         const customerId = req.user._id;
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         // Check active subscription
         const activeSubscription = await Subscription.findOne({

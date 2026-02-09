@@ -9,11 +9,16 @@ const { ORDER_STATUS, MAP, IMAGES } = require("../../config/constants");
 exports.getLiveTracking = async (req, res) => {
     try {
         const customerId = req.user._id;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istNow = new Date(now.getTime() + istOffset);
 
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+        // Start of Today (IST)
+        const today = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), 0, 0, 0, 0));
+        today.setTime(today.getTime() - istOffset); // Map back to UTC for query if stored as UTC
+
+        // End of Today (IST)
+        const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
         // DEBUG LOGGING
         logger.info(`Tracking Request for ${customerId}`, {

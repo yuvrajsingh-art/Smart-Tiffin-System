@@ -81,7 +81,7 @@ const GuestMealModal = ({
             />
 
             {/* Modal */}
-            <div className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-[scaleIn_0.2s_ease-out]">
+            <div className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-primary to-orange-500 p-5 text-white">
                     <div className="flex items-center justify-between">
@@ -114,8 +114,8 @@ const GuestMealModal = ({
                             <button
                                 onClick={() => setSelectedDate('today')}
                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all ${selectedDate === 'today'
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
                                 Today
@@ -123,8 +123,8 @@ const GuestMealModal = ({
                             <button
                                 onClick={() => setSelectedDate('tomorrow')}
                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all ${selectedDate === 'tomorrow'
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
                                 Tomorrow
@@ -132,8 +132,8 @@ const GuestMealModal = ({
                             <button
                                 onClick={() => setSelectedDate('custom')}
                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all ${selectedDate === 'custom'
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
                                 Other
@@ -211,8 +211,8 @@ const GuestMealModal = ({
                                 <button
                                     onClick={() => setPaymentMethod('wallet')}
                                     className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${paymentMethod === 'wallet'
-                                            ? 'bg-green-100 text-green-700 border-2 border-green-400'
-                                            : 'bg-gray-100 text-gray-600 border-2 border-transparent'
+                                        ? 'bg-green-100 text-green-700 border-2 border-green-400'
+                                        : 'bg-gray-100 text-gray-600 border-2 border-transparent'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
@@ -221,8 +221,8 @@ const GuestMealModal = ({
                                 <button
                                     onClick={() => setPaymentMethod('upi')}
                                     className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 ${paymentMethod === 'upi'
-                                            ? 'bg-purple-100 text-purple-700 border-2 border-purple-400'
-                                            : 'bg-gray-100 text-gray-600 border-2 border-transparent'
+                                        ? 'bg-purple-100 text-purple-700 border-2 border-purple-400'
+                                        : 'bg-gray-100 text-gray-600 border-2 border-transparent'
                                         }`}
                                 >
                                     <span className="text-lg">📱</span>

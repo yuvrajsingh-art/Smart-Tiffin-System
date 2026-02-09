@@ -12,10 +12,13 @@ exports.getWeeklyMenu = async (req, res) => {
         const customerId = req.user._id;
 
         // Check if customer has active subscription
+        const now = new Date();
+        const startOfTodaySub = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
             status: "approved",
-            endDate: { $gte: new Date() }
+            endDate: { $gte: startOfTodaySub }
         }).populate('provider', 'fullName');
 
         if (!activeSubscription || !activeSubscription.provider) {
@@ -28,74 +31,72 @@ exports.getWeeklyMenu = async (req, res) => {
 
         const providerId = activeSubscription.provider._id;
 
-        // Get current week dates (Monday to Sunday)
-        const today = new Date();
-        const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // If Sunday, go back 6 days
+        // --- IST Aware Weekly Logic ---
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istNow = new Date(now.getTime() + istOffset);
+        const currentDay = istNow.getUTCDay();
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
 
-        const monday = new Date(today);
-        monday.setDate(today.getDate() + mondayOffset);
-        monday.setHours(0, 0, 0, 0);
+        // Start of Monday IST (at 00:00:00)
+        const monday = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate() + mondayOffset, 0, 0, 0, 0));
+        monday.setTime(monday.getTime() - istOffset); // Map back to UTC for query if stored as UTC
 
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        sunday.setHours(23, 59, 59, 999);
+        // End of Sunday IST (at 23:59:59)
+        const sunday = new Date(monday.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
 
         // Fetch weekly menu from database
         const weeklyMenus = await Menu.find({
             provider: providerId,
             menuDate: { $gte: monday, $lte: sunday },
             isPublished: true,
-            approvalStatus: "Approved"
+            approvalStatus: { $in: ["Approved", "Pending"] }
         }).sort({ menuDate: 1, mealType: 1 });
 
         // Format menu data for frontend
         const menuData = {};
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-        // Initialize all days with default data
+        // Initialize all days with default data (Matching Frontend Keys)
         days.forEach(day => {
             menuData[day] = {
                 lunch: {
-                    title: "Menu Not Available",
-                    items: "Please check with provider",
-                    cal: 0,
-                    img: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200"
+                    name: "Chef's Lunch Special",
+                    items: "Signature delights being prepared by the chef...",
+                    calories: 0,
+                    price: 0,
+                    image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200"
                 },
                 dinner: {
-                    title: "Menu Not Available",
-                    items: "Please check with provider",
-                    cal: 0,
-                    img: "https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200"
+                    name: "Chef's Dinner Special",
+                    items: "Signature delights being prepared by the chef...",
+                    calories: 0,
+                    price: 0,
+                    image: "https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200"
                 }
             };
         });
 
         // Fill with actual menu data
         weeklyMenus.forEach(menu => {
-            const menuDate = new Date(menu.menuDate);
-            const dayName = days[menuDate.getDay()];
+            // Adjust menuDate to IST to find the correct bucket
+            const menuDateIST = new Date(menu.menuDate.getTime() + istOffset);
+            const dayName = days[menuDateIST.getUTCDay()];
 
             if (menuData[dayName]) {
-                // Formatted items string - prioritize new items array
-                let itemsString = "";
-                if (menu.items && menu.items.length > 0) {
-                    itemsString = menu.items.map(i => i.name).join(", ");
-                } else {
-                    const legacyItems = [];
-                    if (menu.bread?.count) legacyItems.push(`${menu.bread.count} ${menu.bread.type}`);
-                    if (menu.rice) legacyItems.push(menu.rice);
-                    if (menu.dal) legacyItems.push(menu.dal);
-                    if (menu.mainDish) legacyItems.push(menu.mainDish);
-                    if (menu.sabjiDry) legacyItems.push(menu.sabjiDry);
-                    itemsString = legacyItems.join(", ");
-                }
+                const itemsString = Array.isArray(menu.items) && menu.items.length > 0
+                    ? menu.items.map(i => i.name).join(', ')
+                    : (menu.description || 'Standard meal');
 
                 menuData[dayName][menu.mealType] = {
-                    title: menu.menuLabel || menu.name || "Regular Menu",
-                    items: itemsString || menu.description || "Balanced meal",
-                    cal: menu.calories || calculateCalories(menu),
-                    img: menu.image || getDefaultImage(menu.mealType, menu.type)
+                    id: menu._id,
+                    name: menu.menuLabel || menu.name,
+                    items: itemsString,
+                    itemsArray: menu.items || [],
+                    calories: menu.calories || 650,
+                    price: menu.price || 0,
+                    type: menu.type || "Veg",
+                    image: menu.image || (menu.mealType === 'lunch' ? "https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=200" : "https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?q=80&w=200"),
+                    emoji: menu.mealType === 'lunch' ? "🍛" : "🌙"
                 };
             }
         });
@@ -299,7 +300,7 @@ exports.getTodayMenu = async (req, res) => {
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
             status: "approved",
-            endDate: { $gte: new Date() }
+            endDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
         }).populate('provider', 'fullName');
 
         if (!activeSubscription || !activeSubscription.provider) {
@@ -308,17 +309,25 @@ exports.getTodayMenu = async (req, res) => {
         }
 
         const providerId = activeSubscription.provider._id;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+
+        // Use a more robust date calculation (Targeting the calendar date)
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
         const todayMenus = await Menu.find({
             provider: providerId,
-            menuDate: { $gte: today, $lt: tomorrow },
+            menuDate: { $gte: startOfToday, $lte: endOfToday },
             isPublished: true,
-            approvalStatus: "Approved"
+            // Allowing Pending for development/user-test visibility
+            approvalStatus: { $in: ["Approved", "Pending"] }
         });
+
+        console.log(`[MENU_DEBUG] Customer: ${customerId}, Provider: ${providerId}`);
+        console.log(`[MENU_DEBUG] Date Range: ${startOfToday.toISOString()} to ${endOfToday.toISOString()}`);
+        console.log(`[MENU_DEBUG] Found Menus: ${todayMenus.length}`);
+
 
         const lunchMenu = todayMenus.find(m => m.mealType === 'lunch');
         const dinnerMenu = todayMenus.find(m => m.mealType === 'dinner');
@@ -326,25 +335,19 @@ exports.getTodayMenu = async (req, res) => {
         const formatMenu = (menu) => {
             if (!menu) return null;
 
-            let itemsString = "";
-            if (menu.items && menu.items.length > 0) {
-                itemsString = menu.items.map(i => i.name).join(", ");
-            } else {
-                const legacyItems = [];
-                if (menu.bread?.count) legacyItems.push(`${menu.bread.count} ${menu.bread.type}`);
-                if (menu.rice) legacyItems.push(menu.rice);
-                if (menu.dal) legacyItems.push(menu.dal);
-                if (menu.mainDish) legacyItems.push(menu.mainDish);
-                itemsString = legacyItems.join(", ");
-            }
+            const itemsString = Array.isArray(menu.items) && menu.items.length > 0
+                ? menu.items.map(i => i.name).join(', ')
+                : menu.description || 'Standard meal';
 
             return {
-                name: menu.menuLabel || menu.name || "Today's Special",
-                items: itemsString || menu.description,
-                emoji: menu.mealType === 'lunch' ? "🍛" : "🌙",
-                calories: menu.calories || calculateCalories(menu),
-                spiceLevel: menu.spiceLevel || "Medium",
-                type: menu.type || "Veg"
+                name: menu.menuLabel || menu.name,
+                items: itemsString,
+                itemsArray: menu.items || [],
+                calories: menu.calories || 0,
+                price: menu.price || 0,
+                type: menu.type || "Veg",
+                image: menu.image || null,
+                emoji: menu.mealType === 'lunch' ? "🍛" : "🌙"
             };
         };
 
@@ -389,26 +392,35 @@ exports.getPublicMenu = async (req, res) => {
             approvalStatus: "Approved"
         }).sort({ menuDate: 1, mealType: 1 });
 
-        const menuData = {};
+        // Unified formatter for Customer response
+        const formatForCustomer = (menu) => {
+            if (!menu) return null;
+            const itemsString = Array.isArray(menu.items) && menu.items.length > 0
+                ? menu.items.map(i => i.name).join(', ')
+                : (menu.description || 'Standard meal');
+
+            return {
+                name: menu.menuLabel || menu.name,
+                items: itemsString,
+                calories: menu.calories || 650,
+                price: menu.price || 0,
+                type: menu.type || "Veg",
+                image: menu.image || null,
+                emoji: menu.mealType === 'lunch' ? "🍛" : "🌙"
+            };
+        };
+
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const menuData = {};
         days.forEach(day => {
-            menuData[day] = { lunch: "Menu Not Available", dinner: "Menu Not Available", badges: [] };
+            menuData[day] = { lunch: null, dinner: null, badges: [] };
         });
 
         weeklyMenus.forEach(menu => {
             const menuDate = new Date(menu.menuDate);
             const dayName = days[menuDate.getDay()];
             if (menuData[dayName]) {
-                let itemsString = "";
-                if (menu.items && menu.items.length > 0) {
-                    itemsString = menu.items.map(i => i.name).join(", ");
-                } else {
-                    const legacyItems = [];
-                    if (menu.mainDish) legacyItems.push(menu.mainDish);
-                    if (menu.sabjiDry) legacyItems.push(menu.sabjiDry);
-                    itemsString = legacyItems.join(", ");
-                }
-                menuData[dayName][menu.mealType] = itemsString || menu.menuLabel || menu.name;
+                menuData[dayName][menu.mealType] = formatForCustomer(menu);
 
                 // Use menuLabel as a badge if tags aren't present
                 if (menu.tags && menu.tags.length > 0) {
