@@ -9,6 +9,7 @@ import ProviderApi from '../../services/ProviderApi';
 function ProviderRevenue() {
     const [timeRange, setTimeRange] = useState('week');
     const [loading, setLoading] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [revenueData, setRevenueData] = useState({
         totalRevenue: 0,
         todayRevenue: 0,
@@ -58,11 +59,12 @@ function ProviderRevenue() {
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
                     title="Revenue Management"
                     subtitle="Track your earnings and transactions"
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 p-6 overflow-y-auto">
                     <div className="flex justify-between items-center mb-6">

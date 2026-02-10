@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
 function ProviderProfile() {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [profileData, setProfileData] = useState({
         businessName: '',
         ownerName: '',
@@ -143,11 +144,12 @@ function ProviderProfile() {
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
                     title="Profile"
                     subtitle="Manage your business profile and settings"
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 p-6 overflow-y-auto">
                     <div className="flex justify-between items-center mb-6">

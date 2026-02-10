@@ -11,7 +11,8 @@ function DeliveryStatus() {
     const [deliveries, setDeliveries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
-
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+ 
     useEffect(() => {
         fetchDeliveries();
     }, []);
@@ -99,11 +100,12 @@ function DeliveryStatus() {
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
                     title="Delivery Status"
                     subtitle="Track and manage all your delivery orders"
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 p-6 overflow-y-auto">
                     {loading ? (

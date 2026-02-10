@@ -10,6 +10,7 @@ import ProviderApi from '../../services/ProviderApi';
 
 function ProviderAnalysis() {
     const [timeRange, setTimeRange] = useState('week');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [analyticsData, setAnalyticsData] = useState({
         week: { revenue: 0, orders: 0, customers: 0, avgOrderValue: 0, growth: { revenue: 0, orders: 0, customers: 0 }, dailyStats: [] },
         month: { revenue: 0, orders: 0, customers: 0, avgOrderValue: 0, growth: { revenue: 0, orders: 0, customers: 0 } }
@@ -73,11 +74,12 @@ function ProviderAnalysis() {
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
                     title="Analytics"
                     subtitle="Track your business performance and insights"
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 p-6 overflow-y-auto">
                     <div className="flex justify-between items-center mb-6">

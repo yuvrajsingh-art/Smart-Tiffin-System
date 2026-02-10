@@ -60,7 +60,10 @@ export const UserProvider = ({ children }) => {
                 setUser(data.user);
             } catch (error) {
                 console.error("Session verification failed:", error);
-                // 401 interceptor handle kar lega, yahan bas loading band karni hai
+                // Clear invalid token
+                localStorage.removeItem('token');
+                setToken(null);
+                setUser(null);
             } finally {
                 setIsLoading(false);
             }
