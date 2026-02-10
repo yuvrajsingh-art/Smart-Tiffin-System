@@ -52,6 +52,7 @@ function ProviderProfile() {
                     phone: profile.contact_number || '',
                     address: addressStr,
                     description: profile.description || '',
+                    profileImage: profile.store_image || profile.provider?.profile_image || '',
                     operatingHours: {
                         open: profile.lunch_start || '08:00',
                         close: profile.dinner_end || '22:00'
@@ -172,7 +173,7 @@ function ProviderProfile() {
                                     />
                                 </div>
                                 <div className="space-y-6">
-                                    <ProfilePicture />
+                                    <ProfilePicture profileData={profileData} />
                                     <RatingReviews profileData={profileData} />
                                     <BuisnessDetails profileData={profileData} />
                                 </div>
