@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import Swal from 'sweetalert2';
 
 const SubscriptionModals = ({
     showCancelModal, setShowCancelModal, handleCancelSubscription,
@@ -142,8 +143,18 @@ const CancelFlow = ({ onClose, onConfirmCancel }) => {
     };
 
     const applyDiscount = () => {
-        // Mock API call or logic to apply discount
-        alert("10% Discount Coupon 'STAYWITHUS10' applied to your next renewal!");
+        Swal.fire({
+            icon: 'success',
+            title: 'Discount Applied!',
+            html: `<p class="text-gray-600">10% Discount Coupon <strong class="text-orange-600">'STAYWITHUS10'</strong> applied to your next renewal!</p>`,
+            confirmButtonText: 'Great!',
+            confirmButtonColor: '#f97316',
+            background: '#fff',
+            customClass: {
+                popup: 'rounded-3xl',
+                confirmButton: 'rounded-xl px-6 py-3 font-bold'
+            }
+        });
         onClose();
     };
 
