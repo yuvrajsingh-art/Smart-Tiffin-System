@@ -10,7 +10,7 @@ exports.getSubscribers = async (req, res) => {
 
     const subscriptions = await Subscription.find({
       provider: providerId,
-      status: "approved",
+      status: { $in: ["approved", "active"] },
       adminApproval: "approved"
     })
       .populate("customer", "name fullName phone mobile email address")
@@ -92,7 +92,7 @@ exports.getSubscriptionStats = async (req, res) => {
     // Total active subscriptions
     const totalActive = await Subscription.countDocuments({
       provider: providerId,
-      status: "approved",
+      status: { $in: ["approved", "active"] },
       adminApproval: "approved",
       endDate: { $gte: today },
       $or: [
@@ -105,7 +105,7 @@ exports.getSubscriptionStats = async (req, res) => {
     // Paused subscriptions
     const paused = await Subscription.countDocuments({
       provider: providerId,
-      status: "approved",
+      status: { $in: ["approved", "active"] },
       adminApproval: "approved",
       pauseFrom: { $lte: today },
       pauseTo: { $gte: today }
@@ -115,7 +115,7 @@ exports.getSubscriptionStats = async (req, res) => {
     const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
     const expiringThisWeek = await Subscription.countDocuments({
       provider: providerId,
-      status: "approved",
+      status: { $in: ["approved", "active"] },
       adminApproval: "approved",
       endDate: {
         $gte: today,
@@ -128,7 +128,7 @@ exports.getSubscriptionStats = async (req, res) => {
       {
         $match: {
           provider: providerId,
-          status: "approved",
+          status: { $in: ["approved", "active"] },
           adminApproval: "approved",
           paymentStatus: "Paid"
         }
@@ -194,7 +194,7 @@ exports.pauseSubscription = async (req, res) => {
       {
         _id: subscriptionId,
         provider: providerId,
-        status: "approved"
+        status: { $in: ["approved", "active"] }
       },
       {
         pauseFrom: pauseFromDate,
@@ -239,7 +239,7 @@ exports.resumeSubscription = async (req, res) => {
       {
         _id: subscriptionId,
         provider: providerId,
-        status: "approved"
+        status: { $in: ["approved", "active"] }
       },
       {
         $unset: {

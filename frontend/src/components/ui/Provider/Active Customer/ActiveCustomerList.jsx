@@ -20,8 +20,15 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
   const fetchActiveCustomers = async () => {
     try {
       const response = await ProviderApi.get('/provider-subscription');
+      console.log('=== Active Customers Response ===');
+      console.log('Full Response:', response.data);
+      
       if (response.data && response.data.data) {
+        console.log('Total Subscriptions:', response.data.data.length);
+        console.log('Subscriptions:', response.data.data);
+        
         const formattedData = response.data.data.map(sub => {
+          console.log('Processing subscription:', sub._id, 'Status:', sub.status);
           return {
             id: sub._id,
             name: sub.customer?.fullName || sub.customer?.name || 'N/A',
@@ -36,6 +43,11 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
             address: sub.deliveryAddress?.fullAddress || sub.customer?.address || 'N/A'
           };
         });
+        
+        console.log('Formatted Customers:', formattedData);
+        console.log('Active Count:', formattedData.filter(c => c.status === 'active').length);
+        console.log('Paused Count:', formattedData.filter(c => c.status === 'paused').length);
+        
         setCustomers(formattedData);
       }
     } catch (error) {
