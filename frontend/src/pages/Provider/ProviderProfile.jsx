@@ -39,25 +39,30 @@ function ProviderProfile() {
         try {
             const response = await ProviderApi.get('/provider-store');
             console.log('Profile Response:', response.data);
-            if (response.data && response.data.profile) {
-                const profile = response.data.profile;
+            if (response.data && response.data.data) {
+                const profile = response.data.data;
+                const addressStr = typeof profile.address === 'object' 
+                    ? `${profile.address.street || ''}, ${profile.address.city || ''}, ${profile.address.pincode || ''}`.replace(/^,\s*|,\s*$/g, '')
+                    : profile.address || '';
+                
                 const formatted = {
-                    businessName: profile.messName || profile.businessName || '',
-                    ownerName: profile.ownerName || '',
-                    email: profile.email || profile.contactEmail || '',
-                    phone: profile.phone || profile.contactPhone || '',
-                    address: profile.address || '',
+                    businessName: profile.mess_name || '',
+                    ownerName: profile.provider?.fullName || '',
+                    email: profile.provider?.email || '',
+                    phone: profile.contact_number || '',
+                    address: addressStr,
                     description: profile.description || '',
+                    profileImage: profile.store_image || profile.provider?.profile_image || '',
                     operatingHours: {
-                        open: profile.kitchenTimings?.open || '08:00',
-                        close: profile.kitchenTimings?.close || '22:00'
+                        open: profile.lunch_start || '08:00',
+                        close: profile.dinner_end || '22:00'
                     },
-                    cuisineTypes: profile.cuisineTypes || [],
+                    cuisineTypes: profile.cuisines || [],
                     specialties: profile.specialties || [],
                     rating: profile.rating || 0,
-                    totalReviews: profile.totalReviews || 0,
+                    totalReviews: profile.reviewCount || 0,
                     established: profile.established || '',
-                    licenseNumber: profile.fssaiLicense || profile.licenseNumber || ''
+                    licenseNumber: profile.fssai_license || ''
                 };
                 setProfileData(formatted);
                 setEditData(formatted);
@@ -77,16 +82,15 @@ function ProviderProfile() {
     const handleSave = async () => {
         try {
             await ProviderApi.put('/provider-store', {
-                messName: editData.businessName,
-                contactEmail: editData.email,
-                contactPhone: editData.phone,
+                mess_name: editData.businessName,
+                contact_number: editData.phone,
                 address: editData.address,
                 description: editData.description,
-                cuisineTypes: editData.cuisineTypes,
-                specialties: editData.specialties
+                cuisines: editData.cuisineTypes
             });
             setProfileData({ ...editData });
             setIsEditing(false);
+            alert('Profile updated successfully!');
         } catch (error) {
             console.error('Error saving profile:', error);
             alert('Failed to save profile');
@@ -96,6 +100,14 @@ function ProviderProfile() {
     const handleCancel = () => {
         setEditData({ ...profileData });
         setIsEditing(false);
+    };
+
+    const handleInputChange = (field, value) => {
+        setEditData({ ...editData, [field]: value });
+    };
+
+    const handleOperatingHoursChange = (field, value) => {
+        setEditData({ ...editData, operatingHours: { ...editData.operatingHours, [field]: value } });
     };
 
     return (
@@ -147,11 +159,21 @@ function ProviderProfile() {
                             <StateCards />
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 <div className="lg:col-span-2 space-y-6">
-                                    <ProviderInformation isEditing={isEditing} profileData={profileData} />
-                                    <OperatingHours isEditing={isEditing} profileData={profileData} />
+                                    <ProviderInformation 
+                                        isEditing={isEditing} 
+                                        profileData={profileData} 
+                                        editData={editData}
+                                        handleInputChange={handleInputChange}
+                                    />
+                                    <OperatingHours 
+                                        isEditing={isEditing} 
+                                        profileData={profileData}
+                                        editData={editData}
+                                        handleOperatingHoursChange={handleOperatingHoursChange}
+                                    />
                                 </div>
                                 <div className="space-y-6">
-                                    <ProfilePicture />
+                                    <ProfilePicture profileData={profileData} />
                                     <RatingReviews profileData={profileData} />
                                     <BuisnessDetails profileData={profileData} />
                                 </div>

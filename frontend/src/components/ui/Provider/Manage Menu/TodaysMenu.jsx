@@ -197,7 +197,7 @@ const TodaysMenu = () => {
               <img
                 src={menu.image}
                 alt={menu.name}
-                className="w-full h-full object-cover"
+                className="w-[400px] h-[300px] object-cover "
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100">

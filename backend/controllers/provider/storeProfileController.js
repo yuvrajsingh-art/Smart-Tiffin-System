@@ -5,7 +5,7 @@ exports.getStoreProfile = async (req, res) => {
     try {
         const providerId = req.user._id;
         
-        let profile = await StoreProfile.findOne({ provider: providerId });
+        let profile = await StoreProfile.findOne({ provider: providerId }).populate('provider', 'fullName email');
         
         // Create default profile if doesn't exist
         if (!profile) {
@@ -26,6 +26,7 @@ exports.getStoreProfile = async (req, res) => {
                 }
             });
             await profile.save();
+            profile = await StoreProfile.findOne({ provider: providerId }).populate('provider', 'fullName email');
         }
         
         res.json({
