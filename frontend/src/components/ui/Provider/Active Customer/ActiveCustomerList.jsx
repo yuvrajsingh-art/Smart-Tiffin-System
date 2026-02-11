@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaPhone, FaEnvelope, FaCalendarAlt, FaShoppingBag } from 'react-icons/fa';
 import ProviderApi from '../../../../services/ProviderApi';
 import PauseSubscriptionModal from './PauseSubscriptionModal';
+import CustomerProfileModal from './CustomerProfileModal';
 import { toast } from 'react-hot-toast';
 
 const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
@@ -9,6 +10,8 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
   const [loading, setLoading] = useState(true);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     fetchActiveCustomers();
@@ -166,6 +169,11 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
     setIsPauseModalOpen(false);
   };
 
+  const handleViewProfile = (customer) => {
+    setSelectedCustomer(customer);
+    setIsProfileModalOpen(true);
+  };
+
   const getPlanColor = (plan) => {
     return plan === 'Premium' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
   };
@@ -294,7 +302,10 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
                     Resume
                   </button>
                 )}
-                <button className="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium">
+                <button 
+                  onClick={() => handleViewProfile(customer)}
+                  className="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                >
                   View Profile
                 </button>
               </div>
@@ -311,6 +322,15 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
           subscriptionId={selectedSubscription.id}
           customerName={selectedSubscription.name}
           onPaused={handleSubscriptionPaused}
+        />
+      )}
+
+      {/* Customer Profile Modal */}
+      {selectedCustomer && (
+        <CustomerProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          customer={selectedCustomer}
         />
       )}
 

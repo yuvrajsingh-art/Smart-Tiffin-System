@@ -15,7 +15,31 @@ function DeliveryStatus() {
  
     useEffect(() => {
         fetchDeliveries();
+        
+        // Auto-refresh every minute to update statuses
+        const interval = setInterval(() => {
+            fetchDeliveries();
+        }, 60000);
+        
+        return () => clearInterval(interval);
     }, []);
+
+    const calculateDeliveryStatus = (mealType, deliveryTime) => {
+        const now = new Date();
+        const [hours, minutes] = deliveryTime.split(':').map(Number);
+        
+        const deliveryDateTime = new Date();
+        deliveryDateTime.setHours(hours, minutes, 0, 0);
+        
+        const readyForPickupTime = new Date(deliveryDateTime.getTime() - 70 * 60000); // 1hr 10min before
+        const outForDeliveryTime = new Date(deliveryDateTime.getTime() - 30 * 60000); // 30min before
+        const deliveredTime = new Date(deliveryDateTime.getTime() - 15 * 60000); // 15min before
+        
+        if (now >= deliveredTime) return 'delivered';
+        if (now >= outForDeliveryTime) return 'out_for_delivery';
+        if (now >= readyForPickupTime) return 'ready_for_pickup';
+        return 'preparing';
+    };
 
     const fetchDeliveries = async () => {
         try {
@@ -23,25 +47,53 @@ function DeliveryStatus() {
             console.log('KDS Response:', response.data);
             if (response.data && response.data.data) {
                 const allOrders = [
-                    ...response.data.data.justIn.map(o => ({ ...o, status: 'preparing' })),
-                    ...response.data.data.preparing.map(o => ({ ...o, status: 'preparing' })),
-                    ...response.data.data.ready.map(o => ({ ...o, status: 'ready_for_pickup' })),
-                    ...response.data.data.dispatched.map(o => ({ ...o, status: 'out_for_delivery' }))
+                    ...response.data.data.justIn,
+                    ...response.data.data.preparing,
+                    ...response.data.data.ready,
+                    ...response.data.data.dispatched
                 ];
                 
-                const formattedDeliveries = allOrders.map(order => ({
-                    id: order._id,
-                    orderId: order.orderNo,
-                    customer: order.customerName || 'N/A',
-                    phone: 'N/A',
-                    address: 'N/A',
-                    items: order.items?.map(i => i.name) || [],
-                    status: order.status,
-                    orderTime: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                    estimatedDelivery: 'N/A',
-                    rider: null,
-                    amount: order.amount || 0
-                }));
+                const formattedDeliveries = allOrders.map(order => {
+                    const mealType = order.mealType || 'lunch';
+                    const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '11:00' : '19:00');
+                    const calculatedStatus = calculateDeliveryStatus(mealType, deliveryTime);
+                    
+                    // Extract customer details
+                    const customer = order.customer || {};
+                    const phone = customer.phone || customer.phoneNumber || order.customerPhone || 'N/A';
+                    
+                    // Extract address
+                    let address = 'N/A';
+                    if (customer.address) {
+                        if (typeof customer.address === 'string') {
+                            address = customer.address;
+                        } else if (typeof customer.address === 'object') {
+                            const addr = customer.address;
+                            address = [addr.street, addr.area, addr.city, addr.pincode]
+                                .filter(Boolean)
+                                .join(', ') || 'N/A';
+                        }
+                    } else if (order.deliveryAddress) {
+                        address = order.deliveryAddress;
+                    }
+                    
+                    return {
+                        id: order._id,
+                        orderId: order.orderNo,
+                        customer: order.customerName || customer.fullName || customer.name || 'N/A',
+                        phone: phone,
+                        address: address,
+                        items: order.items?.map(i => i.name) || [],
+                        status: calculatedStatus,
+                        mealType,
+                        deliveryTime,
+                        orderTime: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                        estimatedDelivery: deliveryTime,
+                        rider: order.rider?.name || null,
+                        riderPhone: order.rider?.phone || null,
+                        amount: order.amount || 0
+                    };
+                });
                 setDeliveries(formattedDeliveries);
             }
         } catch (error) {

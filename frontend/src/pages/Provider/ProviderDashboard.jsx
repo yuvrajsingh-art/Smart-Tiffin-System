@@ -4,6 +4,7 @@ import QuickActionsPanel from '../../components/ui/Provider/Dashboard/QuickActio
 import CustomerActivityFeed from '../../components/ui/Provider/Dashboard/CustomerActivityFeed';
 import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
+import { useState } from 'react';
 
 const ProviderDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);

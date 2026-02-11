@@ -25,30 +25,94 @@ function ProviderAnalysis() {
 
     const fetchAnalytics = async () => {
         try {
-            const dashboardRes = await ProviderApi.get('/provider-deshbord/dashboard');
-            const menuRes = await ProviderApi.get('/provider-menus/today');
+            const [dashboardRes, subscriptionsRes, walletRes, transactionsRes] = await Promise.all([
+                ProviderApi.get('/provider-deshbord/dashboard'),
+                ProviderApi.get('/provider-subscription'),
+                ProviderApi.get('/provider-wallet/summary'),
+                ProviderApi.get('/provider-wallet/transactions?limit=100')
+            ]);
             
-            if (dashboardRes.data && dashboardRes.data.data) {
-                const data = dashboardRes.data.data;
-                setAnalyticsData({
-                    week: {
-                        revenue: data.businessHealth?.todayRevenue || 0,
-                        orders: data.liveOperations?.ordersToPrep || 0,
-                        customers: data.businessHealth?.activeSubscribers || 0,
-                        avgOrderValue: 175,
-                        growth: { revenue: 12.5, orders: 8.3, customers: 15.2 },
-                        dailyStats: []
-                    },
-                    month: {
-                        revenue: (data.businessHealth?.todayRevenue || 0) * 30,
-                        orders: (data.liveOperations?.ordersToPrep || 0) * 30,
-                        customers: data.businessHealth?.activeSubscribers || 0,
-                        avgOrderValue: 177,
-                        growth: { revenue: 18.7, orders: 22.1, customers: 28.5 }
+            console.log('Dashboard Response:', dashboardRes.data);
+            console.log('Subscriptions Response:', subscriptionsRes.data);
+            console.log('Wallet Response:', walletRes.data);
+            
+            let todayRevenue = 0;
+            let totalRevenue = 0;
+            let weekRevenue = 0;
+            let activeSubscribers = 0;
+            let totalOrders = 0;
+            
+            // Get revenue from wallet API (most accurate)
+            if (walletRes.data && walletRes.data.data) {
+                totalRevenue = walletRes.data.data.totalEarnings || 0;
+            }
+            
+            // Calculate week revenue from transactions (same logic as MyRevenue)
+            if (transactionsRes.data && transactionsRes.data.data) {
+                const transactions = transactionsRes.data.data;
+                const today = new Date();
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay() + 1);
+                
+                transactions.forEach(txn => {
+                    const txnDate = new Date(txn.date || txn.createdAt);
+                    if (txnDate >= weekStart && txnDate <= today) {
+                        if (txn.status === 'Success' || txn.status === 'Completed') {
+                            weekRevenue += Math.abs(txn.amount);
+                        }
                     }
                 });
+                
+                console.log('Week Revenue Calculated:', weekRevenue);
             }
+            
+            // Get data from dashboard API
+            if (dashboardRes.data && dashboardRes.data.data) {
+                const data = dashboardRes.data.data;
+                console.log('Business Health:', data.businessHealth);
+                console.log('Live Operations:', data.liveOperations);
+                
+                todayRevenue = data.businessHealth?.todayRevenue || 0;
+                activeSubscribers = data.businessHealth?.activeSubscribers || 0;
+                totalOrders = data.liveOperations?.totalOrdersToday || data.liveOperations?.ordersToPrep || 0;
+            }
+            
+            // Fallback: Count active subscriptions from subscription API
+            if (subscriptionsRes.data && subscriptionsRes.data.data) {
+                const activeCount = subscriptionsRes.data.data.filter(sub => 
+                    sub.status === 'active' || sub.status === 'approved'
+                ).length;
+                console.log('Active subscriptions from API:', activeCount);
+                if (activeCount > 0) {
+                    activeSubscribers = activeCount;
+                }
+            }
+            
+            console.log('Final Parsed Values:', { todayRevenue, totalRevenue, weekRevenue, activeSubscribers, totalOrders });
+            
+            // Calculate average order value
+            const avgOrderValue = totalOrders > 0 ? Math.round(todayRevenue / totalOrders) : 0;
+            
+            setAnalyticsData({
+                week: {
+                    revenue: weekRevenue,
+                    orders: totalOrders * 7,
+                    customers: activeSubscribers,
+                    avgOrderValue: avgOrderValue,
+                    growth: { revenue: 12.5, orders: 8.3, customers: 15.2 },
+                    dailyStats: []
+                },
+                month: {
+                    revenue: totalRevenue,
+                    orders: totalOrders * 30,
+                    customers: activeSubscribers,
+                    avgOrderValue: avgOrderValue,
+                    growth: { revenue: 18.7, orders: 22.1, customers: 28.5 }
+                }
+            });
 
+            // Fetch top items from menu
+            const menuRes = await ProviderApi.get('/provider-menus/today');
             if (menuRes.data && menuRes.data.data) {
                 const lunchDinner = menuRes.data.data.filter(m => m.mealType === 'lunch' || m.mealType === 'dinner');
                 const formatted = lunchDinner.slice(0, 2).map((item, idx) => ({

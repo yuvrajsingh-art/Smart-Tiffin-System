@@ -29,30 +29,33 @@ exports.getProviderDashboard = async (req, res) => {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const revenueAgg = await Order.aggregate([
-      {
-        $match: {
-          provider: providerId,
-          status: "delivered",
-          createdAt: { $gte: startOfDay }
-        }
-      },
-      {
-        $group: {
-          _id: "$paymentMethod",
-          amount: { $sum: "$amount" }
-        }
-      }
-    ]);
+    // Get all delivered orders for today
+    const deliveredOrders = await Order.find({
+      provider: providerId,
+      status: "delivered",
+      createdAt: { $gte: startOfDay }
+    }).select("amount paymentMethod");
 
     let totalRevenue = 0;
     let online = 0;
     let cash = 0;
 
-    revenueAgg.forEach(r => {
-      totalRevenue += r.amount;
-      if (r._id === "UPI" || r._id === "Card") online += r.amount;
-      if (r._id === "Cash") cash += r.amount;
+    deliveredOrders.forEach(order => {
+      const amount = order.amount || 0;
+      totalRevenue += amount;
+      if (order.paymentMethod === "UPI" || order.paymentMethod === "Card") {
+        online += amount;
+      }
+      if (order.paymentMethod === "Cash") {
+        cash += amount;
+      }
+    });
+
+    // Get total orders count (all statuses except cancelled)
+    const totalOrdersToday = await Order.countDocuments({
+      provider: providerId,
+      createdAt: { $gte: startOfDay },
+      status: { $ne: "cancelled" }
     });
 
     /* ---------------- TOTAL CUSTOMERS (ALL: Active + Expired) ---------------- */
@@ -66,7 +69,7 @@ exports.getProviderDashboard = async (req, res) => {
 
     const activeSubscribers = await Subscription.countDocuments({
       provider: providerId,
-      status: "approved",
+      status: { $in: ["active", "approved"] },
       endDate: { $gte: new Date() }
     });
 
@@ -101,7 +104,8 @@ exports.getProviderDashboard = async (req, res) => {
         liveOperations: {
           ordersToPrep,
           readyForPickup,
-          outForDelivery
+          outForDelivery,
+          totalOrdersToday
         },
 
         businessHealth: {
