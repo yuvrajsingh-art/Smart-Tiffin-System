@@ -5,8 +5,10 @@ import CustomerActivityFeed from '../../components/ui/Provider/Dashboard/Custome
 import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
 import { useState } from 'react';
+import { useAuth } from '../../context/UserContext';
 
 const ProviderDashboard = () => {
+      const { user } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
@@ -14,7 +16,7 @@ const ProviderDashboard = () => {
             <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
-                    title="Welcome Back Chef!"
+                    title={`Welcome back, ${user?.name?.split(' ')[0] || user?.businessName?.split(' ')[0] || 'Provider'}!`}
                     subtitle="Here's what's happening with your tiffin service today."
                     onMenuClick={() => setIsSidebarOpen(true)}
                 />

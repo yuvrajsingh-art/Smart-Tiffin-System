@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/UserContext';
 import ProviderApi from '../../../services/ProviderApi';
 
-const ProviderHeader = ({ title, subtitle, onMenuClick }) => {
+const ProviderHeader = ({ title, onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user } = useAuth();
@@ -59,7 +59,7 @@ const ProviderHeader = ({ title, subtitle, onMenuClick }) => {
         
         <div>
           <h1 className="text-2xl font-black text-[#2D241E] tracking-tight">
-            Welcome back, {user?.name?.split(' ')[0] || user?.businessName?.split(' ')[0] || 'Provider'}!
+            {title}
           </h1>
           <p className="text-sm font-medium text-[#5C4D42] flex items-center gap-2 mt-1">
             <span className="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
