@@ -21,6 +21,8 @@ const Feedback = () => {
     const [stats, setStats] = useState([]);
     const [history, setHistory] = useState([]);
     const [availableTags, setAvailableTags] = useState([]);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editReviewId, setEditReviewId] = useState(null);
 
     // Form State
     const [rating, setRating] = useState(0);
@@ -83,12 +85,38 @@ const Feedback = () => {
         if (selectedTags.includes(tag)) {
             setSelectedTags(prev => prev.filter(t => t !== tag));
         } else {
-            if (selectedTags.length < 3) {
+            if (selectedTags.length < 5) { // Increased to 5 for better expression
                 setSelectedTags(prev => [...prev, tag]);
             } else {
-                toast.error('You can select up to 3 tags');
+                toast.error('You can select up to 5 tags');
             }
         }
+    };
+
+    const handleEdit = (review) => {
+        setIsEditing(true);
+        setEditReviewId(review.id);
+        setRating(review.rating);
+        setComment(review.comment);
+        setSelectedTags(review.tags || []);
+        // Setup a mock "currentMeal" object for the form to display
+        setCurrentMeal({
+            orderId: review.order?._id || review.id, // Fallback to id if order populated differently
+            mealType: review.meal,
+            mealName: review.mealName || 'Previous Meal',
+            date: review.date,
+            isUpdate: true
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setIsEditing(false);
+        setEditReviewId(null);
+        setRating(0);
+        setComment('');
+        setSelectedTags([]);
+        fetchFeedbackData(); // Reset currentMeal to today's if available
     };
 
     const handleSubmit = async () => {
@@ -99,24 +127,33 @@ const Feedback = () => {
 
         try {
             const payload = {
-                orderId: currentMeal.orderId,
                 rating,
                 comment,
                 tags: selectedTags
             };
 
-            const res = await axios.post('/api/customer/feedback/submit', payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            let res;
+            if (isEditing) {
+                res = await axios.put(`/api/customer/feedback/update/${editReviewId}`, payload, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } else {
+                payload.orderId = currentMeal.orderId;
+                res = await axios.post('/api/customer/feedback/submit', payload, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            }
 
             if (res.data.success) {
-                toast.success('Feedback submitted successfully!');
-                setCurrentMeal(null); // Hide form
+                toast.success(isEditing ? 'Feedback updated successfully!' : 'Feedback submitted successfully!');
+                setIsEditing(false);
+                setEditReviewId(null);
+                setCurrentMeal(null);
                 setRating(0);
                 setComment('');
                 setSelectedTags([]);
-                fetchHistory(); // Refresh history
-                fetchFeedbackData(); // Refresh stats
+                fetchHistory();
+                fetchFeedbackData();
             }
         } catch (error) {
             console.error('Error submitting feedback:', error);
@@ -141,49 +178,56 @@ const Feedback = () => {
             <BackgroundBlobs />
             <PageHeader title="Your Feedback" />
 
-            {/* Stats Section */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
-                {stats.map((stat, idx) => (
-                    <div key={idx} className="glass-panel p-4 rounded-2xl border border-white/60 text-center">
-                        <span className={`material-symbols-outlined text-2xl mb-1 ${stat.color || 'text-[#2D241E]'}`}>
-                            {stat.icon}
-                        </span>
-                        <p className="text-2xl font-black text-[#2D241E]">{stat.value}</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
-                    </div>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                {/* Left Column: Rating Form */}
-                <div className="lg:col-span-1 space-y-8 sticky top-24">
-                    {currentMeal ? (
-                        <RatingForm
-                            currentMeal={currentMeal}
-                            rating={rating}
-                            setRating={setRating}
-                            comment={comment}
-                            setComment={setComment}
-                            availableTags={availableTags}
-                            selectedTags={selectedTags}
-                            toggleTag={toggleTag}
-                            onSubmit={handleSubmit}
-                        />
-                    ) : (
-                        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/60 text-center opacity-80">
-                            <div className="inline-block p-4 rounded-full bg-green-50 text-green-600 mb-4">
-                                <span className="material-symbols-outlined text-4xl">check_circle</span>
-                            </div>
-                            <h3 className="text-xl font-black text-[#2D241E]">All Caught Up!</h3>
-                            <p className="text-sm font-medium text-gray-400 mt-2">
-                                You have reviewed all your recent delivered meals. Check back after your next delivery.
-                            </p>
+            <div className="reveal-section active transition-all duration-700">
+                {/* Stats Section */}
+                <div className="grid grid-cols-3 gap-6 mb-12">
+                    {stats.map((stat, idx) => (
+                        <div key={idx} className="glass-panel p-6 rounded-[2.5rem] border border-white/60 text-center shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all cursor-default relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <span className={`material-symbols-outlined text-4xl mb-2 ${stat.color || 'text-[#2D241E]'} group-hover:rotate-12 transition-transform`}>
+                                {stat.icon}
+                            </span>
+                            <p className="text-4xl font-black text-[#2D241E] leading-tight mb-1">{stat.value}</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] opacity-60">{stat.label}</p>
                         </div>
-                    )}
+                    ))}
                 </div>
 
-                {/* Right Column: History */}
-                <FeedbackHistoryList history={history} />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                    {/* Left Column: Rating Form */}
+                    <div className="lg:col-span-4 space-y-8 sticky top-24">
+                        {currentMeal ? (
+                            <RatingForm
+                                currentMeal={currentMeal}
+                                rating={rating}
+                                setRating={setRating}
+                                comment={comment}
+                                setComment={setComment}
+                                availableTags={availableTags}
+                                selectedTags={selectedTags}
+                                toggleTag={toggleTag}
+                                onSubmit={handleSubmit}
+                                isEditing={isEditing}
+                                onCancel={cancelEdit}
+                            />
+                        ) : (
+                            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/60 text-center opacity-80">
+                                <div className="inline-block p-4 rounded-full bg-green-50 text-green-600 mb-4">
+                                    <span className="material-symbols-outlined text-4xl">check_circle</span>
+                                </div>
+                                <h3 className="text-xl font-black text-[#2D241E]">All Caught Up!</h3>
+                                <p className="text-sm font-medium text-gray-400 mt-2">
+                                    You have reviewed all your recent delivered meals. Check back after your next delivery.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Column: History */}
+                    <div className="lg:col-span-8">
+                        <FeedbackHistoryList history={history} onEdit={handleEdit} />
+                    </div>
+                </div>
             </div>
         </div>
     );

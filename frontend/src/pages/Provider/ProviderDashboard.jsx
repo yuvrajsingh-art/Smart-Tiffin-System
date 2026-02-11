@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import ProviderStatsCards from '../../components/ui/Provider/Dashboard/ProviderStateCards';
+import ProviderStatsCards from '../../components/ui/Provider/Dashboard/ProviderStatsCards';
 import ProviderRecentOrders from '../../components/ui/Provider/Dashboard/ProviderRecentOrders';
 import QuickActionsPanel from '../../components/ui/Provider/Dashboard/QuickActionsPanel';
 import CustomerActivityFeed from '../../components/ui/Provider/Dashboard/CustomerActivityFeed';

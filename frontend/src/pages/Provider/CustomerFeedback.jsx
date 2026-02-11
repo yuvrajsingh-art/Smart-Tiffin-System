@@ -22,7 +22,7 @@ function CustomerFeedback() {
     const fetchFeedbacks = async () => {
         try {
             const response = await ProviderApi.get('/provider-reviews/categorized');
-            console.log('Reviews Response:', response.data);
+
             if (response.data && response.data.reviews) {
                 const allReviews = [
                     ...response.data.reviews.negative || [],
@@ -68,10 +68,23 @@ function CustomerFeedback() {
         return 'text-red-600';
     };
 
-    const handleReply = (feedbackId) => {
-        console.log(`Replying to feedback ${feedbackId}: ${replyText}`);
-        setReplyingTo(null);
-        setReplyText('');
+    const handleReply = async (feedbackId) => {
+        if (!replyText.trim()) return;
+
+        try {
+            const response = await ProviderApi.put(`/provider-reviews/action/${feedbackId}`, {
+                action: 'reply',
+                replyText: replyText
+            });
+
+            if (response.data.success) {
+                fetchFeedbacks();
+                setReplyingTo(null);
+                setReplyText('');
+            }
+        } catch (error) {
+            console.error('Error replying to feedback:', error);
+        }
     };
 
     return (

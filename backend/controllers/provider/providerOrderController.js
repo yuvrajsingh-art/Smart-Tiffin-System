@@ -162,7 +162,7 @@ exports.getTodaysOrders = async (req, res) => {
             provider: providerId,
             orderDate: { $gte: today, $lt: tomorrow }
         })
-            .populate('customer', 'fullName phone')
+            .populate('customer', 'fullName name phone mobile address')
             .sort({ mealType: 1, createdAt: -1 });
 
         // Separate by meal type
