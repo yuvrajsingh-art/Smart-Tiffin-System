@@ -23,30 +23,42 @@ const Profile = () => {
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', address: '', diet: 'Pure Veg', spiceLevel: 'Medium', sweetTooth: false, memberSince: ''
     });
+    const [stats, setStats] = useState([
+        { label: 'Member Since', value: '...', icon: 'calendar_month' },
+        { label: 'Total Spent', value: '₹0', icon: 'payments', color: 'text-primary' },
+        { label: 'Loyalty Level', value: 'Bronze', icon: 'military_tech', color: 'text-orange-500' },
+    ]);
 
-    useEffect(() => {
-        if (user) {
-            setFormData({
-                name: user.name || '',
-                email: user.email || '',
-                phone: user.mobile || '',
-                address: user.address || '',
-                diet: user.dietPreference || 'Pure Veg',
-                spiceLevel: user.spiceLevel || 'Medium',
-                sweetTooth: user.sweetTooth || false,
-                memberSince: user.memberSince ? new Date(user.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Oct 2025',
-                profileImage: user.profile_image,
-                securitySettings: user.securitySettings || { enhancedEncryption: false, loginAlerts: true }
-            });
+    const fetchProfileData = async () => {
+        setLoading(true);
+        try {
+            const { data } = await axios.get('/api/customer/profile');
+            if (data.success) {
+                const { profile, stats: apiStats } = data.data;
+                setFormData({
+                    name: profile.name || '',
+                    email: profile.email || '',
+                    phone: profile.phone || '',
+                    address: profile.address || '',
+                    diet: profile.diet || 'Pure Veg',
+                    spiceLevel: profile.spiceLevel || 'Medium',
+                    sweetTooth: profile.sweetTooth || false,
+                    memberSince: profile.memberSince || 'Oct 2025',
+                    profileImage: profile.profileImage,
+                    securitySettings: profile.securitySettings || { enhancedEncryption: false, loginAlerts: true }
+                });
+                if (apiStats) setStats(apiStats);
+            }
+        } catch (error) {
+            console.error("Failed to fetch profile", error);
+        } finally {
             setLoading(false);
         }
-    }, [user]);
+    };
 
-    const stats = [
-        { label: 'Member Since', value: formData.memberSince, icon: 'calendar_month' },
-        { label: 'Total Spent', value: '₹4,250', icon: 'payments', color: 'text-primary' },
-        { label: 'Loyalty Level', value: 'Silver', icon: 'military_tech', color: 'text-orange-500' },
-    ];
+    useEffect(() => {
+        fetchProfileData();
+    }, []);
 
     const handleSave = async () => {
         try {
@@ -55,6 +67,7 @@ const Profile = () => {
             if (data.success) {
                 setIsEditing(false);
                 setShowSuccessModal(true);
+                fetchProfileData(); // Refresh to update stats/profile
             }
         } catch (error) {
             console.error("Failed to update profile", error);

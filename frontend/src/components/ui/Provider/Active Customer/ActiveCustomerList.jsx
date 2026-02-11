@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FaPhone, FaEnvelope, FaCalendarAlt, FaShoppingBag } from 'react-icons/fa';
 import ProviderApi from '../../../../services/ProviderApi';
+import PauseSubscriptionModal from './PauseSubscriptionModal';
+import { toast } from 'react-hot-toast';
 
 const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
 
   useEffect(() => {
     fetchActiveCustomers();
@@ -13,13 +17,8 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
   const fetchActiveCustomers = async () => {
     try {
       const response = await ProviderApi.get('/provider-subscription');
-      console.log('Subscription API Response:', response.data);
-      console.log('Response data field:', response.data.data);
-      console.log('Response count:', response.data.count);
-      
       if (response.data && response.data.data) {
         const formattedData = response.data.data.map(sub => {
-          console.log('Processing subscription:', sub);
           return {
             id: sub._id,
             name: sub.customer?.fullName || sub.customer?.name || 'N/A',
@@ -29,12 +28,11 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
             status: sub.status.toLowerCase(),
             joinDate: sub.createdAt,
             lastOrder: sub.endDate || sub.duration?.end,
-            totalOrders: sub.skippedMeals?.length || 0,
+            totalOrders: sub.skippedMeals || sub.mealsSkipped || 0,
             avatar: (sub.customer?.fullName || sub.customer?.name || 'NA').split(' ').map(n => n[0]).join('').toUpperCase(),
             address: sub.deliveryAddress?.fullAddress || sub.customer?.address || 'N/A'
           };
         });
-        console.log('Formatted customers:', formattedData);
         setCustomers(formattedData);
       }
     } catch (error) {
@@ -127,8 +125,8 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
 
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         customer.phone.includes(searchTerm);
+      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone.includes(searchTerm);
     const matchesStatus = filterStatus === 'all' || customer.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -138,8 +136,34 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
       case 'active': return 'bg-green-100 text-green-800';
       case 'paused': return 'bg-yellow-100 text-yellow-800';
       case 'expired': return 'bg-red-100 text-red-800';
+      case 'cancelled': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const handlePause = (customer) => {
+    setSelectedSubscription(customer);
+    setIsPauseModalOpen(true);
+  };
+
+  const handleResume = async (customer) => {
+    if (!window.confirm(`Are you sure you want to resume subscription for ${customer.name}?`)) return;
+
+    try {
+      const response = await ProviderApi.put(`/provider-subscription/${customer.id}/resume`);
+      if (response.data.success) {
+        toast.success(`Subscription resumed successfully`);
+        fetchActiveCustomers(); // Refresh list
+      }
+    } catch (error) {
+      console.error('Error resuming subscription:', error);
+      toast.error('Failed to resume subscription');
+    }
+  };
+
+  const handleSubscriptionPaused = () => {
+    fetchActiveCustomers(); // Refresh list
+    setIsPauseModalOpen(false);
   };
 
   const getPlanColor = (plan) => {
@@ -240,31 +264,55 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
                 </div>
                 <div className="flex items-center gap-3">
                   <FaShoppingBag className="text-gray-400 text-sm" />
-                  <span className="text-sm text-gray-600">Last Order: {formatDate(customer.lastOrder)}</span>
+                  <span className="text-sm text-gray-600">Ends On: {formatDate(customer.lastOrder)}</span>
                 </div>
               </div>
 
               {/* Order Stats */}
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Total Orders:</span>
+                  <span className="text-sm text-gray-600">Skipped Meals:</span>
                   <span className="text-lg font-bold text-orange-600">{customer.totalOrders}</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex gap-2 mt-4">
+                {customer.status === 'active' && (
+                  <button
+                    onClick={() => handlePause(customer)}
+                    className="flex-1 bg-yellow-500 text-white py-2 px-3 rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium flex items-center justify-center gap-1"
+                  >
+                    Pause
+                  </button>
+                )}
+                {customer.status === 'paused' && (
+                  <button
+                    onClick={() => handleResume(customer)}
+                    className="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg hover:bg-green-600 transition-colors text-sm font-medium flex items-center justify-center gap-1"
+                  >
+                    Resume
+                  </button>
+                )}
                 <button className="flex-1 bg-orange-500 text-white py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium">
                   View Profile
-                </button>
-                <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
-                  Contact
                 </button>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Pause Modal */}
+      {selectedSubscription && (
+        <PauseSubscriptionModal
+          isOpen={isPauseModalOpen}
+          onClose={() => setIsPauseModalOpen(false)}
+          subscriptionId={selectedSubscription.id}
+          customerName={selectedSubscription.name}
+          onPaused={handleSubscriptionPaused}
+        />
+      )}
 
       {/* Empty State */}
       {filteredCustomers.length === 0 && (

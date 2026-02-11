@@ -13,7 +13,7 @@ exports.getSubscribers = async (req, res) => {
       status: "approved",
       adminApproval: "approved"
     })
-      .populate("customer", "name phone email")
+      .populate("customer", "name fullName phone mobile email address")
       .sort({ createdAt: -1 });
 
     console.log('Found subscriptions:', subscriptions.length);
@@ -73,10 +73,10 @@ exports.getSubscribers = async (req, res) => {
 
   } catch (error) {
     console.error('Error in getSubscribers:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to fetch subscribers',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -155,10 +155,10 @@ exports.getSubscriptionStats = async (req, res) => {
 
   } catch (error) {
     console.error('Error in getSubscriptionStats:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to fetch subscription stats',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -166,189 +166,189 @@ exports.getSubscriptionStats = async (req, res) => {
 
 // Pause a subscription
 exports.pauseSubscription = async (req, res) => {
-    try {
-        const { pauseFrom, pauseTo, reason } = req.body;
-        const subscriptionId = req.params.id;
-        const providerId = req.user._id;
+  try {
+    const { pauseFrom, pauseTo, reason } = req.body;
+    const subscriptionId = req.params.id;
+    const providerId = req.user._id;
 
-        // Validate dates
-        if (!pauseFrom || !pauseTo) {
-            return res.status(400).json({
-                success: false,
-                message: "Pause from and to dates are required"
-            });
-        }
-
-        const pauseFromDate = new Date(pauseFrom);
-        const pauseToDate = new Date(pauseTo);
-
-        if (pauseFromDate >= pauseToDate) {
-            return res.status(400).json({
-                success: false,
-                message: "Pause from date must be before pause to date"
-            });
-        }
-
-        // Find and update subscription
-        const subscription = await Subscription.findOneAndUpdate(
-            { 
-                _id: subscriptionId, 
-                provider: providerId,
-                status: "approved"
-            },
-            {
-                pauseFrom: pauseFromDate,
-                pauseTo: pauseToDate,
-                pauseReason: reason || "Paused by provider"
-            },
-            { new: true }
-        ).populate("customer", "name phone email");
-
-        if (!subscription) {
-            return res.status(404).json({
-                success: false,
-                message: "Subscription not found or unauthorized"
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: "Subscription paused successfully",
-            data: subscription
-        });
-
-    } catch (error) {
-        console.error('Error in pauseSubscription:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to pause subscription',
-            error: error.message 
-        });
+    // Validate dates
+    if (!pauseFrom || !pauseTo) {
+      return res.status(400).json({
+        success: false,
+        message: "Pause from and to dates are required"
+      });
     }
+
+    const pauseFromDate = new Date(pauseFrom);
+    const pauseToDate = new Date(pauseTo);
+
+    if (pauseFromDate >= pauseToDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Pause from date must be before pause to date"
+      });
+    }
+
+    // Find and update subscription
+    const subscription = await Subscription.findOneAndUpdate(
+      {
+        _id: subscriptionId,
+        provider: providerId,
+        status: "approved"
+      },
+      {
+        pauseFrom: pauseFromDate,
+        pauseTo: pauseToDate,
+        pauseReason: reason || "Paused by provider"
+      },
+      { new: true }
+    ).populate("customer", "name phone email");
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription not found or unauthorized"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Subscription paused successfully",
+      data: subscription
+    });
+
+  } catch (error) {
+    console.error('Error in pauseSubscription:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to pause subscription',
+      error: error.message
+    });
+  }
 };
 
 
 // Resume a subscription
 exports.resumeSubscription = async (req, res) => {
-    try {
-        const subscriptionId = req.params.id;
-        const providerId = req.user._id;
+  try {
+    const subscriptionId = req.params.id;
+    const providerId = req.user._id;
 
-        // Find and update subscription
-        const subscription = await Subscription.findOneAndUpdate(
-            { 
-                _id: subscriptionId, 
-                provider: providerId,
-                status: "approved"
-            },
-            { 
-                $unset: { 
-                    pauseFrom: 1, 
-                    pauseTo: 1, 
-                    pauseReason: 1 
-                }
-            },
-            { new: true }
-        ).populate("customer", "name phone email");
-
-        if (!subscription) {
-            return res.status(404).json({
-                success: false,
-                message: "Subscription not found or unauthorized"
-            });
+    // Find and update subscription
+    const subscription = await Subscription.findOneAndUpdate(
+      {
+        _id: subscriptionId,
+        provider: providerId,
+        status: "approved"
+      },
+      {
+        $unset: {
+          pauseFrom: 1,
+          pauseTo: 1,
+          pauseReason: 1
         }
+      },
+      { new: true }
+    ).populate("customer", "name phone email");
 
-        res.status(200).json({
-            success: true,
-            message: "Subscription resumed successfully",
-            data: subscription
-        });
-
-    } catch (error) {
-        console.error('Error in resumeSubscription:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to resume subscription',
-            error: error.message 
-        });
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription not found or unauthorized"
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: "Subscription resumed successfully",
+      data: subscription
+    });
+
+  } catch (error) {
+    console.error('Error in resumeSubscription:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resume subscription',
+      error: error.message
+    });
+  }
 };
 
 // Get single subscription details
 exports.getSubscriptionById = async (req, res) => {
-    try {
-        const subscriptionId = req.params.id;
-        const providerId = req.user._id;
+  try {
+    const subscriptionId = req.params.id;
+    const providerId = req.user._id;
 
-        const subscription = await Subscription.findOne({
-            _id: subscriptionId,
-            provider: providerId
-        }).populate("customer", "name phone email address");
+    const subscription = await Subscription.findOne({
+      _id: subscriptionId,
+      provider: providerId
+    }).populate("customer", "name phone email address");
 
-        if (!subscription) {
-            return res.status(404).json({
-                success: false,
-                message: "Subscription not found"
-            });
-        }
-
-        res.json({
-            success: true,
-            data: subscription
-        });
-
-    } catch (error) {
-        console.error('Error in getSubscriptionById:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to fetch subscription details',
-            error: error.message 
-        });
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription not found"
+      });
     }
+
+    res.json({
+      success: true,
+      data: subscription
+    });
+
+  } catch (error) {
+    console.error('Error in getSubscriptionById:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch subscription details',
+      error: error.message
+    });
+  }
 };
 
 // Update subscription status
 exports.updateSubscriptionStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-        const subscriptionId = req.params.id;
-        const providerId = req.user._id;
+  try {
+    const { status } = req.body;
+    const subscriptionId = req.params.id;
+    const providerId = req.user._id;
 
-        if (!['pending', 'approved', 'rejected'].includes(status)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid status. Must be pending, approved, or rejected"
-            });
-        }
-
-        const subscription = await Subscription.findOneAndUpdate(
-            { 
-                _id: subscriptionId, 
-                provider: providerId
-            },
-            { status },
-            { new: true }
-        ).populate("customer", "name phone email");
-
-        if (!subscription) {
-            return res.status(404).json({
-                success: false,
-                message: "Subscription not found or unauthorized"
-            });
-        }
-
-        res.json({
-            success: true,
-            message: `Subscription ${status} successfully`,
-            data: subscription
-        });
-
-    } catch (error) {
-        console.error('Error in updateSubscriptionStatus:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to update subscription status',
-            error: error.message 
-        });
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Must be pending, approved, or rejected"
+      });
     }
+
+    const subscription = await Subscription.findOneAndUpdate(
+      {
+        _id: subscriptionId,
+        provider: providerId
+      },
+      { status },
+      { new: true }
+    ).populate("customer", "name phone email");
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription not found or unauthorized"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Subscription ${status} successfully`,
+      data: subscription
+    });
+
+  } catch (error) {
+    console.error('Error in updateSubscriptionStatus:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update subscription status',
+      error: error.message
+    });
+  }
 };

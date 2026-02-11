@@ -1,4 +1,4 @@
-import ProviderStatsCards from '../../components/ui/Provider/Dashboard/ProviderStateCards';
+import ProviderStatsCards from '../../components/ui/Provider/Dashboard/ProviderStatsCards';
 import ProviderRecentOrders from '../../components/ui/Provider/Dashboard/ProviderRecentOrders';
 import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
@@ -15,7 +15,7 @@ const ProviderDashboard = () => {
                 <div className="flex-1 p-6 overflow-y-auto">
                     {/* Stats Cards */}
                     <ProviderStatsCards />
-                    
+
                     {/* Recent Orders */}
                     <ProviderRecentOrders />
                 </div>
