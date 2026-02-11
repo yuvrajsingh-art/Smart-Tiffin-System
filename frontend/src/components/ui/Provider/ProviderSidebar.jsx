@@ -30,9 +30,9 @@ function ProviderSidebar({ isOpen, setIsOpen }) {
     { icon: "restaurant_menu", label: "Manage Daily Menu", path: "/provider/menu" },
     { icon: "group", label: "Active Customers", path: "/provider/customers" },
     { icon: "local_shipping", label: "Delivery Status", path: "/provider/delivery" },
+    { icon: "p", label: "Subscription plan", path: "/provider/plan" },
     { icon: "payment", label: "My Revenue", path: "/provider/revenue" },
-    { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" },
-    { icon: "analytics", label: "Analytics", path: "/provider/analytics" },
+    { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" }
   ];
 
   const handleLogout = () => {

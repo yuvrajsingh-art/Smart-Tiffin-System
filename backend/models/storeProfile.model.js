@@ -22,21 +22,7 @@ const storeProfileSchema = new mongoose.Schema({
     },
 
     cuisines: [{
-        type: String,
-        enum: [
-            "North Indian",
-            "South Indian",
-            "Punjabi",
-            "Gujarati",
-            "Bengali",
-            "Maharashtrian",
-            "Rajasthani",
-            "Thali",
-            "Chinese",
-            "Continental",
-            "Jain",
-            "Vegan"
-        ]
+        type: String
     }],
 
     // Kitchen Timings
