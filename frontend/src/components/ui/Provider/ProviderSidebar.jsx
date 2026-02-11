@@ -52,7 +52,7 @@ function ProviderSidebar({ isOpen, setIsOpen }) {
 
       {/* Sidebar */}
       <aside className={`
-        w-64 h-screen fixed md:relative left-0 top-0 flex flex-col flex-shrink-0 transition-transform duration-300 bg-white md:glass-sidebar
+        w-64 h-screen fixed md:relative left-0 top-0 flex flex-col flex-shrink-0 transition-transform duration-300 bg-[#fffbf5] backdrop-blur-2xl md:glass-sidebar border-r border-orange-100
         ${isOpen ? "translate-x-0 shadow-2xl z-50" : "-translate-x-full md:translate-x-0 md:z-10"}
       `}>
         {/* Close button for mobile */}
@@ -88,7 +88,7 @@ function ProviderSidebar({ isOpen, setIsOpen }) {
           <div className="my-4 h-px bg-orange-100 w-full"></div>
         </nav>
 
-        <div className="p-3 border-t border-orange-100/50 space-y-1 bg-orange-50/30">
+        <div className="p-3 border-t border-orange-100/50 space-y-1 bg-white/30">
           <div onClick={() => setIsOpen(false)}>
             <Link
               to="/provider/profile"
