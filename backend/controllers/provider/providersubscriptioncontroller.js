@@ -21,27 +21,27 @@ exports.getSubscribers = async (req, res) => {
 
     const data = subscriptions.map(sub => {
       let status = "Active";
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
       // Check if expired
       if (sub.endDate < today) {
         status = "Expired";
       }
-      // Check if paused
+      // Check if currently paused
       else if (
         sub.pauseFrom &&
         sub.pauseTo &&
-        today >= sub.pauseFrom &&
-        today <= sub.pauseTo
+        new Date(sub.pauseFrom) <= today &&
+        new Date(sub.pauseTo) >= today
       ) {
         status = "Paused";
       }
 
-      // Calculate meals skipped
+      // Calculate actual skipped meals from skippedMeals array
       let mealsSkipped = 0;
-      if (sub.pauseFrom && sub.pauseTo) {
-        const diffTime = Math.abs(sub.pauseTo - sub.pauseFrom);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        mealsSkipped = diffDays + 1;
+      if (sub.skippedMeals && Array.isArray(sub.skippedMeals)) {
+        mealsSkipped = sub.skippedMeals.length;
       }
 
       return {
@@ -51,6 +51,7 @@ exports.getSubscribers = async (req, res) => {
         planType: `${sub.planName} (${sub.mealType})`,
         mealType: sub.mealType,
         price: sub.price,
+        deliveryAddress: sub.deliveryAddress,
         duration: {
           start: sub.startDate,
           end: sub.endDate,

@@ -43,57 +43,71 @@ function DeliveryStatus() {
 
     const fetchDeliveries = async () => {
         try {
-            const response = await ProviderApi.get('/provider-kds/kds-1');
-            console.log('KDS Response:', response.data);
+            const response = await ProviderApi.get('/provider-orders/today');
+            console.log('Orders Response:', response.data);
+            
             if (response.data && response.data.data) {
-                const allOrders = [
-                    ...response.data.data.justIn,
-                    ...response.data.data.preparing,
-                    ...response.data.data.ready,
-                    ...response.data.data.dispatched
-                ];
+                const { lunch, dinner } = response.data.data;
+                const allOrders = [...lunch, ...dinner];
                 
                 const formattedDeliveries = allOrders.map(order => {
                     const mealType = order.mealType || 'lunch';
-                    const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '11:00' : '19:00');
-                    const calculatedStatus = calculateDeliveryStatus(mealType, deliveryTime);
+                    const deliveryTime = order.deliveryTime || (mealType.toLowerCase() === 'lunch' ? '12:00' : '20:00');
+                    
+                    // Use only database status
+                    let orderStatus = order.status;
+                    if (orderStatus === 'cancelled') {
+                        return null; // Skip cancelled orders
+                    }
+                    
+                    if (orderStatus === 'confirmed' || orderStatus === 'cooking') {
+                        orderStatus = 'preparing';
+                    } else if (orderStatus === 'prepared') {
+                        orderStatus = 'ready_for_pickup';
+                    } else if (orderStatus === 'out_for_delivery') {
+                        orderStatus = 'out_for_delivery';
+                    } else if (orderStatus === 'delivered') {
+                        orderStatus = 'delivered';
+                    } else {
+                        orderStatus = 'preparing'; // Default
+                    }
                     
                     // Extract customer details
                     const customer = order.customer || {};
-                    const phone = customer.phone || customer.phoneNumber || order.customerPhone || 'N/A';
+                    const phone = customer.mobile || customer.phone || 'N/A';
                     
                     // Extract address
                     let address = 'N/A';
-                    if (customer.address) {
-                        if (typeof customer.address === 'string') {
-                            address = customer.address;
-                        } else if (typeof customer.address === 'object') {
-                            const addr = customer.address;
-                            address = [addr.street, addr.area, addr.city, addr.pincode]
+                    if (order.deliveryAddress) {
+                        const addr = order.deliveryAddress;
+                        if (typeof addr === 'string') {
+                            address = addr;
+                        } else {
+                            address = [addr.street, addr.city, addr.pincode]
                                 .filter(Boolean)
                                 .join(', ') || 'N/A';
                         }
-                    } else if (order.deliveryAddress) {
-                        address = order.deliveryAddress;
                     }
                     
                     return {
                         id: order._id,
-                        orderId: order.orderNo,
-                        customer: order.customerName || customer.fullName || customer.name || 'N/A',
+                        orderId: order.orderNumber || `ORD-${order._id.slice(-6)}`,
+                        customer: customer.fullName || customer.name || 'N/A',
                         phone: phone,
                         address: address,
-                        items: order.items?.map(i => i.name) || [],
-                        status: calculatedStatus,
+                        items: order.menuItems?.map(i => i.name) || [order.mealType],
+                        status: orderStatus,
                         mealType,
                         deliveryTime,
-                        orderTime: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                        orderTime: new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                         estimatedDelivery: deliveryTime,
-                        rider: order.rider?.name || null,
-                        riderPhone: order.rider?.phone || null,
-                        amount: order.amount || 0
+                        rider: order.deliveryPartner?.name || null,
+                        riderPhone: order.deliveryPartner?.phone || null,
+                        amount: order.amount || 0,
+                        orderType: order.orderType
                     };
-                });
+                }).filter(Boolean); // Remove null entries (cancelled orders)
+                
                 setDeliveries(formattedDeliveries);
             }
         } catch (error) {

@@ -4,8 +4,9 @@ import RenderStars from "./RenderStars";
 
 function FeedbackStateCards({ feedbacks }) {
     const getAverageRating = () => {
+        if (feedbacks.length === 0) return 0;
         const total = feedbacks.reduce((sum, f) => sum + f.rating, 0);
-        return total / feedbacks.length; // number return
+        return (total / feedbacks.length).toFixed(1);
     };
 
 
@@ -19,7 +20,7 @@ function FeedbackStateCards({ feedbacks }) {
                             {getAverageRating()}
                         </p>
                         <div className="flex justify-center gap-1 my-2">
-                            <RenderStars rating={Math.round(getAverageRating())} />
+                            <RenderStars rating={Math.round(parseFloat(getAverageRating()))} />
                              
                         </div>
                         <p className="text-sm text-gray-600">Average Rating</p>

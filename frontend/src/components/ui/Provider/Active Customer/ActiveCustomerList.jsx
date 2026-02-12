@@ -29,6 +29,9 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
         
         const formattedData = response.data.data.map(sub => {
           console.log('Processing subscription:', sub._id, 'Status:', sub.status);
+          console.log('DeliveryAddress:', sub.deliveryAddress);
+          console.log('Customer Address:', sub.customer?.address);
+          
           return {
             id: sub._id,
             name: sub.customer?.fullName || sub.customer?.name || 'N/A',
@@ -40,7 +43,17 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
             lastOrder: sub.endDate || sub.duration?.end,
             totalOrders: sub.skippedMeals || sub.mealsSkipped || 0,
             avatar: (sub.customer?.fullName || sub.customer?.name || 'NA').split(' ').map(n => n[0]).join('').toUpperCase(),
-            address: sub.deliveryAddress?.fullAddress || sub.customer?.address || 'N/A'
+            address: (() => {
+              if (sub.deliveryAddress) {
+                const addr = sub.deliveryAddress;
+                console.log('Address object:', addr);
+                if (typeof addr === 'string') return addr;
+                const formatted = [addr.street, addr.city, addr.pincode].filter(Boolean).join(', ');
+                console.log('Formatted address:', formatted);
+                return formatted || 'N/A';
+              }
+              return sub.customer?.address || 'N/A';
+            })()
           };
         });
         
