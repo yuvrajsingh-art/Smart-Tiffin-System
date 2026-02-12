@@ -22,7 +22,7 @@ router.put("/publish/:id", authMiddleware.protect, authMiddleware.authorizeRoles
 router.get("/today", authMiddleware.protect, getTodayMenu);
 
 // Get menu history
-router.get("/history", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), getMenuHistory);
+router.get("/history", authMiddleware.protect, authMiddleware.authorizeRoles("provider"), isVerifiedProvider, getMenuHistory);
 
 // Delete menu item
 router.delete("/:id", authMiddleware.protect, async (req, res) => {

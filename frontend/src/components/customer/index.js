@@ -28,3 +28,4 @@ export { default as InvoiceModal } from './InvoiceModal';
 export { default as MealTicketModal } from './MealTicketModal';
 export { default as AvatarSelectorModal } from './AvatarSelectorModal';
 export { default as SecurityPrivacyForm } from './SecurityPrivacyForm';
+export { default as ReportIssueModal } from './ReportIssueModal';

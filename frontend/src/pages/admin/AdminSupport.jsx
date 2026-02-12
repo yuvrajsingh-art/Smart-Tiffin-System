@@ -273,30 +273,98 @@ const AdminSupport = () => {
 
 // --- Sub-Component: Interactive Ticket Detail Modal ---
 const TicketDetailsModal = ({ ticket, onClose }) => {
-    const [messages, setMessages] = useState([
-        { id: 1, text: `Hi, I'm facing an issue: ${ticket.issue}`, sender: 'user', time: '10:30 AM' },
-        { id: 2, text: 'We are looking into it. Please wait.', sender: 'bot', time: '10:31 AM' }
-    ]);
+    const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [loading, setLoading] = useState(true);
     const chatEndRef = useRef(null);
+
+    const fetchTicketDetails = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`/api/admin/tickets/${ticket.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                const fullTicket = res.data.data;
+                const formattedMessages = (fullTicket.messages || []).map(m => ({
+                    id: m._id,
+                    text: m.text,
+                    sender: m.sender,
+                    time: new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }));
+                setMessages(formattedMessages);
+            }
+        } catch (err) {
+            console.error("Fetch Ticket Details Error:", err);
+            toast.error("Failed to load conversation");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTicketDetails();
+    }, [ticket.id]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!inputText.trim()) return;
-        const newMsg = { id: Date.now(), text: inputText, sender: 'agent', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-        setMessages(prev => [...prev, newMsg]);
-        setInputText('');
 
-        // Sim Bot Reply
+        const messageText = inputText.trim();
+        setInputText('');
         setIsTyping(true);
-        setTimeout(() => {
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`/api/admin/tickets/${ticket.id}/reply`,
+                { message: messageText },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                const updatedTicket = res.data.data;
+                const lastMsg = updatedTicket.messages[updatedTicket.messages.length - 1];
+                setMessages(prev => [...prev, {
+                    id: lastMsg._id,
+                    text: lastMsg.text,
+                    sender: lastMsg.sender,
+                    time: new Date(lastMsg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }]);
+            }
+        } catch (err) {
+            console.error("Reply Error:", err);
+            toast.error("Failed to send reply");
+        } finally {
             setIsTyping(false);
-            setMessages(prev => [...prev, { id: Date.now() + 1, text: 'Ticket updated in system. Customer notified.', sender: 'sys', time: 'Just now' }]);
-        }, 1500);
+        }
+    };
+
+    const handleResolve = async () => {
+        const resolution = prompt("Enter resolution details (optional):");
+        const toastId = toast.loading("Resolving ticket...");
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.put(`/api/admin/tickets/${ticket.id}/resolve`,
+                { resolution },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                toast.success("Ticket resolved successfully", { id: toastId });
+                onClose();
+                // Optionally refresh the ticket list in parent
+                window.location.reload(); // Simple refresh for now
+            }
+        } catch (err) {
+            console.error("Resolve Error:", err);
+            toast.error("Failed to resolve ticket", { id: toastId });
+        }
     };
 
     return createPortal(
@@ -328,14 +396,15 @@ const TicketDetailsModal = ({ ticket, onClose }) => {
                                 <p className="text-sm font-bold text-[#2D241E]">{ticket.kitchen}</p>
                             </div>
                         </div>
-                        <div className="p-5 bg-blue-50 rounded-[1.5rem] border border-blue-100 shadow-sm">
-                            <p className="text-[10px] uppercase font-bold text-blue-400 mb-1 tracking-wider">AI Insight</p>
-                            <p className="text-xs font-bold text-blue-800 leading-relaxed">User churn risk high. Recommend immediate resolution within 30 mins to retain loyalty.</p>
-                        </div>
                     </div>
 
                     <div className="mt-auto space-y-2">
-                        <button className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-xs hover:bg-black transition-colors uppercase tracking-widest">Mark Resolved</button>
+                        <button
+                            onClick={handleResolve}
+                            className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-xs hover:bg-black transition-colors uppercase tracking-widest"
+                        >
+                            Mark Resolved
+                        </button>
                         <button className="w-full py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-50 transition-colors uppercase tracking-widest">Escalate Case</button>
                     </div>
                 </div>
@@ -350,7 +419,7 @@ const TicketDetailsModal = ({ ticket, onClose }) => {
                             </span>
                             <div>
                                 <p className="text-xs font-bold text-gray-800 uppercase tracking-widest">Live Connect</p>
-                                <p className="text-[10px] text-gray-400">#{ticket.id} • Assigned to You</p>
+                                <p className="text-[10px] text-gray-400">#{ticket.displayId} • Assigned to You</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
@@ -359,18 +428,30 @@ const TicketDetailsModal = ({ ticket, onClose }) => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                        {messages.map((msg) => (
-                            <div key={msg.id} className={`flex ${msg.sender === 'agent' ? 'justify-end' : msg.sender === 'sys' ? 'justify-center' : 'justify-start'}`}>
-                                {msg.sender === 'sys' ? (
-                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 uppercase tracking-tighter">{msg.text}</span>
-                                ) : (
-                                    <div className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-sm ${msg.sender === 'agent' ? 'bg-gray-900 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'}`}>
-                                        <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
-                                        <p className={`text-[10px] font-medium mt-1 opacity-40 ${msg.sender === 'agent' ? 'text-white text-right' : 'text-gray-500'}`}>{msg.time}</p>
-                                    </div>
-                                )}
+                        {loading ? (
+                            <div className="flex flex-col gap-4">
+                                <SkeletonLoader type="text" count={3} className="h-10 w-3/4 rounded-2xl" />
+                                <SkeletonLoader type="text" count={2} className="h-10 w-1/2 ml-auto rounded-2xl" />
                             </div>
-                        ))}
+                        ) : messages.length > 0 ? (
+                            messages.map((msg) => (
+                                <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : msg.sender === 'system' ? 'justify-center' : 'justify-start'}`}>
+                                    {msg.sender === 'system' ? (
+                                        <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 uppercase tracking-tighter">{msg.text}</span>
+                                    ) : (
+                                        <div className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-sm ${msg.sender === 'admin' ? 'bg-gray-900 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'}`}>
+                                            <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                                            <p className={`text-[10px] font-medium mt-1 opacity-40 ${msg.sender === 'admin' ? 'text-white text-right' : 'text-gray-500'}`}>{msg.time}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full opacity-30">
+                                <span className="material-symbols-outlined text-4xl mb-2">forum</span>
+                                <p className="text-xs font-bold uppercase tracking-widest">No messages yet</p>
+                            </div>
+                        )}
                         {isTyping && (
                             <div className="flex items-center gap-1.5 text-gray-400 ml-2">
                                 <span className="size-1 bg-gray-300 rounded-full animate-bounce"></span>

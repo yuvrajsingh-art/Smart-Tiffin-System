@@ -35,6 +35,20 @@ exports.createMenu = async (req, res) => {
       }
     }
 
+    // --- DUPLICATE CHECK ---
+    const existingMenu = await Menu.findOne({
+      provider: req.user.id,
+      menuDate: targetDate,
+      mealType
+    });
+
+    if (existingMenu) {
+      return res.status(400).json({
+        success: false,
+        message: `A ${mealType} menu already exists for this date. Please edit the existing one.`
+      });
+    }
+
     const newMenu = new Menu({
       provider: req.user.id,
       name,
@@ -50,8 +64,9 @@ exports.createMenu = async (req, res) => {
       image,
       description,
       availableDays: availableDays || [],
-      isPublished: true,
-      isAvailable: true
+      isPublished: true, // Auto-publish
+      isAvailable: true,
+      approvalStatus: 'Approved' // Auto-approve
     });
 
     await newMenu.save();

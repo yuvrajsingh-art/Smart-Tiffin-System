@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
-const MealTicketModal = ({ isOpen, onClose, meal }) => {
+const MealTicketModal = ({ isOpen, onClose, meal, onReportIssue }) => {
     if (!isOpen || !meal) return null;
 
     const handlePrint = () => {
@@ -25,6 +25,13 @@ const MealTicketModal = ({ isOpen, onClose, meal }) => {
                         Meal Ticket
                     </h2>
                     <div className="flex gap-2">
+                        <button
+                            onClick={onReportIssue}
+                            className="p-2 hover:bg-white/10 rounded-full transition-colors text-red-300 hover:text-red-200"
+                            title="Report Issue"
+                        >
+                            <span className="material-symbols-outlined">report_problem</span>
+                        </button>
                         <button
                             onClick={handlePrint}
                             className="p-2 hover:bg-white/10 rounded-full transition-colors"

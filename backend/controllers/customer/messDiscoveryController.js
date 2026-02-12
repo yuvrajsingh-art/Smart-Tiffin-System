@@ -1,4 +1,23 @@
+const ProviderProfile = require("../../models/providerProfile.model");
 const StoreProfile = require("../../models/storeProfile.model");
+const User = require("../../models/user.model");
+const Review = require("../../models/review.model");
+const Plan = require("../../models/plan.model");
+const { sendSuccess, sendError } = require("../../utils/responseHelper");
+
+/**
+ * Get Standard Platform Plans
+ * @route GET /api/customer/messes/plans
+ */
+exports.getStandardPlans = async (req, res) => {
+    try {
+        const plans = await Plan.find({ isActive: true, isStandard: true }).sort({ price: 1 });
+        return sendSuccess(res, 200, "Standard plans retrieved", plans);
+    } catch (error) {
+        console.error("Get Standard Plans Error:", error.message);
+        return sendError(res, 500, "Failed to fetch plans", error);
+    }
+};
 
 // Find mess providers
 exports.findMessProviders = async (req, res) => {

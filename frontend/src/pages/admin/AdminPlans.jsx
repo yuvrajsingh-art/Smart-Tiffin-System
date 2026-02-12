@@ -1,18 +1,35 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 
 const AdminPlans = () => {
     const formRef = useRef(null);
+    const [plans, setPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Data: Standard Platform Plans
-    const [plans, setPlans] = useState([
-        { id: 'PLN001', name: 'Student Budget', price: '2500', period: 'Monthly', type: 'Veg', color: 'from-emerald-400 to-emerald-600', shadow: 'shadow-emerald-500/20', description: 'Roti (4), Sabzi, Dal, Rice, Salad', subscribers: 124, revenue: '₹3.1L', badge: 'Popular' },
-        { id: 'PLN002', name: 'Premium Thali', price: '3500', period: 'Monthly', type: 'Veg', color: 'from-[#2D241E] to-[#453831]', shadow: 'shadow-stone-500/20', description: 'Roti (4), 2 Sabzi, Dal Fry, Jeera Rice, Sweet, Curd', subscribers: 85, revenue: '₹2.9L', badge: 'Best Value' },
-        { id: 'PLN003', name: 'Chicken Delight', price: '4500', period: 'Monthly', type: 'Non-Veg', color: 'from-rose-500 to-rose-700', shadow: 'shadow-rose-500/20', description: 'Roti (4), Chicken Curry, Dal, Rice, Salad, Sweet (Wed/Sun)', subscribers: 45, revenue: '₹2.0L', badge: 'Premium' },
-        { id: 'PLN004', name: 'Weight Loss Keto', price: '6000', period: 'Monthly', type: 'Diet', color: 'from-violet-500 to-violet-700', shadow: 'shadow-violet-500/20', description: 'Keto Roti (2), Green Veg, Grilled Paneer/Chicken, Salad', subscribers: 20, revenue: '₹1.2L', badge: 'Niche' },
-    ]);
+    // Fetch Plans from Backend
+    const fetchPlans = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const res = await axios.get('/api/admin/plans', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setPlans(res.data.data);
+            }
+        } catch (err) {
+            console.error("Fetch Plans Error:", err);
+            toast.error("Failed to load plans");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPlans();
+    }, []);
 
     // Mock Data: Linked Kitchens (Franchise View)
     const linkedKitchensMock = {
@@ -26,17 +43,14 @@ const AdminPlans = () => {
         ]
     };
 
-    // Mock Data: Proposed Plans (Approval Queue)
-    const [proposedPlans, setProposedPlans] = useState([
-        { id: 'PROP001', kitchen: 'Spice Route', basePlan: 'Student Budget', standardPrice: 2500, proposedPrice: 2800, type: 'Veg', date: 'Today', status: 'Pending' },
-        { id: 'PROP002', kitchen: 'Urban Mess', basePlan: 'Premium Thali', standardPrice: 3500, proposedPrice: 3200, type: 'Veg', date: 'Yesterday', status: 'Pending' },
-        { id: 'PROP003', kitchen: 'Fit Foods', basePlan: 'Weight Loss Keto', standardPrice: 6000, proposedPrice: 7500, type: 'Diet', date: '2 days ago', status: 'Reviewing' },
-    ]);
-
     const [activeView, setActiveView] = useState('Platform'); // Platform, Proposed
     const [showModal, setShowModal] = useState(false);
     const [viewKitchens, setViewKitchens] = useState(null); // ID of plan to view links for
     const [editingPlan, setEditingPlan] = useState(null);
+
+    // Filter plans based on view
+    const platformPlans = plans.filter(p => !p.provider || p.verificationStatus === 'Approved');
+    const proposedPlansReal = plans.filter(p => p.provider && p.verificationStatus === 'Pending');
 
     // Calculate Price Variance
     const getVariance = (std, prop) => {
@@ -45,16 +59,26 @@ const AdminPlans = () => {
         return { val: percent, label: percent > 0 ? `+${percent}%` : `${percent}%`, color: percent > 15 || percent < -15 ? 'text-rose-600 bg-rose-50' : 'text-emerald-600 bg-emerald-50' };
     };
 
-    // Optimistic UI Handlers
-    const handleApproveProposal = (id) => {
-        setProposedPlans(prev => prev.filter(p => p.id !== id));
-        toast.success("Proposal Accepted & Live!", { icon: '✅' });
-    };
 
-    const handleRejectProposal = (id) => {
-        if (window.confirm("Reject this pricing proposal?")) {
-            setProposedPlans(prev => prev.filter(p => p.id !== id));
-            toast.error("Proposal Sent Back to Kitchen");
+
+    const handleDeletePlan = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this plan? This cannot be undone.")) return;
+
+        const toastId = toast.loading("Deleting plan...");
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.delete(`/api/admin/plans/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.data.success) {
+                setPlans(prev => prev.filter(p => p._id !== id));
+                toast.success("Plan deleted successfully");
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to delete plan");
+        } finally {
+            toast.dismiss(toastId);
         }
     };
 
@@ -66,26 +90,29 @@ const AdminPlans = () => {
         const name = form.elements['name']?.value;
         if (!name) return toast.error("Plan name is required");
 
+        const toastId = toast.loading(editingPlan ? "Updating plan..." : "Creating plan...");
         const token = localStorage.getItem('token');
+
         const planData = {
             name: name,
-            price: form.elements['price']?.value || '0',
+            price: Number(form.elements['price']?.value) || 0,
             period: form.elements['period']?.value || 'Monthly',
             type: form.elements['type']?.value || 'Veg',
             description: form.elements['desc']?.value || '',
-            color: form.elements['color']?.value || 'from-gray-500 to-gray-700',
+            color: form.elements['color']?.value || 'from-emerald-400 to-emerald-600',
+            badge: editingPlan?.badge || 'Standard'
         };
 
         try {
             if (editingPlan) {
                 // Update existing plan
                 const res = await axios.put(
-                    `/api/admin/plans/${editingPlan.id}`,
+                    `/api/admin/plans/${editingPlan._id}`,
                     planData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (res.data.success) {
-                    setPlans(prev => prev.map(p => p.id === editingPlan.id ? { ...p, ...planData } : p));
+                    setPlans(prev => prev.map(p => p._id === editingPlan._id ? res.data.data : p));
                     toast.success("Standard Plan updated everywhere!");
                 }
             } else {
@@ -96,13 +123,7 @@ const AdminPlans = () => {
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (res.data.success) {
-                    const newPlan = {
-                        ...res.data.data,
-                        subscribers: 0,
-                        revenue: '₹0',
-                        badge: 'New'
-                    };
-                    setPlans(prev => [newPlan, ...prev]);
+                    setPlans(prev => [...prev, res.data.data]);
                     toast.success("New Standard Plan Launched!", { icon: '🚀' });
                 }
             }
@@ -110,6 +131,8 @@ const AdminPlans = () => {
             setEditingPlan(null);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to save plan');
+        } finally {
+            toast.dismiss(toastId);
         }
     };
 
@@ -142,13 +165,6 @@ const AdminPlans = () => {
                             </button>
                         ))}
                     </div>
-                    <button
-                        onClick={() => { setEditingPlan(null); setShowModal(true); }}
-                        className="px-5 py-2.5 bg-[#2D241E] text-white rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all hover:bg-[#453831] flex items-center gap-2 shadow-xl shadow-black/10 scale-105 active:scale-95"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                        Launch New Plan
-                    </button>
                 </div>
             </div>
 
@@ -161,7 +177,7 @@ const AdminPlans = () => {
                         { label: 'Active Subscriptions', val: '2,845', sub: '+124 this week', icon: 'loyalty', color: 'text-orange-600', bg: 'bg-orange-50' },
                         { label: 'Franchise Kitchens', val: '42', sub: '98% Coverage', icon: 'storefront', color: 'text-blue-600', bg: 'bg-blue-50' },
                         { label: 'Avg Order Value', val: '₹3,200', sub: 'Per Month', icon: 'payments', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                        { label: 'Pending Proposals', val: proposedPlans.length.toString(), sub: 'Needs Review', icon: 'rate_review', color: 'text-rose-500', bg: 'bg-rose-50' },
+                        { label: 'Pending Proposals', val: proposedPlansReal.length.toString(), sub: 'Needs Review', icon: 'rate_review', color: 'text-rose-500', bg: 'bg-rose-50' },
                     ].map((s, i) => (
                         <div key={i} className="bg-white/70 backdrop-blur-xl p-5 rounded-[2rem] border border-white/60 shadow-lg group hover:shadow-xl transition-all">
                             <div className="flex justify-between items-start mb-2">
@@ -182,8 +198,8 @@ const AdminPlans = () => {
             {
                 activeView === 'Platform' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {plans.map(plan => (
-                            <div key={plan.id} className="group relative flex flex-col h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg hover:shadow-2xl transition-all duration-300">
+                        {platformPlans.map(plan => (
+                            <div key={plan._id} className="group relative flex flex-col h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg hover:shadow-2xl transition-all duration-300">
 
                                 {/* Card Header */}
                                 <div className={`h-32 bg-gradient-to-br ${plan.color} relative p-5 flex flex-col justify-between shrink-0 rounded-t-[2rem] overflow-hidden`}>
@@ -198,10 +214,16 @@ const AdminPlans = () => {
                                     </div>
                                     <div className="relative z-10 text-white">
                                         <h3 className="text-lg font-bold tracking-tight leading-none drop-shadow-md">{plan.name}</h3>
-                                        <p className="text-[10px] font-medium opacity-90 mt-1 flex items-center gap-1">
-                                            <span className="size-1 rounded-full bg-white"></span>
-                                            {plan.type} Series
-                                        </p>
+                                        <div className="flex flex-col gap-1 mt-2">
+                                            <p className="text-[10px] font-medium opacity-90 flex items-center gap-1">
+                                                <span className="size-1 rounded-full bg-white"></span>
+                                                {plan.type} Series
+                                            </p>
+                                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-tighter flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[12px]">storefront</span>
+                                                {plan.provider?.fullName || 'Platform Standard'}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -236,32 +258,64 @@ const AdminPlans = () => {
                                         </div>
                                     </div>
 
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-2 mt-auto">
+                                    {/* Actions - Review Flow */}
+                                    <div className="flex flex-col gap-2 mt-auto">
+                                        {plan.verificationStatus === 'Pending' ? (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        const token = localStorage.getItem('token');
+                                                        try {
+                                                            await axios.put(`/api/admin/plans/${plan._id}/approve`, {}, {
+                                                                headers: { Authorization: `Bearer ${token}` }
+                                                            });
+                                                            toast.success("Plan Approved!");
+                                                            fetchPlans();
+                                                        } catch (err) {
+                                                            toast.error("Approval failed");
+                                                        }
+                                                    }}
+                                                    className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg active:scale-95"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        const reason = window.prompt("Reason for rejection?");
+                                                        if (reason === null) return;
+                                                        const token = localStorage.getItem('token');
+                                                        try {
+                                                            await axios.put(`/api/admin/plans/${plan._id}/reject`, { reason }, {
+                                                                headers: { Authorization: `Bearer ${token}` }
+                                                            });
+                                                            toast.success("Plan Rejected");
+                                                            fetchPlans();
+                                                        } catch (err) {
+                                                            toast.error("Rejection failed");
+                                                        }
+                                                    }}
+                                                    className="flex-1 py-2.5 bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg active:scale-95"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className={`p-2 rounded-xl text-center text-[10px] font-black uppercase tracking-widest ${plan.verificationStatus === 'Approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                                                }`}>
+                                                {plan.verificationStatus}
+                                            </div>
+                                        )}
                                         <button
-                                            onClick={() => { setEditingPlan(plan); setShowModal(true); }}
-                                            className="flex-1 py-2.5 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#453831] transition-all shadow-lg active:scale-95"
+                                            onClick={() => setViewKitchens(plan)}
+                                            className="w-full py-2 bg-[#2D241E]/5 text-[#2D241E] border border-[#2D241E]/10 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-[#2D241E]/10 transition-all active:scale-95"
                                         >
-                                            Edit Standard
+                                            View Details
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         ))}
 
-                        {/* Add New Card Placeholder */}
-                        <button
-                            onClick={() => { setEditingPlan(null); setShowModal(true); }}
-                            className="group relative flex flex-col h-full min-h-[300px] rounded-[2rem] border-2 border-dashed border-[#2D241E]/10 hover:border-orange-400 hover:bg-orange-50/10 transition-all duration-300 items-center justify-center gap-3 p-8"
-                        >
-                            <div className="size-14 bg-white rounded-full shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-gray-100">
-                                <span className="material-symbols-outlined text-2xl text-orange-500">add</span>
-                            </div>
-                            <div className="text-center">
-                                <h3 className="text-sm font-bold text-[#2D241E]">Create New Plan</h3>
-                                <p className="text-[10px] font-medium text-[#897a70]">Define a standard product</p>
-                            </div>
-                        </button>
                     </div>
                 ) : (
                     /* View: Kitchen Proposals */
@@ -272,7 +326,7 @@ const AdminPlans = () => {
                                 <p className="text-[10px] text-[#897a70] font-bold mt-1">Kitchens requesting to sell Standard Plans at custom prices.</p>
                             </div>
                             <div className="flex gap-2">
-                                {proposedPlans.filter(p => { const v = getVariance(p.standardPrice, p.proposedPrice); return v.val > 15 || v.val < -15; }).length > 0 && (
+                                {proposedPlansReal.length > 999 && ( // Temporarily disabled variance check as it needs base price comparison
                                     <div className="px-2 py-0.5 bg-rose-50 rounded-lg border border-rose-100 flex items-center gap-1.5 animate-pulse">
                                         <span className="relative flex h-1.5 w-1.5">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -296,41 +350,70 @@ const AdminPlans = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {proposedPlans.length > 0 ? (
-                                        proposedPlans.map(prop => {
-                                            const variance = getVariance(prop.standardPrice, prop.proposedPrice);
+                                    {proposedPlansReal.length > 0 ? (
+                                        proposedPlansReal.map(prop => {
                                             return (
-                                                <tr key={prop.id} className="group hover:bg-white/60 transition-all">
+                                                <tr key={prop._id} className="group hover:bg-white/60 transition-all">
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="size-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-[10px]">{(prop?.kitchen || 'K').charAt(0)}</div>
+                                                            <div className="size-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-[10px]">{(prop.provider?.fullName || 'K').charAt(0)}</div>
                                                             <div>
-                                                                <p className="text-xs font-bold text-[#2D241E]">{prop.kitchen}</p>
-                                                                <p className="text-xs font-bold text-[#897a70]">{prop.date}</p>
+                                                                <p className="text-xs font-bold text-[#2D241E]">{prop.provider?.fullName || 'Unknown Kitchen'}</p>
+                                                                <p className="text-xs font-bold text-[#897a70]">{new Date(prop.createdAt).toLocaleDateString()}</p>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <p className="text-xs font-bold text-[#5C4D42]">{prop.basePlan}</p>
+                                                        <p className="text-xs font-bold text-[#5C4D42]">{prop.name}</p>
                                                         <span className={`text-[10px] font-bold uppercase ${prop.type === 'Veg' ? 'text-emerald-600' : 'text-rose-600'}`}>{prop.type}</span>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <p className="text-xs font-bold text-gray-400">₹{prop.standardPrice}</p>
+                                                        <p className="text-xs font-bold text-gray-400">₹{prop.price}</p>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <p className="text-sm font-bold text-[#2D241E]">₹{prop.proposedPrice}</p>
+                                                        <p className="text-sm font-bold text-[#2D241E]">₹{prop.price}</p>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${variance.color}`}>
-                                                            {variance.label}
+                                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-emerald-600 bg-emerald-50`}>
+                                                            Standard
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button onClick={() => handleApproveProposal(prop.id)} className="size-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/15" title="Approve">
+                                                            <button
+                                                                onClick={async () => {
+                                                                    const token = localStorage.getItem('token');
+                                                                    try {
+                                                                        await axios.put(`/api/admin/plans/${prop._id}/approve`, {}, {
+                                                                            headers: { Authorization: `Bearer ${token}` }
+                                                                        });
+                                                                        toast.success("Plan Approved!");
+                                                                        fetchPlans();
+                                                                    } catch (err) {
+                                                                        toast.error("Approval failed");
+                                                                    }
+                                                                }}
+                                                                className="size-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-md shadow-emerald-500/15" title="Approve"
+                                                            >
                                                                 <span className="material-symbols-outlined text-[14px]">check</span>
                                                             </button>
-                                                            <button onClick={() => handleRejectProposal(prop.id)} className="size-7 rounded-lg bg-white border border-gray-200 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-all" title="Reject">
+                                                            <button
+                                                                onClick={async () => {
+                                                                    const reason = window.prompt("Reason for rejection?");
+                                                                    if (reason === null) return;
+                                                                    const token = localStorage.getItem('token');
+                                                                    try {
+                                                                        await axios.put(`/api/admin/plans/${prop._id}/reject`, { reason }, {
+                                                                            headers: { Authorization: `Bearer ${token}` }
+                                                                        });
+                                                                        toast.success("Plan Rejected");
+                                                                        fetchPlans();
+                                                                    } catch (err) {
+                                                                        toast.error("Rejection failed");
+                                                                    }
+                                                                }}
+                                                                className="size-7 rounded-lg bg-white border border-gray-200 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-all" title="Reject"
+                                                            >
                                                                 <span className="material-symbols-outlined text-[14px]">close</span>
                                                             </button>
                                                         </div>
@@ -391,7 +474,7 @@ const AdminPlans = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
-                                        {(linkedKitchensMock[viewKitchens.id] || []).map((k, i) => (
+                                        {(linkedKitchensMock[viewKitchens?._id] || []).map((k, i) => (
                                             <tr key={i} className="hover:bg-gray-50/50">
                                                 <td className="py-4 font-bold text-[#2D241E] text-xs">{k.name}</td>
                                                 <td className="py-4 font-bold text-[#5C4D42] text-xs">₹{k.price}</td>
@@ -411,7 +494,7 @@ const AdminPlans = () => {
                                                 </td>
                                             </tr>
                                         ))}
-                                        {!(linkedKitchensMock[viewKitchens.id]) && (
+                                        {!(linkedKitchensMock[viewKitchens?._id]) && (
                                             <tr>
                                                 <td colSpan="5" className="py-8 text-center text-xs font-bold text-gray-400">No kitchens currently linked to this plan.</td>
                                             </tr>

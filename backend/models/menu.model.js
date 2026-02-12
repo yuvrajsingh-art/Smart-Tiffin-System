@@ -64,13 +64,13 @@ const menuSchema = new mongoose.Schema({
   }],
 
   isAvailable: { type: Boolean, default: true },
-  isPublished: { type: Boolean, default: false },
+  isPublished: { type: Boolean, default: true }, // Default to Published
   isHoliday: { type: Boolean, default: false },
 
   approvalStatus: {
     type: String,
     enum: ["Pending", "Approved", "Rejected"],
-    default: "Pending"
+    default: "Approved" // Default to Approved
   }
 
 }, { timestamps: true });

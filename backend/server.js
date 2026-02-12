@@ -16,7 +16,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
-const initScheduledJobs = require("./utils/scheduler");
+const { initScheduledJobs } = require("./utils/scheduler");
 
 // Load environment variables
 dotenv.config();
@@ -148,6 +148,7 @@ app.use("/api/provider-wallet", walletRoutes);
 app.use("/api/provider-reviews", reviewTriageRoutes);
 app.use("/api/provider-store", storeProfileRoutes);
 app.use("/api/provider-orders", providerOrderRoutes);  // NEW: Order management
+app.use("/api/provider-plans", require("./routes/provider/planRoutes"));
 app.use("/api/notifications", providerNotificationRoutes);  // Provider Notifications
 
 // Admin endpoints: /api/admin/*
@@ -197,6 +198,9 @@ const log = {
 // =============================================================================
 // START SERVER
 // =============================================================================
+
+// Provider Support Routes
+app.use('/api/provider/support', require('./routes/provider/supportRoutes'));
 
 const PORT = process.env.PORT || 5000;
 

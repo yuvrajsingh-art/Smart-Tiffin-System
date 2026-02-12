@@ -49,7 +49,7 @@ exports.getWeeklyMenu = async (req, res) => {
             provider: providerId,
             menuDate: { $gte: monday, $lte: sunday },
             isPublished: true,
-            approvalStatus: { $in: ["Approved", "Pending"] }
+            approvalStatus: "Approved"
         }).sort({ menuDate: 1, mealType: 1 });
 
         // Format menu data for frontend
@@ -320,8 +320,7 @@ exports.getTodayMenu = async (req, res) => {
             provider: providerId,
             menuDate: { $gte: startOfToday, $lte: endOfToday },
             isPublished: true,
-            // Allowing Pending for development/user-test visibility
-            approvalStatus: { $in: ["Approved", "Pending"] }
+            approvalStatus: "Approved"
         });
 
         console.log(`[MENU_DEBUG] Customer: ${customerId}, Provider: ${providerId}`);

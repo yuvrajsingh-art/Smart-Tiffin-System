@@ -14,17 +14,23 @@ import CustomerFeedback from '../pages/Provider/CustomerFeedback';
 import ProviderAnalysis from '../pages/Provider/ProviderAnalysis';
 import ProviderProfile from '../pages/Provider/ProviderProfile';
 import ProviderRevenue from '../pages/Provider/ProviderRevenue';
+import ProviderSupport from '../pages/Provider/ProviderSupport';
+
+import ManagePlans from '../pages/Provider/ManagePlans';
 
 // Provider route configuration
 export const providerRoutes = [
     { path: "dashboard", element: <ProviderDashboard /> },
     { path: "menu", element: <ManageMenu /> },
+    { path: "plans", element: <ManagePlans /> },
     { path: "customers", element: <ActiveCustomers /> },
     { path: "delivery", element: <DeliveryStatus /> },
     { path: "revenue", element: <ProviderRevenue /> },
     { path: "feedback", element: <CustomerFeedback /> },
     { path: "analytics", element: <ProviderAnalysis /> },
+    { path: "analytics", element: <ProviderAnalysis /> },
     { path: "profile", element: <ProviderProfile /> },
+    { path: "support", element: <ProviderSupport /> },
 ];
 
 export default providerRoutes;

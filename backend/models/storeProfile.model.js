@@ -143,4 +143,4 @@ storeProfileSchema.index({ mess_name: 1 });
 storeProfileSchema.index({ "address.city": 1 });
 storeProfileSchema.index({ mess_name: "text", description: "text", "address.city": "text" });
 
-module.exports = mongoose.model("StoreProfile", storeProfileSchema);
+module.exports = mongoose.models.StoreProfile || mongoose.model("StoreProfile", storeProfileSchema);

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import useGeolocation from "../../hooks/useGeolocation";
+import Logo from "../../components/common/Logo";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -189,12 +190,7 @@ const Register = () => {
 
             {/* Header (Synced with Role Page) */}
             <header className="w-full max-w-7xl px-6 py-6 flex justify-between items-center z-50">
-                <div className="flex items-center gap-2">
-                    <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white shadow-md">
-                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
-                    </div>
-                    <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#2D241E] to-primary">Smart Tiffin</span>
-                </div>
+                <Logo />
                 <div className="hidden sm:block">
                     <span className="text-xs text-[#5C4D42]/80 font-medium">Already have an account?</span>
                     <Link to="/login" className="ml-2 text-xs font-bold text-primary hover:text-[#e04112] transition-colors">Log in</Link>

@@ -34,9 +34,13 @@ const AdminCustomers = () => {
 
     const fetchCustomers = async () => {
         try {
-            const { data } = await axios.get('/api/admin/customers');
+            const token = localStorage.getItem('token');
+            const { data } = await axios.get('/api/admin/customers', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (data.success) {
-                const transformed = data.data.map(c => ({
+                const payload = data.data; // { data: [], pagination: {}, stats: {} }
+                const transformed = (payload.data || []).map(c => ({
                     ...c,
                     id: c._id,
                     name: c.fullName || 'Unknown',
@@ -52,12 +56,14 @@ const AdminCustomers = () => {
                     address: c.address || (typeof c.location === 'object' ? c.location?.address : 'No Address')
                 }));
                 setCustomers(transformed);
-                if (data.stats) {
-                    setStats(data.stats);
+                if (payload.stats) {
+                    setStats(payload.stats);
                 }
             }
         } catch (error) {
-            toast.error("Failed to load customers");
+            console.error("Fetch Customers Error details:", error.response?.data || error.message);
+            const errorMsg = error.response?.data?.message || "Failed to connect to system nodes";
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -504,20 +510,18 @@ const AdminCustomers = () => {
                                     ))}
                                 </div>
 
-                                {/* Order History */}
-                                <div className="p-4 bg-gray-50 rounded-xl">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-xs font-bold text-gray-700">Order History (30 days)</span>
-                                        <span className="text-xs text-emerald-600 font-bold">92% success</span>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        {[...Array(30)].map((_, i) => (
-                                            <div key={i} className={`flex-1 h-6 rounded ${i > 24 ? 'bg-gray-200' : [4, 9, 15, 22].includes(i) ? 'bg-rose-400' : 'bg-emerald-400'}`}></div>
-                                        ))}
-                                    </div>
-                                    <div className="flex gap-4 mt-2 text-[10px] text-gray-500">
-                                        <span className="flex items-center gap-1"><span className="size-2 bg-emerald-400 rounded"></span>Delivered</span>
-                                        <span className="flex items-center gap-1"><span className="size-2 bg-rose-400 rounded"></span>Skipped</span>
+                                {/* Basic Customer Activity (Simplified) */}
+                                <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
+                                    <h4 className="text-[10px] font-bold text-[#2D241E] uppercase tracking-widest mb-4 ml-1">Engagement Snapshot</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100/50">
+                                            <p className="text-[10px] font-bold text-[#897a70] uppercase">Last Order</p>
+                                            <p className="text-sm font-bold text-[#2D241E] mt-1">2 Days Ago</p>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100/50">
+                                            <p className="text-[10px] font-bold text-[#897a70] uppercase">Subscription Status</p>
+                                            <p className="text-sm font-bold text-emerald-600 mt-1">Active</p>
+                                        </div>
                                     </div>
                                 </div>
 

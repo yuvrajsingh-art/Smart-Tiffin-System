@@ -52,16 +52,31 @@ exports.registerCustomer = async (req, res) => {
 
     // Validate required fields
     if (!fullName || !email || !password || !mobile) {
-      logger.warn("Register Failed: Missing Fields", { email });
-      return res.status(400).json({ message: "All required fields missing" });
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Strict Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // Mobile Number Validation (10 digits)
+    const mobileRegex = /^\d{10}$/;
+    if (!mobileRegex.test(mobile)) {
+      return res.status(400).json({ message: "Mobile number must be exactly 10 digits" });
+    }
+
+    // Password Length Validation
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim();
     const userExist = await User.findOne({ email: normalizedEmail });
     if (userExist) {
-      logger.warn("Register Failed: Duplicate User", { email: normalizedEmail });
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "This email is already registered" });
     }
 
     // Hash password
@@ -130,14 +145,31 @@ exports.providerCustomer = async (req, res) => {
 
     // Validate required fields
     if (!fullName || !email || !password || !mobile) {
-      return res.status(400).json({ message: "All required fields missing" });
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Strict Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // Mobile Number Validation
+    const mobileRegex = /^\d{10}$/;
+    if (!mobileRegex.test(mobile)) {
+      return res.status(400).json({ message: "Mobile number must be exactly 10 digits" });
+    }
+
+    // Password Length Validation
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim();
     const userExist = await User.findOne({ email: normalizedEmail });
     if (userExist) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "This email is already registered" });
     }
 
     // Hash password
@@ -207,14 +239,14 @@ exports.loginUser = async (req, res) => {
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       logger.warn("Login Failed: User Not Found", { email: normalizedEmail });
-      return res.status(404).json({ message: "Email not registered" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       logger.warn("Login Failed: Invalid Password", { email: normalizedEmail });
-      return res.status(401).json({ message: "Incorrect password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     // Generate token
