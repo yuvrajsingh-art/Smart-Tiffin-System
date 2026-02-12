@@ -4,6 +4,7 @@ const CustomerWallet = require("../../models/customerWallet.model");
 const Transaction = require("../../models/transaction.model");
 const Menu = require("../../models/menu.model");
 const DummyBank = require("../../models/dummyBank.model");
+const { createNotification } = require("../../utils/notificationService");
 const logger = require("../../utils/logger");
 
 /**
@@ -40,9 +41,23 @@ exports.bookGuestMeal = async (req, res) => {
             return res.status(404).json({ success: false, message: "Active subscription required to book guest meals" });
         }
 
-        // 2. Calculate Cost
-        const GUEST_MEAL_PRICE = 150;
-        const totalCost = GUEST_MEAL_PRICE * quantity;
+        // 2. Calculate Cost from Subscription Plan
+        // Calculate per-meal price from subscription
+        let perMealPrice = 120; // Default fallback
+        
+        if (subscription.price && subscription.durationInDays) {
+            // Calculate total meals in subscription
+            let mealsPerDay = 0;
+            if (subscription.mealType === 'Both') mealsPerDay = 2;
+            else if (subscription.mealType === 'Lunch' || subscription.mealType === 'Dinner') mealsPerDay = 1;
+            
+            const totalMeals = subscription.durationInDays * mealsPerDay;
+            if (totalMeals > 0) {
+                perMealPrice = Math.round(subscription.price / totalMeals);
+            }
+        }
+        
+        const totalCost = perMealPrice * quantity;
 
         let paymentStatus = "Pending";
         let finalPaymentMethod = "Cash";
@@ -161,6 +176,18 @@ exports.bookGuestMeal = async (req, res) => {
             }] : [],
             deliveryAddress: subscription.deliveryAddress
         });
+
+        // Send notification to provider about new guest order
+        try {
+            await createNotification({
+                userId: subscription.provider,
+                title: "New Guest Order",
+                message: `New guest order: ${quantity} ${mealType} meal(s) for ₹${totalCost}`,
+                type: "new_order"
+            });
+        } catch (notifError) {
+            logger.warn("Failed to send guest order notification to provider", notifError);
+        }
 
         logger.info("Guest Meal Booked", {
             orderId: newOrder._id,
@@ -340,7 +367,21 @@ exports.cancelGuestMeal = async (req, res) => {
 
         // 4. Update order status
         order.status = 'cancelled';
+        order.cancelledBy = 'customer';
+        order.cancelledAt = new Date();
         await order.save();
+
+        // Send notification to provider about cancellation
+        try {
+            await createNotification({
+                userId: order.provider,
+                title: "Guest Order Cancelled",
+                message: `Customer cancelled guest order: ${order.quantity} ${order.mealType} meal(s)`,
+                type: "order_cancelled"
+            });
+        } catch (notifError) {
+            logger.warn("Failed to send cancellation notification to provider", notifError);
+        }
 
         logger.info("Guest Meal Cancelled", {
             orderId: order._id,

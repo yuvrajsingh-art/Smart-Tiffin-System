@@ -49,20 +49,27 @@ function ProviderRecentOrders() {
                 const formattedOrders = allOrders.slice(0, 6).map(order => {
                     const mealType = order.mealType || 'lunch';
                     const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '11:00' : '19:00');
-                    const calculatedStatus = calculateDeliveryStatus(mealType, deliveryTime);
+                    
+                    // Use actual order status if cancelled, otherwise calculate delivery status
+                    const displayStatus = order.status === 'cancelled' 
+                        ? 'Cancelled' 
+                        : calculateDeliveryStatus(mealType, deliveryTime);
                     
                     return {
                         id: order._id,
                         customer: order.customer?.fullName || 'N/A',
-                        phone: order.customer?.phone || 'N/A',
-                        item: `${order.mealType} - ${order.tiffinCount} Tiffin(s)`,
-                        quantity: order.tiffinCount,
+                        phone: order.customer?.mobile || 'N/A',
+                        item: `${order.mealType} - ${order.quantity || 1} Tiffin(s)`,
+                        quantity: order.quantity || 1,
                         time: new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                        status: calculatedStatus,
-                        amount: order.amount,
+                        status: displayStatus,
+                        amount: order.amount || 0,
                         orderDate: 'Today',
                         mealType,
-                        deliveryTime
+                        deliveryTime,
+                        orderType: order.orderType || 'subscription',
+                        actualStatus: order.status,
+                        cancelledBy: order.cancelledBy
                     };
                 });
                 setRecentOrders(formattedOrders);
@@ -138,9 +145,16 @@ function ProviderRecentOrders() {
                                         </div>
                                     </div>
                                     <div className="text-right flex flex-col items-end gap-1">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                                            {order.status}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {order.orderType === 'guest' && (
+                                                <span className="px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+                                                    👤 Guest
+                                                </span>
+                                            )}
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </span>
+                                        </div>
                                         {order.status !== 'Cancelled' && order.status !== 'Delivered' && (
                                             <button
                                                 onClick={() => handleCancelOrder(order)}
@@ -165,7 +179,9 @@ function ProviderRecentOrders() {
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-lg text-gray-800">₹{order.amount}</p>
-                                        <p className="text-xs text-gray-500">₹{order.amount / order.quantity} each</p>
+                                        {order.quantity > 0 && (
+                                            <p className="text-xs text-gray-500">₹{Math.round(order.amount / order.quantity)} each</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>

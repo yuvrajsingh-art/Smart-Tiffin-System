@@ -136,6 +136,10 @@ const orderSchema = new mongoose.Schema({
     },
 
     // Cancellation details
+    cancelledBy: {
+        type: String,
+        enum: ["customer", "provider", "admin"],
+    },
     cancellationReason: String,
     cancelledAt: Date,
     refundAmount: Number

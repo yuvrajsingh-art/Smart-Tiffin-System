@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserPlus, FaUserMinus, FaStar, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUserPlus, FaUserMinus, FaStar, FaExclamationTriangle, FaUtensils, FaUserFriends, FaBan } from 'react-icons/fa';
 import ProviderApi from '../../../../services/ProviderApi';
 
 const CustomerActivityFeed = () => {
@@ -8,43 +8,34 @@ const CustomerActivityFeed = () => {
 
     useEffect(() => {
         fetchActivities();
+        
+        // Auto-refresh every 2 minutes
+        const interval = setInterval(() => {
+            fetchActivities();
+        }, 120000);
+        
+        return () => clearInterval(interval);
     }, []);
 
     const fetchActivities = async () => {
         try {
-            const [subsResponse, reviewsResponse] = await Promise.all([
-                ProviderApi.get('/provider-subscription?limit=5'),
-                ProviderApi.get('/provider-reviews?limit=5')
-            ]);
-
-            const subscriptions = subsResponse.data?.data || [];
-            const reviews = reviewsResponse.data?.data || [];
-
-            const subActivities = subscriptions.map(sub => ({
-                id: sub._id,
-                type: sub.status === 'approved' ? 'new_subscription' : 'cancelled_subscription',
-                customer: sub.customer?.fullName || 'Customer',
-                message: sub.status === 'approved' 
-                    ? `subscribed to ${sub.planName || 'plan'}` 
-                    : `cancelled subscription`,
-                time: new Date(sub.createdAt),
-                icon: sub.status === 'approved' ? 'new' : 'cancelled'
-            }));
-
-            const reviewActivities = reviews.map(review => ({
-                id: review._id,
-                type: review.rating >= 4 ? 'positive_feedback' : 'negative_feedback',
-                customer: review.customer?.fullName || 'Customer',
-                message: `rated ${review.rating} stars`,
-                time: new Date(review.createdAt),
-                icon: review.rating >= 4 ? 'feedback' : 'complaint'
-            }));
-
-            const combined = [...subActivities, ...reviewActivities]
-                .sort((a, b) => b.time - a.time)
-                .slice(0, 8);
-
-            setActivities(combined);
+            const response = await ProviderApi.get('/provider/activities');
+            if (response.data?.success) {
+                const fetchedActivities = response.data.data || [];
+                
+                // Debug: Check cancelled order timestamps
+                const cancelledActivities = fetchedActivities.filter(a => a.type === 'order_cancelled');
+                if (cancelledActivities.length > 0) {
+                    console.log('🔴 Cancelled Activities:', cancelledActivities.map(a => ({
+                        customer: a.customer,
+                        message: a.message,
+                        time: a.time,
+                        timeAgo: getTimeAgo(a.time)
+                    })));
+                }
+                
+                setActivities(fetchedActivities);
+            }
         } catch (error) {
             console.error('Error fetching activities:', error);
         } finally {
@@ -57,18 +48,22 @@ const CustomerActivityFeed = () => {
             case 'new':
                 return <FaUserPlus className="text-green-600" />;
             case 'cancelled':
-                return <FaUserMinus className="text-red-600" />;
+                return <FaBan className="text-red-600" />;
             case 'feedback':
                 return <FaStar className="text-yellow-600" />;
             case 'complaint':
                 return <FaExclamationTriangle className="text-orange-600" />;
+            case 'order':
+                return <FaUtensils className="text-blue-600" />;
+            case 'guest':
+                return <FaUserFriends className="text-purple-600" />;
             default:
                 return <FaUserPlus className="text-gray-600" />;
         }
     };
 
     const getTimeAgo = (date) => {
-        const seconds = Math.floor((new Date() - date) / 1000);
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
         if (seconds < 60) return 'Just now';
         const minutes = Math.floor(seconds / 60);
         if (minutes < 60) return `${minutes}m ago`;

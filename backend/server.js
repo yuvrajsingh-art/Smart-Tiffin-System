@@ -120,6 +120,7 @@ const storeProfileRoutes = require("./routes/provider/storeProfileRoutes");
 const providerOrderRoutes = require("./routes/provider/providerOrderRoutes");
 const providerNotificationRoutes = require("./routes/provider/providerNotificationRoutes");
 const subscriptionPlanRoutes = require("./routes/provider/subscriptionPlanRoutes");
+const activityRoutes = require("./routes/provider/activityRoutes");
 
 // Admin routes
 const adminRoutes = require("./routes/adminRoutes");
@@ -151,6 +152,7 @@ app.use("/api/provider-store", storeProfileRoutes);
 app.use("/api/provider-orders", providerOrderRoutes);
 app.use("/api/notifications", providerNotificationRoutes);
 app.use("/api/provider", subscriptionPlanRoutes);
+app.use("/api/provider/activities", activityRoutes);
 
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);

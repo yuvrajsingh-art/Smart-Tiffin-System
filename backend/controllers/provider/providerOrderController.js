@@ -99,6 +99,7 @@ exports.cancelOrderByProvider = async (req, res) => {
         // Step 3: Update order status
         order.status = 'cancelled';
         order.cancelledBy = 'provider';
+        order.cancelledAt = new Date();
         order.cancellationReason = reason || 'Provider unable to deliver';
         await order.save();
 
@@ -162,7 +163,7 @@ exports.getTodaysOrders = async (req, res) => {
             provider: providerId,
             orderDate: { $gte: today, $lt: tomorrow }
         })
-            .populate('customer', 'fullName name phone mobile address')
+            .populate('customer', 'fullName mobile address email')
             .sort({ mealType: 1, createdAt: -1 });
 
         // Separate by meal type
