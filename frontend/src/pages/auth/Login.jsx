@@ -205,7 +205,7 @@ function Login() {
                                 </div>
                             ) : (
                                 <div className="flex items-center justify-center gap-2">
-                                    <span>Let's Eat</span>
+                                    <span>Login </span>
                                     <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                                 </div>
                             )}
