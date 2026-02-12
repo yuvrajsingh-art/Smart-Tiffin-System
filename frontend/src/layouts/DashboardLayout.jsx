@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSubscription } from '../context/SubscriptionContext';
 import { useAuth } from '../context/UserContext';
+import Logo from '../components/common/Logo';
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
         to={to}
@@ -68,11 +69,8 @@ const DashboardLayout = () => {
             {/* Mobile Sidebar (Slide-in) */}
             <div className={`fixed top-0 left-0 bottom-0 w-64 bg-white/90 backdrop-blur-2xl border-r border-orange-100 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logic same as desktop but simpler structure for mobile if needed, or re-use styling */}
-                <div className="h-20 flex items-center gap-3 px-6 border-b border-orange-100/50">
-                    <div className="size-8 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
-                    </div>
-                    <span className="text-base font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                <div className="h-20 flex items-center px-6 border-b border-orange-100/50">
+                    <Logo size="h-9" iconSize="text-[18px]" />
                 </div>
                 <nav className="p-3 space-y-1">
                     {visibleNavItems.map((item) => (
@@ -86,11 +84,8 @@ const DashboardLayout = () => {
 
             {/* Desktop Sidebar (Glass) */}
             <aside className="hidden lg:flex w-64 h-full glass-sidebar flex-col flex-shrink-0 z-50 relative transition-all duration-300">
-                <div className="h-20 flex items-center gap-3 px-6 flex-shrink-0">
-                    <div className="size-8 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
-                    </div>
-                    <span className="text-base font-bold tracking-tight text-[#2D241E]">Smart Tiffin</span>
+                <div className="h-20 flex items-center px-6 flex-shrink-0">
+                    <Logo size="h-9" iconSize="text-[18px]" />
                 </div>
 
                 <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">

@@ -52,21 +52,6 @@ function Login() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const getPasswordStrength = (password) => {
-        if (!password) return { score: 0, label: '', color: 'bg-transparent' };
-        let score = 0;
-        if (password.length > 6) score++;
-        if (password.length > 10) score++;
-        if (/[A-Z]/.test(password)) score++;
-        if (/[0-9]/.test(password)) score++;
-        if (/[^A-Za-z0-9]/.test(password)) score++;
-
-        if (score <= 2) return { score, label: 'Weak', color: 'bg-red-500' };
-        if (score <= 4) return { score, label: 'Medium', color: 'bg-yellow-500' };
-        return { score, label: 'Strong', color: 'bg-green-500' };
-    };
-
-    const strength = getPasswordStrength(formData.password);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -87,10 +72,9 @@ function Login() {
         } catch (error) {
             console.error("Login component error:", error);
             if (error.response) {
-                if (error.response.status === 404) {
-                    setErrors({ email: "Email not registered" });
-                } else if (error.response.status === 401) {
-                    setErrors({ password: "Incorrect password" });
+                if (error.response.status === 401) {
+                    setErrors({ general: "Invalid email or password. Please try again." });
+                    toast.error("Authentication Failed");
                 }
             }
         } finally {
@@ -125,6 +109,12 @@ function Login() {
                         </div>
                         <h1 className="text-3xl font-black text-[#2D241E] mb-2">Welcome Back!</h1>
                         <p className="text-sm text-[#2D241E]/60 font-medium">Login to manage your Smart Tiffin experience</p>
+
+                        {errors.general && (
+                            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-xs font-bold text-red-500 animate-in fade-in slide-in-from-top-2">
+                                {errors.general}
+                            </div>
+                        )}
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
@@ -171,22 +161,6 @@ function Login() {
                                     <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                 </button>
 
-                                {/* Password Strength Indicator */}
-                                {formData.password && (
-                                    <div className="mt-3 px-1 transition-all animate-in fade-in slide-in-from-top-1">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#5C4D42]/60">Strength</span>
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${strength.label === 'Weak' ? 'text-red-500' : strength.label === 'Medium' ? 'text-yellow-600' : 'text-green-600'}`}>
-                                                {strength.label}
-                                            </span>
-                                        </div>
-                                        <div className="h-1.5 w-full bg-[#2D241E]/5 rounded-full overflow-hidden flex gap-1">
-                                            <div className={`h-full transition-all duration-500 ${strength.score >= 1 ? strength.color : 'bg-transparent'} flex-1`}></div>
-                                            <div className={`h-full transition-all duration-500 ${strength.score >= 3 ? strength.color : 'bg-transparent'} flex-1`}></div>
-                                            <div className={`h-full transition-all duration-500 ${strength.score >= 5 ? strength.color : 'bg-transparent'} flex-1`}></div>
-                                        </div>
-                                    </div>
-                                )}
 
                                 {errors.password && <span className="text-[10px] font-bold text-red-500 mt-1 ml-4 uppercase tracking-wider animate-in fade-in slide-in-from-top-1">{errors.password}</span>}
                             </div>
@@ -233,7 +207,7 @@ function Login() {
 
             {/* Footer */}
             <footer className="py-8 text-center text-[#2D241E]/40 text-[10px] font-bold uppercase tracking-widest w-full relative z-10">
-                <p>© 2024 Smart Tiffin Technology. All rights reserved.</p>
+                <p>© 2024 Smart Tiffin System. All rights reserved.</p>
                 <div className="flex justify-center gap-8 mt-4 text-[#2D241E]/60">
                     <Link to="#" className="hover:text-primary transition-colors">Privacy</Link>
                     <Link to="#" className="hover:text-primary transition-colors">Terms</Link>

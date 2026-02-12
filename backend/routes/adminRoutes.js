@@ -39,6 +39,7 @@ const {
     toggleProviderStatus,
     updateProvider,
     deleteProvider,
+    getProviderFullProfile,
 
     // Finance Management
     getFinanceStats,
@@ -48,16 +49,14 @@ const {
     approveCancellation,
     getRefundRequests,
 
-    // Menu Management
-    getPendingMenus,
-    approveMenu,
-    rejectMenu,
 
     // Plans Management
     getPlans,
     createPlan,
     updatePlan,
     deletePlan,
+    approvePlan,
+    rejectPlan,
 
     // Support Tickets
     getTickets,
@@ -67,7 +66,9 @@ const {
 
     // Settings
     getSettings,
-    updateSettings
+    updateSettings,
+    getAuditLogs,
+    purgeCache
 } = require("../controllers/admin");  // Now imports from modular index.js
 
 const {
@@ -152,6 +153,9 @@ router.put("/providers/:id/verify", protect, authorizeRoles("admin"), verifyProv
 // PUT /api/admin/providers/:id/status - Toggle provider status
 router.put("/providers/:id/status", protect, authorizeRoles("admin"), toggleProviderStatus);
 
+// GET /api/admin/providers/:id/full-profile - Get full provider profile [NEW]
+router.get("/providers/:id/full-profile", protect, authorizeRoles("admin"), getProviderFullProfile);
+
 // =============================================================================
 // FINANCE MANAGEMENT
 // =============================================================================
@@ -183,18 +187,6 @@ router.get("/reports/sales/download", protect, authorizeRoles("admin"), exportSa
 // GET /api/admin/reports/customers/download - Download customers CSV [NEW]
 router.get("/reports/customers/download", protect, authorizeRoles("admin"), exportCustomersCSV);
 
-// =============================================================================
-// MENU MANAGEMENT
-// =============================================================================
-
-// GET /api/admin/menus/pending - Get pending menus
-router.get("/menus/pending", protect, authorizeRoles("admin"), getPendingMenus);
-
-// PUT /api/admin/menus/:id/approve - Approve menu
-router.put("/menus/:id/approve", protect, authorizeRoles("admin"), approveMenu);
-
-// PUT /api/admin/menus/:id/reject - Reject menu
-router.put("/menus/:id/reject", protect, authorizeRoles("admin"), rejectMenu);
 
 // =============================================================================
 // PLANS MANAGEMENT
@@ -211,6 +203,12 @@ router.put("/plans/:id", protect, authorizeRoles("admin"), updatePlan);
 
 // DELETE /api/admin/plans/:id - Delete plan
 router.delete("/plans/:id", protect, authorizeRoles("admin"), deletePlan);
+
+// PUT /api/admin/plans/:id/approve - Approve plan
+router.put("/plans/:id/approve", protect, authorizeRoles("admin"), approvePlan);
+
+// PUT /api/admin/plans/:id/reject - Reject plan
+router.put("/plans/:id/reject", protect, authorizeRoles("admin"), rejectPlan);
 
 // =============================================================================
 // SUPPORT TICKETS
@@ -235,7 +233,10 @@ router.post("/tickets/:id/reply", protect, authorizeRoles("admin"), replyToTicke
 // GET /api/admin/settings - Get settings
 router.get("/settings", protect, authorizeRoles("admin"), getSettings);
 
-// PUT /api/admin/settings - Update settings
-router.put("/settings", protect, authorizeRoles("admin"), updateSettings);
+// GET /api/admin/settings/logs - Get audit logs
+router.get("/settings/logs", protect, authorizeRoles("admin"), getAuditLogs);
+
+// POST /api/admin/settings/purge-cache - Purge cache
+router.post("/settings/purge-cache", protect, authorizeRoles("admin"), purgeCache);
 
 module.exports = router;

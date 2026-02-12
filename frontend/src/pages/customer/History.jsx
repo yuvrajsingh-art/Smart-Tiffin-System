@@ -11,7 +11,8 @@ import {
     HistoryStats,
     HistoryList,
     InvoiceModal,
-    MealTicketModal
+    MealTicketModal,
+    ReportIssueModal
 } from '../../components/customer';
 import { HistorySkeleton } from '../../components/common';
 
@@ -36,6 +37,7 @@ const History = () => {
 
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [selectedMeal, setSelectedMeal] = useState(null);
+    const [reportOrder, setReportOrder] = useState(null);
     const [user] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
 
     const fetchData = async (tab, currentFilter) => {
@@ -203,8 +205,24 @@ const History = () => {
                 isOpen={!!selectedMeal}
                 onClose={() => setSelectedMeal(null)}
                 meal={selectedMeal}
+                onReportIssue={() => {
+                    const meal = selectedMeal;
+                    setSelectedMeal(null); // Close ticket modal
+                    // Open report modal (need state for it)
+                    // We need to add state for report modal:
+                    // [reportOrder, setReportOrder] = useState(null)
+                    setReportOrder(meal);
+                }}
             />
-        </div >
+
+            {/* We need to add ReportIssueModal here and state at top */}
+            <ReportIssueModal
+                isOpen={!!reportOrder}
+                onClose={() => setReportOrder(null)}
+                order={reportOrder}
+                onSuccess={() => fetchData(activeTab, filter)}
+            />
+        </div>
     );
 };
 

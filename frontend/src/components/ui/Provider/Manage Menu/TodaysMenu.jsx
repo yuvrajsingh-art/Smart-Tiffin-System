@@ -209,10 +209,34 @@ const TodaysMenu = () => {
               }`}>
               {label}
             </div>
+
+            {/* Approval Status Badge */}
+            {hasMenu && (
+              <div className={`absolute bottom-4 left-4 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 ${menu.approvalStatus === 'Approved' ? 'bg-green-500 text-white' :
+                menu.approvalStatus === 'Rejected' ? 'bg-red-500 text-white' :
+                  'bg-amber-400 text-white'
+                }`}>
+                <span className="material-symbols-outlined text-xs">
+                  {menu.approvalStatus === 'Approved' ? 'verified' :
+                    menu.approvalStatus === 'Rejected' ? 'error' : 'schedule'}
+                </span>
+                {menu.approvalStatus || 'Pending'}
+              </div>
+            )}
           </div>
 
           {/* Content Section */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-6 relative">
+            {/* Rejection Remarks */}
+            {hasMenu && menu.approvalStatus === 'Rejected' && menu.adminRemarks && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex gap-3 items-start animate-pulse">
+                <span className="material-symbols-outlined text-red-500">info</span>
+                <div>
+                  <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Rejection Reason</p>
+                  <p className="text-sm text-red-700 font-medium">{menu.adminRemarks}</p>
+                </div>
+              </div>
+            )}
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="text-2xl font-bold text-gray-800">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../../components/common/Logo';
 
 const RoleSelection = () => {
     return (
@@ -12,12 +13,7 @@ const RoleSelection = () => {
 
             {/* Header */}
             <header className="w-full max-w-7xl px-6 py-6 flex justify-between items-center z-50">
-                <div className="flex items-center gap-2">
-                    <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white shadow-md">
-                        <span className="material-symbols-outlined text-[18px]">lunch_dining</span>
-                    </div>
-                    <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#2D241E] to-primary">Smart Tiffin</span>
-                </div>
+                <Logo />
                 <Link to="/" className="text-xs font-bold text-[#5C4D42] hover:text-primary flex items-center gap-1">
                     <span className="material-symbols-outlined text-[16px]">arrow_back</span> Back
                 </Link>
@@ -105,7 +101,7 @@ const RoleSelection = () => {
 
             {/* Footer */}
             <footer className="w-full py-3 text-center border-t border-orange-100/30 flex-shrink-0 bg-white/40">
-                <p className="text-[10px] text-[#5C4D42]/40">© 2024 Smart Tiffin • Privacy</p>
+                <p className="text-[10px] text-[#5C4D42]/40">© 2024 Smart Tiffin System • Privacy</p>
             </footer>
         </div>
     );

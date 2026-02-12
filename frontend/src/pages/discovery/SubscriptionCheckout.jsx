@@ -25,13 +25,21 @@ const SubscriptionCheckout = () => {
     const [provider, setProvider] = useState(null);
     const [loadingProvider, setLoadingProvider] = useState(true);
 
-    const planType = searchParams.get('plan') || 'monthly';
-    const planName = planType === 'monthly' ? 'Monthly Complete' : 'Weekly Trial';
+    const planType = searchParams.get('type') || 'monthly'; // 'monthly', 'weekly', 'trial' or Plan Type 'Veg' etc.
+    // robustly handle plan name
+    const paramPlanName = searchParams.get('plan');
+    const planName = paramPlanName || (searchParams.get('type') === 'weekly' ? 'Weekly Trial' : 'Monthly Complete');
 
-    // Use provider pricing if available, else fallback to defaults
-    const basePrice = provider
-        ? (planType === 'monthly' ? provider.monthlyPrice : provider.weeklyPrice)
-        : (planType === 'monthly' ? 3500 : 900);
+    // Use price from URL if available (passed from Grid), else fallback to provider
+    const paramPrice = searchParams.get('price');
+    const basePrice = paramPrice
+        ? Number(paramPrice)
+        : (provider
+            ? (planType === 'monthly' ? provider.monthlyPrice : provider.weeklyPrice)
+            : (planType === 'monthly' ? 3500 : 900));
+
+    const paramDuration = searchParams.get('duration');
+    const durationInDays = paramDuration ? Number(paramDuration) : (planType === 'weekly' ? 7 : 30);
 
     const [currentStep, setCurrentStep] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -65,8 +73,8 @@ const SubscriptionCheckout = () => {
     const getAddonsTotal = () => {
         let total = 0;
         // Cost of addons (Adjusted for Plan Type)
-        const isWeekly = planType === 'weekly';
-        const multiplier = isWeekly ? (7 / 30) : 1;
+        // Cost of addons (Adjusted for Duration)
+        const multiplier = durationInDays / 30;
 
         if (addons.extraRoti) total += Math.round(addons.extraRoti * 150 * multiplier);
         if (addons.extraRice) total += Math.round(addons.extraRice * 200 * multiplier);
@@ -87,7 +95,7 @@ const SubscriptionCheckout = () => {
             providerId,
             planName,
             totalAmount: grandTotal,
-            durationInDays: planType === 'weekly' ? 7 : 30,
+            durationInDays: durationInDays,
             startDate: config.startDate,
             mealType: config.mealType,
             lunchTime: delivery.lunchTime,
@@ -96,7 +104,7 @@ const SubscriptionCheckout = () => {
                 ...delivery.address,
                 phone: delivery.phone
             },
-            planType: 'veg', // Mapping to model's category/planType
+            planType: planType || 'veg', // Mapping to model's category/planType
             paymentMethod: details.method,
             transactionId: details.transactionId
         };

@@ -20,8 +20,7 @@ const initialStats = {
     pendingApprovals: [],
     deliveryMetrics: { settled: 0, transit: 0, staged: 0, completionRate: 0 },
     activityLogs: [],
-    menu: { lunch: { dish: '--', type: '--' }, dinner: { dish: '--', type: '--' } },
-    systemHealth: { status: 'Stable', node: 'Primary', traffic: 'Normal' }
+    menu: { lunch: { dish: '--', type: '--' }, dinner: { dish: '--', type: '--' } }
 };
 
 
@@ -30,18 +29,13 @@ const initialStats = {
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const { socket } = useSocket();
-    const [showBroadcast, setShowBroadcast] = useState(false);
     const [showLogs, setShowLogs] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false); // New
     const [searchResults, setSearchResults] = useState(null); // New
     const [searchQuery, setSearchQuery] = useState('');
-    const [broadcastMsg, setBroadcastMsg] = useState('');
-    const [isSending, setIsSending] = useState(false);
-    const [approvals, setApprovals] = useState([]);
-    const [systemHealth, setSystemHealth] = useState('Stable');
     const [loading, setLoading] = useState(true);
-    const [broadcast, setBroadcast] = useState(null);
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+    const [approvals, setApprovals] = useState([]);
     const formRef = React.useRef(null);
 
     // 🔹 Real-time Stats State
@@ -51,9 +45,10 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
         try {
             setLoading(true);
+            const token = localStorage.getItem('token');
             const [statsRes, settingsRes] = await Promise.all([
-                axios.get('/api/admin/stats'),
-                axios.get('/api/admin/settings')
+                axios.get('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get('/api/admin/settings', { headers: { Authorization: `Bearer ${token}` } })
             ]);
 
             if (statsRes.data.success) {
@@ -77,14 +72,6 @@ const AdminDashboard = () => {
                 })));
             }
 
-            if (settingsRes.data.success) {
-                const settings = settingsRes.data.data;
-                if (settings.activeBroadcast && settings.activeBroadcast.isActive) {
-                    setBroadcast(settings.activeBroadcast.message);
-                } else {
-                    setBroadcast(null);
-                }
-            }
         } catch (error) {
             console.error("Fetch Stats Error:", error.message);
             toast.error("Failed to sync with cloud nodes");
@@ -93,14 +80,6 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleDismissBroadcast = async () => {
-        try {
-            await axios.delete('/api/admin/broadcast');
-            setBroadcast(null);
-        } catch (error) {
-            console.error("Dismiss Broadcast Error:", error.message);
-        }
-    };
 
     useEffect(() => {
         fetchStats();
@@ -183,26 +162,6 @@ const AdminDashboard = () => {
         }
     };
 
-    const sendBroadcast = async () => {
-        if (!broadcastMsg) return toast.error('Message cannot be empty');
-
-        setIsSending(true);
-        try {
-            const { data } = await axios.post('/api/admin/broadcast', { message: broadcastMsg });
-            if (data.success) {
-                toast.success(`Broadcast sent to all users/providers!`, {
-                    icon: '📣',
-                    style: { background: '#2D241E', color: '#fff', fontSize: '10px', fontWeight: 'bold' }
-                });
-                setShowBroadcast(false);
-                setBroadcastMsg('');
-            }
-        } catch (error) {
-            toast.error("Failed to send broadcast");
-        } finally {
-            setIsSending(false);
-        }
-    };
 
     const handleAddNewCustomer = async (e) => {
         try {
@@ -286,9 +245,6 @@ const AdminDashboard = () => {
                         <button className="px-5 py-2 rounded-xl text-[10px] font-bold bg-[#2D241E] text-white shadow-xl shadow-black/20 uppercase tracking-wider">Live</button>
                         <button onClick={() => navigate('/admin/reports')} className="px-5 py-2 rounded-xl text-[10px] font-bold text-[#5C4D42] hover:bg-white/80 uppercase tracking-wider transition-all">Reports</button>
                     </div>
-                    <button onClick={() => setShowBroadcast(true)} className="size-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/20 hover:scale-110 active:scale-95 transition-all">
-                        <span className="material-symbols-outlined text-[20px]">campaign</span>
-                    </button>
                 </div>
             </div>
 
@@ -318,26 +274,6 @@ const AdminDashboard = () => {
                 </div>
             ) : (
                 <>
-                    {/* Durable Broadcast Hub */}
-                    {broadcast && (
-                        <div className="bg-[#2D241E] p-4 rounded-3xl text-white shadow-2xl relative overflow-hidden group mb-6 animate-[slideIn_0.5s]">
-                            <div className="absolute top-0 right-0 size-32 bg-orange-500/10 rounded-full blur-3xl group-hover:bg-orange-500/20 transition-all duration-700"></div>
-                            <div className="relative flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="size-10 bg-white/10 rounded-2xl flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
-                                        <span className="material-symbols-outlined text-[20px]">campaign</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-0.5 italic">Live System Broadcast</h4>
-                                        <p className="text-sm font-bold text-white italic tracking-tight">{broadcast}</p>
-                                    </div>
-                                </div>
-                                <button onClick={handleDismissBroadcast} className="size-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all">
-                                    <span className="material-symbols-outlined text-[18px]">close</span>
-                                </button>
-                            </div>
-                        </div>
-                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         <AdminStatCard
@@ -523,37 +459,6 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
-                    {/* Platform Health Monitor */}
-                    <div className="bg-[#2D241E] p-6 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl border border-white/5 relative overflow-hidden group mx-0.5">
-                        <div className="absolute right-0 top-0 size-64 bg-orange-400/5 blur-[100px] group-hover:bg-orange-400/10 transition-colors duration-1000"></div>
-                        <div className="flex items-center gap-6 relative z-10">
-                            <div className="size-12 bg-white/5 rounded-2xl flex items-center justify-center text-emerald-400 ring-4 ring-emerald-400/10 shadow-lg">
-                                <span className="material-symbols-outlined text-[24px]">sensors</span>
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-bold italic tracking-tight uppercase">System Status</h4>
-                                <p className="text-xs text-white/40 font-bold uppercase tracking-wider mt-0.5">Live Status: <span className="text-emerald-400">{stats.systemHealth?.nodeStatus || 'Online'}</span></p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-8 relative z-10 pr-2">
-                            <div className="text-center">
-                                <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Ping</p>
-                                <p className="text-sm font-bold italic">{stats.systemHealth?.latency || '0ms'}</p>
-                            </div>
-                            <div className="w-px h-10 bg-white/10"></div>
-                            <div className="text-center">
-                                <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Traffic</p>
-                                <p className="text-sm font-bold italic">{stats.systemHealth?.traffic || 'Normal'}</p>
-                            </div>
-                            <button
-                                onClick={() => setShowLogs(true)}
-                                className="px-6 py-3 bg-white/5 hover:bg-white/10 hover:shadow-2xl border border-white/10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 group/btn"
-                            >
-                                View Logs
-                                <span className="material-symbols-outlined text-[16px] group-hover/btn:translate-x-1 transition-transform">list_alt</span>
-                            </button>
-                        </div>
-                    </div>
 
                     {/* 4. Secondary Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -599,23 +504,57 @@ const AdminDashboard = () => {
                             <div className="absolute top-0 right-0 size-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
                             <div className="flex justify-between items-center mb-5 relative z-10">
                                 <h3 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Today's Menu</h3>
-                                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider italic shadow-sm">Active</span>
-                            </div>
-                            <div className="flex gap-4 mb-3 relative z-10">
-                                <div className="flex-1 p-4 bg-orange-50/50 rounded-[1.5rem] border border-orange-100/50 text-center hover:bg-orange-50 hover:shadow-lg transition-all cursor-default relative overflow-hidden">
-                                    <span className="material-symbols-outlined text-[20px] text-orange-600 mb-2">sunny</span>
-                                    <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight truncate px-1">{(typeof stats.menu?.lunch?.dish === 'string' ? stats.menu.lunch.dish : 'No Menu')}</p>
-                                    <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-0.5">{(typeof stats.menu?.lunch?.type === 'string' ? stats.menu.lunch.type : '-') || '-'} • Lunch</p>
-                                    {!stats.menu?.lunch?.dish && <div className="absolute inset-0 bg-gray-50/80 flex items-center justify-center font-bold text-xs text-gray-400">Not Set</div>}
-                                </div>
-                                <div className="flex-1 p-4 bg-indigo-50/50 rounded-[1.5rem] border border-indigo-100/50 text-center hover:bg-indigo-50 hover:shadow-lg transition-all cursor-default relative overflow-hidden">
-                                    <span className="material-symbols-outlined text-[20px] text-indigo-600 mb-2">nightlight</span>
-                                    <p className="text-sm font-bold text-[#2D241E] uppercase tracking-tight truncate px-1">{(typeof stats.menu?.dinner?.dish === 'string' ? stats.menu.dinner.dish : 'No Menu')}</p>
-                                    <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-0.5">{(typeof stats.menu?.dinner?.type === 'string' ? stats.menu.dinner.type : '-') || '-'} • Dinner</p>
-                                    {!stats.menu?.dinner?.dish && <div className="absolute inset-0 bg-gray-50/80 flex items-center justify-center font-bold text-xs text-gray-400">Not Set</div>}
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-full shadow-sm">
+                                    <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest italic">Live Monitor</span>
                                 </div>
                             </div>
-                            <button onClick={() => navigate('/admin/menu')} className="w-full py-3 mt-1 bg-white/60 border border-white/40 text-xs font-bold text-[#5C4D42] rounded-xl hover:bg-white hover:text-[#2D241E] uppercase tracking-wider transition-all shadow-sm">Manage Menu</button>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 relative z-10">
+                                {/* Lunch Card */}
+                                <div className="p-4 bg-orange-50/40 rounded-[1.5rem] border border-orange-100/50 hover:bg-orange-50 hover:shadow-md transition-all cursor-default relative overflow-hidden group/item">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="size-8 rounded-xl bg-orange-100 flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-[18px] text-orange-600 fill-1">sunny</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] font-black text-[#2D241E] truncate group-hover/item:text-orange-600 transition-colors">
+                                                {stats.menu?.lunch?.dish !== 'Not Set' ? stats.menu?.lunch?.dish : 'No Menu Plan'}
+                                            </p>
+                                            <p className="text-[9px] font-bold text-[#897a70] uppercase tracking-tighter opacity-70">
+                                                {stats.menu?.lunch?.type || 'N/A'} • Lunch
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {stats.menu?.lunch?.dish === 'Not Set' && (
+                                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
+                                            <span className="px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-md text-[9px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Waiting for Selection</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Dinner Card */}
+                                <div className="p-4 bg-indigo-50/40 rounded-[1.5rem] border border-indigo-100/50 hover:bg-indigo-50 hover:shadow-md transition-all cursor-default relative overflow-hidden group/item">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="size-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-[18px] text-indigo-600 fill-1">nightlight</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] font-black text-[#2D241E] truncate group-hover/item:text-indigo-600 transition-colors">
+                                                {stats.menu?.dinner?.dish !== 'Not Set' ? stats.menu?.dinner?.dish : 'No Menu Plan'}
+                                            </p>
+                                            <p className="text-[9px] font-bold text-[#897a70] uppercase tracking-tighter opacity-70">
+                                                {stats.menu?.dinner?.type || 'N/A'} • Dinner
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {stats.menu?.dinner?.dish === 'Not Set' && (
+                                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
+                                            <span className="px-2 py-0.5 bg-gray-100 border border-gray-200 rounded-md text-[9px] font-black text-gray-400 uppercase tracking-widest shadow-sm">Waiting for Selection</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <button onClick={() => navigate('/admin/menu')} className="w-full py-2.5 bg-[#2D241E] text-white text-[10px] font-black rounded-xl hover:bg-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-black/10 active:scale-[0.98]">Manage Operations</button>
                         </div>
 
                         {/* Operations Control */}
@@ -639,68 +578,7 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
-                    {/* Broadcast Modal */}
-                    {
-                        showBroadcast && createPortal(
-                            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
-                                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowBroadcast(false)}></div>
-                                <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
 
-                                    {/* Compact Header */}
-                                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-9 bg-blue-100 rounded-xl flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-blue-600 text-[20px]">record_voice_over</span>
-                                            </div>
-                                            <div>
-                                                <h3 className="text-base font-bold text-gray-800">Broadcast Message</h3>
-                                                <p className="text-xs text-gray-500">Reach all users instantly</p>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => setShowBroadcast(false)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
-                                            <span className="material-symbols-outlined text-[18px]">close</span>
-                                        </button>
-                                    </div>
-
-                                    <div className="p-5 space-y-4">
-                                        <div className="space-y-1.5">
-                                            <div className="flex justify-between items-center px-1">
-                                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Message Content</label>
-                                                <span className={`text-[10px] font-bold ${broadcastMsg.length > 130 ? 'text-red-500' : 'text-gray-400'}`}>
-                                                    {broadcastMsg.length}/140
-                                                </span>
-                                            </div>
-                                            <textarea
-                                                placeholder="Write your announcement..."
-                                                value={broadcastMsg}
-                                                onChange={(e) => setBroadcastMsg(e.target.value)}
-                                                className="w-full h-32 bg-gray-50 border border-gray-100 focus:border-blue-500 focus:bg-white rounded-xl p-4 text-sm text-gray-800 outline-none resize-none transition-all"
-                                            />
-                                        </div>
-
-                                        <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex items-start gap-3">
-                                            <span className="material-symbols-outlined text-blue-500 text-[18px] mt-0.5">info</span>
-                                            <p className="text-[11px] font-medium text-blue-700 italic leading-snug">
-                                                This alert will be visible at the top of the dashboard for every active user in the system.
-                                            </p>
-                                        </div>
-
-                                        <div className="flex gap-2 pt-2">
-                                            <button onClick={() => setShowBroadcast(false)} className="flex-1 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-gray-600">Cancel</button>
-                                            <button
-                                                onClick={sendBroadcast}
-                                                disabled={isSending || !broadcastMsg.trim()}
-                                                className="flex-[2] py-3 bg-gray-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                            >
-                                                {isSending ? 'Sending Alert...' : 'Broadcast Alert'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>,
-                            document.body
-                        )
-                    }
 
                     {/* System Logs Modal */}
                     {
@@ -939,7 +817,7 @@ const AdminDashboard = () => {
                     }
                 </>
             )}
-        </div>
+        </div >
     );
 };
 

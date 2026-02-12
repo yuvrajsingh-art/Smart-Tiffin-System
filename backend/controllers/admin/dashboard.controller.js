@@ -127,16 +127,16 @@ exports.getDashboardStats = async (req, res) => {
             Menu.findOne({
                 menuDate: { $gte: startOfToday, $lte: endOfToday },
                 mealType: 'lunch'
-            }).select('mainDish type'),
+            }).select('name type'),
             Menu.findOne({
                 menuDate: { $gte: startOfToday, $lte: endOfToday },
                 mealType: 'dinner'
-            }).select('mainDish type')
+            }).select('name type')
         ]);
 
         const menu = {
-            lunch: lunchMenu ? { dish: lunchMenu.mainDish, type: lunchMenu.type } : { dish: "Not Set", type: "N/A" },
-            dinner: dinnerMenu ? { dish: dinnerMenu.mainDish, type: dinnerMenu.type } : { dish: "Not Set", type: "N/A" }
+            lunch: lunchMenu ? { dish: lunchMenu.name, type: lunchMenu.type } : { dish: "Not Set", type: "N/A" },
+            dinner: dinnerMenu ? { dish: dinnerMenu.name, type: dinnerMenu.type } : { dish: "Not Set", type: "N/A" }
         };
 
         logger.success(`Dashboard stats fetched in ${Date.now() - startTime}ms`);

@@ -10,10 +10,10 @@ const providerSchema = new mongoose.Schema(
     },
 
     // Operational Settings
-  isActive: { type: Boolean, default: false },
-  autoAccept: { type: Boolean, default: false },
-  preparationTime: { type: Number, default: 30 }, // minutes
-  serviceRadius: { type: Number, default: 5 }, // km
+    isActive: { type: Boolean, default: false },
+    autoAccept: { type: Boolean, default: false },
+    preparationTime: { type: Number, default: 30 }, // minutes
+    serviceRadius: { type: Number, default: 5 }, // km
 
     // STEP 1 – IDENTITY
     messName: { type: String, required: true },
@@ -95,4 +95,4 @@ const providerSchema = new mongoose.Schema(
 );
 providerSchema.index({ location: "2dsphere" });
 
-module.exports = mongoose.model("Provider", providerSchema);
+module.exports = mongoose.models.Provider || mongoose.model("Provider", providerSchema);

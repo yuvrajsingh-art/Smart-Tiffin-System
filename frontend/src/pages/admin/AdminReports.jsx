@@ -83,86 +83,42 @@ const AdminReports = () => {
         fetchReportData();
     }, []);
 
-    const [genLogs, setGenLogs] = useState([]);
     const [showDrilldown, setShowDrilldown] = useState(false);
-    const [selectedMetric, setSelectedMetric] = useState(null);
     const [isAuditing, setIsAuditing] = useState(false);
     const [auditStep, setAuditStep] = useState(0); // 0: Idle, 1: Scanning, 2: Validating, 3: Completed
 
 
     const handleGenerate = () => {
         setIsGenerating(true);
-        setGenLogs(["Initializing Intelligence Hub...", "Establishing secure bridge to Regional Data...", "Fetching transactional updates (JSON)..."]);
 
-        const possibleLogs = [
-            "Normalizing unit economics for Q1...",
-            "Merging retention curves...",
-            "Analyzing kitchen latencies (Regional Hub)...",
-            "Calculating churn coefficients...",
-            "Optimizing resource allocation vectors...",
-            "Finalizing executive summary..."
-        ];
+        // Simulating a real report generation request
+        setTimeout(() => {
+            setIsGenerating(false);
+            setShowReportEngine(false);
 
-        let i = 0;
-        const interval = setInterval(() => {
-            if (i < possibleLogs.length) {
-                setGenLogs(prev => [...prev.slice(-3), possibleLogs[i]]);
-                i++;
-            } else {
-                clearInterval(interval);
-                setIsGenerating(false);
-                setShowReportEngine(false);
-                setGenLogs([]);
+            toast.success(`Report Compiled: ${genConfig.metric}`, {
+                icon: '📑',
+                style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
+            });
 
-                // Randomize Chart Data
-                const newData = revenueData.map(d => ({
-                    ...d,
-                    profit: d.profit + Math.floor(Math.random() * 5000),
-                    retention: Math.min(100, d.retention + Math.floor(Math.random() * 3))
-                }));
-                setCurrentRevenueData(newData);
-
-                // Randomize Metrics
-                setMetrics(prev => prev.map(m => ({
-                    ...m,
-                    val: m.label === 'EBITDA' ? m.val + Math.floor(Math.random() * 10000) :
-                        m.label === 'Avg Rating' ? Math.min(5, m.val + (Math.random() * 0.05)) :
-                            m.label === 'Churn Rate' ? Math.max(0, m.val - (Math.random() * 0.1)) :
-                                m.val
-                })));
-
-                // Contextual Auto-Tab Switch
-                if (genConfig.metric === 'Summary') setActiveTab('Overview');
-                if (genConfig.metric === 'Kitchen') setActiveTab('Menu Perf');
-                if (genConfig.metric === 'Retention') setActiveTab('Retention');
-
-                toast.success(`Report Compiled: ${genConfig.metric}`, {
-                    icon: '📑',
-                    style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
-                });
-            }
-        }, 400);
+            // Contextual Auto-Tab Switch
+            if (genConfig.metric === 'Summary') setActiveTab('Overview');
+            if (genConfig.metric === 'Kitchen') setActiveTab('Menu Perf');
+            if (genConfig.metric === 'Retention') setActiveTab('Retention');
+        }, 1500);
     };
 
     const handleTriggerAudit = () => {
         setIsAuditing(true);
         setAuditStep(1);
 
-        toast('Audit Initialized: Scanning System Servers', { icon: '🔍', style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
+        toast('Audit Initialized: Scanning Core Systems', { icon: '🔍', style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
 
         setTimeout(() => {
-            setAuditStep(2);
-            toast('Compliance Check: Data Validation', { icon: '🛡️', style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
-
-            setTimeout(() => {
-                setAuditStep(3);
-                toast.success('Audit Completed: Certificate Issued', { style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
-
-                setTimeout(() => {
-                    setIsAuditing(false);
-                    setAuditStep(0);
-                }, 2000);
-            }, 2500);
+            setAuditStep(3);
+            toast.success('System Audit Completed', { style: { borderRadius: '15px', background: '#2D241E', color: '#fff' } });
+            setIsAuditing(false);
+            setAuditStep(0);
         }, 2000);
     };
 
@@ -297,21 +253,21 @@ const AdminReports = () => {
                                 ))}
                             </div>
 
-                            {/* AI Insights Bar */}
+                            {/* Reports Quick Filter Area */}
                             <div className="bg-[#F5F2EB]/50 backdrop-blur-md rounded-2xl border border-[#2D241E]/5 p-4 flex flex-col md:flex-row items-center gap-6">
                                 <div className="flex items-center gap-3 shrink-0">
                                     <div className="size-10 rounded-full bg-[#2D241E] flex items-center justify-center text-white">
-                                        <span className="material-symbols-outlined text-[20px] animate-pulse">psychology</span>
+                                        <span className="material-symbols-outlined text-[20px]">assignment</span>
                                     </div>
                                     <div>
-                                        <h4 className="text-[10px] font-bold text-[#2D241E] uppercase tracking-wider">Neural Summary</h4>
-                                        <p className="text-[10px] font-bold text-[#897a70] uppercase">Strategic Recommendation</p>
+                                        <h4 className="text-[10px] font-bold text-[#2D241E] uppercase tracking-wider">Report Generator</h4>
+                                        <p className="text-[10px] font-bold text-[#897a70] uppercase">Configure and Export</p>
                                     </div>
                                 </div>
                                 <p className="text-[11px] font-medium text-[#2D241E]/70 leading-relaxed italic">
-                                    "Revenue projected to hit ₹5L threshold by next month. Consider increasing delivery incentives for South-West cluster to optimize fulfillment speed."
+                                    Select parameters from the Intelligence Hub to generate deep-dive analytics for specific regions or timeframes.
                                 </p>
-                                <button onClick={() => handleAction('Full AI Report')} className="ml-auto text-[10px] font-bold text-orange-600 uppercase tracking-wider hover:underline whitespace-nowrap">View Detailed Wisdom →</button>
+                                <button onClick={() => setShowReportEngine(true)} className="ml-auto px-4 py-2 bg-[#2D241E] text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-orange-600 transition-all">Open Report Hub</button>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -585,79 +541,41 @@ const AdminReports = () => {
                     activeTab === 'Retention' && (
                         <div className="space-y-4 animate-slide-up">
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                                {/* Stickiness Scoreboard */}
-                                <div className="lg:col-span-4 bg-[#2D241E] p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group h-[400px] flex flex-col">
-                                    <div className="absolute top-0 right-0 size-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-white/10 transition-colors"></div>
-                                    <div className="relative z-10">
-                                        <h3 className="text-xl font-bold italic">Stickiness Score</h3>
-                                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mt-1">DAU / MAU Ratio</p>
-                                    </div>
-                                    <div className="flex-1 flex flex-col items-center justify-center relative z-10">
-                                        <div className="text-6xl font-bold text-emerald-400 tracking-tighter">68<span className="text-2xl text-white/40">%</span></div>
-                                        <p className="text-[11px] font-bold uppercase text-emerald-400/60 mt-2 tracking-[0.3em]">Elite Tier</p>
-                                    </div>
-                                    <div className="relative z-10 space-y-3">
-                                        <div className="flex justify-between text-[10px] font-bold">
-                                            <span className="text-white/60">Churn Probability</span>
-                                            <span className="text-rose-400">12.4%</span>
-                                        </div>
-                                        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                                            <div className="h-full bg-rose-500 w-[12%]"></div>
-                                        </div>
-                                        <p className="text-[10px] text-white/40 italic leading-relaxed text-center">"User retention is 15% higher in mobile app clusters."</p>
-                                    </div>
-                                </div>
-
-                                {/* Cohort Heatmap */}
-                                <div className="lg:col-span-8 bg-white/70 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/60 shadow-lg h-[400px] flex flex-col">
-                                    <div className="flex justify-between items-center mb-6 shrink-0">
+                                {/* Simple User Active Summary */}
+                                <div className="lg:col-span-12 bg-white/70 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/60 shadow-lg">
+                                    <div className="flex justify-between items-center mb-6">
                                         <div>
-                                            <h3 className="text-base font-bold text-[#2D241E]">Cohort Retention Matrix</h3>
-                                            <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-1">Behavioral cluster analysis by month</p>
+                                            <h3 className="text-xl font-bold text-[#2D241E]">User Activity Summary</h3>
+                                            <p className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider mt-1">Cross-platform Engagement Monitor</p>
                                         </div>
-                                        <button onClick={() => handleAction('Export Matrix')} className="p-2 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all">
-                                            <span className="material-symbols-outlined text-[18px] text-[#2D241E]">share</span>
-                                        </button>
                                     </div>
-                                    <div className="flex-1 overflow-x-auto custom-scrollbar">
-                                        <table className="w-full text-center border-collapse">
-                                            <thead>
-                                                <tr>
-                                                    <th className="p-2 text-[10px] font-bold text-[#897a70] uppercase tracking-tight">Cohort</th>
-                                                    <th className="p-2 text-[10px] font-bold text-[#897a70] uppercase tracking-tight">Size</th>
-                                                    <th className="p-2 text-[10px] font-bold text-[#897a70] uppercase tracking-tight">Month 1</th>
-                                                    <th className="p-2 text-[10px] font-bold text-[#897a70] uppercase tracking-tight">Month 2</th>
-                                                    <th className="p-2 text-[10px] font-bold text-[#897a70] uppercase tracking-tight">Month 3</th>
-                                                    <th className="p-2 text-[10px] font-bold text-[#897a70] uppercase tracking-tight">Month 4</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {[
-                                                    { m: 'Jan 26', s: '1,240', r: [100, 85, 78, 72] },
-                                                    { m: 'Feb 26', s: '980', r: [100, 82, 74, 0] },
-                                                    { m: 'Mar 26', s: '2,100', r: [100, 88, 0, 0] },
-                                                    { m: 'Apr 26', s: '1,500', r: [100, 0, 0, 0] },
-                                                ].map((row, i) => (
-                                                    <tr key={i}>
-                                                        <td className="p-2 text-[10px] font-bold text-[#2D241E]">{row.m}</td>
-                                                        <td className="p-2 text-xs font-bold text-[#897a70]">{row.s}</td>
-                                                        {row.r.map((val, j) => (
-                                                            <td key={j} className="p-1">
-                                                                <div
-                                                                    className={`h-8 rounded-lg flex items-center justify-center text-[10px] font-bold ${val === 0 ? 'bg-gray-50 text-gray-300' : 'text-[#2D241E]'}`}
-                                                                    style={{
-                                                                        backgroundColor: val === 0 ? '' : `rgba(16, 185, 129, ${val / 100})`,
-                                                                        color: val > 60 ? '#fff' : '#2D241E'
-                                                                    }}
-                                                                >
-                                                                    {val > 0 ? `${val}%` : '-'}
-                                                                </div>
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                    <div className="flex flex-col md:flex-row items-center gap-10 py-10">
+                                        <div className="flex-1 text-center">
+                                            <p className="text-[10px] font-bold text-[#897a70] uppercase mb-1">Active Subscribers</p>
+                                            <h4 className="text-4xl font-bold text-[#2D241E]">1,240</h4>
+                                            <div className="mt-2 text-emerald-500 text-[10px] font-bold flex items-center justify-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                                                +12% vs last month
+                                            </div>
+                                        </div>
+                                        <div className="w-px h-20 bg-gray-100 hidden md:block"></div>
+                                        <div className="flex-1 text-center">
+                                            <p className="text-[10px] font-bold text-[#897a70] uppercase mb-1">Weekly Active Users</p>
+                                            <h4 className="text-4xl font-bold text-[#2D241E]">850</h4>
+                                            <div className="mt-2 text-amber-500 text-[10px] font-bold flex items-center justify-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">horizontal_rule</span>
+                                                Stable performance
+                                            </div>
+                                        </div>
+                                        <div className="w-px h-20 bg-gray-100 hidden md:block"></div>
+                                        <div className="flex-1 text-center">
+                                            <p className="text-[10px] font-bold text-[#897a70] uppercase mb-1">Retention Rate</p>
+                                            <h4 className="text-4xl font-bold text-[#2D241E]">88%</h4>
+                                            <div className="mt-2 text-emerald-500 text-[10px] font-bold flex items-center justify-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">recommend</span>
+                                                Above target
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -708,24 +626,10 @@ const AdminReports = () => {
                                         <div className="size-20 relative">
                                             <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
                                             <div className="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-orange-500 animate-pulse text-3xl">analytics</span>
-                                            </div>
                                         </div>
                                         <div className="text-center">
-                                            <h4 className="text-base font-bold text-gray-800">Analyzing Market Patterns</h4>
-                                            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Neural Inference in progress...</p>
-                                        </div>
-
-                                        {/* Streaming Terminal Logs */}
-                                        <div className="w-full bg-gray-900 rounded-xl p-4 font-mono text-[10px] text-emerald-400 space-y-1 shadow-inner">
-                                            {genLogs.map((log, idx) => (
-                                                <div key={idx} className="flex gap-2 opacity-80">
-                                                    <span className="opacity-40">[{new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
-                                                    <span>{log}</span>
-                                                </div>
-                                            ))}
-                                            <div className="w-1.5 h-3 bg-emerald-400 animate-pulse inline-block ml-1"></div>
+                                            <h4 className="text-base font-bold text-gray-800">Processing Reports</h4>
+                                            <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Compiling datasets...</p>
                                         </div>
                                     </div>
                                 ) : (

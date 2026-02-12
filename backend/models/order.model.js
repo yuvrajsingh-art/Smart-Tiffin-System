@@ -84,7 +84,11 @@ const orderSchema = new mongoose.Schema({
         street: String,
         city: String,
         pincode: String,
-        landmark: String
+        landmark: String,
+        coordinates: {
+            lat: { type: Number, default: 0 },
+            lng: { type: Number, default: 0 }
+        }
     },
 
     deliveryInstructions: String,

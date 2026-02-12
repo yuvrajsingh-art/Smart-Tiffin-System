@@ -30,6 +30,19 @@ exports.getMealsHistory = async (req, res) => {
 
         const totalOrders = await Order.countDocuments(filterQuery);
 
+        // Get unique provider IDs
+        const providerIds = [...new Set(orders.map(order => order.provider?._id))];
+
+        // Fetch provider profiles to get mess names
+        const ProviderProfile = require("../../models/providerprofile.model");
+        const profiles = await ProviderProfile.find({ user: { $in: providerIds } });
+
+        // Create a map of userId -> messName
+        const messNameMap = {};
+        profiles.forEach(p => {
+            messNameMap[p.user.toString()] = p.messName;
+        });
+
         // Format orders for frontend
         const mealsHistory = orders.map(order => {
             const orderDate = new Date(order.orderDate);
@@ -57,7 +70,7 @@ exports.getMealsHistory = async (req, res) => {
                 date: dateString,
                 type: order.mealType || (menuItem?.mealType === 'lunch' ? 'Lunch' : 'Dinner'),
                 item: menuItem?.name || 'Standard Meal',
-                mess: order.provider?.fullName || 'Provider',
+                mess: messNameMap[order.provider?._id?.toString()] || order.provider?.fullName || 'Provider',
                 status: order.status === 'delivered' ? 'Delivered' : order.status === 'cancelled' ? 'Skipped' : 'Pending',
                 icon: order.status === 'cancelled' ? 'block' : (order.mealType?.toLowerCase() === 'lunch' ? 'lunch_dining' : 'dinner_dining'),
                 orderId: order.orderNumber || `#ST-${order._id.toString().slice(-4)}`
@@ -126,6 +139,24 @@ exports.getWalletHistory = async (req, res) => {
 
         const totalTransactions = await Transaction.countDocuments({ customer: customerId });
 
+        // Get unique provider IDs from transactions (order.provider or subscription.provider)
+        const providerIds = new Set();
+        transactions.forEach(t => {
+            if (t.subscriptionId?.provider?._id) providerIds.add(t.subscriptionId.provider._id.toString());
+            // If order has provider, add here too (need to populate order.provider first)
+        });
+
+        // Check if we need to populate provider in orderId (it wasn't populated in original code)
+        // Since original code relied on subscriptionId.provider, we keep it simple for now or fetch if needed.
+        // Actually, let's fetch profiles for subscription providers
+
+        const ProviderProfile = require("../../models/providerprofile.model");
+        const profiles = await ProviderProfile.find({ user: { $in: [...providerIds] } });
+        const messNameMap = {};
+        profiles.forEach(p => {
+            messNameMap[p.user.toString()] = p.messName;
+        });
+
         // Format transactions for frontend
         const walletHistory = transactions.map(transaction => {
             const transactionDate = new Date(transaction.createdAt);
@@ -155,7 +186,8 @@ exports.getWalletHistory = async (req, res) => {
                 icon = 'restaurant';
             } else if (transaction.subscriptionId) {
                 title = `Subscription: ${transaction.subscriptionId.planName}`;
-                subtitle = transaction.subscriptionId.provider?.fullName || 'Provider';
+                const providerId = transaction.subscriptionId.provider?._id?.toString();
+                subtitle = messNameMap[providerId] || transaction.subscriptionId.provider?.fullName || 'Provider';
                 icon = 'card_membership';
             } else if (transaction.transactionType === 'Wallet Topup') {
                 title = 'Wallet Topup';

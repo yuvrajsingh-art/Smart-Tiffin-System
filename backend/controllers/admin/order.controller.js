@@ -68,24 +68,58 @@ exports.getOrders = async (req, res) => {
 
         // Format orders for frontend
         const formattedOrders = orders.map(order => ({
+            id: order.orderNumber || order._id.toString().slice(-6).toUpperCase(),
             rawId: order._id,
-            id: order._id.toString().slice(-6).toUpperCase(),
+            displayId: order.orderNumber,
             customer: order.customer?.fullName || 'Unknown',
             customerMobile: order.customer?.mobile || 'N/A',
             kitchen: order.provider?.businessName || 'Unknown',
-            type: order.order_type === 'subscription' ? 'Subscription' : 'One-Time',
-            status: order.status,
-            price: order.grandTotal || 0,
+            type: order.orderType === 'subscription' ? 'Subscription' : 'One-Time',
+            status: order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' '),
+            price: order.amount || 0,
             time: formatTime(order.createdAt),
             date: formatDate(order.createdAt),
-            address: order.delivery_location?.address_text || 'Unknown',
-            rider: order.rider_id ? 'Assigned' : 'Not Assigned'
+            address: order.deliveryAddress?.address_text || `${order.deliveryAddress?.street}, ${order.deliveryAddress?.city}` || 'Unknown',
+            zone: order.deliveryAddress?.city || 'Zone A',
+            rider: order.deliveryPerson || (order.status === 'out_for_delivery' ? 'Searching...' : '-'),
+            items: order.menuItems || [],
+            customization: order.customization || {},
+            paymentMethod: order.paymentMethod,
+            paymentStatus: order.paymentStatus,
+            timeline: {
+                confirmed: order.confirmedAt,
+                cooking: order.cookingStartedAt,
+                prepared: order.preparedAt,
+                outForDelivery: order.outForDeliveryAt,
+                delivered: order.deliveredAt
+            }
         }));
 
         return sendSuccess(res, 200, "Orders retrieved successfully", formattedOrders);
     } catch (error) {
         console.error("Get Orders Error:", error.message);
         return sendError(res, 500, "Failed to fetch orders", error);
+    }
+};
+
+/**
+ * Get single order details
+ * @route GET /api/admin/orders/:id
+ */
+exports.getOrderById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) return sendError(res, 400, "Invalid ID");
+
+        const order = await Order.findById(id)
+            .populate('customer', 'fullName mobile email address')
+            .populate('provider', 'businessName fullName mobile address');
+
+        if (!order) return sendError(res, 404, "Order not found");
+
+        return sendSuccess(res, 200, "Order details retrieved", order);
+    } catch (error) {
+        return sendError(res, 500, "Failed to fetch order", error);
     }
 };
 
@@ -104,15 +138,18 @@ exports.updateOrderStatus = async (req, res) => {
             return sendError(res, 400, "Invalid order ID");
         }
 
-        const validStatuses = ['Placed', 'Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Cancelled'];
-        if (!validStatuses.includes(status)) {
+        const validStatuses = ['confirmed', 'cooking', 'prepared', 'out_for_delivery', 'delivered', 'cancelled'];
+        const normalizedStatus = status.toLowerCase().replace(/ /g, '_');
+
+        if (!validStatuses.includes(normalizedStatus)) {
             return sendError(res, 400, "Invalid status");
         }
 
-        const updateData = { status };
-        if (status === 'Delivered') {
-            updateData.deliveredAt = new Date();
-        }
+        const updateData = { status: normalizedStatus };
+        if (normalizedStatus === 'cooking') updateData.cookingStartedAt = new Date();
+        if (normalizedStatus === 'prepared') updateData.preparedAt = new Date();
+        if (normalizedStatus === 'out_for_delivery') updateData.outForDeliveryAt = new Date();
+        if (normalizedStatus === 'delivered') updateData.deliveredAt = new Date();
 
         const order = await Order.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -123,7 +160,7 @@ exports.updateOrderStatus = async (req, res) => {
         // Log action
         await createLog(
             'ORDER_STATUS_UPDATE',
-            `Order #${order._id.toString().slice(-6)} status updated to ${status}.`,
+            `Order #${order.orderNumber} status updated to ${status}.`,
             req.user.id,
             'edit_document',
             'text-indigo-500'

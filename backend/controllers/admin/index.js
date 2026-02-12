@@ -16,7 +16,6 @@ const providerController = require('./provider.controller');
 
 // Features
 const financeController = require('./finance.controller');
-const menuController = require('./menu.controller');
 const planController = require('./plan.controller');
 const ticketController = require('./ticket.controller');
 const broadcastController = require('./broadcast.controller');
@@ -48,6 +47,7 @@ module.exports = {
     toggleProviderStatus: providerController.toggleProviderStatus,
     updateProvider: providerController.updateProvider,
     deleteProvider: providerController.deleteProvider,
+    getProviderFullProfile: providerController.getProviderFullProfile,
 
     // Finance
     getFinanceStats: financeController.getFinanceStats,
@@ -57,16 +57,14 @@ module.exports = {
     getRefundRequests: financeController.getRefundRequests,
     approveCancellation: financeController.approveCancellation,
 
-    // Menus
-    getPendingMenus: menuController.getPendingMenus,
-    approveMenu: menuController.approveMenu,
-    rejectMenu: menuController.rejectMenu,
 
     // Plans
     getPlans: planController.getPlans,
     createPlan: planController.createPlan,
     updatePlan: planController.updatePlan,
     deletePlan: planController.deletePlan,
+    approvePlan: planController.approvePlan,
+    rejectPlan: planController.rejectPlan,
 
     // Tickets
     getTickets: ticketController.getTickets,
@@ -80,5 +78,7 @@ module.exports = {
 
     // Settings
     getSettings: settingsController.getSettings,
-    updateSettings: settingsController.updateSettings
+    updateSettings: settingsController.updateSettings,
+    getAuditLogs: settingsController.getAuditLogs,
+    purgeCache: settingsController.purgeCache
 };

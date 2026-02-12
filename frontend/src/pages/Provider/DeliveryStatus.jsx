@@ -25,9 +25,10 @@ function DeliveryStatus() {
                     ...response.data.data.justIn.map(o => ({ ...o, status: 'preparing' })),
                     ...response.data.data.preparing.map(o => ({ ...o, status: 'preparing' })),
                     ...response.data.data.ready.map(o => ({ ...o, status: 'ready_for_pickup' })),
-                    ...response.data.data.dispatched.map(o => ({ ...o, status: 'out_for_delivery' }))
+                    ...response.data.data.dispatched.map(o => ({ ...o, status: 'out_for_delivery' })),
+                    ...(!filter || filter === 'all' || filter === 'delivered' ? [] : []) // Don't show delivered in main flow unless filtered, but for now show all
                 ];
-                
+
                 const formattedDeliveries = allOrders.map(order => ({
                     id: order._id,
                     orderId: order.orderNo,
@@ -41,6 +42,7 @@ function DeliveryStatus() {
                     rider: null,
                     amount: order.amount || 0
                 }));
+                // Also fetch delivered orders if needed, for now just keeping active flow
                 setDeliveries(formattedDeliveries);
             }
         } catch (error) {
@@ -48,6 +50,24 @@ function DeliveryStatus() {
             setDeliveries([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const updateOrderStatus = async (orderId, action) => {
+        try {
+            let endpoint = '';
+            switch (action) {
+                case 'mark_ready': endpoint = `/provider-kds/order/${orderId}/ready`; break;
+                case 'mark_dispatched': endpoint = `/provider-kds/order/${orderId}/dispatched`; break;
+                case 'mark_delivered': endpoint = `/provider-kds/order/${orderId}/delivered`; break;
+                default: return;
+            }
+
+            await ProviderApi.put(endpoint);
+            fetchDeliveries(); // Refresh list
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Failed to update status');
         }
     };
 
@@ -119,8 +139,8 @@ function DeliveryStatus() {
                                 setFilter={setFilter}
                                 statusCounts={statusCounts}
                             />
-                            <ProviderDeliveryCards 
-                                getStatusIcon={getStatusIcon} 
+                            <ProviderDeliveryCards
+                                getStatusIcon={getStatusIcon}
                                 getStatusText={getStatusText}
                                 filteredDeliveries={filteredDeliveries}
                                 getStatusColor={getStatusColor}

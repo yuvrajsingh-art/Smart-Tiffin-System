@@ -132,15 +132,23 @@ exports.bookGuestMeal = async (req, res) => {
         // 4. Create Guest Order
         const orderDate = date ? new Date(date) : new Date();
 
-        // Fetch Menu Details for the order
+        // Fetch Menu Details for the order and ensure it is APPROVED
         const menu = await Menu.findOne({
             provider: subscription.provider,
             mealType: mealType.toLowerCase(),
             menuDate: {
                 $gte: new Date(orderDate).setHours(0, 0, 0, 0),
                 $lt: new Date(orderDate).setHours(23, 59, 59, 999)
-            }
+            },
+            approvalStatus: "Approved"
         });
+
+        if (!menu) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot book guest meal. The menu for ${new Date(orderDate).toLocaleDateString()} is either not set or pending admin approval.`
+            });
+        }
 
         const newOrder = await Order.create({
             customer: customerId,

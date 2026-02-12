@@ -12,7 +12,6 @@ import AdminCustomers from '../pages/admin/AdminCustomers';
 import AdminProviders from '../pages/admin/AdminProviders';
 import AdminPlans from '../pages/admin/AdminPlans';
 import AdminOrders from '../pages/admin/AdminOrders';
-import AdminMenu from '../pages/admin/AdminMenu';
 import AdminFinance from '../pages/admin/AdminFinance';
 import AdminSettings from '../pages/admin/AdminSettings';
 import AdminSupport from '../pages/admin/AdminSupport';
@@ -23,7 +22,6 @@ export const adminRoutes = [
     { path: "reports", element: <AdminReports /> },
     { path: "plans", element: <AdminPlans /> },
     { path: "providers", element: <AdminProviders /> },
-    { path: "menu", element: <AdminMenu /> },
     { path: "customers", element: <AdminCustomers /> },
     { path: "orders", element: <AdminOrders /> },
     { path: "support", element: <AdminSupport /> },

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../components/common/Logo';
 
 function Footer() {
     const [email, setEmail] = useState('');
@@ -25,14 +26,7 @@ function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
                     {/* Brand Column */}
                     <div className="space-y-6">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-full bg-gradient-to-tr from-primary to-orange-300 flex items-center justify-center text-white shadow-lg shadow-orange-200">
-                                <span className="material-symbols-outlined text-[24px]">lunch_dining</span>
-                            </div>
-                            <h2 className="text-2xl font-black tracking-tight text-[#2D241E]">
-                                Smart Tiffin
-                            </h2>
-                        </div>
+                        <Logo />
                         <p className="text-[#5C4D42] leading-relaxed text-sm font-medium">
                             Revolutionizing the way students and professionals access healthy, homemade meals.
                             Connecting hungry bellies with caring kitchens since 2024.

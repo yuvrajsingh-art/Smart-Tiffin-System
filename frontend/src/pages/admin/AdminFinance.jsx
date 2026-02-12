@@ -25,11 +25,12 @@ const AdminFinance = () => {
 
     const fetchFinanceData = async () => {
         try {
+            const token = localStorage.getItem('token');
             const [statsRes, payoutsRes, invoicesRes, refundsRes] = await Promise.all([
-                axios.get('/api/admin/finance/stats'),
-                axios.get('/api/admin/finance/payouts'),
-                axios.get('/api/admin/finance/invoices'),
-                axios.get('/api/admin/finance/refunds')
+                axios.get('/api/admin/finance/stats', { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get('/api/admin/finance/payouts', { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get('/api/admin/finance/invoices', { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get('/api/admin/finance/refunds', { headers: { Authorization: `Bearer ${token}` } })
             ]);
             if (statsRes.data.success) setStats(statsRes.data.data);
             if (payoutsRes.data.success) setPayouts(payoutsRes.data.data);
@@ -47,7 +48,12 @@ const AdminFinance = () => {
     const handleApproveRefund = async (id) => {
         try {
             toast.loading("Processing Refund...");
-            const res = await axios.post(`/api/admin/finance/refund/${id}/approve`);
+            const token = localStorage.getItem('token');
+            const res = await axios.post(
+                `/api/admin/finance/refund/${id}/approve`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             if (res.data.success) {
                 toast.dismiss();
                 toast.success("Refund Approved & Processed");
@@ -70,8 +76,11 @@ const AdminFinance = () => {
     };
 
     const handleBulkPayout = () => {
-        toast.loading("Processing Batch Payout...", { duration: 2000 });
-        setTimeout(() => toast.success("Batch Transfer of ₹3.15L Initiated via HDFC"), 2000);
+        toast.loading("Processing Batch Payout...");
+        setTimeout(() => {
+            toast.dismiss();
+            toast.success("Batch Payout Processed Successfully");
+        }, 2000);
     };
 
     const handleViewLedger = () => {
@@ -439,18 +448,14 @@ const TaxComplianceView = () => (
 const SettlementModal = ({ data, onClose }) => {
     const [commission, setCommission] = useState(15);
     const [processing, setProcessing] = useState(false);
-    const [step, setStep] = useState(0); // 0: Review, 1: Auth, 2: Success
 
     const handlePayout = () => {
         setProcessing(true);
-        setTimeout(() => setStep(1), 1000); // Auth
-        setTimeout(() => setStep(2), 3000); // Success
         setTimeout(() => {
             toast.success('Payout Transfer Successful');
             onClose();
-            setStep(0);
             setProcessing(false);
-        }, 4500);
+        }, 2000);
     };
 
     return createPortal(
@@ -472,7 +477,13 @@ const SettlementModal = ({ data, onClose }) => {
                 {/* Interactive Content */}
                 <div className="p-5 flex-1">
 
-                    {step === 0 && (
+                    {processing ? (
+                        <div className="flex flex-col items-center justify-center h-64 animate-enter">
+                            <div className="size-16 border-4 border-gray-100 border-t-[#2D241E] rounded-full animate-spin mb-6"></div>
+                            <h4 className="text-lg font-bold text-[#2D241E]">Processing Transfer...</h4>
+                            <p className="text-xs font-medium text-[#897a70] mt-2">Connecting to payment gateway...</p>
+                        </div>
+                    ) : (
                         <div className="space-y-6 animate-enter">
                             <div className="p-6 bg-[#2D241E] rounded-[2rem] text-white flex justify-between items-center shadow-xl">
                                 <div>
@@ -502,27 +513,9 @@ const SettlementModal = ({ data, onClose }) => {
                                 <p className="text-xs font-bold text-[#897a70] mt-2 text-center">Adjusting commission affects the Net Payable amount.</p>
                             </div>
 
-                            <button onClick={handlePayout} className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold text-xs uppercase tracking-wider hover:bg-emerald-600 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-emerald-500/30">
+                            <button onClick={handlePayout} className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold text-xs uppercase tracking-wider hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30">
                                 Authorize Transfer
                             </button>
-                        </div>
-                    )}
-
-                    {step === 1 && (
-                        <div className="flex flex-col items-center justify-center h-64 animate-enter">
-                            <div className="size-16 border-4 border-gray-100 border-t-[#2D241E] rounded-full animate-spin mb-6"></div>
-                            <h4 className="text-lg font-bold text-[#2D241E]">Processing Transfer...</h4>
-                            <p className="text-xs font-medium text-[#897a70] mt-2">Connecting to bank...</p>
-                        </div>
-                    )}
-
-                    {step === 2 && (
-                        <div className="flex flex-col items-center justify-center h-64 animate-enter">
-                            <div className="size-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6 text-emerald-600 animate-[scaleIn_0.3s]">
-                                <span className="material-symbols-outlined text-4xl">check</span>
-                            </div>
-                            <h4 className="text-2xl font-bold text-[#2D241E]">Transfer Complete!</h4>
-                            <p className="text-xs font-medium text-[#897a70] mt-2">Transaction ID: TXN-{Date.now()}</p>
                         </div>
                     )}
 
