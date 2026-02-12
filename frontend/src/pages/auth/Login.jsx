@@ -52,21 +52,7 @@ function Login() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const getPasswordStrength = (password) => {
-        if (!password) return { score: 0, label: '', color: 'bg-transparent' };
-        let score = 0;
-        if (password.length > 6) score++;
-        if (password.length > 10) score++;
-        if (/[A-Z]/.test(password)) score++;
-        if (/[0-9]/.test(password)) score++;
-        if (/[^A-Za-z0-9]/.test(password)) score++;
 
-        if (score <= 2) return { score, label: 'Weak', color: 'bg-red-500' };
-        if (score <= 4) return { score, label: 'Medium', color: 'bg-yellow-500' };
-        return { score, label: 'Strong', color: 'bg-green-500' };
-    };
-
-    const strength = getPasswordStrength(formData.password);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -170,24 +156,6 @@ function Login() {
                                 >
                                     <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                 </button>
-
-                                {/* Password Strength Indicator */}
-                                {formData.password && (
-                                    <div className="mt-3 px-1 transition-all animate-in fade-in slide-in-from-top-1">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#5C4D42]/60">Strength</span>
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${strength.label === 'Weak' ? 'text-red-500' : strength.label === 'Medium' ? 'text-yellow-600' : 'text-green-600'}`}>
-                                                {strength.label}
-                                            </span>
-                                        </div>
-                                        <div className="h-1.5 w-full bg-[#2D241E]/5 rounded-full overflow-hidden flex gap-1">
-                                            <div className={`h-full transition-all duration-500 ${strength.score >= 1 ? strength.color : 'bg-transparent'} flex-1`}></div>
-                                            <div className={`h-full transition-all duration-500 ${strength.score >= 3 ? strength.color : 'bg-transparent'} flex-1`}></div>
-                                            <div className={`h-full transition-all duration-500 ${strength.score >= 5 ? strength.color : 'bg-transparent'} flex-1`}></div>
-                                        </div>
-                                    </div>
-                                )}
-
                                 {errors.password && <span className="text-[10px] font-bold text-red-500 mt-1 ml-4 uppercase tracking-wider animate-in fade-in slide-in-from-top-1">{errors.password}</span>}
                             </div>
                         </div>
