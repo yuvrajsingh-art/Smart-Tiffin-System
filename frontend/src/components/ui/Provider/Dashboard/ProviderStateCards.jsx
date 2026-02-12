@@ -15,6 +15,13 @@ const ProviderStatsCards = () => {
 
     useEffect(() => {
         fetchDashboardStats();
+        
+        // Auto-refresh every 2 minutes
+        const interval = setInterval(() => {
+            fetchDashboardStats();
+        }, 120000);
+        
+        return () => clearInterval(interval);
     }, []);
 
     const fetchDashboardStats = async () => {

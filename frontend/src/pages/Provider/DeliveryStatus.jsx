@@ -11,10 +11,35 @@ function DeliveryStatus() {
     const [deliveries, setDeliveries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
-
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+ 
     useEffect(() => {
         fetchDeliveries();
+        
+        // Auto-refresh every minute to update statuses
+        const interval = setInterval(() => {
+            fetchDeliveries();
+        }, 60000);
+        
+        return () => clearInterval(interval);
     }, []);
+
+    const calculateDeliveryStatus = (mealType, deliveryTime) => {
+        const now = new Date();
+        const [hours, minutes] = deliveryTime.split(':').map(Number);
+        
+        const deliveryDateTime = new Date();
+        deliveryDateTime.setHours(hours, minutes, 0, 0);
+        
+        const readyForPickupTime = new Date(deliveryDateTime.getTime() - 70 * 60000); // 1hr 10min before
+        const outForDeliveryTime = new Date(deliveryDateTime.getTime() - 30 * 60000); // 30min before
+        const deliveredTime = new Date(deliveryDateTime.getTime() - 15 * 60000); // 15min before
+        
+        if (now >= deliveredTime) return 'delivered';
+        if (now >= outForDeliveryTime) return 'out_for_delivery';
+        if (now >= readyForPickupTime) return 'ready_for_pickup';
+        return 'preparing';
+    };
 
     const fetchDeliveries = async () => {
         try {
@@ -22,6 +47,7 @@ function DeliveryStatus() {
             console.log('KDS Response:', response.data);
             if (response.data && response.data.data) {
                 const allOrders = [
+<<<<<<< HEAD
                     ...response.data.data.justIn.map(o => ({ ...o, status: 'preparing' })),
                     ...response.data.data.preparing.map(o => ({ ...o, status: 'preparing' })),
                     ...response.data.data.ready.map(o => ({ ...o, status: 'ready_for_pickup' })),
@@ -43,6 +69,55 @@ function DeliveryStatus() {
                     amount: order.amount || 0
                 }));
                 // Also fetch delivered orders if needed, for now just keeping active flow
+=======
+                    ...response.data.data.justIn,
+                    ...response.data.data.preparing,
+                    ...response.data.data.ready,
+                    ...response.data.data.dispatched
+                ];
+                
+                const formattedDeliveries = allOrders.map(order => {
+                    const mealType = order.mealType || 'lunch';
+                    const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '11:00' : '19:00');
+                    const calculatedStatus = calculateDeliveryStatus(mealType, deliveryTime);
+                    
+                    // Extract customer details
+                    const customer = order.customer || {};
+                    const phone = customer.phone || customer.phoneNumber || order.customerPhone || 'N/A';
+                    
+                    // Extract address
+                    let address = 'N/A';
+                    if (customer.address) {
+                        if (typeof customer.address === 'string') {
+                            address = customer.address;
+                        } else if (typeof customer.address === 'object') {
+                            const addr = customer.address;
+                            address = [addr.street, addr.area, addr.city, addr.pincode]
+                                .filter(Boolean)
+                                .join(', ') || 'N/A';
+                        }
+                    } else if (order.deliveryAddress) {
+                        address = order.deliveryAddress;
+                    }
+                    
+                    return {
+                        id: order._id,
+                        orderId: order.orderNo,
+                        customer: order.customerName || customer.fullName || customer.name || 'N/A',
+                        phone: phone,
+                        address: address,
+                        items: order.items?.map(i => i.name) || [],
+                        status: calculatedStatus,
+                        mealType,
+                        deliveryTime,
+                        orderTime: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                        estimatedDelivery: deliveryTime,
+                        rider: order.rider?.name || null,
+                        riderPhone: order.rider?.phone || null,
+                        amount: order.amount || 0
+                    };
+                });
+>>>>>>> e0e90d30dc25ca4f82a351b90bcb99d93b91d4cd
                 setDeliveries(formattedDeliveries);
             }
         } catch (error) {
@@ -119,11 +194,12 @@ function DeliveryStatus() {
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
                     title="Delivery Status"
                     subtitle="Track and manage all your delivery orders"
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 p-6 overflow-y-auto">
                     {loading ? (

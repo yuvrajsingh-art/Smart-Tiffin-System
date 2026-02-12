@@ -6,6 +6,7 @@ import WeeklyPlan from '../../components/ui/Provider/Manage Menu/WeeklyPlan';
 
 const ManageMenu = () => {
     const [activeTab, setActiveTab] = useState('today');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const tabs = [
         { id: 'today', label: "Today's Menu" },
@@ -14,11 +15,12 @@ const ManageMenu = () => {
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
                     title="Meal Cards"
                     subtitle="Configure today's special Lunch and Dinner thalis"
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 overflow-y-auto">
                     {/* Tabs - Inside content area */}

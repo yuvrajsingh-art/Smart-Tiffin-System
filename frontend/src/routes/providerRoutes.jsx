@@ -11,7 +11,7 @@ import ManageMenu from '../pages/Provider/ManageMenu';
 import ActiveCustomers from '../pages/Provider/ActiveCustomers';
 import DeliveryStatus from '../pages/Provider/DeliveryStatus';
 import CustomerFeedback from '../pages/Provider/CustomerFeedback';
-import ProviderAnalysis from '../pages/Provider/ProviderAnalysis';
+import SubscriptionPlan from '../pages/Provider/SubscriptionPlan';
 import ProviderProfile from '../pages/Provider/ProviderProfile';
 import ProviderRevenue from '../pages/Provider/ProviderRevenue';
 import Notification from '../components/ui/Provider/Notification';
@@ -27,8 +27,7 @@ export const providerRoutes = [
     { path: "delivery", element: <DeliveryStatus /> },
     { path: "revenue", element: <ProviderRevenue /> },
     { path: "feedback", element: <CustomerFeedback /> },
-    { path: "analytics", element: <ProviderAnalysis /> },
-    { path: "analytics", element: <ProviderAnalysis /> },
+    { path: "plan", element: <SubscriptionPlan /> },
     { path: "profile", element: <ProviderProfile /> },
     { path: "notifications", element: <Notification /> },
     { path: "support", element: <ProviderSupport /> },

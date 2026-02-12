@@ -9,6 +9,7 @@ const ActiveCustomers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleAddCustomer = (customerData) => {
     console.log('New customer:', customerData);
@@ -16,11 +17,12 @@ const ActiveCustomers = () => {
 
   return (
     <div className="flex h-screen bg-[#FFFBF5]">
-      <ProviderSidebar />
+      <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex-1 flex flex-col">
         <ProviderHeader 
           title="Active Customers" 
-          subtitle="Manage your active customer subscriptions and orders" 
+          subtitle="Manage your active customer subscriptions and orders"
+          onMenuClick={() => setIsSidebarOpen(true)}
         />
         <div className="flex-1 p-6 overflow-y-auto">
           {/* Search and Filter */}

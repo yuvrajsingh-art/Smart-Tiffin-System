@@ -9,10 +9,12 @@ import ProfilePicture from '../../components/ui/Provider/Profile/ProfilePicture'
 import RatingReviews from '../../components/ui/Provider/Profile/RatingReviews';
 import BuisnessDetails from '../../components/ui/Provider/Profile/BuisnessDetails';
 import ProviderApi from '../../services/ProviderApi';
+import Swal from 'sweetalert2';
 
 function ProviderProfile() {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [profileData, setProfileData] = useState({
         businessName: '',
         ownerName: '',
@@ -80,20 +82,50 @@ function ProviderProfile() {
     };
 
     const handleSave = async () => {
+        console.log('Saving profile with data:', editData);
         try {
-            await ProviderApi.put('/provider-store', {
+            const payload = {
                 mess_name: editData.businessName,
                 contact_number: editData.phone,
-                address: editData.address,
+                address: {
+                    street: editData.address.split(',')[0]?.trim() || '',
+                    city: editData.address.split(',')[1]?.trim() || '',
+                    pincode: editData.address.split(',')[2]?.trim() || ''
+                },
                 description: editData.description,
                 cuisines: editData.cuisineTypes
-            });
+            };
+            console.log('Payload being sent:', payload);
+            
+            const response = await ProviderApi.put('/provider-store', payload);
+            console.log('Response received:', response.data);
+            
             setProfileData({ ...editData });
             setIsEditing(false);
-            alert('Profile updated successfully!');
+            Swal.fire({
+                icon: 'success',
+                title: 'Profile Updated!',
+                text: 'Your profile has been updated successfully',
+                timer: 2000,
+                showConfirmButton: false,
+                background: '#fff',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
+            });
         } catch (error) {
             console.error('Error saving profile:', error);
-            alert('Failed to save profile');
+            console.error('Error response:', error.response?.data);
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops!',
+                text: error.response?.data?.message || 'Failed to save profile. Please try again.',
+                confirmButtonColor: '#f97316',
+                customClass: {
+                    popup: 'rounded-3xl',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold'
+                }
+            });
         }
     };
 
@@ -112,11 +144,12 @@ function ProviderProfile() {
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
                     title="Profile"
                     subtitle="Manage your business profile and settings"
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 p-6 overflow-y-auto">
                     <div className="flex justify-between items-center mb-6">

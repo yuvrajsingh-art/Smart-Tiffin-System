@@ -13,7 +13,31 @@ function ProviderRecentOrders() {
 
     useEffect(() => {
         fetchRecentOrders();
+        
+        // Auto-refresh every minute for real-time updates
+        const interval = setInterval(() => {
+            fetchRecentOrders();
+        }, 60000);
+        
+        return () => clearInterval(interval);
     }, []);
+
+    const calculateDeliveryStatus = (mealType, deliveryTime) => {
+        const now = new Date();
+        const [hours, minutes] = deliveryTime.split(':').map(Number);
+        
+        const deliveryDateTime = new Date();
+        deliveryDateTime.setHours(hours, minutes, 0, 0);
+        
+        const readyForPickupTime = new Date(deliveryDateTime.getTime() - 70 * 60000);
+        const outForDeliveryTime = new Date(deliveryDateTime.getTime() - 30 * 60000);
+        const deliveredTime = new Date(deliveryDateTime.getTime() - 15 * 60000);
+        
+        if (now >= deliveredTime) return 'Delivered';
+        if (now >= outForDeliveryTime) return 'Out for Delivery';
+        if (now >= readyForPickupTime) return 'Ready for Pickup';
+        return 'Preparing';
+    };
 
     const fetchRecentOrders = async () => {
         try {
@@ -22,22 +46,29 @@ function ProviderRecentOrders() {
                 const { lunch, dinner } = response.data.data;
                 const allOrders = [...lunch, ...dinner].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-                const formattedOrders = allOrders.slice(0, 6).map(order => ({
-                    id: order._id,
-                    customer: order.customer?.fullName || 'N/A',
-                    phone: order.customer?.phone || 'N/A',
-                    item: `${order.mealType} - ${order.tiffinCount} Tiffin(s)`,
-                    quantity: order.tiffinCount,
-                    time: new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                    status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
-                    amount: order.amount,
-                    orderDate: 'Today'
-                }));
+                const formattedOrders = allOrders.slice(0, 6).map(order => {
+                    const mealType = order.mealType || 'lunch';
+                    const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '11:00' : '19:00');
+                    const calculatedStatus = calculateDeliveryStatus(mealType, deliveryTime);
+                    
+                    return {
+                        id: order._id,
+                        customer: order.customer?.fullName || 'N/A',
+                        phone: order.customer?.phone || 'N/A',
+                        item: `${order.mealType} - ${order.tiffinCount} Tiffin(s)`,
+                        quantity: order.tiffinCount,
+                        time: new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                        status: calculatedStatus,
+                        amount: order.amount,
+                        orderDate: 'Today',
+                        mealType,
+                        deliveryTime
+                    };
+                });
                 setRecentOrders(formattedOrders);
             }
         } catch (error) {
             console.error('Error fetching recent orders:', error);
-            // Keep dummy data as fallback if needed, or clear it
         } finally {
             setLoading(false);
         }
@@ -58,6 +89,7 @@ function ProviderRecentOrders() {
             case 'Delivered': return 'bg-green-100 text-green-800';
             case 'Preparing': return 'bg-yellow-100 text-yellow-800';
             case 'Out for Delivery': return 'bg-blue-100 text-blue-800';
+            case 'Ready for Pickup': return 'bg-orange-100 text-orange-800';
             case 'Confirmed': return 'bg-purple-100 text-purple-800';
             case 'Cancelled': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';

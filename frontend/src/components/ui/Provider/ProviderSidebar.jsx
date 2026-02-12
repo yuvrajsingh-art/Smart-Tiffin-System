@@ -20,10 +20,11 @@ const SidebarItem = ({ icon, label, path, active }) => (
   </Link>
 );
 
-function ProviderSidebar() {
+function ProviderSidebar({ isOpen, setIsOpen }) {
   const location = useLocation();
   const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
 
   const menu = [
     { icon: "dashboard", label: "Dashboard", path: "/provider/dashboard" },
@@ -31,10 +32,16 @@ function ProviderSidebar() {
     { icon: "loyalty", label: "Subscription Plans", path: "/provider/plans" },
     { icon: "group", label: "Active Customers", path: "/provider/customers" },
     { icon: "local_shipping", label: "Delivery Status", path: "/provider/delivery" },
+<<<<<<< HEAD
     { icon: "payment", label: "My Revenue", path: "/provider/revenue" },
     { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" },
     { icon: "analytics", label: "Analytics", path: "/provider/analytics" },
     { icon: "support_agent", label: "Support & Disputes", path: "/provider/support" },
+=======
+    { icon: "p", label: "Subscription plan", path: "/provider/plan" },
+    { icon: "payment", label: "My Revenue", path: "/provider/revenue" },
+    { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" }
+>>>>>>> e0e90d30dc25ca4f82a351b90bcb99d93b91d4cd
   ];
 
   const handleLogout = () => {
@@ -44,33 +51,74 @@ function ProviderSidebar() {
 
   return (
     <>
+<<<<<<< HEAD
       <aside className="w-64 h-full glass-sidebar flex flex-col flex-shrink-0 z-10 relative transition-all duration-300">
         <div className="h-20 flex items-center px-6">
           <Logo size="h-9" iconSize="text-[18px]" />
+=======
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden"
+          onClick={() => setIsOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        w-64 h-screen fixed md:relative left-0 top-0 flex flex-col flex-shrink-0 transition-transform duration-300 bg-[#fffbf5] backdrop-blur-2xl md:glass-sidebar border-r border-orange-100
+        ${isOpen ? "translate-x-0 shadow-2xl z-50" : "-translate-x-full md:translate-x-0 md:z-10"}
+      `}>
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setIsOpen(false)}
+          className="md:hidden absolute top-4 right-4 p-2 rounded-xl bg-white/80 hover:bg-white transition-colors"
+        >
+          <span className="material-symbols-outlined text-xl text-gray-800">
+            close
+          </span>
+        </button>
+
+        <div className="h-20 flex items-center gap-3 px-6">
+          <div className="size-8 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <span className="material-symbols-outlined text-[18px]">
+              lunch_dining
+            </span>
+          </div>
+          <span className="text-base font-bold tracking-tight text-[#2D241E]">
+            Smart Tiffin
+          </span>
+>>>>>>> e0e90d30dc25ca4f82a351b90bcb99d93b91d4cd
         </div>
 
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">
           {menu.map((item) => (
-            <SidebarItem
-              key={item.path}
-              {...item}
-              active={location.pathname === item.path}
-            />
+            <div key={item.path} onClick={() => setIsOpen(false)}>
+              <SidebarItem
+                {...item}
+                active={location.pathname === item.path}
+              />
+            </div>
           ))}
           <div className="my-4 h-px bg-orange-100 w-full"></div>
         </nav>
 
         <div className="p-3 border-t border-orange-100/50 space-y-1 bg-white/30">
-          <Link
-            to="/provider/profile"
-            className="flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-[#5C4D42] font-medium hover:bg-white/80 hover:text-primary transition-all group"
-          >
-            <span className="material-symbols-outlined text-[18px]">person</span>
-            <span className="text-xs font-bold tracking-wide">Profile</span>
-          </Link>
+          <div onClick={() => setIsOpen(false)}>
+            <Link
+              to="/provider/profile"
+              className="flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-[#5C4D42] font-medium hover:bg-white/80 hover:text-primary transition-all group"
+            >
+              <span className="material-symbols-outlined text-[18px]">person</span>
+              <span className="text-xs font-bold tracking-wide">Profile</span>
+            </Link>
+          </div>
 
           <button
-            onClick={() => setShowLogoutModal(true)}
+            onClick={() => {
+              setIsOpen(false);
+              setShowLogoutModal(true);
+            }}
             className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-red-500 font-medium hover:bg-red-50 hover:text-red-600 transition-all"
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -80,7 +128,6 @@ function ProviderSidebar() {
           </button>
         </div>
       </aside>
-
       {showLogoutModal &&
         createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">

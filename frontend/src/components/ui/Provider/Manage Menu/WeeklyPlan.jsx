@@ -231,7 +231,7 @@ const WeeklyPlan = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#fffbf5] p-6">
       <div className="max-w-6xl mx-auto">
 
         {/* Week Navigation */}
@@ -257,12 +257,7 @@ const WeeklyPlan = () => {
             </button>
           </div>
 
-          <div className="flex gap-2">
-
-            <button className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 flex items-center gap-2">
-              <FaEdit size={12} /> Edit Week
-            </button>
-          </div>
+ 
         </div>
 
         {/* Day Headers */}

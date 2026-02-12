@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaPowerOff, FaBell, FaUmbrellaBeach, FaCheckCircle } from 'react-icons/fa';
 import ProviderApi from '../../../../services/ProviderApi';
+import Swal from 'sweetalert2';
 
 const QuickActionsPanel = () => {
     const [kitchenStatus, setKitchenStatus] = useState('open');
@@ -31,10 +32,29 @@ const QuickActionsPanel = () => {
                 is_active: newStatus === 'open'
             });
             setKitchenStatus(newStatus);
-            alert(`Kitchen ${newStatus === 'open' ? 'opened' : 'closed'} successfully!`);
+            Swal.fire({
+                icon: 'success',
+                title: `Kitchen ${newStatus === 'open' ? 'Opened' : 'Closed'}!`,
+                text: `Your kitchen is now ${newStatus}`,
+                timer: 2000,
+                showConfirmButton: false,
+                background: '#fff',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
+            });
         } catch (error) {
             console.error('Error toggling kitchen status:', error);
-            alert('Failed to update kitchen status');
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops!',
+                text: 'Failed to update kitchen status',
+                confirmButtonColor: '#f97316',
+                customClass: {
+                    popup: 'rounded-3xl',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -48,26 +68,82 @@ const QuickActionsPanel = () => {
                 reason: !vacationMode ? 'Vacation' : null
             });
             setVacationMode(!vacationMode);
-            alert(`Vacation mode ${!vacationMode ? 'enabled' : 'disabled'}!`);
+            Swal.fire({
+                icon: 'success',
+                title: `Vacation Mode ${!vacationMode ? 'Enabled' : 'Disabled'}!`,
+                text: !vacationMode ? 'Your customers will be notified' : 'Welcome back!',
+                timer: 2000,
+                showConfirmButton: false,
+                background: '#fff',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
+            });
         } catch (error) {
             console.error('Error toggling vacation mode:', error);
-            alert('Failed to update vacation mode');
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops!',
+                text: 'Failed to update vacation mode',
+                confirmButtonColor: '#f97316',
+                customClass: {
+                    popup: 'rounded-3xl',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold'
+                }
+            });
         } finally {
             setLoading(false);
         }
     };
 
     const sendBulkNotification = async () => {
-        const message = prompt('Enter notification message for all customers:');
+        const { value: message } = await Swal.fire({
+            title: 'Send Notification',
+            input: 'textarea',
+            inputLabel: 'Message for all customers',
+            inputPlaceholder: 'Type your message here...',
+            inputAttributes: {
+                'aria-label': 'Type your message here'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Send',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#f97316',
+            customClass: {
+                popup: 'rounded-3xl',
+                confirmButton: 'rounded-xl px-6 py-3 font-bold',
+                cancelButton: 'rounded-xl px-6 py-3 font-bold'
+            }
+        });
+
         if (!message) return;
 
         setLoading(true);
         try {
             await ProviderApi.post('/provider-notifications/bulk', { message });
-            alert('Notification sent to all customers!');
+            Swal.fire({
+                icon: 'success',
+                title: 'Notification Sent!',
+                text: 'All customers have been notified',
+                timer: 2000,
+                showConfirmButton: false,
+                background: '#fff',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
+            });
         } catch (error) {
             console.error('Error sending notification:', error);
-            alert('Failed to send notification');
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops!',
+                text: 'Failed to send notification',
+                confirmButtonColor: '#f97316',
+                customClass: {
+                    popup: 'rounded-3xl',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -153,7 +229,16 @@ const QuickActionsPanel = () => {
 
                 {/* Mark All Orders Ready */}
                 <button
-                    onClick={() => alert('Bulk order update feature coming soon!')}
+                    onClick={() => Swal.fire({
+                        icon: 'info',
+                        title: 'Coming Soon!',
+                        text: 'Bulk order update feature will be available soon',
+                        confirmButtonColor: '#f97316',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            confirmButton: 'rounded-xl px-6 py-3 font-bold'
+                        }
+                    })}
                     disabled={loading}
                     className={`p-4 rounded-xl border-2 border-purple-500 bg-purple-50 hover:bg-purple-100 transition-all ${
                         loading ? 'opacity-50 cursor-not-allowed' : ''

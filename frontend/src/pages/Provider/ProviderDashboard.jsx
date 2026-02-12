@@ -4,15 +4,21 @@ import QuickActionsPanel from '../../components/ui/Provider/Dashboard/QuickActio
 import CustomerActivityFeed from '../../components/ui/Provider/Dashboard/CustomerActivityFeed';
 import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
+import { useState } from 'react';
+import { useAuth } from '../../context/UserContext';
 
 const ProviderDashboard = () => {
+      const { user } = useAuth();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
-            <ProviderSidebar />
+            <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col">
                 <ProviderHeader
-                    title="Welcome Back Chef!"
+                    title={`Welcome back, ${user?.name?.split(' ')[0] || user?.businessName?.split(' ')[0] || 'Provider'}!`}
                     subtitle="Here's what's happening with your tiffin service today."
+                    onMenuClick={() => setIsSidebarOpen(true)}
                 />
                 <div className="flex-1 p-6 overflow-y-auto">
                     {/* Quick Actions Panel */}

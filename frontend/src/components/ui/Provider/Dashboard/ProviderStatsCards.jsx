@@ -17,10 +17,21 @@ const ProviderStatsCards = () => {
 
     const fetchStats = async () => {
         try {
-            const response = await ProviderApi.get('/provider-subscription/stats');
-            if (response.data && response.data.stats) {
-                setStats(response.data.stats);
-            }
+            // Fetch from wallet API for accurate revenue
+            const [subscriptionRes, walletRes] = await Promise.all([
+                ProviderApi.get('/provider-subscription/stats'),
+                ProviderApi.get('/provider-wallet/summary')
+            ]);
+            
+            const subscriptionStats = subscriptionRes.data?.stats || {};
+            const walletData = walletRes.data?.data || {};
+            
+            setStats({
+                totalActive: subscriptionStats.totalActive || 0,
+                paused: subscriptionStats.paused || 0,
+                expiringThisWeek: subscriptionStats.expiringThisWeek || 0,
+                totalRevenue: walletData.totalEarnings || 0
+            });
         } catch (error) {
             console.error('Error fetching stats:', error);
         } finally {

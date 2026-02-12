@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/UserContext';
 import ProviderApi from '../../../services/ProviderApi';
 
-const ProviderHeader = ({ title, subtitle }) => {
+const ProviderHeader = ({ title, onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user } = useAuth();
@@ -21,7 +21,7 @@ const ProviderHeader = ({ title, subtitle }) => {
         setNotifications(response.data.data.slice(0, 5)); // Latest 5
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('Error faetching notifications:', error);
       // Empty state when API fails - no dummy data
       setNotifications([]);
     } finally {
@@ -42,15 +42,30 @@ const ProviderHeader = ({ title, subtitle }) => {
   };
 
   return (
-    <header className="h-20 glass-header px-8 flex items-center justify-between flex-shrink-0 z-20">
-      <div>
-        <h1 className="text-2xl font-black text-[#2D241E] tracking-tight">
-          Welcome back, {user?.name?.split(' ')[0] || user?.businessName?.split(' ')[0] || 'Provider'}!
-        </h1>
-        <p className="text-sm font-medium text-[#5C4D42] flex items-center gap-2 mt-1">
-          <span className="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
-          <span>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-        </p>
+    <header className="h-20 glass-header px-4 md:px-8 flex items-center justify-between flex-shrink-0 z-20">
+      <div className="flex items-center gap-4">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => {
+            console.log('Hamburger clicked!');
+            onMenuClick && onMenuClick();
+          }}
+          className="md:hidden p-2 hover:bg-white/60 rounded-lg transition-all"
+        >
+          <span className="material-symbols-outlined text-[28px] text-gray-800">
+            menu
+          </span>
+        </button>
+        
+        <div>
+          <h1 className="text-2xl font-black text-[#2D241E] tracking-tight">
+            {title}
+          </h1>
+          <p className="text-sm font-medium text-[#5C4D42] flex items-center gap-2 mt-1">
+            <span className="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
+            <span>{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center gap-6">
