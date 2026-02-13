@@ -13,8 +13,9 @@
  * @param {Number} statusCode - HTTP status code (default: 200)
  * @param {String} message - Success message
  * @param {Object} data - Response data
+ * @param {Object} additionalData - Additional data like pagination, stats
  */
-const sendSuccess = (res, statusCode = 200, message = 'Success', data = null) => {
+const sendSuccess = (res, statusCode = 200, message = 'Success', data = null, additionalData = {}) => {
 
     const response = {
         success: true,
@@ -24,6 +25,9 @@ const sendSuccess = (res, statusCode = 200, message = 'Success', data = null) =>
     if (data !== null) {
         response.data = data;
     }
+
+    // Merge additional data (pagination, stats, etc.)
+    Object.assign(response, additionalData);
 
     return res.status(statusCode).json(response);
 };

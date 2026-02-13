@@ -35,35 +35,70 @@ const AdminCustomers = () => {
     const fetchCustomers = async () => {
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error("Please login first");
+                setLoading(false);
+                return;
+            }
+
             const { data } = await axios.get('/api/admin/customers', {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            
             if (data.success) {
-                const payload = data.data; // { data: [], pagination: {}, stats: {} }
-                const transformed = (payload.data || []).map(c => ({
-                    ...c,
-                    id: c._id,
-                    name: c.fullName || 'Unknown',
-                    status: c.status?.charAt(0).toUpperCase() + c.status?.slice(1) || 'Active',
-                    plan: 'Standard',
-                    phone: c.mobile || 'N/A',
-                    balance: `₹${c.walletBalance || 0}`,
-                    kyc: c.isVerified ? 'Verified' : 'Pending',
-                    joins: new Date(c.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                    tags: ['User'],
-                    tickets: 0,
-                    referrals: 0,
-                    address: c.address || (typeof c.location === 'object' ? c.location?.address : 'No Address')
-                }));
+                const customerList = Array.isArray(data.data) ? data.data : [];
+                
+                const transformed = customerList.map(c => {
+                    // Determine display status based on subscription
+                    let displayStatus = 'No Plan';
+                    let statusColor = 'Inactive';
+                    
+                    if (c.activePlan && c.subscriptionStatus) {
+                        // Map subscription status to display text
+                        const statusMap = {
+                            'active': 'Active',
+                            'approved': 'Active',
+                            'pending': 'Pending',
+                            'cancelled': 'Cancelled',
+                            'expired': 'Expired',
+                            'paused': 'Paused'
+                        };
+                        displayStatus = statusMap[c.subscriptionStatus] || c.subscriptionStatus;
+                        statusColor = displayStatus;
+                    } else {
+                        // No subscription - show account status
+                        displayStatus = c.status === 'banned' ? 'Banned' : 'No Plan';
+                        statusColor = displayStatus;
+                    }
+                    
+                    return {
+                        ...c,
+                        id: c._id,
+                        name: c.fullName || 'Unknown',
+                        status: displayStatus,
+                        rawStatus: c.status, // Keep original account status for API calls
+                        subscriptionStatus: c.subscriptionStatus, // Keep subscription status
+                        plan: c.activePlan ? `${c.activePlan.type} ${c.activePlan.category}` : 'No Plan',
+                        phone: c.mobile || 'N/A',
+                        balance: `₹${c.walletBalance || 0}`,
+                        kyc: c.isVerified ? 'Verified' : 'Pending',
+                        joins: new Date(c.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                        tags: ['User'],
+                        tickets: 0,
+                        referrals: 0,
+                        address: c.address || (typeof c.location === 'object' ? c.location?.address : 'No Address')
+                    };
+                });
+                
                 setCustomers(transformed);
-                if (payload.stats) {
-                    setStats(payload.stats);
+                
+                if (data.stats) {
+                    setStats(data.stats);
                 }
             }
         } catch (error) {
-            console.error("Fetch Customers Error details:", error.response?.data || error.message);
-            const errorMsg = error.response?.data?.message || "Failed to connect to system nodes";
-            toast.error(errorMsg);
+            console.error('Fetch Customers Error:', error);
+            toast.error(error.response?.data?.message || "Failed to load customers");
         } finally {
             setLoading(false);
         }
@@ -159,10 +194,11 @@ const AdminCustomers = () => {
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (res.data.success) {
-                    fetchCustomers();
                     toast.success(res.data.message, {
                         style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
                     });
+                    // Refresh the list to show updated status
+                    await fetchCustomers();
                 }
             } else if (type === 'Delete') {
                 if (!window.confirm(`Are you sure you want to delete ${customer.fullName || customer.name}?`)) return;
@@ -172,10 +208,10 @@ const AdminCustomers = () => {
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (res.data.success) {
-                    fetchCustomers();
                     toast.success('Customer deleted', {
                         style: { borderRadius: '15px', background: '#2D241E', color: '#fff' }
                     });
+                    await fetchCustomers();
                 }
             } else {
                 toast.success(`${type} done for ${customer.fullName || customer.name}`, {
@@ -479,7 +515,7 @@ const AdminCustomers = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${selectedCustomer.status === 'Active' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${selectedCustomer.rawStatus === 'active' ? 'bg-emerald-100 text-emerald-600' : selectedCustomer.rawStatus === 'banned' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
                                         {selectedCustomer.status}
                                     </span>
                                     <button onClick={() => setSelectedCustomer(null)} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-all text-gray-400 hover:text-gray-600">
@@ -552,10 +588,10 @@ const AdminCustomers = () => {
                             <div className="p-4 border-t border-gray-100 flex justify-between">
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => { handleAction(selectedCustomer.status === 'banned' ? 'Unban' : 'Ban', selectedCustomer); setSelectedCustomer(null); }}
-                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectedCustomer.status === 'banned' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
+                                        onClick={() => { handleAction(selectedCustomer.rawStatus === 'banned' ? 'Unban' : 'Ban', selectedCustomer); setSelectedCustomer(null); }}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectedCustomer.rawStatus === 'banned' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
                                     >
-                                        {selectedCustomer.status === 'banned' ? 'Unban' : 'Ban'}
+                                        {selectedCustomer.rawStatus === 'banned' ? 'Unban' : 'Ban'}
                                     </button>
                                     <button
                                         onClick={() => { handleAction('Delete', selectedCustomer); setSelectedCustomer(null); }}

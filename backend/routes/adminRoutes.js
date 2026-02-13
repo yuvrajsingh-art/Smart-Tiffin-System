@@ -49,6 +49,16 @@ const {
     approveCancellation,
     getRefundRequests,
 
+<<<<<<< HEAD
+=======
+    // Menu Management
+    getPendingMenus,
+    approveMenu,
+    rejectMenu,
+    getAllMenus,
+    updateMenu,
+    deleteMenu,
+>>>>>>> 288570730d33e32f3a8c311d0abba0db8af0261f
 
     // Plans Management
     getPlans,
@@ -187,6 +197,30 @@ router.get("/reports/sales/download", protect, authorizeRoles("admin"), exportSa
 // GET /api/admin/reports/customers/download - Download customers CSV [NEW]
 router.get("/reports/customers/download", protect, authorizeRoles("admin"), exportCustomersCSV);
 
+<<<<<<< HEAD
+=======
+// =============================================================================
+// MENU MANAGEMENT
+// =============================================================================
+
+// GET /api/admin/menus - Get all menus
+router.get("/menus", protect, authorizeRoles("admin"), getAllMenus);
+
+// GET /api/admin/menus/pending - Get pending menus
+router.get("/menus/pending", protect, authorizeRoles("admin"), getPendingMenus);
+
+// PUT /api/admin/menus/:id - Update menu
+router.put("/menus/:id", protect, authorizeRoles("admin"), updateMenu);
+
+// DELETE /api/admin/menus/:id - Delete menu
+router.delete("/menus/:id", protect, authorizeRoles("admin"), deleteMenu);
+
+// PUT /api/admin/menus/:id/approve - Approve menu
+router.put("/menus/:id/approve", protect, authorizeRoles("admin"), approveMenu);
+
+// PUT /api/admin/menus/:id/reject - Reject menu
+router.put("/menus/:id/reject", protect, authorizeRoles("admin"), rejectMenu);
+>>>>>>> 288570730d33e32f3a8c311d0abba0db8af0261f
 
 // =============================================================================
 // PLANS MANAGEMENT

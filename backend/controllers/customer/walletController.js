@@ -193,6 +193,9 @@ exports.addMoneyToWallet = async (req, res) => {
         wallet.totalAdded = (wallet.totalAdded || 0) + amount;
         await wallet.save();
 
+        // Sync with User model walletBalance
+        await User.findByIdAndUpdate(customerId, { walletBalance: wallet.balance });
+
         // 3. Create transaction record for wallet topup
         const transaction = new Transaction({
             customer: customerId,
@@ -416,6 +419,9 @@ exports.debitWallet = async (customerId, amount, description, referenceId, trans
                 wallet.balance += rechargeAmt;
                 wallet.totalAdded = (wallet.totalAdded || 0) + rechargeAmt;
 
+                // Sync with User model
+                await User.findByIdAndUpdate(customerId, { walletBalance: wallet.balance });
+
                 // Create Topup Transaction record
                 const topupTx = new Transaction({
                     customer: customerId,
@@ -443,6 +449,9 @@ exports.debitWallet = async (customerId, amount, description, referenceId, trans
         // Perform Debit
         wallet.balance -= amount;
         await wallet.save();
+
+        // Sync with User model walletBalance
+        await User.findByIdAndUpdate(customerId, { walletBalance: wallet.balance });
 
         // Create Debit Transaction
         const transaction = new Transaction({

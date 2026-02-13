@@ -43,12 +43,17 @@ exports.getCustomers = async (req, res) => {
 
         // Fetch data
         const [customers, totalCustomers, activeCustomers, balanceData, newToday] = await Promise.all([
-            User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+            User.find(query)
+                .select('fullName email mobile status walletBalance isVerified createdAt address location role')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum)
+                .lean(),
             User.countDocuments({ role: 'customer' }),
             User.countDocuments({ role: 'customer', status: 'active' }),
             User.aggregate([
                 { $match: { role: 'customer' } },
-                { $group: { _id: null, total: { $sum: { $ifNull: ["$walletBalance", 0] } } } }
+                { $group: { _id: null, total: { $sum: "$walletBalance" } } }
             ]),
             User.countDocuments({
                 role: 'customer',
@@ -56,11 +61,40 @@ exports.getCustomers = async (req, res) => {
             })
         ]);
 
+        // Get active subscriptions for all customers
+        const Subscription = require('../../models/subscription.model');
+        const customerIds = customers.map(c => c._id);
+        const activeSubscriptions = await Subscription.find({
+            customer: { $in: customerIds },
+            status: { $in: ['active', 'approved', 'pending', 'cancelled', 'expired', 'paused'] }
+        }).select('customer planName type category status');
+
+        // Map subscriptions to customers
+        const subscriptionMap = {};
+        activeSubscriptions.forEach(sub => {
+            subscriptionMap[sub.customer.toString()] = {
+                planName: sub.planName,
+                type: sub.type,
+                category: sub.category,
+                status: sub.status // actual subscription status from DB
+            };
+        });
+
+        // Add subscription info to customers
+        const customersWithPlans = customers.map(c => {
+            const subscription = subscriptionMap[c._id.toString()];
+            return {
+                ...c,
+                activePlan: subscription || null,
+                // Show actual subscription status if exists
+                subscriptionStatus: subscription ? subscription.status : null
+            };
+        });
+
         const totalBalance = balanceData.length > 0 ? balanceData[0].total : 0;
         const paginationMeta = getPaginationMeta(totalCustomers, pageNum, limitNum);
 
-        return sendSuccess(res, 200, "Customers retrieved successfully", {
-            data: customers,
+        return sendSuccess(res, 200, "Customers retrieved successfully", customersWithPlans, {
             pagination: paginationMeta,
             stats: {
                 totalCustomers,
@@ -180,6 +214,7 @@ exports.updateCustomer = async (req, res) => {
         if (mobile) updateData.mobile = mobile;
         if (address) updateData.address = sanitizeString(address);
         if (status) updateData.status = status;
+        if (req.body.walletBalance !== undefined) updateData.walletBalance = req.body.walletBalance;
 
         const customer = await User.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -252,16 +287,16 @@ exports.toggleCustomerStatus = async (req, res) => {
 
         // Log action
         await createLog(
-            'CUSTOMER_STATUS_TOGGLE',
+            customer.status === 'banned' ? 'CUSTOMER_BANNED' : 'CUSTOMER_UNBANNED',
             `Customer ${customer.fullName} was ${customer.status === 'banned' ? 'banned' : 'unbanned'}.`,
             req.user.id,
-            customer.status === 'banned' ? 'person_off' : 'person',
+            customer.status === 'banned' ? 'block' : 'check_circle',
             customer.status === 'banned' ? 'text-rose-500' : 'text-emerald-500'
         );
 
         return sendSuccess(res, 200, `Customer ${customer.status === 'banned' ? 'banned' : 'unbanned'} successfully`, customer);
     } catch (error) {
         console.error("Toggle Customer Status Error:", error.message);
-        return sendError(res, 500, "Failed to toggle customer status", error);
+        return sendError(res, 500, "Failed to update customer status", error);
     }
 };
