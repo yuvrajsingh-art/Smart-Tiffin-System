@@ -492,9 +492,8 @@ exports.purchaseSubscription = async (req, res) => {
         }
 
         // 1. Basic Validation
-        if (!providerId || !totalAmount || !planName) {
-            logger.warn("Purchase Failed: Missing Fields", { providerId, totalAmount, planName });
-            console.log("Missing fields detected:", { providerId, totalAmount, planName });
+        if (!providerId || !planName) {
+            logger.warn("Purchase Failed: Missing Fields", { providerId, planName });
             return res.status(400).json({
                 success: false,
                 message: 'Missing required subscription details'
@@ -502,7 +501,6 @@ exports.purchaseSubscription = async (req, res) => {
         }
 
         // Find the actual provider User ID from StoreProfile 
-        // Support both provider (User ID) and _id (Store ID) to prevent 404 from frontend
         const store = await StoreProfile.findOne({
             $or: [
                 { provider: providerId },
@@ -519,6 +517,54 @@ exports.purchaseSubscription = async (req, res) => {
         }
         const providerUserId = store.provider;
 
+        // --- SECURITY HARDENING: VALIDATE PRICE SERVER-SIDE ---
+        // Fetch the authoritative price from the Plan model or Store Profile
+        // We prioritize the provider's specific pricing if valid, otherwise fallback to standard plan
+
+        let validatedPrice = 0;
+        let validatedDuration = durationInDays || 30;
+
+        // Check if it matches a Standard Plan
+        const Plan = require("../../models/plan.model"); // Import locally to avoid circular dep issues if any
+        const standardPlan = await Plan.findOne({ name: planName, isActive: true });
+
+        if (standardPlan) {
+            // It's a standard plan, but we need to check if Provider has overridden the price
+            // For now, we'll assume Provider follows standard pricing OR StoreProfile has specific plan prices
+            // Simplified Logic: Standard Plan Price is the base truth
+            validatedPrice = standardPlan.price;
+
+            if (validatedDuration === 7 && standardPlan.period !== 'Weekly') {
+                // Calculate prorated or specific weekly price if not defined
+                // Ideally, we should have a weekly variant. For now, we trust the Store Profile's weekly price for "Weekly Trial"
+            }
+        }
+
+        // Fallback/Override: Check Store Profile for simple Weekly/Monthly pricing
+        // This handles the current frontend flow where planName might be generic "Monthly Complete"
+        if (durationInDays <= 7) {
+            validatedPrice = store.weeklyPrice;
+        } else {
+            validatedPrice = store.monthlyPrice;
+        }
+
+        // Final Security Check
+        // Allow a small buffer for potential frontend variations or set strictly
+        // For strict security: Price MUST match exactly. 
+        // However, to avoid breaking existing flows (mock data mismatch), we will Log and Enforce if legitimate.
+
+        if (!validatedPrice || validatedPrice <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid Plan Configuration: Price not found for this provider.'
+            });
+        }
+
+        // ENFORCEMENT: Ignore client sent totalAmount, use validatedPrice
+        const finalAmount = validatedPrice;
+
+        logger.info(`Price Validation: Client sent ${totalAmount}, Server calculated ${finalAmount}`);
+
         // 2. Handle Wallet 
         let wallet = await CustomerWallet.findOne({ customer: customerId });
         if (!wallet) {
@@ -533,7 +579,7 @@ exports.purchaseSubscription = async (req, res) => {
         if (isWallet) {
             const debitResult = await debitWallet(
                 customerId,
-                totalAmount,
+                finalAmount,
                 `Subscription for ${planName}`,
                 `SUB-${Date.now().toString().slice(-6)}`,
                 'Subscription Purchase'
@@ -573,7 +619,7 @@ exports.purchaseSubscription = async (req, res) => {
             }
 
             // Check Bank Balance
-            if (sourceBank.balance < totalAmount) {
+            if (sourceBank.balance < finalAmount) {
                 return res.status(400).json({
                     success: false,
                     message: `Insufficient balance in ${sourceBank.bankName}. Available: ₹${sourceBank.balance}`
@@ -581,11 +627,11 @@ exports.purchaseSubscription = async (req, res) => {
             }
 
             // Deduct from Source Bank
-            sourceBank.balance -= totalAmount;
+            sourceBank.balance -= finalAmount;
             await sourceBank.save();
 
             // Just update totalSpent statistics without touching wallet balance
-            wallet.totalSpent = (wallet.totalSpent || 0) + totalAmount;
+            wallet.totalSpent = (wallet.totalSpent || 0) + finalAmount;
         }
 
         // Save wallet state (only updates totalSpent for external payments)
@@ -594,7 +640,7 @@ exports.purchaseSubscription = async (req, res) => {
         // 4. Calculate End Date
         const start = new Date(startDate || Date.now());
         const end = new Date(start);
-        end.setDate(start.getDate() + (durationInDays || 30));
+        end.setDate(start.getDate() + (validatedDuration || 30));
 
         // Create Subscription
         // Robust mapping for mealType enum ["Lunch", "Dinner", "Both"]
@@ -615,12 +661,12 @@ exports.purchaseSubscription = async (req, res) => {
             provider: providerUserId,
             created_by: "customer",
             planName,
-            price: totalAmount,
-            totalAmount,
-            type: durationInDays <= 7 ? "weekly" : "monthly",
+            price: finalAmount,
+            totalAmount: finalAmount,
+            type: validatedDuration <= 7 ? "weekly" : "monthly",
             category: (planType && planType.toLowerCase()) || "veg",
             planType: (planType && planType.toLowerCase()) || "veg",
-            durationInDays: durationInDays || 30,
+            durationInDays: validatedDuration || 30,
             startDate: start,
             endDate: end,
             mealType: finalMealType,
@@ -661,7 +707,7 @@ exports.purchaseSubscription = async (req, res) => {
                 provider: providerUserId,
                 type: 'debit',
                 transactionType: 'Subscription Purchase',
-                amount: totalAmount,
+                amount: finalAmount,
                 description: `Subscription for ${planName} at ${store.mess_name}`,
                 referenceId: transactionId || `SUB-${subscription._id.toString().slice(-6)}`,
                 status: isPayLater ? 'Pending' : 'Success',
@@ -681,8 +727,8 @@ exports.purchaseSubscription = async (req, res) => {
         try {
             const providerProfile = await ProviderProfile.findOne({ user: providerUserId });
             const commissionRate = providerProfile?.commission_rate || 15;
-            const commissionAmount = (totalAmount * commissionRate) / 100;
-            const providerEarnings = totalAmount - commissionAmount;
+            const commissionAmount = (finalAmount * commissionRate) / 100;
+            const providerEarnings = finalAmount - commissionAmount;
 
             let providerWallet = await Wallet.findOne({ provider: providerUserId });
             if (!providerWallet) {

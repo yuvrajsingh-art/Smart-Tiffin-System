@@ -152,11 +152,11 @@ exports.getProviders = async (req, res) => {
 
         const providers = await User.find(query).sort({ createdAt: -1 });
         const providerIds = providers.map(p => p._id);
-        const profiles = await Provider.find({ owner: { $in: providerIds } });
+        const profiles = await Provider.find({ user: { $in: providerIds } });
 
         // Merge profile data
         const mergedData = providers.map(provider => {
-            const profile = profiles.find(p => p.owner.toString() === provider._id.toString());
+            const profile = profiles.find(p => p.user && p.user.toString() === provider._id.toString());
             return {
                 ...provider.toObject(),
                 profile: profile || null
@@ -166,7 +166,36 @@ exports.getProviders = async (req, res) => {
         return sendSuccess(res, 200, "Providers retrieved successfully", mergedData);
     } catch (error) {
         console.error("Get Providers Error:", error.message);
-        return sendError(res, 500, "Failed to fetch providers", error);
+        return sendError(res, 500, "Failed to fetch providers", error.message);
+    }
+};
+
+/**
+ * Get full profile of a provider (User + ProviderProfile + StoreProfile)
+ * @route GET /api/admin/providers/:id/full-profile
+ */
+exports.getProviderFullProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
+            return sendError(res, 400, "Invalid provider ID");
+        }
+
+        const user = await User.findById(id).select("-password");
+        if (!user) return sendError(res, 404, "User not found");
+
+        const providerProfile = await Provider.findOne({ user: id });
+        const storeProfile = await StoreProfile.findOne({ provider: id });
+
+        return sendSuccess(res, 200, "Full profile retrieved successfully", {
+            user,
+            providerProfile,
+            storeProfile
+        });
+    } catch (error) {
+        console.error("Full Profile Error:", error.message);
+        return sendError(res, 500, "Failed to fetch full profile", error.message);
     }
 };
 
@@ -262,16 +291,51 @@ exports.updateProvider = async (req, res) => {
             return sendError(res, 400, "Invalid provider ID");
         }
 
-        const provider = await User.findByIdAndUpdate(id, updateData, { new: true });
+        // 1. Separate fields into models
+        const userFields = ['fullName', 'email', 'mobile', 'address', 'status', 'isVerified'];
+        const providerFields = ['messName', 'ownerName', 'phone', 'fssaiNumber', 'commission_rate', 'bankDetails', 'location', 'isActive'];
+        const storeFields = ['cuisines', 'lunch_start', 'lunch_end', 'dinner_start', 'dinner_end', 'monthlyPrice', 'weeklyPrice', 'delivery_radius_km'];
 
-        if (!provider) {
-            return sendError(res, 404, "Provider not found");
+        const userData = {};
+        const profileData = {};
+        const storeData = {};
+
+        Object.keys(updateData).forEach(key => {
+            if (userFields.includes(key)) userData[key] = updateData[key];
+            if (providerFields.includes(key)) profileData[key] = updateData[key];
+            if (storeFields.includes(key)) storeData[key] = updateData[key];
+        });
+
+        // 2. Update User
+        const user = await User.findByIdAndUpdate(id, userData, { new: true });
+        if (!user) return sendError(res, 404, "Provider user not found");
+
+        // 3. Update Provider Profile (if exists)
+        if (Object.keys(profileData).length > 0) {
+            await Provider.findOneAndUpdate({ user: id }, profileData, { new: true, upsert: true });
         }
 
-        return sendSuccess(res, 200, "Provider updated successfully", provider);
+        // 4. Update Store Profile (if exists)
+        if (Object.keys(storeData).length > 0 || profileData.messName) {
+            const finalStoreData = { ...storeData };
+            if (profileData.messName) finalStoreData.mess_name = profileData.messName;
+
+            await StoreProfile.findOneAndUpdate({ provider: id }, finalStoreData, { new: true, upsert: true });
+        }
+
+        // 5. Log Action
+        await createLog(
+            'PROVIDER_UPDATED',
+            `Admin updated provider profile: ${profileData.messName || user.fullName}`,
+            req.user.id,
+            'edit',
+            'text-amber-600'
+        );
+
+        return sendSuccess(res, 200, "Provider and profiles updated successfully", user);
     } catch (error) {
         console.error("Update Provider Error:", error.message);
-        return sendError(res, 500, "Failed to update provider", error);
+        return sendError(res, 500, "Failed to update provider", error.message);
     }
 };
 
@@ -293,12 +357,22 @@ exports.deleteProvider = async (req, res) => {
             return sendError(res, 404, "Provider not found");
         }
 
-        // Delete provider profile
-        await Provider.findOneAndDelete({ owner: id });
+        // Delete linked profiles
+        await Provider.findOneAndDelete({ user: id });
+        await StoreProfile.findOneAndDelete({ provider: id });
 
-        return sendSuccess(res, 200, "Provider deleted successfully");
+        // Log Action
+        await createLog(
+            'PROVIDER_REMOVED',
+            `Admin permanently removed provider and all associated profiles`,
+            req.user.id,
+            'delete',
+            'text-rose-600'
+        );
+
+        return sendSuccess(res, 200, "Provider and all profiles deleted successfully");
     } catch (error) {
         console.error("Delete Provider Error:", error.message);
-        return sendError(res, 500, "Failed to delete provider", error);
+        return sendError(res, 500, "Failed to delete provider", error.message);
     }
 };

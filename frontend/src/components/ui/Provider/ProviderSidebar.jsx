@@ -1,7 +1,8 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../../context/UserContext";
+import Logo from "../../common/Logo";
 
 const SidebarItem = ({ icon, label, path, active }) => (
   <Link
@@ -28,11 +29,13 @@ function ProviderSidebar({ isOpen, setIsOpen }) {
   const menu = [
     { icon: "dashboard", label: "Dashboard", path: "/provider/dashboard" },
     { icon: "restaurant_menu", label: "Manage Daily Menu", path: "/provider/menu" },
+    { icon: "loyalty", label: "Subscription Plans", path: "/provider/plans" },
     { icon: "group", label: "Active Customers", path: "/provider/customers" },
     { icon: "local_shipping", label: "Delivery Status", path: "/provider/delivery" },
-    { icon: "lan", label: "Subscription plan", path: "/provider/plan" },
     { icon: "payment", label: "My Revenue", path: "/provider/revenue" },
-    { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" }
+    { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" },
+    { icon: "analytics", label: "Analytics", path: "/provider/analytics" },
+    { icon: "support_agent", label: "Support & Disputes", path: "/provider/support" }
   ];
 
   const handleLogout = () => {
@@ -65,15 +68,8 @@ function ProviderSidebar({ isOpen, setIsOpen }) {
           </span>
         </button>
 
-        <div className="h-20 flex items-center gap-3 px-6">
-          <div className="size-8 bg-gradient-to-br from-primary to-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-            <span className="material-symbols-outlined text-[18px]">
-              lunch_dining
-            </span>
-          </div>
-          <span className="text-base font-bold tracking-tight text-[#2D241E]">
-            Smart Tiffin
-          </span>
+        <div className="h-20 flex items-center px-6">
+          <Logo size="h-9" iconSize="text-[18px]" />
         </div>
 
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto custom-scrollbar">

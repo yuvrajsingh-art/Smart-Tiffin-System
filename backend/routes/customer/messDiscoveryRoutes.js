@@ -5,15 +5,19 @@ const {
     findMessProviders,
     getMessDetails,
     getPopularLocations,
-    getSearchSuggestions
+    getSearchSuggestions,
+    getStandardPlans // Added import
 } = require("../../controllers/customer/messDiscoveryController");
 
 const { protect } = require("../../middleware/authMiddleware.middleware");
 
-// Find mess providers with filters and location
+// GET /api/customer/messes/plans - Get standard plans (Public)
+router.get("/plans", getStandardPlans);
+
+// GET /api/discovery/find-mess - Find messes
 router.get("/find-mess", findMessProviders);
 
-// Get single mess details
+// GET /api/customer/messes/:id - Get mess details
 router.get("/mess/:id", getMessDetails);
 
 // Get popular locations

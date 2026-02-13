@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from '../components/common/NotificationBell';
+import Logo from '../components/common/Logo';
 
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
@@ -31,7 +32,6 @@ const AdminLayout = () => {
         { icon: 'dashboard', label: 'Dashboard', to: '/admin/dashboard' },
         { icon: 'group', label: 'Customers', to: '/admin/customers' },
         { icon: 'soup_kitchen', label: 'Manage Kitchens', to: '/admin/providers' },
-        { icon: 'restaurant', label: 'Menu Management', to: '/admin/menu' },
         { icon: 'restaurant_menu', label: 'Manage Plans', to: '/admin/plans' },
         { icon: 'local_shipping', label: 'Orders & Delivery', to: '/admin/orders' },
         { icon: 'feedback', label: 'Complaints & Support', to: '/admin/support' },
@@ -64,15 +64,7 @@ const AdminLayout = () => {
             <aside className={`fixed lg:static top-0 left-0 bottom-0 w-64 bg-white/50 backdrop-blur-xl border-r border-[#2D241E]/5 z-50 flex flex-col transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 {/* Logo Area */}
                 <div className="h-20 flex items-center px-6 flex-shrink-0">
-                    <div className="flex items-center gap-2.5">
-                        <div className="size-8 bg-[#2D241E] rounded-lg flex items-center justify-center text-orange-400 shadow-xl shadow-orange-900/10">
-                            <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
-                        </div>
-                        <div>
-                            <span className="block text-base font-black tracking-tight text-[#2D241E] leading-none">Smart Tiffin</span>
-                            <span className="text-[9px] font-bold tracking-widest uppercase text-[#5C4D42]/70 mt-0.5">Admin Portal</span>
-                        </div>
-                    </div>
+                    <Logo size="h-9" iconSize="text-[18px]" />
                 </div>
 
                 {/* Nav Links */}

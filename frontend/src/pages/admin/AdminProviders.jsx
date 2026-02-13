@@ -15,7 +15,10 @@ const AdminProviders = () => {
     // Fetch Providers
     const fetchProviders = async () => {
         try {
-            const { data } = await axios.get('/api/admin/providers');
+            const token = localStorage.getItem('token');
+            const { data } = await axios.get('/api/admin/providers', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (data.success && Array.isArray(data.data)) {
                 const transformed = data.data.map(p => ({
                     ...p,
@@ -32,9 +35,7 @@ const AdminProviders = () => {
                     accNo: p.profile?.bankDetails?.accountNumber || 'N/A',
                     ifsc: p.profile?.bankDetails?.ifscCode || 'N/A',
                     commission: `${p.profile?.commission_rate || 15}%`,
-                    hours: '8AM - 10PM',
-                    capacity: 50,
-                    currentLoad: 0
+                    hours: p.profile?.lunch_start ? `${p.profile.lunch_start} - ${p.profile.dinner_end}` : '8AM - 10PM'
                 }));
                 setProviders(transformed);
             }
@@ -77,7 +78,12 @@ const AdminProviders = () => {
 
     const handleApproveRequest = async (id, name) => {
         try {
-            const { data } = await axios.put(`/api/admin/providers/${id}/verify`);
+            const token = localStorage.getItem('token');
+            const { data } = await axios.put(
+                `/api/admin/providers/${id}/verify`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             if (data.success) {
                 toast.success(`${name} Approved! Now live on the platform.`, {
                     icon: '🚀',
@@ -94,8 +100,13 @@ const AdminProviders = () => {
     const handleRejectRequest = async (id, name) => {
         if (!window.confirm(`Reject application for ${name}?`)) return;
         try {
+            const token = localStorage.getItem('token');
             // Using Status Toggle to ban/suspend as rejection for now
-            const { data } = await axios.put(`/api/admin/providers/${id}/status`);
+            const { data } = await axios.put(
+                `/api/admin/providers/${id}/status`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             if (data.success) {
                 toast.error(`${name}'s application has been rejected.`, {
                     icon: '❌',
@@ -146,126 +157,127 @@ const AdminProviders = () => {
     };
 
     // --- Modal Handlers ---
-    const handleSaveNew = (e) => {
-        console.log("handleSaveNew called");
+    const handleSaveNew = async (e) => {
+        console.log("handleSaveNew called (Real API)");
         try {
             if (e && e.preventDefault) e.preventDefault();
             const form = formRef.current;
-            if (!form) {
-                console.error("Form Ref is null!");
-                toast.error("Internal Error: Form not found");
-                return;
-            }
-
-            // Immediate feedback
-            const procToast = toast.loading("Processing registration...");
+            if (!form) return;
 
             const name = form.elements['name']?.value;
-            if (!name) {
-                toast.dismiss(procToast);
-                toast.error("Kitchen Name is required");
+            const owner = form.elements['owner']?.value;
+            const email = form.elements['email']?.value;
+            const mobile = form.elements['phone']?.value;
+            const fssai = form.elements['fssai']?.value;
+            const commission = form.elements['commission']?.value?.replace('%', '') || '15';
+            const password = "Kitchen@123"; // Default initial password
+
+            if (!name || !email || !mobile) {
+                toast.error("Name, Email, and Phone are required");
                 return;
             }
 
-            const newKitchen = {
-                id: `KIT${Math.floor(100 + Math.random() * 900)}`,
-                name: name,
-                owner: form.elements['owner']?.value || '',
-                phone: form.elements['phone']?.value || '',
-                email: form.elements['email']?.value || '',
-                emergency: form.elements['emergency']?.value || '',
-                location: form.elements['location']?.value || '',
-                city: form.elements['city']?.value || 'Indore',
-                pincode: form.elements['pincode']?.value || '',
-                capacity: parseInt(form.elements['capacity']?.value) || 0,
-                currentLoad: 0,
-                rating: 0,
-                status: 'Active',
-                joins: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-                earnings: '₹0',
-                fssai: form.elements['fssai']?.value || '',
-                type: form.elements['type']?.value || 'Pure Veg',
-                commission: form.elements['commission']?.value || '10%',
-                hours: form.elements['hours']?.value || '8AM - 10PM',
-                accNo: form.elements['accNo']?.value || '',
-                ifsc: form.elements['ifsc']?.value || '',
-                payoutCycle: form.elements['payoutCycle']?.value || 'Weekly'
-            };
+            const procToast = toast.loading("Registering kitchen on cloud...");
+            const token = localStorage.getItem('token');
 
-            setProviders(prev => [newKitchen, ...prev]);
-            toast.dismiss(procToast);
-            toast.success(`${newKitchen.name} Registered Successfully!`, {
-                icon: '🍳',
-                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-            });
+            try {
+                const { data } = await axios.post(
+                    '/api/admin/providers',
+                    {
+                        fullName: owner,
+                        email,
+                        password,
+                        mobile,
+                        messName: name,
+                        fssaiNumber: fssai,
+                        commission_rate: parseInt(commission),
+                        bankDetails: {
+                            accountNumber: form.elements['accNo']?.value,
+                            ifscCode: form.elements['ifsc']?.value
+                        },
+                        location: {
+                            address: form.elements['location']?.value,
+                            city: form.elements['city']?.value,
+                            pincode: form.elements['pincode']?.value,
+                            coordinates: [0, 0]
+                        }
+                    },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
 
-            setShowRegisterModal(false);
-            setEditingKitchen(null);
+                toast.dismiss(procToast);
+                if (data.success) {
+                    toast.success(`${name} Registered Successfully!`, {
+                        icon: '🍳',
+                        style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+                    });
+                    fetchProviders();
+                    setShowRegisterModal(false);
+                }
+            } catch (err) {
+                toast.dismiss(procToast);
+                toast.error(err.response?.data?.message || "Cloud Registration Failed");
+            }
         } catch (err) {
             console.error("Registration Logic Error:", err);
             toast.error("Error: " + err.message);
         }
     };
 
-    const handleUpdate = (e) => {
-        console.log("handleUpdate called");
+    const handleUpdate = async (e) => {
+        console.log("handleUpdate called (Real API)");
         try {
             if (e && e.preventDefault) e.preventDefault();
             const form = formRef.current;
             if (!form) return;
 
-            const procToast = toast.loading("Saving changes...");
+            const procToast = toast.loading("Saving changes to cloud...");
+            const token = localStorage.getItem('token');
+            const providerId = editingKitchen?._id || editingKitchen?.id;
 
-            setProviders(prev => prev.map(p => p.id === editingKitchen.id ? {
-                ...p,
-                name: form.elements['name']?.value,
-                owner: form.elements['owner']?.value,
-                phone: form.elements['phone']?.value,
+            const updateData = {
+                fullName: form.elements['owner']?.value,
+                messName: form.elements['name']?.value,
+                mobile: form.elements['phone']?.value,
                 email: form.elements['email']?.value,
-                emergency: form.elements['emergency']?.value,
-                location: form.elements['location']?.value,
-                city: form.elements['city']?.value,
-                pincode: form.elements['pincode']?.value,
-                capacity: parseInt(form.elements['capacity']?.value) || 0,
-                type: form.elements['type']?.value,
-                fssai: form.elements['fssai']?.value,
-                commission: form.elements['commission']?.value,
-                hours: form.elements['hours']?.value,
-                accNo: form.elements['accNo']?.value,
-                ifsc: form.elements['ifsc']?.value,
-                payoutCycle: form.elements['payoutCycle']?.value
-            } : p));
+                fssaiNumber: form.elements['fssai']?.value,
+                commission_rate: parseInt(form.elements['commission']?.value?.replace('%', '') || '15'),
+                location: {
+                    address: form.elements['location']?.value,
+                    city: form.elements['city']?.value,
+                    pincode: form.elements['pincode']?.value,
+                    coordinates: editingKitchen.location?.coordinates || [0, 0]
+                },
+                bankDetails: {
+                    accountNumber: form.elements['accNo']?.value,
+                    ifscCode: form.elements['ifsc']?.value
+                }
+            };
 
-            toast.dismiss(procToast);
-            toast.success('Kitchen Profile Updated!', {
-                icon: '💾',
-                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-            });
+            try {
+                const { data } = await axios.put(
+                    `/api/admin/providers/${providerId}`,
+                    updateData,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
 
-            setEditingKitchen(null);
-            setShowRegisterModal(false);
+                toast.dismiss(procToast);
+                if (data.success) {
+                    toast.success('Kitchen Profile Updated!', {
+                        icon: '💾',
+                        style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
+                    });
+                    fetchProviders();
+                    setEditingKitchen(null);
+                    setShowRegisterModal(false);
+                }
+            } catch (err) {
+                toast.dismiss(procToast);
+                toast.error(err.response?.data?.message || "Cloud Update Failed");
+            }
         } catch (err) {
             console.error("Update Logic Error:", err);
             toast.error("Failed to update.");
-        }
-    };
-
-    const handleLoginAs = (kitchen) => {
-        if (window.confirm(`Simulate login as ${kitchen.name}?`)) {
-            toast.success(`Logged in as ${kitchen.name}`, {
-                icon: '🔐',
-                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-            });
-            // In a real app, this would redirect with an auth token
-        }
-    };
-
-    const handleForcePayout = (kitchen) => {
-        if (window.confirm(`Process immediate payout for ${kitchen.name}?`)) {
-            toast.success(`Payout processed for ${kitchen.name}`, {
-                icon: '💸',
-                style: { borderRadius: '10px', background: '#2D241E', color: '#fff' }
-            });
         }
     };
 
@@ -308,7 +320,6 @@ const AdminProviders = () => {
                 {
                     [
                         { label: 'Active Kitchens', val: providers.filter(p => p.status === 'Active').length, icon: 'storefront', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                        { label: 'Total Capacity', val: providers.reduce((acc, p) => acc + (p.status === 'Active' ? p.capacity : 0), 0), icon: 'restaurant', color: 'text-blue-600', bg: 'bg-blue-50' },
                         { label: 'Avg Rating', val: (providers.filter(p => p.rating > 0).reduce((acc, p) => acc + p.rating, 0) / (providers.filter(p => p.rating > 0).length || 1)).toFixed(1), icon: 'star', color: 'text-amber-600', bg: 'bg-amber-50' },
                         { label: 'Pending Apps', val: pendingRequests.length, icon: 'pending_actions', color: 'text-violet-600', bg: 'bg-violet-50' },
                     ].map((stat, i) => (
@@ -359,7 +370,6 @@ const AdminProviders = () => {
                         <thead>
                             <tr className="bg-white/50 border-b border-gray-100">
                                 <th className="px-6 py-4 text-[11px] font-bold text-[#5C4D42] uppercase tracking-wider">Kitchen Identity</th>
-                                <th className="px-6 py-4 text-[11px] font-bold text-[#5C4D42] uppercase tracking-wider">Capacity & Load</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-[#5C4D42] uppercase tracking-wider">Stats</th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-[#5C4D42] uppercase tracking-wider text-right">Actions</th>
                             </tr>
@@ -388,20 +398,6 @@ const AdminProviders = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="w-32">
-                                                <div className="flex justify-between text-[11px] font-bold mb-1">
-                                                    <span>{pro.currentLoad} Active Orders</span>
-                                                    <span className="text-[#897a70]">{pro.capacity} Max</span>
-                                                </div>
-                                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full ${pro.currentLoad / pro.capacity > 0.8 ? 'bg-rose-500' : 'bg-emerald-500'}`}
-                                                        style={{ width: `${(pro.currentLoad / pro.capacity) * 100}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="flex items-center gap-1 text-[11px] font-bold text-[#2D241E]">
                                                     <span className="material-symbols-outlined text-amber-400 text-[16px]">star</span>
@@ -423,6 +419,13 @@ const AdminProviders = () => {
                                                             title="Approve Request"
                                                         >
                                                             <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setSelectedKitchen(pro)}
+                                                            className="size-8 rounded-xl bg-[#2D241E] text-white flex items-center justify-center hover:bg-violet-600 transition-all shadow-lg shadow-black/10"
+                                                            title="View Application Details"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[18px]">visibility</span>
                                                         </button>
                                                         <button
                                                             onClick={() => handleRejectRequest(pro.id, pro.name)}
@@ -635,96 +638,29 @@ const AdminProviders = () => {
                                     </div>
                                 </div>
 
-                                {/* --- Super Admin Section [NEW] --- */}
-                                <div className="p-5 bg-orange-50/50 border border-orange-100 rounded-[2.5rem] relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 bg-orange-100 px-4 py-1.5 rounded-br-2xl border-b border-r border-orange-200">
-                                        <span className="text-xs font-bold text-orange-700 uppercase tracking-wider flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-[14px]">admin_panel_settings</span>
-                                            Super Admin Controls
-                                        </span>
-                                    </div>
-
-                                    <div className="mt-8 grid grid-cols-2 gap-6">
-                                        {/* Action Buttons */}
-                                        <div className="space-y-3">
-                                            <button
-                                                onClick={() => handleLoginAs(selectedKitchen)}
-                                                className="w-full py-3 bg-[#2D241E] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#2D241E]/20"
-                                            >
-                                                <span className="material-symbols-outlined text-[16px]">login</span>
-                                                Login as Kitchen
-                                            </button>
-                                            <button
-                                                onClick={() => handleForcePayout(selectedKitchen)}
-                                                className="w-full py-3 bg-white border border-gray-200 text-[#2D241E] rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-[16px]">payments</span>
-                                                Force Payout
-                                            </button>
+                                {/* Enhanced Performance Stats (Simplified) */}
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="p-5 bg-emerald-50 rounded-[1.8rem] border border-emerald-100/50 flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Lifetime Rating</p>
+                                            <p className="text-2xl font-bold text-emerald-700">4.85 ★</p>
                                         </div>
-
-                                        {/* Metrics & Remarks */}
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center text-xs font-bold text-[#897a70] border-b border-orange-100 pb-2">
-                                                <span>Hygiene Score</span>
-                                                <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">98/100</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-xs font-bold text-[#897a70] border-b border-orange-100 pb-2">
-                                                <span>Late Deliveries (This Month)</span>
-                                                <span className="text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg">2 Orders</span>
-                                            </div>
-                                            <textarea
-                                                placeholder="Internal Admin Remarks (Only visible to Super Admin)..."
-                                                className="w-full bg-white border border-orange-100 rounded-xl p-3 text-xs font-medium text-[#2D241E] resize-none focus:outline-none focus:border-orange-300 h-20 shadow-inner"
-                                            ></textarea>
-                                        </div>
-
-                                        {/* Audit Log [NEW] */}
-                                        <div className="col-span-2 pt-4 border-t border-orange-100/50">
-                                            <h5 className="text-[10px] font-bold text-orange-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                                <span className="material-symbols-outlined text-[14px]">history</span>
-                                                Audit Trail
-                                            </h5>
-                                            <div className="space-y-1.5">
-                                                {[
-                                                    { action: 'Payout of ₹12,400 Processed', time: '2h ago', by: 'System Automation' },
-                                                    { action: 'Menu Updated (Winter Special)', time: '5h ago', by: 'Kitchen Owner' },
-                                                    { action: 'Commission Adjusted to 12%', time: '1d ago', by: 'Super Admin (You)' }
-                                                ].map((log, i) => (
-                                                    <div key={i} className="flex justify-between items-center text-[11px] font-medium text-[#2D241E] bg-white/60 p-2 rounded-lg border border-orange-50 hover:bg-white transition-all">
-                                                        <span className="truncate flex-1">{log.action}</span>
-                                                        <span className="text-[#897a70] text-[10px] shrink-0 ml-4">{log.time} • {log.by}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Consistency</p>
+                                            <p className="text-sm font-bold text-blue-700">Elite Tier Provider</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Performance Graphics */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-[2rem] relative overflow-hidden">
-                                        <h5 className="text-xs font-bold text-[#897a70] uppercase tracking-wider mb-3">Today's Load</h5>
-                                        <div className="flex items-end justify-between h-20 px-2 pb-2">
-                                            {[40, 60, 30, 80, 50, 90, 70].map((h, i) => (
-                                                <div key={i} className="w-2 bg-orange-200 rounded-t-full transition-all hover:bg-orange-500" style={{ height: `${h}%` }}></div>
-                                            ))}
+                                {/* Provider Health Marker (Simplified) */}
+                                <div className="p-4 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                                            <span className="material-symbols-outlined text-[16px]">verified</span>
                                         </div>
+                                        <span className="text-xs font-bold text-[#2D241E]">Verified Ecosystem Partner</span>
                                     </div>
-                                    <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-[2rem]">
-                                        <h5 className="text-xs font-bold text-[#897a70] uppercase tracking-wider mb-3">Menu Snapshot</h5>
-                                        <ul className="space-y-2">
-                                            <li className="flex items-center gap-2 text-[10px] font-bold text-[#2D241E]">
-                                                <span className="size-1.5 rounded-full bg-emerald-500"></span> Paneer Butter Masala
-                                            </li>
-                                            <li className="flex items-center gap-2 text-[10px] font-bold text-[#2D241E]">
-                                                <span className="size-1.5 rounded-full bg-emerald-500"></span> Dal Fry + Jeera Rice
-                                            </li>
-                                            <li className="flex items-center gap-2 text-[10px] font-bold text-[#2D241E]">
-                                                <span className="size-1.5 rounded-full bg-emerald-500"></span> 4 Butter Roti
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <span className="text-[10px] font-bold text-emerald-600 uppercase">Excellent Standing</span>
                                 </div>
 
                                 {/* Documents Section */}
@@ -778,8 +714,8 @@ const AdminProviders = () => {
                             <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-[2rem] border border-white/10 flex items-center justify-center relative overflow-hidden group">
                                 <div className="text-center p-10">
                                     <span className="material-symbols-outlined text-8xl text-white/20 mb-4 group-hover:scale-110 transition-transform duration-500">description</span>
-                                    <p className="text-white/40 text-lg font-bold">Document Preview Placeholder</p>
-                                    <p className="text-white/20 text-sm mt-2">No actual file uploaded in demo mode.</p>
+                                    <p className="text-white/40 text-lg font-bold uppercase tracking-widest">Compliance Vault</p>
+                                    <p className="text-white/20 text-xs mt-2 uppercase tracking-widest">Verification Pending • Storage Protected</p>
                                 </div>
                                 {/* Mock watermark */}
                                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center rotate-[-45deg] opacity-5">
@@ -925,10 +861,6 @@ const AdminProviders = () => {
                                             <h4 className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">Operations</h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-bold text-[#897a70] uppercase ml-3 tracking-wider">Meal Capacity</label>
-                                                <input name="capacity" type="number" defaultValue={editingKitchen?.capacity} className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-amber-200 outline-none" required />
-                                            </div>
                                             <div className="space-y-1.5">
                                                 <label className="text-[10px] font-bold text-[#897a70] uppercase ml-3 tracking-wider">Commission (%)</label>
                                                 <input name="commission" type="text" defaultValue={editingKitchen?.commission || '10%'} className="w-full bg-gray-50/50 border border-gray-100 px-5 py-3 rounded-2xl text-xs font-bold text-[#2D241E] focus:bg-white focus:border-amber-200 outline-none" />

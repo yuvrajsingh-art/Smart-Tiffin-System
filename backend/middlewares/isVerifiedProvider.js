@@ -14,7 +14,7 @@ exports.isVerifiedProvider = async (req, res, next) => {
         if (!user.isVerified) {
             return res.status(403).json({
                 success: false,
-                message: "Access Denied: Your account is pending verification. Please complete your KYC or wait for admin approval."
+                message: "Access Denied: Your account is pending verification. Please wait for admin approval to access this feature."
             });
         }
 

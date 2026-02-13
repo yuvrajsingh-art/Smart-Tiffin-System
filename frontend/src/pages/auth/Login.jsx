@@ -52,7 +52,10 @@ function Login() {
         return Object.keys(newErrors).length === 0;
     };
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -73,10 +76,9 @@ function Login() {
         } catch (error) {
             console.error("Login component error:", error);
             if (error.response) {
-                if (error.response.status === 404) {
-                    setErrors({ email: "Email not registered" });
-                } else if (error.response.status === 401) {
-                    setErrors({ password: "Incorrect password" });
+                if (error.response.status === 401) {
+                    setErrors({ general: "Invalid email or password. Please try again." });
+                    toast.error("Authentication Failed");
                 }
             }
         } finally {
@@ -111,6 +113,12 @@ function Login() {
                         </div>
                         <h1 className="text-3xl font-black text-[#2D241E] mb-2">Welcome Back!</h1>
                         <p className="text-sm text-[#2D241E]/60 font-medium">Login to manage your Smart Tiffin experience</p>
+
+                        {errors.general && (
+                            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-xs font-bold text-red-500 animate-in fade-in slide-in-from-top-2">
+                                {errors.general}
+                            </div>
+                        )}
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
@@ -156,6 +164,11 @@ function Login() {
                                 >
                                     <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                 </button>
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
                                 {errors.password && <span className="text-[10px] font-bold text-red-500 mt-1 ml-4 uppercase tracking-wider animate-in fade-in slide-in-from-top-1">{errors.password}</span>}
                             </div>
                         </div>
@@ -201,7 +214,7 @@ function Login() {
 
             {/* Footer */}
             <footer className="py-8 text-center text-[#2D241E]/40 text-[10px] font-bold uppercase tracking-widest w-full relative z-10">
-                <p>© 2024 Smart Tiffin Technology. All rights reserved.</p>
+                <p>© 2024 Smart Tiffin System. All rights reserved.</p>
                 <div className="flex justify-center gap-8 mt-4 text-[#2D241E]/60">
                     <Link to="#" className="hover:text-primary transition-colors">Privacy</Link>
                     <Link to="#" className="hover:text-primary transition-colors">Terms</Link>

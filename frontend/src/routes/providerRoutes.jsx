@@ -15,11 +15,14 @@ import SubscriptionPlan from '../pages/Provider/SubscriptionPlan';
 import ProviderProfile from '../pages/Provider/ProviderProfile';
 import ProviderRevenue from '../pages/Provider/ProviderRevenue';
 import Notification from '../components/ui/Provider/Notification';
+import ProviderSupport from '../pages/Provider/ProviderSupport';
+import ManagePlans from '../pages/Provider/ManagePlans';
 
 // Provider route configuration
 export const providerRoutes = [
     { path: "dashboard", element: <ProviderDashboard /> },
     { path: "menu", element: <ManageMenu /> },
+    { path: "plans", element: <ManagePlans /> },
     { path: "customers", element: <ActiveCustomers /> },
     { path: "delivery", element: <DeliveryStatus /> },
     { path: "revenue", element: <ProviderRevenue /> },
@@ -27,6 +30,7 @@ export const providerRoutes = [
     { path: "plan", element: <SubscriptionPlan /> },
     { path: "profile", element: <ProviderProfile /> },
     { path: "notifications", element: <Notification /> },
+    { path: "support", element: <ProviderSupport /> },
 ];
 
 export default providerRoutes;
