@@ -1,4 +1,5 @@
 const Subscription = require("../../models/subscription.model");
+const { createNotification } = require("../../utils/notificationService");
 
 // Get all subscribers for a provider
 exports.getSubscribers = async (req, res) => {
@@ -17,28 +18,30 @@ exports.getSubscribers = async (req, res) => {
       .sort({ createdAt: -1 });
 
     console.log('Found subscriptions:', subscriptions.length);
-    console.log('Subscriptions:', subscriptions);
+    console.log('Provider ID:', providerId);
 
     const data = subscriptions.map(sub => {
-      let status = "Active";
+      let status = "active";
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Check if expired
+      // Check if expired first
       if (sub.endDate < today) {
-        status = "Expired";
+        status = "expired";
       }
-      // Check if currently paused
+      // Then check if currently paused
       else if (
         sub.pauseFrom &&
         sub.pauseTo &&
         new Date(sub.pauseFrom) <= today &&
         new Date(sub.pauseTo) >= today
       ) {
-        status = "Paused";
+        status = "paused";
       }
+      // Otherwise it's active
 
-      // Calculate actual skipped meals from skippedMeals array
+      console.log(`Subscription ${sub._id}: pauseFrom=${sub.pauseFrom}, pauseTo=${sub.pauseTo}, status=${status}`);
+
       let mealsSkipped = 0;
       if (sub.skippedMeals && Array.isArray(sub.skippedMeals)) {
         mealsSkipped = sub.skippedMeals.length;
@@ -66,9 +69,19 @@ exports.getSubscribers = async (req, res) => {
       };
     });
 
+    // Calculate stats
+    const customersWithSkippedMeals = data.filter(d => d.mealsSkipped > 0).length;
+    const stats = {
+      active: data.filter(d => d.status === 'active').length,
+      paused: customersWithSkippedMeals,
+      expired: data.filter(d => d.status === 'expired').length,
+      total: data.length
+    };
+
     res.json({
       success: true,
       count: data.length,
+      stats,
       data
     });
 
@@ -90,7 +103,6 @@ exports.getSubscriptionStats = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Total active subscriptions
     const totalActive = await Subscription.countDocuments({
       provider: providerId,
       status: { $in: ["approved", "active"] },
@@ -103,7 +115,6 @@ exports.getSubscriptionStats = async (req, res) => {
       ]
     });
 
-    // Paused subscriptions
     const paused = await Subscription.countDocuments({
       provider: providerId,
       status: { $in: ["approved", "active"] },
@@ -112,7 +123,6 @@ exports.getSubscriptionStats = async (req, res) => {
       pauseTo: { $gte: today }
     });
 
-    // Expiring this week
     const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
     const expiringThisWeek = await Subscription.countDocuments({
       provider: providerId,
@@ -124,7 +134,6 @@ exports.getSubscriptionStats = async (req, res) => {
       }
     });
 
-    // Total revenue
     const revenueResult = await Subscription.aggregate([
       {
         $match: {
@@ -172,7 +181,6 @@ exports.pauseSubscription = async (req, res) => {
     const subscriptionId = req.params.id;
     const providerId = req.user._id;
 
-    // Validate dates
     if (!pauseFrom || !pauseTo) {
       return res.status(400).json({
         success: false,
@@ -190,7 +198,14 @@ exports.pauseSubscription = async (req, res) => {
       });
     }
 
-    // Find and update subscription
+    // Calculate skipped dates
+    const skippedDates = [];
+    const currentDate = new Date(pauseFromDate);
+    while (currentDate <= pauseToDate) {
+      skippedDates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
     const subscription = await Subscription.findOneAndUpdate(
       {
         _id: subscriptionId,
@@ -200,7 +215,8 @@ exports.pauseSubscription = async (req, res) => {
       {
         pauseFrom: pauseFromDate,
         pauseTo: pauseToDate,
-        pauseReason: reason || "Paused by provider"
+        pauseReason: reason || "Paused by provider",
+        $addToSet: { skippedMeals: { $each: skippedDates } }
       },
       { new: true }
     ).populate("customer", "name phone email");
@@ -211,6 +227,15 @@ exports.pauseSubscription = async (req, res) => {
         message: "Subscription not found or unauthorized"
       });
     }
+
+    // Send notification to customer
+    await createNotification(
+      subscription.customer._id,
+      "Subscription Paused by Provider",
+      `Your subscription has been paused from ${pauseFromDate.toLocaleDateString()} to ${pauseToDate.toLocaleDateString()}. ${reason || ''}`,
+      "Warning",
+      { subscriptionId: subscription._id, pauseFrom, pauseTo }
+    );
 
     res.status(200).json({
       success: true,
@@ -235,7 +260,6 @@ exports.resumeSubscription = async (req, res) => {
     const subscriptionId = req.params.id;
     const providerId = req.user._id;
 
-    // Find and update subscription
     const subscription = await Subscription.findOneAndUpdate(
       {
         _id: subscriptionId,
@@ -258,6 +282,15 @@ exports.resumeSubscription = async (req, res) => {
         message: "Subscription not found or unauthorized"
       });
     }
+
+    // Send notification to customer
+    await createNotification(
+      subscription.customer._id,
+      "Subscription Resumed",
+      "Your subscription has been resumed by the provider. Enjoy your meals!",
+      "Success",
+      { subscriptionId: subscription._id }
+    );
 
     res.status(200).json({
       success: true,

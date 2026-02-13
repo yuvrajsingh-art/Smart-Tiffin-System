@@ -164,11 +164,12 @@ exports.getTodaysOrders = async (req, res) => {
             orderDate: { $gte: today, $lt: tomorrow }
         })
             .populate('customer', 'fullName mobile address email')
+            .populate('deliveryPartner', 'name phone')
             .sort({ mealType: 1, createdAt: -1 });
 
         // Separate by meal type
-        const lunchOrders = orders.filter(o => o.mealType.toLowerCase() === 'lunch');
-        const dinnerOrders = orders.filter(o => o.mealType.toLowerCase() === 'dinner');
+        const lunchOrders = orders.filter(o => (o.mealType || '').toLowerCase() === 'lunch');
+        const dinnerOrders = orders.filter(o => (o.mealType || '').toLowerCase() === 'dinner');
 
         res.json({
             success: true,

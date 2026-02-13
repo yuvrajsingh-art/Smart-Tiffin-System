@@ -44,9 +44,22 @@ const io = new Server(server, {
 
 
 // Socket.io Connection Logic
-io.on("connection", (socket) => {
+const userSockets = new Map(); // Track user connections
 
+io.on("connection", (socket) => {
   console.log(`🔌 New Client Connected: ${socket.id}`);
+
+  // User authentication and room joining
+  socket.on('authenticate', (userId) => {
+    if (userId) {
+      socket.join(`user_${userId}`);
+      userSockets.set(userId, socket.id);
+      console.log(`✅ User ${userId} authenticated and joined room user_${userId}`);
+      console.log(`📊 Total users in room: ${io.sockets.adapter.rooms.get(`user_${userId}`)?.size || 0}`);
+    } else {
+      console.log('⚠️ Authentication failed: No userId provided');
+    }
+  });
 
   // Test Event for Admin Panel Verification
   socket.on('test-new-order', () => {
@@ -66,16 +79,27 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-
+    // Remove user from tracking
+    for (const [userId, socketId] of userSockets.entries()) {
+      if (socketId === socket.id) {
+        userSockets.delete(userId);
+        console.log(`❌ User ${userId} disconnected`);
+        break;
+      }
+    }
     console.log(`❌ Client Disconnected: ${socket.id}`);
   });
 });
 
-// Make io accessible globally or export it (attaching to req is easiest for controllers)
+// Make io accessible globally
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
+
+// Initialize notification service with socket.io
+const notificationService = require('./utils/notificationService');
+notificationService.setSocketIO(io);
 
 // =============================================================================
 // MIDDLEWARE

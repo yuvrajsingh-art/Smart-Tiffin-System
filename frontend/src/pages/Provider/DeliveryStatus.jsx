@@ -51,26 +51,24 @@ function DeliveryStatus() {
                 const allOrders = [...lunch, ...dinner];
                 
                 const formattedDeliveries = allOrders.map(order => {
-                    const mealType = order.mealType || 'lunch';
-                    const deliveryTime = order.deliveryTime || (mealType.toLowerCase() === 'lunch' ? '12:00' : '20:00');
+                    const mealType = (order.mealType || 'lunch').toLowerCase();
+                    const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '12:00' : '20:00');
                     
-                    // Use only database status
-                    let orderStatus = order.status;
+                    // Use database status
+                    let orderStatus = (order.status || 'confirmed').toLowerCase();
+                    
+                    // Skip cancelled orders
                     if (orderStatus === 'cancelled') {
-                        return null; // Skip cancelled orders
+                        return null;
                     }
                     
+                    // Map status to frontend format
                     if (orderStatus === 'confirmed' || orderStatus === 'cooking') {
                         orderStatus = 'preparing';
                     } else if (orderStatus === 'prepared') {
                         orderStatus = 'ready_for_pickup';
-                    } else if (orderStatus === 'out_for_delivery') {
-                        orderStatus = 'out_for_delivery';
-                    } else if (orderStatus === 'delivered') {
-                        orderStatus = 'delivered';
-                    } else {
-                        orderStatus = 'preparing'; // Default
                     }
+                    // 'out_for_delivery' and 'delivered' remain same
                     
                     // Extract customer details
                     const customer = order.customer || {};
@@ -95,7 +93,7 @@ function DeliveryStatus() {
                         customer: customer.fullName || customer.name || 'N/A',
                         phone: phone,
                         address: address,
-                        items: order.menuItems?.map(i => i.name) || [order.mealType],
+                        items: order.menuItems?.map(i => i.name) || [mealType],
                         status: orderStatus,
                         mealType,
                         deliveryTime,
@@ -106,7 +104,7 @@ function DeliveryStatus() {
                         amount: order.amount || 0,
                         orderType: order.orderType
                     };
-                }).filter(Boolean); // Remove null entries (cancelled orders)
+                }).filter(Boolean); // Remove null entries
                 
                 setDeliveries(formattedDeliveries);
             }

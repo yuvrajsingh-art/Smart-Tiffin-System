@@ -9,6 +9,7 @@ import { Toaster } from 'react-hot-toast';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { UserProvider } from './context/UserContext';
 import { SocketProvider } from './context/SocketContext';
+import { NotificationProvider } from './context/NotificationContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Layouts
@@ -33,7 +34,8 @@ function App() {
     <UserProvider>
       <SubscriptionProvider>
         <SocketProvider>
-          <BrowserRouter>
+          <NotificationProvider>
+            <BrowserRouter>
             <Toaster position="top-center" reverseOrder={false} />
             <Routes>
               {/* Public Routes */}
@@ -98,6 +100,7 @@ function App() {
 
             </Routes>
           </BrowserRouter>
+          </NotificationProvider>
         </SocketProvider>
       </SubscriptionProvider>
     </UserProvider>

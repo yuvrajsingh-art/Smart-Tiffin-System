@@ -48,7 +48,7 @@ const orderSchema = new mongoose.Schema({
 
     mealType: {
         type: String,
-        enum: ["Lunch", "Dinner"],
+        enum: ["Lunch", "Dinner", "lunch", "dinner"],
         required: true
     },
 
@@ -70,6 +70,7 @@ const orderSchema = new mongoose.Schema({
     deliveredAt: Date,
 
     // Estimated delivery time
+    deliveryTime: String, // "12:00" or "20:00"
     estimatedDeliveryTime: Date,
 
     // Menu details

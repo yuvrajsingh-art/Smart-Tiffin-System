@@ -8,6 +8,15 @@ const ProviderProfile = require("../../models/providerprofile.model");
 const Wallet = require("../../models/wallet.model");
 const DummyBank = require("../../models/dummyBank.model");
 const { debitWallet } = require("./walletController");
+const { createNotification } = require("../../utils/notificationService");
+
+
+const {
+    notifySubscriptionPurchased,
+    notifySubscriptionPaused,
+    notifySubscriptionCancelled
+} = require("../../utils/notificationHelpers");
+
 
 // Get subscription details for management
 exports.getSubscriptionDetails = async (req, res) => {
@@ -183,6 +192,9 @@ exports.managePausedDays = async (req, res) => {
 
         // Calculate refund amount for NEWLY paused days only
         const refundAmount = newPausedDays.length * 80;
+
+        // Send notifications
+        await notifySubscriptionPaused(customerId, subscription.provider, validDates.length, refundAmount);
 
         // Create PENDING transaction for refund (Requires Admin Approval)
         if (refundAmount > 0) {
@@ -393,6 +405,9 @@ exports.cancelSubscription = async (req, res) => {
             hasActiveSubscription: false,
             activeSubscription: null
         });
+
+        // Send notifications
+        await notifySubscriptionCancelled(customerId, subscription.provider, Math.floor(refundAmount));
 
         res.json({
             success: true,
@@ -621,6 +636,9 @@ exports.purchaseSubscription = async (req, res) => {
         });
 
         await subscription.save();
+
+        // Send notifications
+        await notifySubscriptionPurchased(customerId, providerUserId, planName, totalAmount);
 
         // Update User Model with Active Subscription & Diet Preference
         const dietMap = {

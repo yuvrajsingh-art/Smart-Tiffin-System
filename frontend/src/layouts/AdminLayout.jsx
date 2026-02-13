@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import NotificationBell from '../components/common/NotificationBell';
 
 const SidebarItem = ({ icon, label, to, active }) => (
     <Link
@@ -134,10 +135,7 @@ const AdminLayout = () => {
                             <span className="material-symbols-outlined text-[18px]">calendar_today</span>
                             <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         </button>
-                        <button className="size-10 rounded-full bg-white/60 backdrop-blur-md border border-white/40 flex items-center justify-center text-[#5C4D42] hover:bg-white hover:text-orange-600 hover:shadow-md transition-all relative">
-                            <span className="material-symbols-outlined text-[20px]">notifications</span>
-                            <span className="absolute top-2.5 right-2.5 size-2 bg-orange-500 rounded-full ring-2 ring-white"></span>
-                        </button>
+                        <NotificationBell />
                     </div>
                 </header>
 

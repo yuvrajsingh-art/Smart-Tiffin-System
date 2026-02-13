@@ -12,6 +12,7 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [stats, setStats] = useState({ active: 0, paused: 0, expired: 0, total: 0 });
 
   useEffect(() => {
     fetchActiveCustomers();
@@ -26,6 +27,12 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
       if (response.data && response.data.data) {
         console.log('Total Subscriptions:', response.data.data.length);
         console.log('Subscriptions:', response.data.data);
+        
+        // Set stats from API
+        if (response.data.stats) {
+          setStats(response.data.stats);
+          console.log('Stats from API:', response.data.stats);
+        }
         
         const formattedData = response.data.data.map(sub => {
           console.log('Processing subscription:', sub._id, 'Status:', sub.status);
@@ -159,6 +166,16 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
     return matchesSearch && matchesStatus;
   });
 
+  const getStatusLabel = (status) => {
+    const labels = {
+      'active': 'Active',
+      'paused': 'Paused',
+      'expired': 'Expired',
+      'cancelled': 'Cancelled'
+    };
+    return labels[status] || status;
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
@@ -229,25 +246,25 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">{customers.filter(c => c.status === 'active').length}</p>
+            <p className="text-2xl font-bold text-green-600">{stats.active}</p>
             <p className="text-sm text-gray-600">Active</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <div className="text-center">
-            <p className="text-2xl font-bold text-yellow-600">{customers.filter(c => c.status === 'paused').length}</p>
+            <p className="text-2xl font-bold text-yellow-600">{stats.paused}</p>
             <p className="text-sm text-gray-600">Paused</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <div className="text-center">
-            <p className="text-2xl font-bold text-red-600">{customers.filter(c => c.status === 'expired').length}</p>
+            <p className="text-2xl font-bold text-red-600">{stats.expired}</p>
             <p className="text-sm text-gray-600">Expired</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-800">{customers.length}</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
             <p className="text-sm text-gray-600">Total</p>
           </div>
         </div>
@@ -271,7 +288,7 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(customer.status)}`}>
-                    {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
+                    {getStatusLabel(customer.status)}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPlanColor(customer.plan)}`}>
                     {customer.plan}

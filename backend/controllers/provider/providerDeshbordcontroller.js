@@ -67,11 +67,35 @@ exports.getProviderDashboard = async (req, res) => {
 
     /* ---------------- ACTIVE SUBSCRIPTIONS ---------------- */
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const activeSubscribers = await Subscription.countDocuments({
       provider: providerId,
       status: { $in: ["active", "approved"] },
-      endDate: { $gte: new Date() }
+      endDate: { $gte: today },
+      $or: [
+        { pauseFrom: null },
+        { pauseTo: null },
+        { pauseTo: { $lt: today } },
+        { pauseFrom: { $gt: today } }
+      ]
     });
+
+    /* ---------------- PAUSED SUBSCRIPTIONS ---------------- */
+
+    const pausedSubscribers = await Subscription.countDocuments({
+      provider: providerId,
+      status: { $in: ["active", "approved"] },
+      endDate: { $gte: today },
+      pauseFrom: { $lte: today },
+      pauseTo: { $gte: today }
+    });
+
+    console.log('📊 Dashboard Stats:');
+    console.log('Active Subscribers:', activeSubscribers);
+    console.log('Paused Subscribers:', pausedSubscribers);
+    console.log('Total Customers:', totalCustomers);
 
     /* ---------------- PROVIDER RATING ---------------- */
 
@@ -113,6 +137,7 @@ exports.getProviderDashboard = async (req, res) => {
           online,
           cash,
           activeSubscribers,
+          pausedSubscribers,
           totalCustomers
         },
 
