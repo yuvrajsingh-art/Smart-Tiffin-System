@@ -52,6 +52,9 @@ const {
     getPendingMenus,
     approveMenu,
     rejectMenu,
+    getAllMenus,
+    updateMenu,
+    deleteMenu,
 
     // Plans Management
     getPlans,
@@ -187,8 +190,17 @@ router.get("/reports/customers/download", protect, authorizeRoles("admin"), expo
 // MENU MANAGEMENT
 // =============================================================================
 
+// GET /api/admin/menus - Get all menus
+router.get("/menus", protect, authorizeRoles("admin"), getAllMenus);
+
 // GET /api/admin/menus/pending - Get pending menus
 router.get("/menus/pending", protect, authorizeRoles("admin"), getPendingMenus);
+
+// PUT /api/admin/menus/:id - Update menu
+router.put("/menus/:id", protect, authorizeRoles("admin"), updateMenu);
+
+// DELETE /api/admin/menus/:id - Delete menu
+router.delete("/menus/:id", protect, authorizeRoles("admin"), deleteMenu);
 
 // PUT /api/admin/menus/:id/approve - Approve menu
 router.put("/menus/:id/approve", protect, authorizeRoles("admin"), approveMenu);

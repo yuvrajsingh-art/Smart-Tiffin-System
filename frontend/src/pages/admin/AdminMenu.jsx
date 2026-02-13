@@ -232,13 +232,12 @@ const AdminMenu = () => {
                     <span className="material-symbols-outlined text-[14px] opacity-40 notranslate">{icon}</span>
                     {label}
                 </label>
-                {isDirty[id] && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 uppercase tracking-tight animate-pulse">Modified</span>}
             </div>
             <input
                 type="text"
                 value={menuData[id]}
-                onChange={(e) => handleInputChange(id, e.target.value)}
-                className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-[#201c1a] focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 outline-none transition-all shadow-sm group-hover:border-orange-200/50"
+                readOnly
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-[#201c1a] outline-none cursor-not-allowed opacity-75"
                 placeholder={placeholder}
             />
         </div>
@@ -420,13 +419,9 @@ const AdminMenu = () => {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <button onClick={handleReset} className="size-10 rounded-xl hover:bg-gray-100 flex items-center justify-center text-[#5C4D42] transition-all" title="Reset Form">
-                                <span className="material-symbols-outlined text-[20px]">restart_alt</span>
-                            </button>
-                            <button onClick={handleCopyYesterday} className="px-4 py-2 bg-[#2D241E]/5 hover:bg-[#2D241E]/10 rounded-xl text-[10px] font-bold text-[#2D241E] uppercase tracking-wider transition-all flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                                Copy Yesterday
-                            </button>
+                            <span className="text-[10px] font-bold text-[#897a70] uppercase tracking-wider bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                                View Only Mode
+                            </span>
                         </div>
                     </div>
 

@@ -61,6 +61,9 @@ module.exports = {
     getPendingMenus: menuController.getPendingMenus,
     approveMenu: menuController.approveMenu,
     rejectMenu: menuController.rejectMenu,
+    getAllMenus: menuController.getAllMenus,
+    updateMenu: menuController.updateMenu,
+    deleteMenu: menuController.deleteMenu,
 
     // Plans
     getPlans: planController.getPlans,

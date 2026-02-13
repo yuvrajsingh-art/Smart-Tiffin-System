@@ -73,6 +73,11 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
+  walletBalance: {
+    type: Number,
+    default: 0
+  },
+
   resetPasswordToken: String,
   resetPasswordExpire: Date,
 
