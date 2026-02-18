@@ -85,10 +85,17 @@ const CustomerDashboard = () => {
                             <p className="text-[#5C4D42] font-medium text-sm">Your tiffin is being prepared with love.</p>
                         </div>
                         <div className="hidden md:block">
-                            <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 shadow-sm border border-green-200">
-                                <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-                                Subscription Active
-                            </span>
+                            <div className="flex items-center gap-3">
+                                <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 shadow-sm border border-green-200">
+                                    <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
+                                    Subscription Active
+                                </span>
+                                {dashboardData?.remainingDays > 0 && (
+                                    <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm border border-orange-200">
+                                        {dashboardData.remainingDays} Days Left
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
 

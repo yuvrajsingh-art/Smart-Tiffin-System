@@ -171,11 +171,23 @@ exports.getTodaysOrders = async (req, res) => {
         const lunchOrders = orders.filter(o => (o.mealType || '').toLowerCase() === 'lunch');
         const dinnerOrders = orders.filter(o => (o.mealType || '').toLowerCase() === 'dinner');
 
+        // Separate by status for delivery page
+        const justIn = orders.filter(o => o.status === 'confirmed');
+        const preparing = orders.filter(o => o.status === 'cooking');
+        const ready = orders.filter(o => o.status === 'prepared');
+        const dispatched = orders.filter(o => o.status === 'out_for_delivery');
+        const delivered = orders.filter(o => o.status === 'delivered');
+
         res.json({
             success: true,
             data: {
                 lunch: lunchOrders,
                 dinner: dinnerOrders,
+                justIn,
+                preparing,
+                ready,
+                dispatched,
+                delivered,
                 summary: {
                     totalLunch: lunchOrders.length,
                     totalDinner: dinnerOrders.length,

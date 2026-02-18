@@ -14,6 +14,20 @@ const { isValidObjectId } = require("../../utils/validationHelper");
 const { formatDate, formatTime, getStartOfDay, getEndOfDay } = require("../../utils/dateHelper");
 const { createLog } = require("./helpers");
 
+// Helper to format status for frontend
+const formatStatus = (status) => {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+        case 'confirmed': return 'Preparing';
+        case 'cooking': return 'Preparing';
+        case 'prepared': return 'Out for Delivery';
+        case 'out_for_delivery': return 'In Transit';
+        case 'delivered': return 'Delivered';
+        case 'cancelled': return 'Cancelled';
+        default: return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+    }
+};
+
 /**
  * Get all orders with filters
  * @route GET /api/admin/orders
@@ -63,19 +77,20 @@ exports.getOrders = async (req, res) => {
 
         const orders = await Order.find(query)
             .populate('customer', 'fullName mobile address')
-            .populate('provider', 'businessName')
+            .populate('provider', 'fullName businessName')
             .sort({ createdAt: -1 });
 
         // Format orders for frontend
         const formattedOrders = orders.map(order => ({
             id: order.orderNumber || order._id.toString().slice(-6).toUpperCase(),
+            _id: order._id,
             rawId: order._id,
             displayId: order.orderNumber,
             customer: order.customer?.fullName || 'Unknown',
             customerMobile: order.customer?.mobile || 'N/A',
-            kitchen: order.provider?.businessName || 'Unknown',
+            kitchen: order.provider?.businessName || order.provider?.fullName || 'Unknown',
             type: order.orderType === 'subscription' ? 'Subscription' : 'One-Time',
-            status: order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' '),
+            status: formatStatus(order.status),
             price: order.amount || 0,
             time: formatTime(order.createdAt),
             date: formatDate(order.createdAt),
@@ -139,8 +154,12 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         const validStatuses = ['confirmed', 'cooking', 'prepared', 'out_for_delivery', 'delivered', 'cancelled'];
-        const normalizedStatus = status.toLowerCase().replace(/ /g, '_');
-
+        let normalizedStatus = status.toLowerCase().replace(/ /g, '_');
+        
+        // Map frontend status to backend status
+        if (status === 'Preparing') normalizedStatus = 'prepared';
+        if (status === 'In Transit') normalizedStatus = 'out_for_delivery';
+        
         if (!validStatuses.includes(normalizedStatus)) {
             return sendError(res, 400, "Invalid status");
         }

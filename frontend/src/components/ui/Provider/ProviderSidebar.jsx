@@ -34,8 +34,7 @@ function ProviderSidebar({ isOpen, setIsOpen }) {
     { icon: "local_shipping", label: "Delivery Status", path: "/provider/delivery" },
     { icon: "payment", label: "My Revenue", path: "/provider/revenue" },
     { icon: "feedback", label: "Customer Feedback", path: "/provider/feedback" },
-    { icon: "analytics", label: "Analytics", path: "/provider/analytics" },
-    { icon: "support_agent", label: "Support & Disputes", path: "/provider/support" }
+    { icon: "analytics", label: "Analytics", path: "/provider/analytics" }
   ];
 
   const handleLogout = () => {

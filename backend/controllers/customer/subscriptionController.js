@@ -29,7 +29,7 @@ exports.getSubscriptionDetails = async (req, res) => {
         // Get active subscription
         const activeSubscription = await Subscription.findOne({
             customer: customerId,
-            status: "approved",
+            status: { $in: ["approved", "active"] },
             endDate: { $gte: startOfToday }
         }).populate('provider', 'fullName');
 
@@ -182,19 +182,50 @@ exports.managePausedDays = async (req, res) => {
         }
 
         // Calculate newly added paused days (to calculate refund)
-        // We need to know which dates are NEWLY paused to issue refund for them
         const previousPausedDates = subscription.pausedDates || [];
+        
+        // Separate new and existing paused dates
         const newPausedDays = validDates.filter(d => !previousPausedDates.includes(d));
+        const alreadyPausedDays = validDates.filter(d => previousPausedDates.includes(d));
 
-        // Update paused dates
-        subscription.pausedDates = validDates;
+        // If trying to pause already paused dates, just inform but don't block
+        if (alreadyPausedDays.length > 0 && newPausedDays.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: `All selected dates are already paused: ${alreadyPausedDays.map(d => new Date(d).toLocaleDateString('en-IN')).join(', ')}`
+            });
+        }
+
+        // Update paused dates (keep old + add new)
+        subscription.pausedDates = [...new Set([...previousPausedDates, ...validDates])];
         await subscription.save();
 
         // Calculate refund amount for NEWLY paused days only
         const refundAmount = newPausedDays.length * 80;
 
-        // Send notifications
-        await notifySubscriptionPaused(customerId, subscription.provider, validDates.length, refundAmount);
+        // Get customer name
+        const customer = await User.findById(customerId).select('fullName');
+        const customerName = customer?.fullName || 'Customer';
+
+        // Send notifications with customer name and dates
+        const pausedDatesStr = newPausedDays.map(d => new Date(d).toLocaleDateString('en-IN')).join(', ');
+        const alreadyPausedStr = alreadyPausedDays.length > 0 
+            ? ` (${alreadyPausedDays.length} already paused)` 
+            : '';
+        
+        await createNotification(
+            customerId,
+            'Subscription Paused',
+            `You have paused ${newPausedDays.length} day(s): ${pausedDatesStr}${alreadyPausedStr}. Refund of ₹${refundAmount} pending approval.`,
+            'Info'
+        );
+
+        await createNotification(
+            subscription.provider,
+            'Customer Paused Subscription',
+            `${customerName} has paused subscription for ${newPausedDays.length} day(s): ${pausedDatesStr}${alreadyPausedStr}.`,
+            'Warning'
+        );
 
         // Create PENDING transaction for refund (Requires Admin Approval)
         if (refundAmount > 0) {
@@ -656,6 +687,11 @@ exports.purchaseSubscription = async (req, res) => {
             finalMealTypesArr = ["dinner"];
         }
 
+        // Normalize planType to valid enum values
+        const validPlanTypes = ["veg", "non-veg", "jain"];
+        const normalizedPlanType = (planType && planType.toLowerCase()) || "veg";
+        const finalPlanType = validPlanTypes.includes(normalizedPlanType) ? normalizedPlanType : "veg";
+
         const subscription = new Subscription({
             customer: customerId,
             provider: providerUserId,
@@ -664,8 +700,8 @@ exports.purchaseSubscription = async (req, res) => {
             price: finalAmount,
             totalAmount: finalAmount,
             type: validatedDuration <= 7 ? "weekly" : "monthly",
-            category: (planType && planType.toLowerCase()) || "veg",
-            planType: (planType && planType.toLowerCase()) || "veg",
+            category: finalPlanType,
+            planType: finalPlanType,
             durationInDays: validatedDuration || 30,
             startDate: start,
             endDate: end,
@@ -684,7 +720,7 @@ exports.purchaseSubscription = async (req, res) => {
         await subscription.save();
 
         // Send notifications
-        await notifySubscriptionPurchased(customerId, providerUserId, planName, totalAmount);
+        await notifySubscriptionPurchased(customerId, providerUserId, planName, finalAmount);
 
         // Update User Model with Active Subscription & Diet Preference
         const dietMap = {
@@ -702,6 +738,7 @@ exports.purchaseSubscription = async (req, res) => {
 
         // 6. Create Transaction Record ONLY for Non-Wallet (Wallet handled by debitWallet)
         if (!isWallet) {
+            console.log('Creating transaction with amount:', finalAmount);
             const transaction = new Transaction({
                 customer: customerId,
                 provider: providerUserId,
@@ -721,6 +758,7 @@ exports.purchaseSubscription = async (req, res) => {
             });
 
             await transaction.save();
+            console.log('Transaction saved:', transaction._id, 'Amount:', transaction.amount);
         }
 
         // 7. Credit Provider Wallet & Calculate Commission

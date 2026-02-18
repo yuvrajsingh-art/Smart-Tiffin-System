@@ -17,6 +17,7 @@ import ProviderRevenue from '../pages/Provider/ProviderRevenue';
 import Notification from '../components/ui/Provider/Notification';
 import ProviderSupport from '../pages/Provider/ProviderSupport';
 import ManagePlans from '../pages/Provider/ManagePlans';
+import Analytics from '../pages/Provider/Analytics';
 
 // Provider route configuration
 export const providerRoutes = [
@@ -31,6 +32,7 @@ export const providerRoutes = [
     { path: "profile", element: <ProviderProfile /> },
     { path: "notifications", element: <Notification /> },
     { path: "support", element: <ProviderSupport /> },
+    { path: "analytics", element: <Analytics /> },
 ];
 
 export default providerRoutes;

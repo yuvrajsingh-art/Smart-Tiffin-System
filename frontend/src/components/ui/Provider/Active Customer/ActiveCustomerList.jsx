@@ -171,7 +171,8 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
       'active': 'Active',
       'paused': 'Paused',
       'expired': 'Expired',
-      'cancelled': 'Cancelled'
+      'cancelled': 'Cancelled',
+      'cancellation_requested': 'Cancellation Requested'
     };
     return labels[status] || status;
   };
@@ -182,6 +183,7 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
       case 'paused': return 'bg-yellow-100 text-yellow-800';
       case 'expired': return 'bg-red-100 text-red-800';
       case 'cancelled': return 'bg-gray-100 text-gray-800';
+      case 'cancellation_requested': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -243,7 +245,7 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
   return (
     <div className="space-y-6">
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <div className="text-center">
             <p className="text-2xl font-bold text-green-600">{stats.active}</p>
@@ -260,6 +262,12 @@ const ActiveCustomerList = ({ searchTerm = '', filterStatus = 'all' }) => {
           <div className="text-center">
             <p className="text-2xl font-bold text-red-600">{stats.expired}</p>
             <p className="text-sm text-gray-600">Expired</p>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-orange-600">{stats.cancelled || 0}</p>
+            <p className="text-sm text-gray-600">Cancelled</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">

@@ -29,6 +29,23 @@ exports.getProviderDashboard = async (req, res) => {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const startOfLastMonth = new Date();
+    startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+    startOfLastMonth.setDate(1);
+    startOfLastMonth.setHours(0, 0, 0, 0);
+
+    const endOfLastMonth = new Date();
+    endOfLastMonth.setDate(0);
+    endOfLastMonth.setHours(23, 59, 59, 999);
+
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
     // Get all delivered orders for today
     const deliveredOrders = await Order.find({
       provider: providerId,
@@ -36,13 +53,13 @@ exports.getProviderDashboard = async (req, res) => {
       createdAt: { $gte: startOfDay }
     }).select("amount paymentMethod");
 
-    let totalRevenue = 0;
+    let todayRevenue = 0;
     let online = 0;
     let cash = 0;
 
     deliveredOrders.forEach(order => {
       const amount = order.amount || 0;
-      totalRevenue += amount;
+      todayRevenue += amount;
       if (order.paymentMethod === "UPI" || order.paymentMethod === "Card") {
         online += amount;
       }
@@ -51,10 +68,50 @@ exports.getProviderDashboard = async (req, res) => {
       }
     });
 
+    // Get total revenue (all time)
+    const allOrders = await Order.find({
+      provider: providerId,
+      status: "delivered"
+    }).select("amount");
+    const totalRevenue = allOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
+
+    // Get this month revenue
+    const thisMonthOrders = await Order.find({
+      provider: providerId,
+      status: "delivered",
+      createdAt: { $gte: startOfMonth }
+    }).select("amount");
+    const thisMonthRevenue = thisMonthOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
+
+    // Get last month revenue
+    const lastMonthOrders = await Order.find({
+      provider: providerId,
+      status: "delivered",
+      createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
+    }).select("amount");
+    const lastMonthRevenue = lastMonthOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
+
     // Get total orders count (all statuses except cancelled)
     const totalOrdersToday = await Order.countDocuments({
       provider: providerId,
       createdAt: { $gte: startOfDay },
+      status: { $ne: "cancelled" }
+    });
+
+    const totalOrdersAllTime = await Order.countDocuments({
+      provider: providerId,
+      status: { $ne: "cancelled" }
+    });
+
+    const totalOrdersThisWeek = await Order.countDocuments({
+      provider: providerId,
+      createdAt: { $gte: startOfWeek },
+      status: { $ne: "cancelled" }
+    });
+
+    const totalOrdersThisMonth = await Order.countDocuments({
+      provider: providerId,
+      createdAt: { $gte: startOfMonth },
       status: { $ne: "cancelled" }
     });
 
@@ -96,6 +153,12 @@ exports.getProviderDashboard = async (req, res) => {
     console.log('Active Subscribers:', activeSubscribers);
     console.log('Paused Subscribers:', pausedSubscribers);
     console.log('Total Customers:', totalCustomers);
+    console.log('Total Revenue:', totalRevenue);
+    console.log('This Month Revenue:', thisMonthRevenue);
+    console.log('Last Month Revenue:', lastMonthRevenue);
+    console.log('Total Orders All Time:', totalOrdersAllTime);
+    console.log('Total Orders This Week:', totalOrdersThisWeek);
+    console.log('Total Orders This Month:', totalOrdersThisMonth);
 
     /* ---------------- PROVIDER RATING ---------------- */
 
@@ -129,11 +192,17 @@ exports.getProviderDashboard = async (req, res) => {
           ordersToPrep,
           readyForPickup,
           outForDelivery,
-          totalOrdersToday
+          totalOrdersToday,
+          totalOrdersAllTime,
+          totalOrdersThisWeek,
+          totalOrdersThisMonth
         },
 
         businessHealth: {
-          todayRevenue: totalRevenue,
+          todayRevenue,
+          totalRevenue,
+          thisMonthRevenue,
+          lastMonthRevenue,
           online,
           cash,
           activeSubscribers,

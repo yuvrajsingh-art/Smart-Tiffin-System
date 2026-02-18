@@ -1,168 +1,249 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import axios from 'axios';
-import PlanForm from '../../components/ui/Provider/SubscriptionPlan/PlanForm';
-import PlanPreview from '../../components/ui/Provider/SubscriptionPlan/PlanPreview';
-import EmptyState from '../../components/ui/Provider/SubscriptionPlan/EmptyState';
-import PlanDisplay from '../../components/ui/Provider/SubscriptionPlan/PlanDisplay';
+import ProviderApi from '../../services/ProviderApi';
 import ProviderSidebar from '../../components/ui/Provider/ProviderSidebar';
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
 
 function SubscriptionPlan() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [showForm, setShowForm] = useState(false);
-    const [existingPlan, setExistingPlan] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [fetchingPlan, setFetchingPlan] = useState(true);
+    const [plans, setPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+    const [editingPlan, setEditingPlan] = useState(null);
     const [formData, setFormData] = useState({
-        providerName: '',
-        kitchenName: '',
-        weeklyPrice: '',
-        monthlyPrice: '',
-        description: '',
-        features: '',
-        cuisines: ''
+        name: '',
+        price: '',
+        period: 'Monthly',
+        type: 'veg',
+        description: ''
     });
 
     useEffect(() => {
-        fetchPlan();
+        fetchPlans();
     }, []);
 
-    const fetchPlan = async () => {
+    const fetchPlans = async () => {
         try {
-            const response = await axios.get('/api/provider/subscription-plan');
-            if (response.data.success && response.data.data) {
-                setExistingPlan(response.data.data);
-            }
-        } catch (error) {
-            console.error('Error fetching plan:', error);
-        } finally {
-            setFetchingPlan(false);
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const planData = {
-                ...formData,
-                features: formData.features.split(',').map(f => f.trim()).filter(f => f),
-                cuisines: formData.cuisines.split(',').map(c => c.trim()).filter(c => c)
-            };
-
-            const response = await axios.post('/api/provider/subscription-plan', planData);
-            
+            setLoading(true);
+            const response = await ProviderApi.get('/provider-plans');
             if (response.data.success) {
-                toast.success('Subscription plan created successfully!');
-                setExistingPlan(response.data.data);
-                setShowForm(false);
-                setFormData({
-                    providerName: '',
-                    kitchenName: '',
-                    weeklyPrice: '',
-                    monthlyPrice: '',
-                    description: '',
-                    features: '',
-                    cuisines: ''
-                });
+                setPlans(response.data.data || []);
             }
         } catch (error) {
-            console.error('Error creating plan:', error);
-            toast.error(error.response?.data?.message || 'Failed to create subscription plan');
+            console.error('Error fetching plans:', error);
+            toast.error('Failed to load plans');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleEdit = () => {
-        setFormData({
-            providerName: existingPlan.providerName,
-            kitchenName: existingPlan.kitchenName,
-            weeklyPrice: existingPlan.weeklyPrice,
-            monthlyPrice: existingPlan.monthlyPrice,
-            description: existingPlan.description,
-            features: existingPlan.features.join(', '),
-            cuisines: existingPlan.cuisines.join(', ')
-        });
-        setShowForm(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.name || !formData.price) {
+            return toast.error('Name and price are required');
+        }
+
+        try {
+            if (editingPlan) {
+                const response = await ProviderApi.put(`/provider-plans/${editingPlan._id}`, formData);
+                if (response.data.success) {
+                    toast.success('Plan updated successfully');
+                    await fetchPlans();
+                }
+            } else {
+                const response = await ProviderApi.post('/provider-plans', formData);
+                if (response.data.success) {
+                    toast.success('Plan created successfully');
+                    await fetchPlans();
+                }
+            }
+            setShowModal(false);
+            setEditingPlan(null);
+            setFormData({ name: '', price: '', period: 'Monthly', type: 'veg', description: '' });
+        } catch (error) {
+            console.error('Error saving plan:', error);
+            toast.error(error.response?.data?.message || 'Failed to save plan');
+        }
     };
 
-    if (fetchingPlan) {
-        return (
-            <div className="flex h-screen bg-[#FFFBF5]">
-                <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary"></div>
-                </div>
-            </div>
-        );
-    }
+    const handleDelete = async (planId) => {
+        if (!window.confirm('Delete this plan?')) return;
+        try {
+            const response = await ProviderApi.delete(`/provider-plans/${planId}`);
+            if (response.data.success) {
+                toast.success('Plan deleted');
+                await fetchPlans();
+            }
+        } catch (error) {
+            toast.error('Failed to delete plan');
+        }
+    };
+
+    const openEditModal = (plan) => {
+        setEditingPlan(plan);
+        setFormData({
+            name: plan.name,
+            price: plan.price,
+            period: plan.period || 'Monthly',
+            type: plan.type || 'veg',
+            description: plan.description || ''
+        });
+        setShowModal(true);
+    };
 
     return (
         <div className="flex h-screen bg-[#FFFBF5]">
             <ProviderSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col overflow-auto">
                 <ProviderHeader 
-                    title="Subscription Plan" 
-                    subtitle="Manage your meal subscription plans"
+                    title="Your Subscription Plans" 
+                    subtitle="Manage what customers can subscribe to"
                     onMenuClick={() => setIsSidebarOpen(true)}
                 />
+                
                 <div className="p-6">
-                    {!existingPlan && !showForm ? (
-                        <EmptyState onCreateClick={() => setShowForm(true)} />
-                    ) : showForm ? (
-                        <div className="max-w-7xl mx-auto">
-                            <div className="mb-8">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-12 bg-gradient-to-br from-primary to-orange-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                                            <span className="material-symbols-outlined text-2xl">card_membership</span>
-                                        </div>
-                                        <div>
-                                            <h1 className="text-3xl font-black text-[#2D241E]">{existingPlan ? 'Edit' : 'Create'} Subscription Plan</h1>
-                                            <p className="text-sm text-[#5C4D42] font-medium">Set up your meal plans for customers</p>
-                                        </div>
-                                    </div>
-                                    {existingPlan && (
-                                        <button
-                                            onClick={() => setShowForm(false)}
-                                            className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">close</span>
-                                            Cancel
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <div className="glass-panel p-6 rounded-[2rem] border border-white/60 bg-white/30">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                            <span className="material-symbols-outlined text-xl">edit_note</span>
-                                        </div>
-                                        <h2 className="text-xl font-black text-[#2D241E]">Plan Details</h2>
-                                    </div>
-                                    <PlanForm 
-                                        formData={formData} 
-                                        setFormData={setFormData} 
-                                        onSubmit={handleSubmit}
-                                        loading={loading}
-                                    />
-                                </div>
-
-                                <div className="lg:sticky lg:top-6 h-fit">
-                                    <PlanPreview formData={formData} />
-                                </div>
-                            </div>
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-800">My Plans</h2>
+                            <button
+                                onClick={() => {
+                                    setEditingPlan(null);
+                                    setFormData({ name: '', price: '', period: 'Monthly', type: 'veg', description: '' });
+                                    setShowModal(true);
+                                }}
+                                className="px-5 py-2.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all flex items-center gap-2"
+                            >
+                                <span className="material-symbols-outlined">add</span>
+                                Create Plan
+                            </button>
                         </div>
-                    ) : (
-                        <PlanDisplay plan={existingPlan} onEdit={handleEdit} />
-                    )}
+
+                        {loading ? (
+                            <div className="text-center py-12">
+                                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-orange-500 mx-auto"></div>
+                            </div>
+                        ) : plans.length === 0 ? (
+                            <div className="text-center py-20 bg-white rounded-2xl">
+                                <span className="material-symbols-outlined text-6xl text-gray-300">inventory_2</span>
+                                <p className="text-gray-500 mt-4">No plans yet. Create your first plan!</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {plans.map(plan => (
+                                    <div key={plan._id} className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-800">{plan.name}</h3>
+                                                <p className="text-sm text-gray-500">{plan.type} • {plan.period}</p>
+                                            </div>
+                                            <span className="text-2xl font-bold text-orange-600">₹{plan.price}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-4">{plan.description || 'No description'}</p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => openEditModal(plan)}
+                                                className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition-all"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(plan._id)}
+                                                className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition-all"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            {/* Modal */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+                        <h3 className="text-xl font-bold mb-4">{editingPlan ? 'Edit' : 'Create'} Plan</h3>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Plan Name</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                    placeholder="e.g., Monthly Veg Thali"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Price (₹)</label>
+                                <input
+                                    type="number"
+                                    value={formData.price}
+                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                    placeholder="2400"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Period</label>
+                                <select
+                                    value={formData.period}
+                                    onChange={(e) => setFormData({ ...formData, period: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                >
+                                    <option value="Weekly">Weekly</option>
+                                    <option value="Monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Type</label>
+                                <select
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                >
+                                    <option value="veg">Veg</option>
+                                    <option value="non-veg">Non-Veg</option>
+                                    <option value="jain">Jain</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Description</label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                    rows="3"
+                                    placeholder="Describe your plan..."
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        setEditingPlan(null);
+                                    }}
+                                    className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-2.5 bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600 transition-all"
+                                >
+                                    {editingPlan ? 'Update' : 'Create'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

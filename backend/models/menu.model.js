@@ -59,8 +59,7 @@ const menuSchema = new mongoose.Schema({
     enum: [
       "Monday", "Tuesday", "Wednesday",
       "Thursday", "Friday", "Saturday", "Sunday"
-    ],
-    required: true
+    ]
   }],
 
   isAvailable: { type: Boolean, default: true },

@@ -16,10 +16,10 @@ function DeliveryStatus() {
     useEffect(() => {
         fetchDeliveries();
         
-        // Auto-refresh every minute to update statuses
+        // Auto-refresh every 30 seconds to update statuses based on time
         const interval = setInterval(() => {
             fetchDeliveries();
-        }, 60000);
+        }, 30000);
         
         return () => clearInterval(interval);
     }, []);
@@ -47,40 +47,22 @@ function DeliveryStatus() {
             console.log('Orders Response:', response.data);
             
             if (response.data && response.data.data) {
-<<<<<<< HEAD
-                const { lunch, dinner } = response.data.data;
-                const allOrders = [...lunch, ...dinner];
-=======
+                const data = response.data.data;
+                console.log('Just In:', data.justIn);
+                console.log('Preparing:', data.preparing);
+                console.log('Ready:', data.ready);
+                console.log('Dispatched:', data.dispatched);
+                console.log('Delivered:', data.delivered);
+                
                 const allOrders = [
-<<<<<<< HEAD
-                    ...response.data.data.justIn.map(o => ({ ...o, status: 'preparing' })),
-                    ...response.data.data.preparing.map(o => ({ ...o, status: 'preparing' })),
-                    ...response.data.data.ready.map(o => ({ ...o, status: 'ready_for_pickup' })),
-                    ...response.data.data.dispatched.map(o => ({ ...o, status: 'out_for_delivery' })),
-                    ...(!filter || filter === 'all' || filter === 'delivered' ? [] : []) // Don't show delivered in main flow unless filtered, but for now show all
+                    ...(data.justIn || []),
+                    ...(data.preparing || []),
+                    ...(data.ready || []),
+                    ...(data.dispatched || []),
+                    ...(data.delivered || [])
                 ];
-
-                const formattedDeliveries = allOrders.map(order => ({
-                    id: order._id,
-                    orderId: order.orderNo,
-                    customer: order.customerName || 'N/A',
-                    phone: 'N/A',
-                    address: 'N/A',
-                    items: order.items?.map(i => i.name) || [],
-                    status: order.status,
-                    orderTime: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                    estimatedDelivery: 'N/A',
-                    rider: null,
-                    amount: order.amount || 0
-                }));
-                // Also fetch delivered orders if needed, for now just keeping active flow
-=======
-                    ...response.data.data.justIn,
-                    ...response.data.data.preparing,
-                    ...response.data.data.ready,
-                    ...response.data.data.dispatched
-                ];
->>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
+                
+                console.log('All Orders:', allOrders);
                 
                 const formattedDeliveries = allOrders.map(order => {
                     const mealType = (order.mealType || 'lunch').toLowerCase();
@@ -94,11 +76,17 @@ function DeliveryStatus() {
                         return null;
                     }
                     
+                    // Auto-update status based on time
+                    const timeBasedStatus = calculateDeliveryStatus(mealType, deliveryTime);
+                    
                     // Map status to frontend format
                     if (orderStatus === 'confirmed' || orderStatus === 'cooking') {
-                        orderStatus = 'preparing';
+                        orderStatus = timeBasedStatus === 'delivered' ? 'delivered' : 
+                                     timeBasedStatus === 'out_for_delivery' ? 'out_for_delivery' :
+                                     timeBasedStatus === 'ready_for_pickup' ? 'ready_for_pickup' : 'preparing';
                     } else if (orderStatus === 'prepared') {
-                        orderStatus = 'ready_for_pickup';
+                        orderStatus = timeBasedStatus === 'delivered' ? 'delivered' : 
+                                     timeBasedStatus === 'out_for_delivery' ? 'out_for_delivery' : 'ready_for_pickup';
                     }
                     // 'out_for_delivery' and 'delivered' remain same
                     
@@ -136,13 +124,8 @@ function DeliveryStatus() {
                         amount: order.amount || 0,
                         orderType: order.orderType
                     };
-<<<<<<< HEAD
-                }).filter(Boolean); // Remove null entries
+                }).filter(Boolean);
                 
-=======
-                });
->>>>>>> e0e90d30dc25ca4f82a351b90bcb99d93b91d4cd
->>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
                 setDeliveries(formattedDeliveries);
             }
         } catch (error) {
@@ -245,6 +228,7 @@ function DeliveryStatus() {
                                 getStatusText={getStatusText}
                                 filteredDeliveries={filteredDeliveries}
                                 getStatusColor={getStatusColor}
+                                onUpdateStatus={updateOrderStatus}
                             />
                             {filteredDeliveries.length === 0 && (
                                 <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">

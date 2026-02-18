@@ -6,7 +6,6 @@ import { useSubscription } from '../../context/SubscriptionContext';
 import { useAuth } from '../../context/UserContext';
 import { useSocket } from '../../context/SocketContext';
 import { TrackSkeleton } from '../../components/common';
-import LiveTrackingMap from '../../components/customer/LiveTrackingMap';
 
 const Track = () => {
     const { hasActiveSubscription } = useSubscription();
@@ -40,6 +39,11 @@ const Track = () => {
     useEffect(() => {
         if (hasActiveSubscription()) {
             fetchTracking();
+            // Auto-refresh every 10 seconds
+            const interval = setInterval(() => {
+                fetchTracking(false);
+            }, 10000);
+            return () => clearInterval(interval);
         } else {
             setLoading(false);
         }
@@ -82,7 +86,25 @@ const Track = () => {
                 </div>
                 <h2 className="text-2xl font-black text-[#2D241E]">No Active Deliveries</h2>
                 <p className="text-[#5C4D42] mt-3 max-w-md font-medium opacity-60">You don't have any orders out for delivery right now.</p>
-                <Link to="/customer/dashboard" className="mt-8 px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all">Go to Dashboard</Link>
+                <div className="flex gap-4 mt-8">
+                    <button 
+                        onClick={async () => {
+                            try {
+                                await axios.post('/api/customer/track/initialize-test', {}, {
+                                    headers: { Authorization: `Bearer ${token}` }
+                                });
+                                toast.success('Test order created!');
+                                fetchTracking();
+                            } catch (err) {
+                                toast.error('Failed to create test order');
+                            }
+                        }}
+                        className="px-6 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all"
+                    >
+                        Create Test Order
+                    </button>
+                    <Link to="/customer/dashboard" className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all">Go to Dashboard</Link>
+                </div>
             </div>
         );
     }
@@ -91,7 +113,8 @@ const Track = () => {
 
     // Helper to map API status to Dashboard Steps (1-5)
     const getStepFromStatus = (status) => {
-        switch (status) {
+        const statusLower = status.toLowerCase();
+        switch (statusLower) {
             case 'confirmed': return 1;
             case 'cooking': return 2;
             case 'prepared': return 3;
@@ -100,6 +123,20 @@ const Track = () => {
             default: return 1;
         }
     };
+    
+    // Get display status text
+    const getStatusText = (status) => {
+        const statusLower = status.toLowerCase();
+        switch (statusLower) {
+            case 'confirmed': return 'Order Confirmed';
+            case 'cooking': return 'Cooking';
+            case 'prepared': return 'Ready for Pickup';
+            case 'out_for_delivery': return 'Out for Delivery';
+            case 'delivered': return 'Delivered';
+            default: return status.replace(/_/g, ' ');
+        }
+    };
+    
     const currentStep = getStepFromStatus(order.status);
 
     return (
@@ -144,24 +181,7 @@ const Track = () => {
                     </div>
                 )}
 
-                {/* 0. MAP VIEW (Premium Addition) */}
-                <div className="h-[300px] sm:h-[400px] w-full bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-xl relative group">
-                    <LiveTrackingMap
-                        eta={eta}
-                        distance={trackingData.distance}
-                        deliveryPartner={deliveryPartner}
-                        orderStatus={order.status}
-                        mapData={trackingData.mapData}
-                    />
-                    <div className="absolute top-4 left-4 z-[400]">
-                        <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg border border-white/60 shadow-lg text-[9px] font-black uppercase tracking-widest text-[#2D241E] flex items-center gap-2">
-                            <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
-                            Real-time GPS
-                        </div>
-                    </div>
-                </div>
-
-                {/* 1. DASHBOARD STYLE TRACKER CARD */}
+                {/* DASHBOARD STYLE TRACKER CARD */}
                 <section className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden group border border-white/60 shadow-[0_20px_40px_-10px_rgba(255,87,36,0.1)]">
                     {/* bg blobs */}
                     <div className="absolute top-0 right-0 w-80 h-80 bg-orange-100/50 rounded-full blur-3xl pointer-events-none"></div>
@@ -170,7 +190,7 @@ const Track = () => {
                         <div className="flex justify-between items-start mb-8">
                             <div>
                                 <span className="text-xs font-black text-orange-500 uppercase tracking-widest mb-2 block">Live Status</span>
-                                <h2 className="text-3xl font-black text-[#2D241E] capitalize">{order.status.replace(/_/g, ' ')} 🍳</h2>
+                                <h2 className="text-3xl font-black text-[#2D241E] capitalize">{getStatusText(order.status)} 🍳</h2>
                             </div>
                             <div className="bg-white/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/60 text-right shadow-sm">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Estimated Arrival</p>

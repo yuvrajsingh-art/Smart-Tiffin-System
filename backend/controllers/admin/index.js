@@ -16,6 +16,7 @@ const providerController = require('./provider.controller');
 
 // Features
 const financeController = require('./finance.controller');
+const menuController = require('./menu.controller');
 const planController = require('./plan.controller');
 const ticketController = require('./ticket.controller');
 const broadcastController = require('./broadcast.controller');
@@ -57,8 +58,6 @@ module.exports = {
     getRefundRequests: financeController.getRefundRequests,
     approveCancellation: financeController.approveCancellation,
 
-<<<<<<< HEAD
-=======
     // Menus
     getPendingMenus: menuController.getPendingMenus,
     approveMenu: menuController.approveMenu,
@@ -66,7 +65,6 @@ module.exports = {
     getAllMenus: menuController.getAllMenus,
     updateMenu: menuController.updateMenu,
     deleteMenu: menuController.deleteMenu,
->>>>>>> 288570730d33e32f3a8c311d0abba0db8af0261f
 
     // Plans
     getPlans: planController.getPlans,

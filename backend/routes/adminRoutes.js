@@ -49,8 +49,6 @@ const {
     approveCancellation,
     getRefundRequests,
 
-<<<<<<< HEAD
-=======
     // Menu Management
     getPendingMenus,
     approveMenu,
@@ -58,7 +56,6 @@ const {
     getAllMenus,
     updateMenu,
     deleteMenu,
->>>>>>> 288570730d33e32f3a8c311d0abba0db8af0261f
 
     // Plans Management
     getPlans,
@@ -197,8 +194,6 @@ router.get("/reports/sales/download", protect, authorizeRoles("admin"), exportSa
 // GET /api/admin/reports/customers/download - Download customers CSV [NEW]
 router.get("/reports/customers/download", protect, authorizeRoles("admin"), exportCustomersCSV);
 
-<<<<<<< HEAD
-=======
 // =============================================================================
 // MENU MANAGEMENT
 // =============================================================================
@@ -220,7 +215,6 @@ router.put("/menus/:id/approve", protect, authorizeRoles("admin"), approveMenu);
 
 // PUT /api/admin/menus/:id/reject - Reject menu
 router.put("/menus/:id/reject", protect, authorizeRoles("admin"), rejectMenu);
->>>>>>> 288570730d33e32f3a8c311d0abba0db8af0261f
 
 // =============================================================================
 // PLANS MANAGEMENT

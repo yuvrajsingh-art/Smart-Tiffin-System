@@ -6,13 +6,17 @@ const {
     getMessDetails,
     getPopularLocations,
     getSearchSuggestions,
-    getStandardPlans // Added import
+    getStandardPlans,
+    getProviderPlans
 } = require("../../controllers/customer/messDiscoveryController");
 
 const { protect } = require("../../middleware/authMiddleware.middleware");
 
 // GET /api/customer/messes/plans - Get standard plans (Public)
 router.get("/plans", getStandardPlans);
+
+// GET /api/discovery/plans/:providerId - Get provider specific plans
+router.get("/plans/:providerId", getProviderPlans);
 
 // GET /api/discovery/find-mess - Find messes
 router.get("/find-mess", findMessProviders);

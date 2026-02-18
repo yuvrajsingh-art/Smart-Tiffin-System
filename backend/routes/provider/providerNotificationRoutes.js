@@ -5,7 +5,8 @@ const auth = require("../../middleware/authMiddleware.middleware");
 const {
     getProviderNotifications,
     markAsRead,
-    markAllAsRead
+    markAllAsRead,
+    sendBulkNotification
 } = require("../../controllers/provider/providerNotificationController");
 
 // Get all notifications for provider
@@ -16,5 +17,8 @@ router.patch("/:id/read", auth.protect, markAsRead);
 
 // Mark all notifications as read
 router.patch("/mark-all-read", auth.protect, markAllAsRead);
+
+// Send bulk notification to customers
+router.post("/bulk", auth.protect, sendBulkNotification);
 
 module.exports = router;
