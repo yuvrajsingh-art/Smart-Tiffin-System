@@ -17,8 +17,32 @@ exports.getPlans = async (req, res) => {
     }
 };
 
+/**
+ * Create new plan
+ * @route POST /api/admin/plans
+ */
 exports.createPlan = async (req, res) => {
-    return sendError(res, 405, "Platform Admin cannot create plans. Plans must be created by Providers.");
+    try {
+        const { name, price, period, type, description, color, badge } = req.body;
+        
+        const newPlan = await Plan.create({
+            name,
+            price,
+            period: period || 'Monthly',
+            type: type || 'Veg',
+            description: description || '',
+            color: color || 'from-emerald-400 to-emerald-600',
+            badge: badge || 'Standard',
+            provider: req.user.id,
+            verificationStatus: 'Approved',
+            isActive: true
+        });
+        
+        return sendSuccess(res, 201, "Plan created successfully", newPlan);
+    } catch (error) {
+        console.error("Create Plan Error:", error.message);
+        return sendError(res, 500, "Failed to create plan", error);
+    }
 };
 
 /**
@@ -62,10 +86,39 @@ exports.rejectPlan = async (req, res) => {
     }
 };
 
+/**
+ * Update plan
+ * @route PUT /api/admin/plans/:id
+ */
 exports.updatePlan = async (req, res) => {
-    return sendError(res, 405, "Platform Admin cannot edit plans.");
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+        
+        const plan = await Plan.findByIdAndUpdate(id, updateData, { new: true });
+        if (!plan) return sendError(res, 404, "Plan not found");
+        
+        return sendSuccess(res, 200, "Plan updated successfully", plan);
+    } catch (error) {
+        console.error("Update Plan Error:", error.message);
+        return sendError(res, 500, "Failed to update plan", error);
+    }
 };
 
+/**
+ * Delete plan
+ * @route DELETE /api/admin/plans/:id
+ */
 exports.deletePlan = async (req, res) => {
-    return sendError(res, 405, "Platform Admin cannot delete plans.");
+    try {
+        const { id } = req.params;
+        
+        const plan = await Plan.findByIdAndDelete(id);
+        if (!plan) return sendError(res, 404, "Plan not found");
+        
+        return sendSuccess(res, 200, "Plan deleted successfully");
+    } catch (error) {
+        console.error("Delete Plan Error:", error.message);
+        return sendError(res, 500, "Failed to delete plan", error);
+    }
 };

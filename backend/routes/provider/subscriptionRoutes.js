@@ -10,8 +10,13 @@ const {
     updateSubscriptionStatus
 } = require("../../controllers/provider/providersubscriptioncontroller");
 
+const { generateTestOrders } = require("../../controllers/provider/testOrderController");
+
 const { protect } = require("../../middleware/authMiddleware.middleware");
 const { isVerifiedProvider } = require("../../middlewares/isVerifiedProvider");
+
+// Test endpoint to generate sample orders
+router.post("/generate-test-orders", protect, isVerifiedProvider, generateTestOrders);
 
 // Get all subscribers for provider
 router.get("/", protect, isVerifiedProvider, getSubscribers);

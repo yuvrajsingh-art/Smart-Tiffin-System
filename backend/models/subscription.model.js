@@ -138,4 +138,19 @@ const subscriptionSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
+// Virtual field to calculate remaining days
+subscriptionSchema.virtual('remainingDays').get(function() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(this.endDate);
+    endDate.setHours(0, 0, 0, 0);
+    const diffTime = endDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+});
+
+// Ensure virtuals are included in JSON
+subscriptionSchema.set('toJSON', { virtuals: true });
+subscriptionSchema.set('toObject', { virtuals: true });
+
 module.exports = mongoose.model("subscription", subscriptionSchema);

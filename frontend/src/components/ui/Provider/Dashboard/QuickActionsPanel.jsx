@@ -120,7 +120,10 @@ const QuickActionsPanel = () => {
 
         setLoading(true);
         try {
-            await ProviderApi.post('/provider-notifications/bulk', { message });
+            await ProviderApi.post('/provider-notifications/bulk', { 
+                title: 'Message from Provider',
+                message 
+            });
             Swal.fire({
                 icon: 'success',
                 title: 'Notification Sent!',

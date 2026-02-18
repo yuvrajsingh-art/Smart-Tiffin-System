@@ -14,10 +14,10 @@ function ProviderRecentOrders() {
     useEffect(() => {
         fetchRecentOrders();
         
-        // Auto-refresh every minute for real-time updates
+        // Auto-refresh every 30 seconds for real-time updates
         const interval = setInterval(() => {
             fetchRecentOrders();
-        }, 60000);
+        }, 30000);
         
         return () => clearInterval(interval);
     }, []);
@@ -50,10 +50,23 @@ function ProviderRecentOrders() {
                     const mealType = order.mealType || 'lunch';
                     const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '11:00' : '19:00');
                     
-                    // Use actual order status if cancelled, otherwise calculate delivery status
-                    const displayStatus = order.status === 'cancelled' 
-                        ? 'Cancelled' 
-                        : calculateDeliveryStatus(mealType, deliveryTime);
+                    // Use actual database status
+                    let displayStatus = 'Preparing';
+                    const dbStatus = (order.status || 'confirmed').toLowerCase();
+                    
+                    if (dbStatus === 'cancelled') {
+                        displayStatus = 'Cancelled';
+                    } else if (dbStatus === 'delivered') {
+                        displayStatus = 'Delivered';
+                    } else if (dbStatus === 'out_for_delivery') {
+                        displayStatus = 'Out for Delivery';
+                    } else if (dbStatus === 'prepared') {
+                        displayStatus = 'Ready for Pickup';
+                    } else if (dbStatus === 'cooking') {
+                        displayStatus = 'Cooking';
+                    } else if (dbStatus === 'confirmed') {
+                        displayStatus = 'Confirmed';
+                    }
                     
                     return {
                         id: order._id,
@@ -94,6 +107,7 @@ function ProviderRecentOrders() {
     const getStatusColor = (status) => {
         switch (status) {
             case 'Delivered': return 'bg-green-100 text-green-800';
+            case 'Cooking':
             case 'Preparing': return 'bg-yellow-100 text-yellow-800';
             case 'Out for Delivery': return 'bg-blue-100 text-blue-800';
             case 'Ready for Pickup': return 'bg-orange-100 text-orange-800';

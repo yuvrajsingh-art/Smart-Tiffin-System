@@ -144,6 +144,8 @@ const storeProfileRoutes = require("./routes/provider/storeProfileRoutes");
 const providerOrderRoutes = require("./routes/provider/providerOrderRoutes");
 const providerNotificationRoutes = require("./routes/provider/providerNotificationRoutes");
 const subscriptionPlanRoutes = require("./routes/provider/subscriptionPlanRoutes");
+const providerPlanRoutes = require("./routes/provider/planRoutes");
+const providerTrackRoutes = require("./routes/provider/trackRoutes");
 const activityRoutes = require("./routes/provider/activityRoutes");
 
 // Admin routes
@@ -173,19 +175,14 @@ app.use("/api/provider-subscription", subscriptionRoutes);
 app.use("/api/provider-wallet", walletRoutes);
 app.use("/api/provider-reviews", reviewTriageRoutes);
 app.use("/api/provider-store", storeProfileRoutes);
-<<<<<<< HEAD
-app.use("/api/provider-orders", providerOrderRoutes);  // NEW: Order management
-app.use("/api/provider-plans", require("./routes/provider/planRoutes"));
-app.use("/api/notifications", providerNotificationRoutes);  // Provider Notifications
-=======
 app.use("/api/provider-orders", providerOrderRoutes);
 app.use("/api/notifications", providerNotificationRoutes);
+app.use("/api/provider-notifications", providerNotificationRoutes);
 app.use("/api/provider", subscriptionPlanRoutes);
-<<<<<<< HEAD
+app.use("/api/provider-plans", providerPlanRoutes);
+app.use("/api/provider-track", providerTrackRoutes);
 app.use("/api/provider/activities", activityRoutes);
-=======
->>>>>>> e0e90d30dc25ca4f82a351b90bcb99d93b91d4cd
->>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
+app.use('/api/provider/support', require('./routes/provider/supportRoutes'));
 
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);
@@ -230,13 +227,6 @@ const log = {
 // =============================================================================
 // START SERVER
 // =============================================================================
-
-// =============================================================================
-// START SERVER
-// =============================================================================
-
-// Provider Support Routes
-app.use('/api/provider/support', require('./routes/provider/supportRoutes'));
 
 const PORT = process.env.PORT || 5000;
 

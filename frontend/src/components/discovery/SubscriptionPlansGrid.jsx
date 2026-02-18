@@ -9,7 +9,7 @@ const SubscriptionPlansGrid = ({ provider, providerId }) => {
     useEffect(() => {
         const fetchPlans = async () => {
             try {
-                const res = await axios.get('/api/customer/discovery/plans');
+                const res = await axios.get(`/api/discovery/plans/${providerId}`);
                 if (res.data.success) {
                     setPlans(res.data.data);
                 }
@@ -19,8 +19,10 @@ const SubscriptionPlansGrid = ({ provider, providerId }) => {
                 setLoading(false);
             }
         };
-        fetchPlans();
-    }, []);
+        if (providerId) {
+            fetchPlans();
+        }
+    }, [providerId]);
 
     if (loading) return <div className="text-center py-10 text-xs font-bold text-gray-400">Loading Plans...</div>;
 

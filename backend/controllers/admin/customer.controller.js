@@ -64,19 +64,29 @@ exports.getCustomers = async (req, res) => {
         // Get active subscriptions for all customers
         const Subscription = require('../../models/subscription.model');
         const customerIds = customers.map(c => c._id);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
         const activeSubscriptions = await Subscription.find({
             customer: { $in: customerIds },
             status: { $in: ['active', 'approved', 'pending', 'cancelled', 'expired', 'paused'] }
-        }).select('customer planName type category status');
+        }).select('customer planName type category status endDate');
 
         // Map subscriptions to customers
         const subscriptionMap = {};
         activeSubscriptions.forEach(sub => {
+            // Calculate remaining days
+            const endDate = new Date(sub.endDate);
+            endDate.setHours(0, 0, 0, 0);
+            const diffTime = endDate - today;
+            const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
             subscriptionMap[sub.customer.toString()] = {
                 planName: sub.planName,
                 type: sub.type,
                 category: sub.category,
-                status: sub.status // actual subscription status from DB
+                status: sub.status,
+                remainingDays: remainingDays > 0 ? remainingDays : 0
             };
         });
 

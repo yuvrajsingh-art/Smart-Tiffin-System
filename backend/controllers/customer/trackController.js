@@ -27,11 +27,11 @@ exports.getLiveTracking = async (req, res) => {
             rangeEnd: tomorrow.toISOString()
         });
 
-        // Find today's active order (subscription or guest)
+        // Find today's active order (subscription or guest) - include delivered for completion message
         const activeOrder = await Order.findOne({
             customer: customerId,
             orderDate: { $gte: today, $lt: tomorrow },
-            status: { $nin: ['delivered', 'cancelled'] }
+            status: { $nin: ['cancelled'] }
         }).populate({
             path: 'subscription',
             populate: { path: 'provider', select: 'fullName' }
