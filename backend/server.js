@@ -34,12 +34,12 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Frontend URL
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   },
-  transports: ['websocket', 'polling'], // Allow both transports
-  allowEIO3: true // Backward compatibility
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
 });
 
 
@@ -107,7 +107,7 @@ notificationService.setSocketIO(io);
 
 // CORS - Allow frontend to communicate with backend
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite dev server
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 
