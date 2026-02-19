@@ -7,7 +7,9 @@ const ProviderStatsCards = () => {
         totalActive: 0,
         paused: 0,
         expiringThisWeek: 0,
-        totalRevenue: 0
+        totalRevenue: 0,
+        avgRating: 0,
+        pendingApps: 0
     });
     const [loading, setLoading] = useState(true);
 
@@ -18,19 +20,42 @@ const ProviderStatsCards = () => {
     const fetchStats = async () => {
         try {
             // Fetch from wallet API for accurate revenue
-            const [subscriptionRes, walletRes] = await Promise.all([
+            const [subscriptionRes, walletRes, feedbackRes] = await Promise.all([
                 ProviderApi.get('/provider-subscription/stats'),
-                ProviderApi.get('/provider-wallet/summary')
+                ProviderApi.get('/provider-wallet/summary'),
+                ProviderApi.get('/provider/feedback/categorized').catch(() => ({ data: { success: false } }))
             ]);
             
             const subscriptionStats = subscriptionRes.data?.stats || {};
             const walletData = walletRes.data?.data || {};
             
+            // Calculate average rating from feedback
+            let avgRating = 0;
+            let pendingApps = 0;
+            
+            if (feedbackRes.data.success && feedbackRes.data.data) {
+                const { positive, neutral, negative } = feedbackRes.data.data;
+                const totalReviews = (positive?.count || 0) + (neutral?.count || 0) + (negative?.count || 0);
+                
+                if (totalReviews > 0) {
+                    const totalRating = 
+                        (positive?.reviews || []).reduce((sum, r) => sum + (r.rating || 0), 0) +
+                        (neutral?.reviews || []).reduce((sum, r) => sum + (r.rating || 0), 0) +
+                        (negative?.reviews || []).reduce((sum, r) => sum + (r.rating || 0), 0);
+                    avgRating = (totalRating / totalReviews).toFixed(1);
+                }
+            }
+            
+            // Pending apps = paused subscriptions
+            pendingApps = subscriptionStats.paused || 0;
+            
             setStats({
                 totalActive: subscriptionStats.totalActive || 0,
                 paused: subscriptionStats.paused || 0,
                 expiringThisWeek: subscriptionStats.expiringThisWeek || 0,
-                totalRevenue: walletData.totalEarnings || 0
+                totalRevenue: walletData.totalEarnings || 0,
+                avgRating: avgRating || 0,
+                pendingApps: pendingApps
             });
         } catch (error) {
             console.error('Error fetching stats:', error);
@@ -48,19 +73,19 @@ const ProviderStatsCards = () => {
             borderColor: 'border-green-200'
         },
         {
-            title: 'Paused',
-            value: stats.paused,
-            icon: <FaPause />,
-            color: 'bg-yellow-100 text-yellow-600',
-            borderColor: 'border-yellow-200'
+            title: 'Avg Rating',
+            value: stats.avgRating > 0 ? `${stats.avgRating} ★` : 'N/A',
+            icon: <FaUsers />,
+            color: 'bg-blue-100 text-blue-600',
+            borderColor: 'border-blue-200'
         },
         {
-            title: 'Expiring Soon',
-            value: stats.expiringThisWeek,
+            title: 'Pending Apps',
+            value: stats.pendingApps,
             icon: <FaClock />,
-            color: 'bg-red-100 text-red-600',
-            borderColor: 'border-red-200',
-            subtext: 'This Week'
+            color: 'bg-orange-100 text-orange-600',
+            borderColor: 'border-orange-200',
+            subtext: 'Paused Subs'
         },
         {
             title: 'Total Revenue',

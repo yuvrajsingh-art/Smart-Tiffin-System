@@ -147,9 +147,11 @@ const subscriptionPlanRoutes = require("./routes/provider/subscriptionPlanRoutes
 const providerPlanRoutes = require("./routes/provider/planRoutes");
 const providerTrackRoutes = require("./routes/provider/trackRoutes");
 const activityRoutes = require("./routes/provider/activityRoutes");
+const providerFeedbackRoutes = require("./routes/provider/feedbackRoutes");
 
 // Admin routes
 const adminRoutes = require("./routes/adminRoutes");
+const adminFeedbackRoutes = require("./routes/admin/feedbackRoutes");
 
 // Customer routes consolidated
 const customerRoutes = require("./routes/customer");
@@ -183,9 +185,11 @@ app.use("/api/provider-plans", providerPlanRoutes);
 app.use("/api/provider-track", providerTrackRoutes);
 app.use("/api/provider/activities", activityRoutes);
 app.use('/api/provider/support', require('./routes/provider/supportRoutes'));
+app.use('/api/provider/feedback', providerFeedbackRoutes);
 
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/feedbacks", adminFeedbackRoutes);
 
 // Customer endpoints: /api/customer/* and /api/discovery/*
 app.use("/api/customer", customerRoutes);
@@ -277,9 +281,13 @@ server.listen(PORT, () => {
   console.log('');
 
   // Initialize Cron Jobs
-  // Initialize Cron Jobs
   initScheduledJobs();
   console.log('Scheduled jobs initialized');
+  
+  // Initialize Order Cron Jobs
+  const { initializeCronJobs } = require('./services/orderCronService');
+  initializeCronJobs();
+  console.log('Order automation initialized');
 
   // Initialize DB Watcher (For Manual Updates)
   const watchOrders = require('./utils/dbWatcher');

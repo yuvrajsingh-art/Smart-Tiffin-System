@@ -111,9 +111,9 @@ exports.getDashboardStats = async (req, res) => {
 
         // 5. Delivery metrics
         const [settled, transit, staged] = await Promise.all([
-            Order.countDocuments({ status: "Delivered" }),
-            Order.countDocuments({ status: "Out for Delivery" }),
-            Order.countDocuments({ status: "Ready" })
+            Order.countDocuments({ status: "delivered" }),
+            Order.countDocuments({ status: "out_for_delivery" }),
+            Order.countDocuments({ status: { $in: ["confirmed", "cooking", "prepared"] } })
         ]);
 
         const totalProcessed = settled + transit + staged;

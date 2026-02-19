@@ -1,4 +1,23 @@
 /**
+ * Calculate estimated delivery time based on meal type and order time
+ */
+exports.calculateDeliveryTime = (mealType, orderTime = new Date()) => {
+    const hour = orderTime.getHours();
+    const deliveryTime = new Date(orderTime);
+    
+    // Lunch: 9 AM - 11 AM (2 hours)
+    if (mealType.toLowerCase() === 'lunch' || hour < 15) {
+        deliveryTime.setHours(11, 0, 0, 0);
+    } 
+    // Dinner: 3 PM - 7 PM (4 hours)
+    else {
+        deliveryTime.setHours(19, 0, 0, 0);
+    }
+    
+    return deliveryTime;
+};
+
+/**
  * Shared helper to generate timeline based on real status
  */
 exports.generateTimeline = (order) => {

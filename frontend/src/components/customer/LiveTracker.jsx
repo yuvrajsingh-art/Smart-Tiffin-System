@@ -15,6 +15,13 @@ const LiveTracker = ({ dashboardData }) => {
         }
     };
 
+    // Calculate delivery time based on current hour
+    const getDeliveryTime = () => {
+        const hour = new Date().getHours();
+        // Lunch: 9 AM - 11 AM, Dinner: 3 PM - 7 PM
+        return hour < 15 ? '11:00 AM' : '7:00 PM';
+    };
+
     return (
         <section className="glass-panel p-6 rounded-[2rem] relative overflow-hidden group border border-white/60 shadow-xl">
             {/* bg blobs */}
@@ -29,7 +36,7 @@ const LiveTracker = ({ dashboardData }) => {
                     <div className="bg-white/50 backdrop-blur-md px-4 py-2 rounded-xl border border-white/60 text-right">
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Estimated Arrival</p>
                         <p className="text-base font-black text-[#2D241E]">
-                            {new Date().getHours() < 15 ? dashboardData?.lunchTime : dashboardData?.dinnerTime}
+                            {getDeliveryTime()}
                         </p>
                     </div>
                 </div>

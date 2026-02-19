@@ -41,12 +41,17 @@ const Feedback = () => {
 
     const fetchFeedbackData = async () => {
         try {
-            const res = await axios.get('/api/customer/feedback/data', {
+            const res = await axios.get('/api/customer/feedback/pending', {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (res.data.success) {
-                setCurrentMeal(res.data.data.currentMeal);
-                setStats(res.data.data.stats);
+            if (res.data.success && res.data.data.length > 0) {
+                const order = res.data.data[0];
+                setCurrentMeal({
+                    orderId: order._id,
+                    mealType: order.mealType,
+                    mealName: `${order.mealType} Meal`,
+                    date: new Date(order.deliveredAt).toLocaleDateString()
+                });
             }
         } catch (error) {
             console.error('Error fetching feedback data:', error);
@@ -59,7 +64,12 @@ const Feedback = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
-                setHistory(res.data.data.feedbackHistory);
+                setHistory(res.data.data);
+                setStats([
+                    { icon: 'star', value: res.data.data.length, label: 'Total Reviews', color: 'text-yellow-500' },
+                    { icon: 'thumb_up', value: res.data.data.filter(r => r.rating >= 4).length, label: 'Positive', color: 'text-green-500' },
+                    { icon: 'restaurant', value: res.data.data.length, label: 'Meals Rated', color: 'text-orange-500' }
+                ]);
             }
         } catch (error) {
             console.error('Error fetching history:', error);
@@ -69,16 +79,8 @@ const Feedback = () => {
     };
 
     const fetchTags = async () => {
-        try {
-            const res = await axios.get('/api/customer/feedback/tags', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data.success) {
-                setAvailableTags(res.data.data.tags);
-            }
-        } catch (error) {
-            console.error('Error fetching tags:', error);
-        }
+        // Set default tags
+        setAvailableTags(['Delicious', 'Fresh', 'Hot', 'Good Quantity', 'On Time', 'Well Packed', 'Tasty', 'Healthy']);
     };
 
     const toggleTag = (tag) => {
@@ -128,26 +130,15 @@ const Feedback = () => {
         try {
             const payload = {
                 rating,
-                comment,
-                tags: selectedTags
+                feedback: comment
             };
 
-            let res;
-            if (isEditing) {
-                res = await axios.put(`/api/customer/feedback/update/${editReviewId}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            } else {
-                payload.orderId = currentMeal.orderId;
-                res = await axios.post('/api/customer/feedback/submit', payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            }
+            const res = await axios.post(`/api/customer/feedback/${currentMeal.orderId}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             if (res.data.success) {
-                toast.success(isEditing ? 'Feedback updated successfully!' : 'Feedback submitted successfully!');
-                setIsEditing(false);
-                setEditReviewId(null);
+                toast.success('Feedback submitted successfully!');
                 setCurrentMeal(null);
                 setRating(0);
                 setComment('');

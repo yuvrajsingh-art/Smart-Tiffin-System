@@ -118,6 +118,15 @@ const storeProfileSchema = new mongoose.Schema({
         state: String,
         pincode: String,
         landmark: String
+    },
+
+    // Business Information
+    established: {
+        type: Number
+    },
+
+    fssai_license: {
+        type: String
     }
 
 }, { timestamps: true });

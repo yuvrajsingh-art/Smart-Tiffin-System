@@ -1,166 +1,84 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { createPortal } from 'react-dom';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
-import { useSocket } from '../../context/SocketContext';
-
-// --- Mock Data Generators Removed ---
-// Real data fetched from API
-const initialTickets = [];
 
 const AdminSupport = () => {
-    const [tickets, setTickets] = useState([]);
+    const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [selectedTicket, setSelectedTicket] = useState(null);
-    const [showConfetti, setShowConfetti] = useState(false);
-    const { socket } = useSocket();
 
-    const fetchTickets = async () => {
+    const fetchFeedbacks = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const res = await axios.get(`/api/admin/tickets`, {
-                params: {
-                    status: filter,
-                    search: searchQuery,
-                    startDate,
-                    endDate
-                },
+            const res = await axios.get('/api/admin/feedbacks', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
-                const data = res.data.data;
-                setTickets(data);
+                setFeedbacks(res.data.data);
             }
         } catch (err) {
-            console.error("Fetch Tickets Error:", err);
-            // setTickets([]); // Keep existing if error or handle gracefully
+            console.error('Fetch Feedbacks Error:', err);
+            setFeedbacks([]);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchTickets();
-    }, [filter, searchQuery, startDate, endDate]);
+        fetchFeedbacks();
+    }, []);
 
-    // --- Real-time Ticket Updates ---
-    useEffect(() => {
-        if (!socket) return;
+    const filteredFeedbacks = feedbacks.filter(f => {
+        const matchesSearch = searchQuery === '' || 
+            f.customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            f.provider?.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        if (filter === 'All') return matchesSearch;
+        if (filter === 'Low') return matchesSearch && f.rating <= 2;
+        if (filter === 'Medium') return matchesSearch && f.rating === 3;
+        if (filter === 'High') return matchesSearch && f.rating >= 4;
+        return matchesSearch;
+    });
 
-        socket.on('new-ticket', (data) => {
-            // Add new ticket to top of list
-            const newTicket = {
-                id: data.ticket._id,
-                displayId: `TKT${data.ticket._id.toString().slice(-4).toUpperCase()}`,
-                user: data.ticket.user?.fullName || 'Unknown User',
-                issue: data.ticket.issue,
-                priority: data.ticket.priority,
-                status: data.ticket.status,
-                date: new Date(data.ticket.createdAt).toLocaleDateString(),
-                kitchen: data.ticket.relatedProvider?.businessName || 'System',
-                hasUnread: true
-            };
-
-            setTickets(prev => [newTicket, ...prev]);
-
-            // Play notification sound
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            audio.play().catch(e => console.log('Audio play failed', e));
-
-            toast.custom((t) => (
-                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border-l-4 border-rose-500 shadow-xl rounded-xl p-4 flex items-start gap-3 pointer-events-auto`}>
-                    <div className="bg-rose-50 p-2 rounded-full"><span className="material-symbols-outlined text-rose-600">notification_important</span></div>
-                    <div>
-                        <p className="text-xs font-bold text-[#2D241E]">New Ticket Incoming!</p>
-                        <p className="text-[10px] text-gray-500 font-medium">#{newTicket.displayId}: {newTicket.issue}</p>
-                    </div>
-                </div>
-            ), { duration: 5000 });
-        });
-
-        return () => {
-            socket.off('new-ticket');
-        };
-    }, [socket]);
-
-
-    // Server-side filtering is active, but we keep this for instant UI feedback if data is already fetched
-    const filteredTickets = tickets;
+    const stats = {
+        total: feedbacks.length,
+        low: feedbacks.filter(f => f.rating <= 2).length,
+        medium: feedbacks.filter(f => f.rating === 3).length,
+        high: feedbacks.filter(f => f.rating >= 4).length,
+        avgRating: feedbacks.length > 0 ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1) : 0
+    };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10 relative">
-
-            {/* Header Block */}
-
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
+        <div className="space-y-6 max-w-[1600px] mx-auto min-h-screen pb-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Support Center</h1>
-                        <span className="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-lg shadow-blue-500/10">Operations Center</span>
-                    </div>
-                    <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60 flex items-center gap-2">
-                        <span className="size-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                        Real-time Customer Issue Tracking & Resolution
+                    <h1 className="text-2xl font-bold text-[#2D241E] tracking-tight uppercase">Customer Feedback</h1>
+                    <p className="text-[#897a70] text-xs font-bold uppercase tracking-wider opacity-60">
+                        Monitor customer satisfaction and reviews
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md relative z-10">
+                <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md">
                     <div className="relative group">
-                        <span className="absolute left-3 top-2.5 material-symbols-outlined text-[18px] text-gray-400 group-focus-within:text-[#2D241E] transition-colors">search</span>
+                        <span className="absolute left-3 top-2.5 material-symbols-outlined text-[18px] text-gray-400">search</span>
                         <input
                             type="text"
-                            placeholder="Search Tickets..."
+                            placeholder="Search..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-2.5 pl-9 w-32 focus:w-48 transition-all placeholder:text-gray-400"
+                            className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-2.5 pl-9 w-32 focus:w-48 transition-all"
                         />
                     </div>
                     <div className="w-px h-4 bg-gray-200 mx-1"></div>
-
-                    {/* Date Pickers */}
-                    <div className="flex items-center gap-2 px-2">
-                        <div className="flex items-center gap-1">
-                            <span className="text-[9px] font-bold text-gray-400 uppercase">From</span>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
-                            />
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <span className="text-[9px] font-bold text-gray-400 uppercase">To</span>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="bg-transparent border-none outline-none text-[10px] font-bold text-[#2D241E] p-1 w-24"
-                            />
-                        </div>
-                        {(startDate || endDate) && (
-                            <button
-                                onClick={() => { setStartDate(''); setEndDate(''); }}
-                                className="text-gray-400 hover:text-red-500 transition-colors"
-                                title="Clear Dates"
-                            >
-                                <span className="material-symbols-outlined text-[16px]">close</span>
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="w-px h-4 bg-gray-200 mx-1"></div>
                     <div className="flex gap-1">
-                        {['All', 'New', 'Open', 'Resolved'].map(t => (
+                        {['All', 'Low', 'Medium', 'High'].map(t => (
                             <button
                                 key={t}
                                 onClick={() => setFilter(t)}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${filter === t ? 'bg-[#2D241E] text-white shadow-md' : 'text-[#897a70] hover:bg-white'}`}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${filter === t ? 'bg-[#2D241E] text-white' : 'text-[#897a70] hover:bg-white'}`}
                             >
                                 {t}
                             </button>
@@ -169,93 +87,71 @@ const AdminSupport = () => {
                 </div>
             </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 {[
-                    { l: 'Pending Tickets', v: tickets.filter(t => t.status !== 'Resolved').length, c: 'rose', i: 'mark_email_unread', bg: 'bg-rose-50' },
-                    { l: 'Critical Issues', v: tickets.filter(t => t.priority === 'Critical').length, c: 'red', i: 'emergency_home', bg: 'bg-white' },
-                    { l: 'Avg Response', v: '14m', c: 'blue', i: 'speed', bg: 'bg-white' },
-                    { l: 'Satisfaction', v: '4.9/5', c: 'emerald', i: 'sentiment_very_satisfied', bg: 'bg-emerald-50' },
+                    { l: 'Total Feedback', v: stats.total, c: 'blue', i: 'rate_review' },
+                    { l: 'Low Rating', v: stats.low, c: 'red', i: 'sentiment_dissatisfied' },
+                    { l: 'Medium Rating', v: stats.medium, c: 'yellow', i: 'sentiment_neutral' },
+                    { l: 'High Rating', v: stats.high, c: 'green', i: 'sentiment_satisfied' },
+                    { l: 'Avg Rating', v: stats.avgRating, c: 'purple', i: 'star' },
                 ].map((s, i) => (
-                    <div key={i} className={`${s.bg} p-5 rounded-[2.5rem] border border-white/60 shadow-sm flex items-center justify-between group hover:scale-[1.02] transition-transform cursor-pointer select-none`}>
+                    <div key={i} className="bg-white p-5 rounded-[2.5rem] border border-white/60 shadow-sm flex items-center justify-between hover:scale-[1.02] transition-transform">
                         <div>
                             <p className="text-xs font-bold text-[#5C4D42]/60 uppercase tracking-wider">{s.l}</p>
                             <h3 className="text-2xl font-bold text-[#2D241E] mt-1">{s.v}</h3>
                         </div>
-                        <div className={`size-12 rounded-2xl flex items-center justify-center ${s.bg === 'bg-white' ? 'bg-gray-50' : 'bg-white/50 shadow-inner'}`}>
+                        <div className="size-12 rounded-2xl bg-gray-50 flex items-center justify-center">
                             <span className={`material-symbols-outlined text-2xl text-${s.c}-500`}>{s.i}</span>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Ticket List */}
-            <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg overflow-hidden min-h-[50vh] flex flex-col">
-                <div className="overflow-x-auto flex-1 custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-white/50 sticky top-0 z-10 backdrop-blur-md">
+            <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-white/50 sticky top-0">
                             <tr className="border-b border-gray-100">
-                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider pl-8">Ticket ID</th>
-                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">User & Issue</th>
-                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Priority</th>
-                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase tracking-wider text-right pr-8">Action</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase">Customer</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase">Provider</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase">Rating</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase">Feedback</th>
+                                <th className="px-6 py-5 text-[11px] font-bold text-[#897a70] uppercase">Date</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100/50">
                             {loading ? (
-                                <SkeletonLoader type="table-row" count={5} />
-                            ) : filteredTickets.length > 0 ? (
-                                filteredTickets.map((ticket) => (
-                                    <tr key={ticket.id} className={`group hover:bg-white/80 transition-all cursor-pointer ${ticket.status === 'New' ? 'bg-orange-50/30' : ''}`} onClick={() => setSelectedTicket(ticket)}>
-                                        <td className="px-6 py-4 pl-8">
-                                            <p className="text-sm font-bold text-[#2D241E]">#{ticket.displayId}</p>
-                                            <p className="text-xs font-bold text-[#897a70]">{ticket.date}</p>
+                                <tr><td colSpan="5"><SkeletonLoader type="table-row" count={5} /></td></tr>
+                            ) : filteredFeedbacks.length > 0 ? (
+                                filteredFeedbacks.map((fb) => (
+                                    <tr key={fb._id} className="hover:bg-white/80 transition-all">
+                                        <td className="px-6 py-4">
+                                            <p className="text-sm font-bold text-[#2D241E]">{fb.customer}</p>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-full bg-gradient-to-br from-orange-100 to-rose-100 border border-white shadow-sm flex items-center justify-center text-[11px] font-bold text-orange-800">
-                                                    {(ticket?.user || 'U').charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-[#2D241E] leading-tight">{ticket.issue}</p>
-                                                    <p className="text-[10px] font-bold text-[#897a70] mt-0.5 flex items-center gap-1">
-                                                        {ticket.user} • {ticket.kitchen}
-                                                    </p>
-                                                </div>
+                                            <p className="text-sm font-bold text-[#2D241E]">{fb.provider}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex gap-0.5">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <span key={i} className={`material-symbols-outlined text-[16px] ${i < fb.rating ? 'text-amber-400' : 'text-gray-200'}`}>star</span>
+                                                ))}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${ticket.priority === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' :
-                                                ticket.priority === 'High' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'
-                                                }`}>
-                                                <span className={`size-1.5 rounded-full ${ticket.priority === 'Critical' ? 'bg-red-500 animate-pulse' : 'bg-current'}`}></span>
-                                                {ticket.priority}
-                                            </span>
+                                            <p className="text-xs text-gray-600 line-clamp-2">{fb.feedback || 'No comment'}</p>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${ticket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
-                                                ticket.status === 'New' ? 'bg-violet-100 text-violet-700 animate-pulse' : 'bg-amber-50 text-amber-700'
-                                                }`}>
-                                                {ticket.status}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right pr-8">
-                                            <button className="size-8 rounded-xl bg-[#2D241E] text-white flex items-center justify-center shadow-lg shadow-orange-900/10 hover:scale-110 active:scale-95 transition-all ml-auto">
-                                                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                                            </button>
+                                            <p className="text-xs text-gray-500">{new Date(fb.date).toLocaleDateString()}</p>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
                                     <td colSpan="5" className="py-20 text-center">
-                                        <div className="flex flex-col items-center justify-center opacity-50">
-                                            <div className="size-20 bg-gray-50 rounded-[2.5rem] flex items-center justify-center mb-4">
-                                                <span className="material-symbols-outlined text-4xl text-gray-300">inbox</span>
-                                            </div>
-                                            <p className="text-base font-bold text-[#2D241E]">All Caught Up!</p>
-                                            <p className="text-[10px] font-bold text-[#897a70] mt-1">No tickets found in this category.</p>
+                                        <div className="flex flex-col items-center opacity-50">
+                                            <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">inbox</span>
+                                            <p className="text-base font-bold text-[#2D241E]">No Feedback Found</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -264,230 +160,7 @@ const AdminSupport = () => {
                     </table>
                 </div>
             </div>
-
-            {/* Ticket Details Modal */}
-            {selectedTicket && <TicketDetailsModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />}
         </div>
-    );
-};
-
-// --- Sub-Component: Interactive Ticket Detail Modal ---
-const TicketDetailsModal = ({ ticket, onClose }) => {
-    const [messages, setMessages] = useState([]);
-    const [inputText, setInputText] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const chatEndRef = useRef(null);
-
-    const fetchTicketDetails = async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`/api/admin/tickets/${ticket.id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.data.success) {
-                const fullTicket = res.data.data;
-                const formattedMessages = (fullTicket.messages || []).map(m => ({
-                    id: m._id,
-                    text: m.text,
-                    sender: m.sender,
-                    time: new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }));
-                setMessages(formattedMessages);
-            }
-        } catch (err) {
-            console.error("Fetch Ticket Details Error:", err);
-            toast.error("Failed to load conversation");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchTicketDetails();
-    }, [ticket.id]);
-
-    useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    const handleSend = async () => {
-        if (!inputText.trim()) return;
-
-        const messageText = inputText.trim();
-        setInputText('');
-        setIsTyping(true);
-
-        try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post(`/api/admin/tickets/${ticket.id}/reply`,
-                { message: messageText },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            if (res.data.success) {
-                const updatedTicket = res.data.data;
-                const lastMsg = updatedTicket.messages[updatedTicket.messages.length - 1];
-                setMessages(prev => [...prev, {
-                    id: lastMsg._id,
-                    text: lastMsg.text,
-                    sender: lastMsg.sender,
-                    time: new Date(lastMsg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }]);
-            }
-        } catch (err) {
-            console.error("Reply Error:", err);
-            toast.error("Failed to send reply");
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    const handleResolve = async () => {
-        const resolution = prompt("Enter resolution details (optional):");
-        const toastId = toast.loading("Resolving ticket...");
-
-        try {
-            const token = localStorage.getItem('token');
-            const res = await axios.put(`/api/admin/tickets/${ticket.id}/resolve`,
-                { resolution },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            if (res.data.success) {
-                toast.success("Ticket resolved successfully", { id: toastId });
-                onClose();
-                // Optionally refresh the ticket list in parent
-                window.location.reload(); // Simple refresh for now
-            }
-        } catch (err) {
-            console.error("Resolve Error:", err);
-            toast.error("Failed to resolve ticket", { id: toastId });
-        }
-    };
-
-    return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="bg-white rounded-2xl w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl relative z-10 flex">
-
-                {/* Left: Context Panel */}
-                <div className="w-[320px] bg-gray-50 border-r border-gray-100 p-6 flex flex-col gap-6 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-lg font-bold">
-                            {(ticket?.user || 'U').charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                            <h3 className="text-base font-bold text-gray-800 truncate">{ticket.user}</h3>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Customer Profile</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="p-5 bg-white rounded-[1.5rem] border border-gray-100 shadow-sm">
-                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-wider">Reported Issue</p>
-                            <p className="text-sm font-bold text-[#2D241E] leading-snug">{ticket.issue}</p>
-                        </div>
-                        <div className="p-5 bg-white rounded-[1.5rem] border border-gray-100 shadow-sm">
-                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-wider">Kitchen</p>
-                            <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[18px] text-orange-500">storefront</span>
-                                <p className="text-sm font-bold text-[#2D241E]">{ticket.kitchen}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mt-auto space-y-2">
-                        <button
-                            onClick={handleResolve}
-                            className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-xs hover:bg-black transition-colors uppercase tracking-widest"
-                        >
-                            Mark Resolved
-                        </button>
-                        <button className="w-full py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-50 transition-colors uppercase tracking-widest">Escalate Case</button>
-                    </div>
-                </div>
-
-                {/* Right: Interactive Chat */}
-                <div className="flex-1 flex flex-col bg-white">
-                    <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0">
-                        <div className="flex items-center gap-2">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <div>
-                                <p className="text-xs font-bold text-gray-800 uppercase tracking-widest">Live Connect</p>
-                                <p className="text-[10px] text-gray-400">#{ticket.displayId} • Assigned to You</p>
-                            </div>
-                        </div>
-                        <button onClick={onClose} className="size-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600">
-                            <span className="material-symbols-outlined text-[18px]">close</span>
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                        {loading ? (
-                            <div className="flex flex-col gap-4">
-                                <SkeletonLoader type="text" count={3} className="h-10 w-3/4 rounded-2xl" />
-                                <SkeletonLoader type="text" count={2} className="h-10 w-1/2 ml-auto rounded-2xl" />
-                            </div>
-                        ) : messages.length > 0 ? (
-                            messages.map((msg) => (
-                                <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : msg.sender === 'system' ? 'justify-center' : 'justify-start'}`}>
-                                    {msg.sender === 'system' ? (
-                                        <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 uppercase tracking-tighter">{msg.text}</span>
-                                    ) : (
-                                        <div className={`max-w-[80%] px-4 py-3 rounded-2xl shadow-sm ${msg.sender === 'admin' ? 'bg-gray-900 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'}`}>
-                                            <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
-                                            <p className={`text-[10px] font-medium mt-1 opacity-40 ${msg.sender === 'admin' ? 'text-white text-right' : 'text-gray-500'}`}>{msg.time}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full opacity-30">
-                                <span className="material-symbols-outlined text-4xl mb-2">forum</span>
-                                <p className="text-xs font-bold uppercase tracking-widest">No messages yet</p>
-                            </div>
-                        )}
-                        {isTyping && (
-                            <div className="flex items-center gap-1.5 text-gray-400 ml-2">
-                                <span className="size-1 bg-gray-300 rounded-full animate-bounce"></span>
-                                <span className="size-1 bg-gray-300 rounded-full animate-bounce delay-100"></span>
-                                <span className="size-1 bg-gray-300 rounded-full animate-bounce delay-200"></span>
-                            </div>
-                        )}
-                        <div ref={chatEndRef} />
-                    </div>
-
-                    <div className="p-4 bg-white border-t border-gray-100">
-                        {/* Quick Responses */}
-                        <div className="flex gap-1.5 mb-3 overflow-x-auto no-scrollbar">
-                            {['Refund Processed', 'Internal Error Fixed', 'Sending Voucher'].map(txt => (
-                                <button key={txt} onClick={() => setInputText(txt)} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold text-gray-500 hover:bg-gray-900 hover:text-white transition-all whitespace-nowrap">{txt}</button>
-                            ))}
-                        </div>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder="Write a response..."
-                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:bg-white focus:border-gray-200 outline-none transition-all"
-                            />
-                            <button onClick={handleSend} className="size-11 bg-orange-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all shrink-0">
-                                <span className="material-symbols-outlined text-[20px]">send</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>,
-        document.body
     );
 };
 
