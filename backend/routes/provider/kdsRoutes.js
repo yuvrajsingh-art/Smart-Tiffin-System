@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getKdsOrders, acceptOrder, markReady, markDispatched, markDelivered } = require("../../controllers/provider/kdsController");
+const { getKdsOrders, acceptOrder, markReady, markDispatched, markDelivered } = require("../../controllers/provider/kdscontroller");
 const { protect } = require("../../middleware/authMiddleware.middleware");
 const { isVerifiedProvider } = require("../../middlewares/isVerifiedProvider");
 
