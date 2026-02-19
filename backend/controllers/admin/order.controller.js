@@ -13,6 +13,7 @@ const { sendSuccess, sendError } = require("../../utils/responseHelper");
 const { isValidObjectId } = require("../../utils/validationHelper");
 const { formatDate, formatTime, getStartOfDay, getEndOfDay } = require("../../utils/dateHelper");
 const { createLog } = require("./helpers");
+const { generateTimeline } = require("../../utils/orderHelper");
 
 // Helper to format status for frontend
 const formatStatus = (status) => {
@@ -128,11 +129,18 @@ exports.getOrderById = async (req, res) => {
 
         const order = await Order.findById(id)
             .populate('customer', 'fullName mobile email address')
-            .populate('provider', 'businessName fullName mobile address');
+            .populate('provider', 'businessName fullName mobile address')
+            .populate('activityLog.updatedBy', 'fullName role');
 
         if (!order) return sendError(res, 404, "Order not found");
 
-        return sendSuccess(res, 200, "Order details retrieved", order);
+        const orderData = {
+            ...order.toObject(),
+            timeline: generateTimeline(order),
+            activityLog: order.activityLog || []
+        };
+
+        return sendSuccess(res, 200, "Order details retrieved", orderData);
     } catch (error) {
         return sendError(res, 500, "Failed to fetch order", error);
     }
@@ -143,11 +151,12 @@ exports.getOrderById = async (req, res) => {
  * @route PUT /api/admin/orders/:id/status
  * @param {String} id - Order ID
  * @body {String} status - New order status
+ * @body {String} note - Optional note
  */
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, note } = req.body;
 
         if (!isValidObjectId(id)) {
             return sendError(res, 400, "Invalid order ID");
@@ -164,17 +173,30 @@ exports.updateOrderStatus = async (req, res) => {
             return sendError(res, 400, "Invalid status");
         }
 
-        const updateData = { status: normalizedStatus };
-        if (normalizedStatus === 'cooking') updateData.cookingStartedAt = new Date();
-        if (normalizedStatus === 'prepared') updateData.preparedAt = new Date();
-        if (normalizedStatus === 'out_for_delivery') updateData.outForDeliveryAt = new Date();
-        if (normalizedStatus === 'delivered') updateData.deliveredAt = new Date();
-
-        const order = await Order.findByIdAndUpdate(id, updateData, { new: true });
-
+        const order = await Order.findById(id);
         if (!order) {
             return sendError(res, 404, "Order not found");
         }
+
+        // Update status
+        order.status = normalizedStatus;
+
+        // Update timestamps
+        if (normalizedStatus === 'cooking' && !order.cookingStartedAt) order.cookingStartedAt = new Date();
+        if (normalizedStatus === 'prepared' && !order.preparedAt) order.preparedAt = new Date();
+        if (normalizedStatus === 'out_for_delivery' && !order.outForDeliveryAt) order.outForDeliveryAt = new Date();
+        if (normalizedStatus === 'delivered' && !order.deliveredAt) order.deliveredAt = new Date();
+
+        // Add to activity log
+        order.activityLog.push({
+            status: normalizedStatus,
+            timestamp: new Date(),
+            updatedBy: req.user.id,
+            updatedByRole: 'admin',
+            note: note || `Admin updated status to ${status}`
+        });
+
+        await order.save();
 
         // Log action
         await createLog(
@@ -185,7 +207,11 @@ exports.updateOrderStatus = async (req, res) => {
             'text-indigo-500'
         );
 
-        return sendSuccess(res, 200, `Order status updated to ${status}`, order);
+        return sendSuccess(res, 200, `Order status updated to ${status}`, {
+            order,
+            timeline: generateTimeline(order),
+            activityLog: order.activityLog
+        });
     } catch (error) {
         console.error("Update Order Status Error:", error.message);
         return sendError(res, 500, "Failed to update order status", error);

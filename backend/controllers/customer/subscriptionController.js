@@ -713,8 +713,8 @@ exports.purchaseSubscription = async (req, res) => {
             paymentMethod: isWallet ? 'Wallet' : (isPayLater ? 'Pay Later' : 'UPI'),
             transactionId: isWallet || isPayLater ? null : transactionId,
             paymentStatus: isPayLater ? "Pending" : "Paid",
-            status: "approved",
-            adminApproval: "approved"
+            status: isPayLater ? "pending" : "approved",
+            adminApproval: isPayLater ? "pending" : "approved"
         });
 
         await subscription.save();

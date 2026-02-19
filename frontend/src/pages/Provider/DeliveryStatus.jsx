@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSocket } from '../../context/SocketContext';
 import ProviderSidebar from "../../components/ui/Provider/ProviderSidebar";
 import ProviderHeader from '../../components/ui/Provider/ProviderHeader';
 import { FaCheck, FaTruck, FaUtensils, FaClock } from 'react-icons/fa';
@@ -12,6 +13,7 @@ function DeliveryStatus() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { socket } = useSocket();
  
     useEffect(() => {
         fetchDeliveries();
@@ -23,6 +25,16 @@ function DeliveryStatus() {
         
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (socket) {
+            socket.on('orderStatusUpdate', (data) => {
+                console.log('Socket: Order status updated', data);
+                fetchDeliveries();
+            });
+            return () => socket.off('orderStatusUpdate');
+        }
+    }, [socket]);
 
     const calculateDeliveryStatus = (mealType, deliveryTime) => {
         const now = new Date();
@@ -66,9 +78,22 @@ function DeliveryStatus() {
                 
                 const formattedDeliveries = allOrders.map(order => {
                     const mealType = (order.mealType || 'lunch').toLowerCase();
-                    const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '12:00' : '20:00');
+                    const deliveryTime = order.deliveryTime || (mealType === 'lunch' ? '11:00' : '19:00');
                     
-                    // Use database status
+                    // Check if order should be shown based on current time
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    
+                    // Only show lunch orders between 9 AM - 12 PM
+                    // Only show dinner orders between 5 PM - 8 PM
+                    let shouldShow = true;
+                    if (mealType === 'lunch' && (currentHour < 9 || currentHour >= 12)) {
+                        shouldShow = false;
+                    } else if (mealType === 'dinner' && (currentHour < 17 || currentHour >= 20)) {
+                        shouldShow = false;
+                    }
+                    
+                    // Use database status directly
                     let orderStatus = (order.status || 'confirmed').toLowerCase();
                     
                     // Skip cancelled orders
@@ -76,19 +101,21 @@ function DeliveryStatus() {
                         return null;
                     }
                     
-                    // Auto-update status based on time
-                    const timeBasedStatus = calculateDeliveryStatus(mealType, deliveryTime);
-                    
-                    // Map status to frontend format
-                    if (orderStatus === 'confirmed' || orderStatus === 'cooking') {
-                        orderStatus = timeBasedStatus === 'delivered' ? 'delivered' : 
-                                     timeBasedStatus === 'out_for_delivery' ? 'out_for_delivery' :
-                                     timeBasedStatus === 'ready_for_pickup' ? 'ready_for_pickup' : 'preparing';
-                    } else if (orderStatus === 'prepared') {
-                        orderStatus = timeBasedStatus === 'delivered' ? 'delivered' : 
-                                     timeBasedStatus === 'out_for_delivery' ? 'out_for_delivery' : 'ready_for_pickup';
+                    // Don't show orders outside their time window unless delivered
+                    if (!shouldShow && orderStatus !== 'delivered') {
+                        return null;
                     }
-                    // 'out_for_delivery' and 'delivered' remain same
+                    
+                    // Map backend status to frontend display status
+                    const statusMap = {
+                        'confirmed': 'preparing',
+                        'cooking': 'preparing',
+                        'prepared': 'ready_for_pickup',
+                        'out_for_delivery': 'out_for_delivery',
+                        'delivered': 'delivered'
+                    };
+                    
+                    orderStatus = statusMap[orderStatus] || 'preparing';
                     
                     // Extract customer details
                     const customer = order.customer || {};
@@ -138,15 +165,25 @@ function DeliveryStatus() {
 
     const updateOrderStatus = async (orderId, action) => {
         try {
-            let endpoint = '';
+            let status = '';
+            let note = '';
             switch (action) {
-                case 'mark_ready': endpoint = `/provider-kds/order/${orderId}/ready`; break;
-                case 'mark_dispatched': endpoint = `/provider-kds/order/${orderId}/dispatched`; break;
-                case 'mark_delivered': endpoint = `/provider-kds/order/${orderId}/delivered`; break;
+                case 'mark_ready': 
+                    status = 'prepared';
+                    note = 'Order marked as ready for pickup';
+                    break;
+                case 'mark_dispatched': 
+                    status = 'out_for_delivery';
+                    note = 'Order dispatched for delivery';
+                    break;
+                case 'mark_delivered': 
+                    status = 'delivered';
+                    note = 'Order delivered successfully';
+                    break;
                 default: return;
             }
 
-            await ProviderApi.put(endpoint);
+            await ProviderApi.put(`/provider-track/${orderId}/status`, { status, note });
             fetchDeliveries(); // Refresh list
         } catch (error) {
             console.error('Error updating status:', error);

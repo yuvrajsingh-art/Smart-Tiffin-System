@@ -16,20 +16,25 @@ function StateCards() {
     const fetchStats = async () => {
         try {
             const response = await ProviderApi.get('/provider-deshbord/dashboard');
-            console.log('Dashboard Stats:', response.data);
+            const profileRes = await ProviderApi.get('/provider-store');
+            console.log('Profile Data:', profileRes.data);
             
             if (response.data && response.data.data) {
                 const data = response.data.data;
-                const profileRes = await ProviderApi.get('/provider-store');
-                const yearsInBusiness = profileRes.data?.profile?.established 
-                    ? new Date().getFullYear() - parseInt(profileRes.data.profile.established)
-                    : 0;
+                const profile = profileRes.data?.data;
+                
+                let yearsInBusiness = 'N/A';
+                if (profile?.established) {
+                    yearsInBusiness = new Date().getFullYear() - parseInt(profile.established);
+                } else if (profile?.createdAt) {
+                    yearsInBusiness = new Date().getFullYear() - new Date(profile.createdAt).getFullYear();
+                }
 
                 setStats([
                     { label: 'Total Orders', value: data.liveOperations?.ordersToPrep || '0', color: 'text-blue-600' },
                     { label: 'Active Customers', value: data.businessHealth?.activeSubscribers || '0', color: 'text-green-600' },
-                    { label: 'Monthly Revenue', value: `₹${data.businessHealth?.todayRevenue || 0}`, color: 'text-orange-600' },
-                    { label: 'Years in Business', value: `${yearsInBusiness}+`, color: 'text-purple-600' }
+                    { label: 'Monthly Revenue', value: `₹${data.businessHealth?.monthlyRevenue || 0}`, color: 'text-orange-600' },
+                    { label: 'Years in Business', value: yearsInBusiness === 'N/A' ? yearsInBusiness : `${yearsInBusiness}+`, color: 'text-purple-600' }
                 ]);
             }
         } catch (error) {

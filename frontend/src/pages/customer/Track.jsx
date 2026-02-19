@@ -87,29 +87,23 @@ const Track = () => {
                 <h2 className="text-2xl font-black text-[#2D241E]">No Active Deliveries</h2>
                 <p className="text-[#5C4D42] mt-3 max-w-md font-medium opacity-60">You don't have any orders out for delivery right now.</p>
                 <div className="flex gap-4 mt-8">
-                    <button 
-                        onClick={async () => {
-                            try {
-                                await axios.post('/api/customer/track/initialize-test', {}, {
-                                    headers: { Authorization: `Bearer ${token}` }
-                                });
-                                toast.success('Test order created!');
-                                fetchTracking();
-                            } catch (err) {
-                                toast.error('Failed to create test order');
-                            }
-                        }}
-                        className="px-6 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all"
-                    >
-                        Create Test Order
-                    </button>
                     <Link to="/customer/dashboard" className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all">Go to Dashboard</Link>
                 </div>
             </div>
         );
     }
 
-    const { order, eta, deliveryPartner } = trackingData;
+    const { order, eta, deliveryPartner, estimatedDeliveryTime, activityLog } = trackingData;
+
+    // Calculate delivery time display
+    const getDeliveryTimeDisplay = () => {
+        if (estimatedDeliveryTime) {
+            const deliveryDate = new Date(estimatedDeliveryTime);
+            return deliveryDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+        const hour = new Date().getHours();
+        return hour < 15 ? '11:00 AM' : '7:00 PM';
+    };
 
     // Helper to map API status to Dashboard Steps (1-5)
     const getStepFromStatus = (status) => {
@@ -194,10 +188,7 @@ const Track = () => {
                             </div>
                             <div className="bg-white/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/60 text-right shadow-sm">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Estimated Arrival</p>
-                                <div className="flex items-baseline justify-end gap-1">
-                                    <p className="text-2xl font-black text-[#2D241E]">{eta}</p>
-                                    <span className="text-xs font-bold text-gray-400">mins</span>
-                                </div>
+                                <p className="text-xl font-black text-[#2D241E]">{getDeliveryTimeDisplay()}</p>
                             </div>
                         </div>
 
@@ -249,6 +240,38 @@ const Track = () => {
                         <span className="material-symbols-outlined text-2xl group-hover:animate-shake">call</span>
                     </a>
                 </div>
+
+                {/* Activity Log */}
+                {activityLog && activityLog.length > 0 && (
+                    <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                        <h3 className="text-lg font-bold text-[#2D241E] mb-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary">history</span>
+                            Order Activity
+                        </h3>
+                        <div className="space-y-3">
+                            {activityLog.slice().reverse().map((log, idx) => (
+                                <div key={idx} className="flex items-start gap-3 pb-3 border-b border-gray-50 last:border-0">
+                                    <div className="size-8 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                                        <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-[#2D241E] capitalize">{log.status.replace(/_/g, ' ')}</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">{log.note}</p>
+                                        <p className="text-[10px] text-gray-400 mt-1">
+                                            {new Date(log.timestamp).toLocaleString('en-US', { 
+                                                month: 'short', 
+                                                day: 'numeric', 
+                                                hour: 'numeric', 
+                                                minute: '2-digit',
+                                                hour12: true 
+                                            })}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>
