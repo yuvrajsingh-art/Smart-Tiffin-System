@@ -161,6 +161,9 @@ const customerRoutes = require("./routes/customer");
 // =============================================================================
 
 // Health check endpoint
+const healthRoutes = require('./routes/health.routes');
+app.use('/api', healthRoutes);
+
 app.get("/", (req, res) => {
   res.send("API running & DB connected");
 });

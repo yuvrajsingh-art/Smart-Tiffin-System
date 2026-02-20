@@ -1,0 +1,78 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+debug.log
+*.txt
+purchase_debug.log
+support_test_log.txt
+order_check_log.txt
+debug_data_log.txt
+customer_journey_report.txt
+lint_output.txt
+syntax.log
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+backup_*
+original_*
+utf8_*
+
+# Documentation (keep only essential)
+IMPLEMENTATION_COMPLETE.md
+NOTIFICATION_*.md
+DEBUGGING_GUIDE.md
+SWEETALERT_IMPLEMENTATION.md
+TRACK_ORDER_UPDATES.md
+CustomerFlow.txt
+syntax_error.txt
+
+# Scripts (test/debug scripts)
+checkCancelledOrders.js
+checkSubscriptions.js
+deleteNotifications.js
+testNotification.js
+NOTIFICATION_PATCHES.js
+
+# Misc
+.cache/
+.parcel-cache/
