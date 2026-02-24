@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const ProviderApi = axios.create({
-  baseURL: "http://localhost:5000/api", // backend ka base URL with /api
+  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
