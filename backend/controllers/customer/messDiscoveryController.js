@@ -1,5 +1,5 @@
 const ProviderProfile = require("../../models/providerprofile.model");
-const StoreProfile = require("../../models/storeprofile.model");
+const StoreProfile = require("../../models/storeProfile.model");
 const User = require("../../models/user.model");
 const Review = require("../../models/review.model");
 const Plan = require("../../models/plan.model");
