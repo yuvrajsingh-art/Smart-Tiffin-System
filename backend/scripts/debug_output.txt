@@ -1,2 +1,0 @@
-Schema hasn't been registered for model "User".
-Use mongoose.model(name, schema)

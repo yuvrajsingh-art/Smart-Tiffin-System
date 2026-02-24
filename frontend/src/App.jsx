@@ -27,7 +27,7 @@ import RoleSelection from './pages/auth/RoleSelection.jsx';
 import Register from './pages/auth/Register.jsx';
 import ForgotPassword from './pages/auth/ForgotPassword.jsx';
 import ResetPassword from './pages/auth/ResetPassword.jsx';
-import ProviderOnboarding from './pages/provider/ProviderOnboarding.jsx';
+import ProviderOnboarding from './pages/Provider/ProviderOnboarding.jsx';
 
 function App() {
   return (
