@@ -33,6 +33,14 @@ const menuSchema = new mongoose.Schema({
   // Menu label (e.g. "STANDARD LUNCH", "PREMIUM DINNER")
   menuLabel: { type: String },
 
+  // Subscription tier for this menu
+  subscriptionTier: {
+    type: String,
+    enum: ["premium", "standard", "basic"],
+    required: true,
+    default: "standard"
+  },
+
   category: {
     type: String,
     enum: ["Thali", "Bowl", "Combo", "Bread", "Curry"],

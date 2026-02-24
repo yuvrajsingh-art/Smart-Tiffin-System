@@ -113,6 +113,11 @@ const subscriptionSchema = new mongoose.Schema({
         enum: ["veg", "non-veg", "jain"],
         default: "veg"
     },
+    planTier: {
+        type: String,
+        enum: ["premium", "standard", "basic"],
+        default: "standard"
+    },
     skippedMeals: [{
         date: String, // YYYY-MM-DD
         mealType: {

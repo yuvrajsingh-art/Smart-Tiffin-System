@@ -32,7 +32,8 @@ const TodaysMenu = () => {
     calories: '',
     menuLabel: '',
     type: 'Veg',
-    category: 'Thali'
+    category: 'Thali',
+    subscriptionTier: 'standard'
   });
 
   useEffect(() => {
@@ -90,7 +91,8 @@ const TodaysMenu = () => {
         calories: existingMenu.calories || '',
         menuLabel: existingMenu.menuLabel || '',
         type: existingMenu.type || 'Veg',
-        category: existingMenu.category || 'Thali'
+        category: existingMenu.category || 'Thali',
+        subscriptionTier: existingMenu.subscriptionTier || 'standard'
       });
     } else {
       const isSunday = dayName === 'Sunday';
@@ -103,7 +105,8 @@ const TodaysMenu = () => {
         calories: '',
         menuLabel: isSunday ? 'SUNDAY SPECIAL' : (mealType === 'lunch' ? 'STANDARD LUNCH' : 'PREMIUM DINNER'),
         type: 'Veg',
-        category: 'Thali'
+        category: 'Thali',
+        subscriptionTier: 'standard'
       });
     }
     setShowEditModal(true);
@@ -151,6 +154,7 @@ const TodaysMenu = () => {
         menuLabel: formData.menuLabel,
         type: formData.type,
         category: formData.category,
+        subscriptionTier: formData.subscriptionTier || 'standard',
         mealType: editingMeal,
         availableDays: [dayName],
         menuDate: new Date(),
@@ -444,16 +448,18 @@ const TodaysMenu = () => {
               </div>
 
               {/* Additional Info */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Calories</label>
-                  <input
-                    type="number"
-                    value={formData.calories}
-                    onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Subscription Tier *</label>
+                  <select
+                    value={formData.subscriptionTier || 'standard'}
+                    onChange={(e) => setFormData({ ...formData, subscriptionTier: e.target.value })}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg"
-                    placeholder="740"
-                  />
+                  >
+                    <option value="premium">💎 Premium</option>
+                    <option value="standard">⭐ Standard</option>
+                    <option value="basic">🥉 Basic</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Type</label>
@@ -466,6 +472,19 @@ const TodaysMenu = () => {
                     <option value="Non-Veg">Non-Veg</option>
                     <option value="Egg">Egg</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Calories</label>
+                  <input
+                    type="number"
+                    value={formData.calories}
+                    onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg"
+                    placeholder="740"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Label</label>

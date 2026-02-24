@@ -59,14 +59,15 @@ exports.createMenu = async (req, res) => {
       items,
       calories: parseInt(calories) || 0,
       menuLabel,
+      subscriptionTier: req.body.subscriptionTier || 'standard',
       menuDate: targetDate,
       isHoliday: isHoliday || false,
       image,
       description,
       availableDays: availableDays || [],
-      isPublished: true, // Auto-publish
+      isPublished: true,
       isAvailable: true,
-      approvalStatus: 'Approved' // Auto-approve
+      approvalStatus: 'Approved'
     });
 
     await newMenu.save();
