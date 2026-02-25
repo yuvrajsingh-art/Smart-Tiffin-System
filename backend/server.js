@@ -32,18 +32,12 @@ const app = express();
 const server = http.createServer(app);
 
 // Initialize Socket.io
-const allowedOrigins = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-  : ['http://localhost:5173'];
-
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: ["https://smart-tiffin-system.vercel.app", "https://smart-tiffin-system-4.vercel.app", "http://localhost:5173"],
+    methods: ["GET", "POST"],
     credentials: true
-  },
-  transports: ['websocket', 'polling'],
-  allowEIO3: true
+  }
 });
 
 
@@ -111,15 +105,7 @@ notificationService.setSocketIO(io);
 
 // CORS - Allow frontend to communicate with backend
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: ["https://smart-tiffin-system.vercel.app", "https://smart-tiffin-system-4.vercel.app", "http://localhost:5173"],
   credentials: true
 }));
 
