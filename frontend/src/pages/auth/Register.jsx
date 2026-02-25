@@ -76,15 +76,14 @@ const Register = () => {
 
         if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
 
-        if (!showManualAddress) {
-            if (!formData.address.city) {
-                newErrors.general = "Please provide location";
-                setShowManualAddress(true);
-            }
-        } else {
+        // Address validation - only check if manual address is shown
+        if (showManualAddress) {
             if (!formData.address.city.trim()) newErrors.city = "City is required";
             if (!formData.address.street.trim()) newErrors.street = "Street is required";
             if (!formData.address.pincode.trim()) newErrors.pincode = "Pincode is required";
+        } else {
+            // If manual address not shown, require user to click manual entry
+            newErrors.general = "Please click Manual Entry to add address";
         }
 
         setErrors(newErrors);

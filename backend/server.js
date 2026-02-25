@@ -110,10 +110,6 @@ notificationService.setSocketIO(io);
 // =============================================================================
 
 // CORS - Allow frontend to communicate with backend
-const allowedOrigins = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-  : ['http://localhost:5173'];
-
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
