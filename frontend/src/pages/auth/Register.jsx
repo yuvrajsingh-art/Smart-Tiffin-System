@@ -100,7 +100,10 @@ const Register = () => {
 
         setLoadingLocation(true); // Re-using this for general loading state
         try {
-            const endpoint = role === 'provider' ? '/api/auth/registerProvider/provider' : '/api/auth/registerCustomer/customer';
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const endpoint = role === 'provider' 
+                ? `${API_URL}/api/auth/registerProvider/provider` 
+                : `${API_URL}/api/auth/registerCustomer/customer`;
 
             const payload = {
                 fullName: formData.name,
