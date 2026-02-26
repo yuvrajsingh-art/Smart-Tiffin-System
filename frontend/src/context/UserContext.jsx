@@ -6,6 +6,8 @@ const UserContext = createContext();
 
 export const useAuth = () => useContext(UserContext);
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -56,7 +58,7 @@ export const UserProvider = ({ children }) => {
 
             try {
                 // Humne interceptor lagaya hai to token header mein khud jayega
-                const { data } = await axios.get('/api/auth/profile');
+                const { data } = await axios.get(`${API_URL}/api/auth/profile`);
                 setUser(data.user);
             } catch (error) {
                 console.error("Session verification failed:", error);
@@ -74,7 +76,7 @@ export const UserProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const { data } = await axios.post('/api/auth/login', { email, password });
+            const { data } = await axios.post(`${API_URL}/api/auth/login`, { email, password });
 
             if (data.token) {
                 localStorage.setItem('token', data.token);

@@ -139,6 +139,9 @@ const AdminPlans = () => {
                                 <div className="relative z-10 text-white">
                                     <h3 className="text-lg font-bold tracking-tight leading-none drop-shadow-md">{plan.name}</h3>
                                     <p className="text-[10px] font-medium opacity-90 mt-1">{plan.type || 'Veg'}</p>
+                                    {plan.provider && (
+                                        <p className="text-[9px] font-bold opacity-80 mt-1">By: {plan.provider.fullName || plan.provider.email}</p>
+                                    )}
                                 </div>
                             </div>
 

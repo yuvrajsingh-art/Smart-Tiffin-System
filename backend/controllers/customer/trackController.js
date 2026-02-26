@@ -4,7 +4,7 @@ const Subscription = require("../../models/subscription.model");
 const Menu = require("../../models/menu.model");
 const logger = require("../../utils/logger");
 const { ORDER_STATUS, MAP, IMAGES } = require("../../config/constants");
-const { generateTimeline } = require("../../utils/orderHelper");
+const { generateTimeline, calculateDeliveryTime } = require("../../utils/orderHelper");
 
 // Get live tracking details for active order
 exports.getLiveTracking = async (req, res) => {
@@ -27,11 +27,11 @@ exports.getLiveTracking = async (req, res) => {
             rangeEnd: tomorrow.toISOString()
         });
 
-        // Find today's active order (subscription or guest)
+        // Find today's active order (subscription or guest) - include delivered for completion message
         const activeOrder = await Order.findOne({
             customer: customerId,
             orderDate: { $gte: today, $lt: tomorrow },
-            status: { $nin: ['delivered', 'cancelled'] }
+            status: { $nin: ['cancelled'] }
         }).populate({
             path: 'subscription',
             populate: { path: 'provider', select: 'fullName' }
@@ -51,8 +51,10 @@ exports.getLiveTracking = async (req, res) => {
             });
         }
 
-        // 1. Calculate realistic ETA based on actual Order.status (from constants)
-        const eta = ORDER_STATUS.ETA[activeOrder.status] || 15;
+        // 1. Calculate realistic ETA based on meal type and current time
+        const estimatedDelivery = activeOrder.estimatedDeliveryTime || calculateDeliveryTime(activeOrder.mealType, activeOrder.orderDate);
+        const etaMinutes = Math.max(0, Math.round((estimatedDelivery - now) / (1000 * 60)));
+        const eta = etaMinutes;
 
         // 2. Generate timeline based on real Order status
         const timeline = generateTimeline(activeOrder);
@@ -101,9 +103,11 @@ exports.getLiveTracking = async (req, res) => {
             data: {
                 order: orderDetails,
                 eta,
+                estimatedDeliveryTime: estimatedDelivery,
                 distance: activeOrder.status === 'out_for_delivery' ? "0.8 km" : "1.2 km",
                 timeline,
                 deliveryPartner,
+                activityLog: activeOrder.activityLog || [],
                 // Get coordinates from subscription delivery address or use default
                 mapData: {
                     customerLocation: activeOrder.subscription?.deliveryAddress?.coordinates || MAP.DEFAULT_CENTER,
@@ -183,7 +187,7 @@ exports.getOrderHistory = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { status } = req.body;
+        const { status, note } = req.body;
 
         const validStatuses = ['pending', 'confirmed', 'preparing', 'cooking', 'ready', 'packed', 'out_for_delivery', 'delivered', 'cancelled'];
 
@@ -194,11 +198,7 @@ exports.updateOrderStatus = async (req, res) => {
             });
         }
 
-        const order = await Order.findByIdAndUpdate(
-            orderId,
-            { status, updatedAt: new Date() },
-            { new: true }
-        );
+        const order = await Order.findById(orderId);
 
         if (!order) {
             return res.status(404).json({
@@ -207,11 +207,49 @@ exports.updateOrderStatus = async (req, res) => {
             });
         }
 
+        // Update status
+        order.status = status;
+        
+        // Update timestamps
+        const tsMap = {
+            'confirmed': 'confirmedAt',
+            'cooking': 'cookingStartedAt',
+            'prepared': 'preparedAt',
+            'out_for_delivery': 'outForDeliveryAt',
+            'delivered': 'deliveredAt'
+        };
+        if (tsMap[status] && !order[tsMap[status]]) {
+            order[tsMap[status]] = new Date();
+        }
+
+        // Add to activity log
+        order.activityLog.push({
+            status,
+            timestamp: new Date(),
+            updatedBy: req.user._id,
+            updatedByRole: req.user.role,
+            note: note || `Status updated to ${status}`
+        });
+
+        await order.save();
+
+        // Emit socket event
+        if (req.app.get('io')) {
+            const io = req.app.get('io');
+            io.emit('orderStatusUpdate', {
+                orderId: order._id,
+                status,
+                timeline: generateTimeline(order),
+                activityLog: order.activityLog
+            });
+        }
+
         res.json({
             success: true,
             data: {
                 orderId: order._id,
                 status: order.status,
+                activityLog: order.activityLog,
                 message: `Order status updated to ${status}`
             }
         });
@@ -248,6 +286,14 @@ exports.initializeTestOrder = async (req, res) => {
             order.preparedAt = null;
             order.outForDeliveryAt = null;
             order.deliveredAt = null;
+            order.estimatedDeliveryTime = calculateDeliveryTime(order.mealType, new Date());
+            order.activityLog = [{
+                status: 'confirmed',
+                timestamp: new Date(),
+                updatedBy: customerId,
+                updatedByRole: 'customer',
+                note: 'Order reset for testing'
+            }];
             await order.save();
             return res.json({ success: true, message: "Today's order reset to 'confirmed' status", order });
         }
@@ -274,12 +320,20 @@ exports.initializeTestOrder = async (req, res) => {
             paymentStatus: "Paid",
             status: "confirmed",
             confirmedAt: new Date(),
+            estimatedDeliveryTime: calculateDeliveryTime("Lunch", new Date()),
             menuItems: [{
                 name: "Standard Veg Thali",
                 description: "Roti, Dal, Sabji, Rice",
                 image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=200"
             }],
-            deliveryAddress: subscription.deliveryAddress
+            deliveryAddress: subscription.deliveryAddress,
+            activityLog: [{
+                status: 'confirmed',
+                timestamp: new Date(),
+                updatedBy: customerId,
+                updatedByRole: 'customer',
+                note: 'Test order initialized'
+            }]
         });
 
         res.json({
@@ -321,6 +375,15 @@ exports.advanceTestStatus = async (req, res) => {
                 'delivered': 'deliveredAt'
             };
             if (tsMap[nextStatus]) order[tsMap[nextStatus]] = new Date();
+
+            // Add to activity log
+            order.activityLog.push({
+                status: nextStatus,
+                timestamp: new Date(),
+                updatedBy: customerId,
+                updatedByRole: 'customer',
+                note: `Status advanced to ${nextStatus}`
+            });
 
             await order.save();
 

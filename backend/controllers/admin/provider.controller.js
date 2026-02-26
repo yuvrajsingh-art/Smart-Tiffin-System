@@ -257,7 +257,7 @@ exports.toggleProviderStatus = async (req, res) => {
         }
 
         // Toggle status
-        provider.status = provider.status === 'active' ? 'suspended' : 'active';
+        provider.status = provider.status === 'active' ? 'banned' : 'active';
         await provider.save();
 
         // Log action
@@ -312,6 +312,10 @@ exports.updateProvider = async (req, res) => {
 
         // 3. Update Provider Profile (if exists)
         if (Object.keys(profileData).length > 0) {
+            // Fix location format if provided
+            if (profileData.location && !profileData.location.type) {
+                profileData.location.type = "Point";
+            }
             await Provider.findOneAndUpdate({ user: id }, profileData, { new: true, upsert: true });
         }
 

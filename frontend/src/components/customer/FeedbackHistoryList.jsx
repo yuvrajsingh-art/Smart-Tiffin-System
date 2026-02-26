@@ -18,7 +18,7 @@ const FeedbackHistoryList = ({ history, onEdit }) => {
                 <div className="space-y-6 max-h-[850px] overflow-y-auto pr-6 custom-scrollbar px-2">
                     {history.map((item, index) => (
                         <div
-                            key={item.id}
+                            key={item._id}
                             style={{ animationDelay: `${index * 100}ms` }}
                             className="group glass-panel p-7 rounded-[2.8rem] border border-white/60 bg-white/40 hover:bg-white transition-all duration-500 shadow-sm hover:shadow-2xl hover:translate-y-[-4px] animate-[slideUp_0.5s_ease-out_both] overflow-hidden relative"
                         >
@@ -31,19 +31,9 @@ const FeedbackHistoryList = ({ history, onEdit }) => {
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <h4 className="font-black text-[#2D241E] text-lg tracking-tight">{item.meal}</h4>
-                                            {!item.response && (
-                                                <button
-                                                    onClick={() => onEdit(item)}
-                                                    className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:text-primary hover:bg-primary/5 transition-all flex items-center gap-1.5 group/btn border border-transparent hover:border-primary/10"
-                                                    title="Edit Review"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm">edit_square</span>
-                                                    <span className="text-[9px] font-black uppercase tracking-widest hidden group-hover/btn:block">Refine</span>
-                                                </button>
-                                            )}
+                                            <h4 className="font-black text-[#2D241E] text-lg tracking-tight">{item.mealType} Meal</h4>
                                         </div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-0.5 opacity-60">{item.date}</p>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-0.5 opacity-60">{new Date(item.deliveredAt).toLocaleDateString()}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-0.5 bg-amber-400/10 p-2 rounded-2xl border border-amber-400/20 shadow-sm group-hover:bg-amber-400/20 transition-colors">
@@ -53,32 +43,26 @@ const FeedbackHistoryList = ({ history, onEdit }) => {
                                 </div>
                             </div>
 
-                            <div className="relative mb-6">
-                                <span className="absolute -top-4 -left-2 text-4xl text-primary/5 font-serif select-none">"</span>
-                                <p className="text-[15px] font-bold text-[#5C4D42] leading-relaxed px-1 relative z-10 italic">
-                                    {item.comment}
-                                </p>
-                            </div>
-
-                            {item.response && (
-                                <div className="mt-6 mb-6 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-6 rounded-[2rem] border border-blue-100 flex gap-4 items-start backdrop-blur-md shadow-sm group-hover:shadow-md transition-all">
-                                    <div className="size-10 rounded-xl bg-blue-500 text-white flex items-center justify-center flex-shrink-0 shadow-lg animate-pulse">
-                                        <span className="material-symbols-outlined text-sm">auto_awesome</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-1.5 opacity-80">Message from Chef</p>
-                                        <p className="text-sm font-bold text-[#5C4D42] opacity-90 leading-relaxed italic">{item.response}</p>
-                                    </div>
+                            {item.feedback && (
+                                <div className="relative mb-6">
+                                    <span className="absolute -top-4 -left-2 text-4xl text-primary/5 font-serif select-none">"</span>
+                                    <p className="text-[15px] font-bold text-[#5C4D42] leading-relaxed px-1 relative z-10 italic">
+                                        {item.feedback}
+                                    </p>
                                 </div>
                             )}
 
-                            <div className="flex flex-wrap gap-2 px-1">
-                                {item.tags.map(t => (
-                                    <span key={t} className="px-4 py-1.5 rounded-xl bg-white/80 border border-gray-100 text-[9px] font-black text-gray-400 uppercase tracking-widest shadow-sm group-hover:border-primary/20 group-hover:text-primary/60 transition-all">
-                                        # {t}
-                                    </span>
-                                ))}
-                            </div>
+                            {item.providerReply && (
+                                <div className="mt-4 bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-6 rounded-[2rem] border border-blue-100 flex gap-4 items-start backdrop-blur-md shadow-sm">
+                                    <div className="size-10 rounded-xl bg-blue-500 text-white flex items-center justify-center flex-shrink-0 shadow-lg">
+                                        <span className="material-symbols-outlined text-sm">restaurant</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em] mb-1.5 opacity-80">Provider Response</p>
+                                        <p className="text-sm font-bold text-[#5C4D42] opacity-90 leading-relaxed italic">{item.providerReply}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

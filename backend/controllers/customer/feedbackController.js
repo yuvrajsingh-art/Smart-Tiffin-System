@@ -1,163 +1,91 @@
-const Order = require("../../models/order.model");
-const Review = require("../../models/review.model");
-const User = require("../../models/user.model");
-const Subscription = require("../../models/subscription.model");
-const Menu = require("../../models/menu.model");
-const logger = require("../../utils/logger");
+const Order = require('../../models/order.model');
+const User = require('../../models/user.model');
+const ProviderProfile = require('../../models/providerprofile.model');
 
-// Get feedback stats and recent meal for feedback
-exports.getFeedbackData = async (req, res) => {
-    try {
-        const customerId = req.user._id;
-
-        // Check active subscription
-        const activeSubscription = await Subscription.findOne({
-            customer: customerId,
-            status: "approved",
-            endDate: { $gte: new Date() }
-        });
-
-        if (!activeSubscription) {
-            return res.status(404).json({
-                success: false,
-                message: 'No active subscription found'
-            });
-        }
-
-        // Get today's latest meal for feedback
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-
-        const todayOrder = await Order.findOne({
-            customer: customerId,
-            orderDate: { $gte: today, $lt: tomorrow },
-            status: 'delivered'
-        }).populate('menu', 'name mainDish mealType')
-            .populate('provider', 'fullName')
-            .sort({ orderDate: -1 });
-
-        // Get feedback stats
-        const totalReviews = await Review.countDocuments({ customer: customerId });
-
-        const avgRatingResult = await Review.aggregate([
-            { $match: { customer: customerId } },
-            { $group: { _id: null, avgRating: { $avg: '$rating' } } }
-        ]);
-
-        const avgRating = avgRatingResult[0]?.avgRating || 0;
-
-        // Count badges (reviews with rating >= 4)
-        const badges = await Review.countDocuments({
-            customer: customerId,
-            rating: { $gte: 4 }
-        });
-
-        const stats = [
-            { label: 'Total Reviews', value: totalReviews.toString(), icon: 'reviews' },
-            { label: 'Avg Rating', value: avgRating.toFixed(1), icon: 'star', color: 'text-amber-500' },
-            { label: 'Badges', value: badges.toString(), icon: 'military_tech', color: 'text-primary' }
-        ];
-
-        // Current meal for feedback
-        let currentMeal = null;
-        if (todayOrder) {
-            const mealTime = todayOrder.menu?.mealType === 'lunch' ? 'Lunch' : 'Dinner';
-            currentMeal = {
-                orderId: todayOrder._id,
-                mealType: mealTime,
-                mealName: todayOrder.menu?.name || todayOrder.menu?.mainDish || 'Special Thali',
-                date: 'Today',
-                provider: todayOrder.provider?.fullName || 'Provider'
-            };
-        }
-
-        res.json({
-            success: true,
-            data: {
-                stats,
-                currentMeal,
-                hasActiveSubscription: true
-            }
-        });
-
-    } catch (error) {
-        logger.error("getFeedbackData Error:", error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch feedback data'
-        });
-    }
-};
-
-// Submit feedback for a meal
+// Submit feedback and rating for an order
 exports.submitFeedback = async (req, res) => {
     try {
+        const { orderId } = req.params;
+        const { rating, feedback } = req.body;
         const customerId = req.user._id;
-        const { orderId, rating, comment, tags } = req.body;
 
-        // Validate input
-        if (!orderId || !rating || rating < 1 || rating > 5) {
+        console.log('Submit Feedback - Order ID:', orderId);
+        console.log('Submit Feedback - Customer ID:', customerId);
+        console.log('Submit Feedback - Rating:', rating);
+        console.log('Submit Feedback - Feedback:', feedback);
+
+        if (!rating || rating < 1 || rating > 5) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid feedback data'
+                message: 'Rating must be between 1 and 5'
             });
         }
 
-        // Check if order exists and belongs to customer
         const order = await Order.findOne({
             _id: orderId,
             customer: customerId,
             status: 'delivered'
-        }).populate('provider', 'fullName')
-            .populate('menu', 'name mainDish');
+        });
+
+        console.log('Order found:', order ? 'Yes' : 'No');
+        if (order) {
+            console.log('Order provider:', order.provider);
+            console.log('Order status:', order.status);
+            console.log('Existing rating:', order.rating);
+        }
 
         if (!order) {
             return res.status(404).json({
                 success: false,
-                message: 'Order not found or not eligible for feedback'
+                message: 'Order not found or not delivered yet'
             });
         }
 
-        // Check if feedback already exists
-        const existingReview = await Review.findOne({
-            customer: customerId,
-            order: orderId
-        });
-
-        if (existingReview) {
+        if (order.rating) {
             return res.status(400).json({
                 success: false,
-                message: 'Feedback already submitted for this meal'
+                message: 'Feedback already submitted for this order'
             });
         }
 
-        // Create new review
-        const review = new Review({
-            customer: customerId,
-            provider: order.provider._id,
-            order: orderId,
-            menu: order.menu?._id,
-            rating,
-            comment: comment || '',
-            tags: tags || [],
-            mealType: order.menu?.mealType || 'lunch',
-            reviewDate: new Date()
-        });
+        // Update order with rating and feedback
+        order.rating = rating;
+        order.feedback = feedback || '';
+        await order.save();
 
-        await review.save();
+        console.log('Order updated with rating:', order.rating);
+        console.log('Order updated with feedback:', order.feedback);
+
+        // Update provider's average rating
+        const provider = await User.findById(order.provider);
+        if (provider) {
+            const providerProfile = await ProviderProfile.findOne({ user: provider._id });
+            
+            if (providerProfile) {
+                const totalReviews = (providerProfile.totalReviews || 0) + 1;
+                const currentRating = providerProfile.rating || 0;
+                const newRating = ((currentRating * (totalReviews - 1)) + rating) / totalReviews;
+                
+                providerProfile.rating = parseFloat(newRating.toFixed(1));
+                providerProfile.totalReviews = totalReviews;
+                await providerProfile.save();
+                
+                console.log('Provider profile updated - Rating:', providerProfile.rating, 'Total Reviews:', providerProfile.totalReviews);
+            }
+        }
 
         res.json({
             success: true,
+            message: 'Feedback submitted successfully',
             data: {
-                reviewId: review._id,
-                message: 'Feedback submitted successfully'
+                orderId: order._id,
+                rating: order.rating,
+                feedback: order.feedback
             }
         });
 
     } catch (error) {
-        logger.error("submitFeedback Error:", error);
+        console.error('Submit Feedback Error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to submit feedback'
@@ -165,136 +93,77 @@ exports.submitFeedback = async (req, res) => {
     }
 };
 
-// Get feedback history
+// Get delivered orders that need feedback
+exports.getOrdersForFeedback = async (req, res) => {
+    try {
+        const customerId = req.user._id;
+
+        const orders = await Order.find({
+            customer: customerId,
+            status: 'delivered',
+            rating: { $exists: false }
+        })
+        .populate('provider', 'fullName businessName')
+        .sort({ deliveredAt: -1 })
+        .limit(10);
+
+        const formattedOrders = orders.map(order => ({
+            _id: order._id,
+            orderNumber: order.orderNumber,
+            provider: order.provider?.fullName || order.provider?.businessName || 'Provider',
+            mealType: order.mealType,
+            deliveredAt: order.deliveredAt,
+            amount: order.amount
+        }));
+
+        res.json({
+            success: true,
+            data: formattedOrders
+        });
+
+    } catch (error) {
+        console.error('Get Orders For Feedback Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch orders'
+        });
+    }
+};
+
+// Get customer's feedback history
 exports.getFeedbackHistory = async (req, res) => {
     try {
         const customerId = req.user._id;
-        const { page = 1, limit = 10 } = req.query;
-        const skip = (page - 1) * limit;
 
-        // Get reviews with order and menu details
-        const reviews = await Review.find({ customer: customerId })
-            .populate('order', 'orderDate')
-            .populate('menu', 'name mainDish mealType')
-            .sort({ reviewDate: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
+        const orders = await Order.find({
+            customer: customerId,
+            rating: { $exists: true }
+        })
+        .populate('provider', 'fullName businessName')
+        .sort({ deliveredAt: -1 });
 
-        const totalReviews = await Review.countDocuments({ customer: customerId });
-
-        // Format reviews for frontend
-        const feedbackHistory = reviews.map(review => {
-            const reviewDate = new Date(review.reviewDate);
-            const dateString = reviewDate.toLocaleDateString('en-US', {
-                day: 'numeric',
-                month: 'short'
-            });
-
-            return {
-                id: review._id,
-                date: dateString,
-                meal: review.mealType === 'lunch' ? 'Lunch' : 'Dinner',
-                rating: review.rating,
-                comment: review.comment || 'No comment provided',
-                tags: review.tags || [],
-                response: review.response?.message || null
-            };
-        });
+        const feedbackHistory = orders.map(order => ({
+            _id: order._id,
+            orderNumber: order.orderNumber,
+            provider: order.provider?.fullName || order.provider?.businessName || 'Provider',
+            mealType: order.mealType,
+            rating: order.rating,
+            feedback: order.feedback,
+            providerReply: order.providerReply,
+            repliedAt: order.repliedAt,
+            deliveredAt: order.deliveredAt
+        }));
 
         res.json({
             success: true,
-            data: {
-                feedbackHistory,
-                pagination: {
-                    currentPage: parseInt(page),
-                    totalPages: Math.ceil(totalReviews / limit),
-                    totalItems: totalReviews,
-                    hasNext: page < Math.ceil(totalReviews / limit),
-                    hasPrev: page > 1
-                }
-            }
+            data: feedbackHistory
         });
 
     } catch (error) {
-        logger.error("getFeedbackHistory Error:", error);
+        console.error('Get Feedback History Error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch feedback history'
-        });
-    }
-};
-
-// Get available feedback tags
-exports.getFeedbackTags = async (req, res) => {
-    try {
-        // Predefined tags for consistency
-        const tags = [
-            'Fresh', 'Tasty', 'On Time', 'Great Portion',
-            'Hot Food', 'Healthy', 'Good Packaging', 'Authentic',
-            'Well Cooked', 'Good Value', 'Clean', 'Spicy'
-        ];
-
-        res.json({
-            success: true,
-            data: { tags }
-        });
-
-    } catch (error) {
-        logger.error("getFeedbackTags Error:", error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch feedback tags'
-        });
-    }
-};
-
-// Update existing feedback
-exports.updateFeedback = async (req, res) => {
-    try {
-        const customerId = req.user._id;
-        const { reviewId } = req.params;
-        const { rating, comment, tags } = req.body;
-
-        // Find and update review
-        const review = await Review.findOne({
-            _id: reviewId,
-            customer: customerId
-        });
-
-        if (!review) {
-            return res.status(404).json({
-                success: false,
-                message: 'Review not found'
-            });
-        }
-
-        // Update fields
-        if (rating && rating >= 1 && rating <= 5) {
-            review.rating = rating;
-        }
-        if (comment !== undefined) {
-            review.comment = comment;
-        }
-        if (tags) {
-            review.tags = tags;
-        }
-
-        review.updatedAt = new Date();
-        await review.save();
-
-        res.json({
-            success: true,
-            data: {
-                reviewId: review._id,
-                message: 'Feedback updated successfully'
-            }
-        });
-
-    } catch (error) {
-        logger.error("updateFeedback Error:", error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to update feedback'
         });
     }
 };

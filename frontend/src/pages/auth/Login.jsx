@@ -52,7 +52,6 @@ function Login() {
         return Object.keys(newErrors).length === 0;
     };
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -160,8 +159,6 @@ function Login() {
                                 >
                                     <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                 </button>
-
-
                                 {errors.password && <span className="text-[10px] font-bold text-red-500 mt-1 ml-4 uppercase tracking-wider animate-in fade-in slide-in-from-top-1">{errors.password}</span>}
                             </div>
                         </div>

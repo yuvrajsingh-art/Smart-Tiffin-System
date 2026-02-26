@@ -44,8 +44,8 @@ function ProviderRevenue() {
                 customer: txn.referenceId || 'N/A',
                 amount: Math.abs(txn.amount),
                 status: txn.status.toLowerCase(),
-                date: new Date(txn.date).toLocaleDateString('en-IN'),
-                time: new Date(txn.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+                date: new Date(txn.date || txn.createdAt).toLocaleDateString('en-IN'),
+                time: new Date(txn.date || txn.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
             }));
             
             // Generate chart data from actual transactions
@@ -60,7 +60,7 @@ function ProviderRevenue() {
             
             setRevenueData({
                 totalRevenue: wallet.totalEarnings || 0,
-                todayRevenue: wallet.withdrawableBalance || 0,
+                todayRevenue: wallet.todayRevenue || 0,
                 weekRevenue: weekRevenue,
                 monthRevenue: wallet.totalEarnings || 0,
                 growth: wallet.monthlyChange || 0,

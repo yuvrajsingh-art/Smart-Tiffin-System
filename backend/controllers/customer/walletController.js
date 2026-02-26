@@ -79,7 +79,7 @@ exports.getWalletDetails = async (req, res) => {
         const transactions = await Transaction.find({ customer: customerId })
             .sort({ createdAt: -1 })
             .limit(10)
-            .select('type amount description status createdAt bankDetails');
+            .select('type transactionType amount description status createdAt bankDetails referenceId');
 
         // Format transactions for frontend
         const formattedTransactions = transactions.map(tx => ({
@@ -153,10 +153,10 @@ exports.addMoneyToWallet = async (req, res) => {
         const masterBank = await getMasterBank();
 
         // 2. Validate UTR (Fetched from DB)
-        if (transactionId !== masterBank.masterUTR) {
+        if (!transactionId || transactionId !== masterBank.masterUTR) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid Transaction ID. Please use the official Master UTR for testing.'
+                message: `Invalid Transaction ID. Use ${masterBank.masterUTR} for testing.`
             });
         }
 
@@ -164,14 +164,6 @@ exports.addMoneyToWallet = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Treasury balance low. Please contact admin."
-            });
-        }
-
-        // Validating 12-digit UTR logic remains for realistic feel
-        if (!transactionId || transactionId.length !== 12) {
-            return res.status(400).json({
-                success: false,
-                message: 'A valid 12-digit Transaction ID (UTR) is required for verification.'
             });
         }
 

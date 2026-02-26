@@ -12,6 +12,7 @@ import Menu from '../pages/customer/Menu';
 import TrackDelivery from '../pages/customer/Track';
 import ManageSubscription from '../pages/customer/ManageSubscription';
 import Feedback from '../pages/customer/Feedback';
+import FeedbackPage from '../pages/customer/FeedbackPage';
 import History from '../pages/customer/History';
 import Wallet from '../pages/customer/Wallet';
 import Profile from '../pages/customer/Profile';
@@ -40,6 +41,7 @@ export const customerRoutes = [
     { path: "track", element: <SubscriptionGuard><TrackDelivery /></SubscriptionGuard> },
     { path: "manage-subscription", element: <SubscriptionGuard><ManageSubscription /></SubscriptionGuard> },
     { path: "feedback", element: <SubscriptionGuard><Feedback /></SubscriptionGuard> },
+    { path: "feedback/:orderId", element: <SubscriptionGuard><FeedbackPage /></SubscriptionGuard> },
     { path: "history", element: <SubscriptionGuard><History /></SubscriptionGuard> },
 ];
 

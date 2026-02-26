@@ -34,12 +34,10 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: ["https://smart-tiffin-system.vercel.app", "https://smart-tiffin-system-4.vercel.app", "http://localhost:5173"],
+    methods: ["GET", "POST"],
     credentials: true
-  },
-  transports: ['websocket', 'polling'], // Allow both transports
-  allowEIO3: true // Backward compatibility
+  }
 });
 
 
@@ -107,7 +105,7 @@ notificationService.setSocketIO(io);
 
 // CORS - Allow frontend to communicate with backend
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite dev server
+  origin: ["https://smart-tiffin-system.vercel.app", "https://smart-tiffin-system-4.vercel.app", "http://localhost:5173"],
   credentials: true
 }));
 
@@ -144,10 +142,14 @@ const storeProfileRoutes = require("./routes/provider/storeProfileRoutes");
 const providerOrderRoutes = require("./routes/provider/providerOrderRoutes");
 const providerNotificationRoutes = require("./routes/provider/providerNotificationRoutes");
 const subscriptionPlanRoutes = require("./routes/provider/subscriptionPlanRoutes");
+const providerPlanRoutes = require("./routes/provider/planRoutes");
+const providerTrackRoutes = require("./routes/provider/trackRoutes");
 const activityRoutes = require("./routes/provider/activityRoutes");
+const providerFeedbackRoutes = require("./routes/provider/feedbackRoutes");
 
 // Admin routes
 const adminRoutes = require("./routes/adminRoutes");
+const adminFeedbackRoutes = require("./routes/admin/feedbackRoutes");
 
 // Customer routes consolidated
 const customerRoutes = require("./routes/customer");
@@ -157,6 +159,9 @@ const customerRoutes = require("./routes/customer");
 // =============================================================================
 
 // Health check endpoint
+const healthRoutes = require('./routes/health.routes');
+app.use('/api', healthRoutes);
+
 app.get("/", (req, res) => {
   res.send("API running & DB connected");
 });
@@ -173,17 +178,19 @@ app.use("/api/provider-subscription", subscriptionRoutes);
 app.use("/api/provider-wallet", walletRoutes);
 app.use("/api/provider-reviews", reviewTriageRoutes);
 app.use("/api/provider-store", storeProfileRoutes);
- 
-app.use("/api/provider-orders", providerOrderRoutes);  // NEW: Order management
-app.use("/api/provider-plans", require("./routes/provider/planRoutes"));
-app.use("/api/notifications", providerNotificationRoutes);  // Provider Notifications
- 
 app.use("/api/provider-orders", providerOrderRoutes);
 app.use("/api/notifications", providerNotificationRoutes);
+app.use("/api/provider-notifications", providerNotificationRoutes);
 app.use("/api/provider", subscriptionPlanRoutes);
- 
+app.use("/api/provider-plans", providerPlanRoutes);
+app.use("/api/provider-track", providerTrackRoutes);
+app.use("/api/provider/activities", activityRoutes);
+app.use('/api/provider/support', require('./routes/provider/supportRoutes'));
+app.use('/api/provider/feedback', providerFeedbackRoutes);
+
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/feedbacks", adminFeedbackRoutes);
 
 // Customer endpoints: /api/customer/* and /api/discovery/*
 app.use("/api/customer", customerRoutes);
@@ -225,13 +232,6 @@ const log = {
 // =============================================================================
 // START SERVER
 // =============================================================================
-
-// =============================================================================
-// START SERVER
-// =============================================================================
-
-// Provider Support Routes
-app.use('/api/provider/support', require('./routes/provider/supportRoutes'));
 
 const PORT = process.env.PORT || 5000;
 
@@ -282,9 +282,13 @@ server.listen(PORT, () => {
   console.log('');
 
   // Initialize Cron Jobs
-  // Initialize Cron Jobs
   initScheduledJobs();
   console.log('Scheduled jobs initialized');
+  
+  // Initialize Order Cron Jobs
+  const { initializeCronJobs } = require('./services/orderCronService');
+  initializeCronJobs();
+  console.log('Order automation initialized');
 
   // Initialize DB Watcher (For Manual Updates)
   const watchOrders = require('./utils/dbWatcher');

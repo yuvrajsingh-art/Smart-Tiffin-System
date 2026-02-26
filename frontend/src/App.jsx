@@ -6,28 +6,28 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { SubscriptionProvider } from './context/SubscriptionContext';
-import { UserProvider } from './context/UserContext';
-import { SocketProvider } from './context/SocketContext';
-import { NotificationProvider } from './context/NotificationContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
+import { SubscriptionProvider } from './context/SubscriptionContext.jsx';
+import { UserProvider } from './context/UserContext.jsx';
+import { SocketProvider } from './context/SocketContext.jsx';
+import { NotificationProvider } from './context/NotificationContext.jsx';
+import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 
 // Layouts
-import DashboardLayout from './layouts/DashboardLayout';
-import AdminLayout from './layouts/AdminLayout';
-import ProviderLayout from './layouts/ProviderLayout';
+import DashboardLayout from './layouts/DashboardLayout.jsx';
+import AdminLayout from './layouts/AdminLayout.jsx';
+import ProviderLayout from './layouts/ProviderLayout.jsx';
 
 // Route Modules
-import { customerRoutes, providerRoutes, adminRoutes } from './routes';
+import { customerRoutes, providerRoutes, adminRoutes } from './routes/index.js';
 
 // Public Pages
-import LandingPage from './pages/LandingPage';
-import Login from './pages/auth/Login';
-import RoleSelection from './pages/auth/RoleSelection';
-import Register from './pages/auth/Register';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import ProviderOnboarding from './pages/provider/ProviderOnboarding';
+import LandingPage from './pages/LandingPage.jsx';
+import Login from './pages/auth/Login.jsx';
+import RoleSelection from './pages/auth/RoleSelection.jsx';
+import Register from './pages/auth/Register.jsx';
+import ForgotPassword from './pages/auth/ForgotPassword.jsx';
+import ResetPassword from './pages/auth/ResetPassword.jsx';
+import ProviderOnboarding from './pages/Provider/ProviderOnboarding.jsx';
 
 function App() {
   return (

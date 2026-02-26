@@ -1,9 +1,41 @@
-const ProviderProfile = require("../../models/providerProfile.model");
+const ProviderProfile = require("../../models/providerprofile.model");
 const StoreProfile = require("../../models/storeProfile.model");
 const User = require("../../models/user.model");
 const Review = require("../../models/review.model");
 const Plan = require("../../models/plan.model");
 const { sendSuccess, sendError } = require("../../utils/responseHelper");
+
+/**
+ * Get Plans for a specific provider (both standard and custom)
+ * @route GET /api/discovery/plans/:providerId
+ */
+exports.getProviderPlans = async (req, res) => {
+    try {
+        const { providerId } = req.params;
+        
+        // Find store to get actual provider user ID
+        const store = await StoreProfile.findOne({
+            $or: [
+                { provider: providerId },
+                { _id: providerId }
+            ]
+        });
+        
+        const actualProviderId = store ? store.provider : providerId;
+        
+        const plans = await Plan.find({ 
+            $or: [
+                { provider: actualProviderId, isActive: true, verificationStatus: 'Approved' },
+                { isStandard: true, isActive: true, verificationStatus: 'Approved' }
+            ]
+        }).sort({ price: 1 });
+        
+        return sendSuccess(res, 200, "Provider plans retrieved", plans);
+    } catch (error) {
+        console.error("Get Provider Plans Error:", error.message);
+        return sendError(res, 500, "Failed to fetch provider plans", error);
+    }
+};
 
 /**
  * Get Standard Platform Plans

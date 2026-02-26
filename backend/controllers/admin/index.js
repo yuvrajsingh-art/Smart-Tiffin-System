@@ -16,6 +16,7 @@ const providerController = require('./provider.controller');
 
 // Features
 const financeController = require('./finance.controller');
+const menuController = require('./menu.controller');
 const planController = require('./plan.controller');
 const ticketController = require('./ticket.controller');
 const broadcastController = require('./broadcast.controller');

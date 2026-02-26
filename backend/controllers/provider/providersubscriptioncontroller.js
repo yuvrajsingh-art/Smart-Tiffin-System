@@ -11,7 +11,7 @@ exports.getSubscribers = async (req, res) => {
 
     const subscriptions = await Subscription.find({
       provider: providerId,
-      status: { $in: ["approved", "active"] },
+      status: { $in: ["approved", "active", "cancellation_requested", "cancelled"] },
       adminApproval: "approved"
     })
       .populate("customer", "name fullName phone mobile email address")
@@ -25,8 +25,14 @@ exports.getSubscribers = async (req, res) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Check if expired first
-      if (sub.endDate < today) {
+      // Check cancellation status first
+      if (sub.status === "cancellation_requested") {
+        status = "cancellation_requested";
+      } else if (sub.status === "cancelled") {
+        status = "cancelled";
+      }
+      // Check if expired
+      else if (sub.endDate < today) {
         status = "expired";
       }
       // Then check if currently paused
@@ -47,6 +53,12 @@ exports.getSubscribers = async (req, res) => {
         mealsSkipped = sub.skippedMeals.length;
       }
 
+      // Calculate remaining days
+      const endDate = new Date(sub.endDate);
+      endDate.setHours(0, 0, 0, 0);
+      const diffTime = endDate - today;
+      const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
       return {
         _id: sub._id,
         customer: sub.customer,
@@ -58,7 +70,8 @@ exports.getSubscribers = async (req, res) => {
         duration: {
           start: sub.startDate,
           end: sub.endDate,
-          durationInDays: sub.durationInDays
+          durationInDays: sub.durationInDays,
+          remainingDays: remainingDays > 0 ? remainingDays : 0
         },
         mealsSkipped,
         status,
@@ -75,6 +88,7 @@ exports.getSubscribers = async (req, res) => {
       active: data.filter(d => d.status === 'active').length,
       paused: customersWithSkippedMeals,
       expired: data.filter(d => d.status === 'expired').length,
+      cancelled: data.filter(d => d.status === 'cancelled' || d.status === 'cancellation_requested').length,
       total: data.length
     };
 

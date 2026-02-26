@@ -13,6 +13,21 @@ const { sendSuccess, sendError } = require("../../utils/responseHelper");
 const { isValidObjectId } = require("../../utils/validationHelper");
 const { formatDate, formatTime, getStartOfDay, getEndOfDay } = require("../../utils/dateHelper");
 const { createLog } = require("./helpers");
+const { generateTimeline } = require("../../utils/orderHelper");
+
+// Helper to format status for frontend
+const formatStatus = (status) => {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+        case 'confirmed': return 'Preparing';
+        case 'cooking': return 'Preparing';
+        case 'prepared': return 'Out for Delivery';
+        case 'out_for_delivery': return 'In Transit';
+        case 'delivered': return 'Delivered';
+        case 'cancelled': return 'Cancelled';
+        default: return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+    }
+};
 
 /**
  * Get all orders with filters
@@ -63,19 +78,20 @@ exports.getOrders = async (req, res) => {
 
         const orders = await Order.find(query)
             .populate('customer', 'fullName mobile address')
-            .populate('provider', 'businessName')
+            .populate('provider', 'fullName businessName')
             .sort({ createdAt: -1 });
 
         // Format orders for frontend
         const formattedOrders = orders.map(order => ({
             id: order.orderNumber || order._id.toString().slice(-6).toUpperCase(),
+            _id: order._id,
             rawId: order._id,
             displayId: order.orderNumber,
             customer: order.customer?.fullName || 'Unknown',
             customerMobile: order.customer?.mobile || 'N/A',
-            kitchen: order.provider?.businessName || 'Unknown',
+            kitchen: order.provider?.businessName || order.provider?.fullName || 'Unknown',
             type: order.orderType === 'subscription' ? 'Subscription' : 'One-Time',
-            status: order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('_', ' '),
+            status: formatStatus(order.status),
             price: order.amount || 0,
             time: formatTime(order.createdAt),
             date: formatDate(order.createdAt),
@@ -113,11 +129,18 @@ exports.getOrderById = async (req, res) => {
 
         const order = await Order.findById(id)
             .populate('customer', 'fullName mobile email address')
-            .populate('provider', 'businessName fullName mobile address');
+            .populate('provider', 'businessName fullName mobile address')
+            .populate('activityLog.updatedBy', 'fullName role');
 
         if (!order) return sendError(res, 404, "Order not found");
 
-        return sendSuccess(res, 200, "Order details retrieved", order);
+        const orderData = {
+            ...order.toObject(),
+            timeline: generateTimeline(order),
+            activityLog: order.activityLog || []
+        };
+
+        return sendSuccess(res, 200, "Order details retrieved", orderData);
     } catch (error) {
         return sendError(res, 500, "Failed to fetch order", error);
     }
@@ -128,34 +151,52 @@ exports.getOrderById = async (req, res) => {
  * @route PUT /api/admin/orders/:id/status
  * @param {String} id - Order ID
  * @body {String} status - New order status
+ * @body {String} note - Optional note
  */
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, note } = req.body;
 
         if (!isValidObjectId(id)) {
             return sendError(res, 400, "Invalid order ID");
         }
 
         const validStatuses = ['confirmed', 'cooking', 'prepared', 'out_for_delivery', 'delivered', 'cancelled'];
-        const normalizedStatus = status.toLowerCase().replace(/ /g, '_');
-
+        let normalizedStatus = status.toLowerCase().replace(/ /g, '_');
+        
+        // Map frontend status to backend status
+        if (status === 'Preparing') normalizedStatus = 'prepared';
+        if (status === 'In Transit') normalizedStatus = 'out_for_delivery';
+        
         if (!validStatuses.includes(normalizedStatus)) {
             return sendError(res, 400, "Invalid status");
         }
 
-        const updateData = { status: normalizedStatus };
-        if (normalizedStatus === 'cooking') updateData.cookingStartedAt = new Date();
-        if (normalizedStatus === 'prepared') updateData.preparedAt = new Date();
-        if (normalizedStatus === 'out_for_delivery') updateData.outForDeliveryAt = new Date();
-        if (normalizedStatus === 'delivered') updateData.deliveredAt = new Date();
-
-        const order = await Order.findByIdAndUpdate(id, updateData, { new: true });
-
+        const order = await Order.findById(id);
         if (!order) {
             return sendError(res, 404, "Order not found");
         }
+
+        // Update status
+        order.status = normalizedStatus;
+
+        // Update timestamps
+        if (normalizedStatus === 'cooking' && !order.cookingStartedAt) order.cookingStartedAt = new Date();
+        if (normalizedStatus === 'prepared' && !order.preparedAt) order.preparedAt = new Date();
+        if (normalizedStatus === 'out_for_delivery' && !order.outForDeliveryAt) order.outForDeliveryAt = new Date();
+        if (normalizedStatus === 'delivered' && !order.deliveredAt) order.deliveredAt = new Date();
+
+        // Add to activity log
+        order.activityLog.push({
+            status: normalizedStatus,
+            timestamp: new Date(),
+            updatedBy: req.user.id,
+            updatedByRole: 'admin',
+            note: note || `Admin updated status to ${status}`
+        });
+
+        await order.save();
 
         // Log action
         await createLog(
@@ -166,7 +207,11 @@ exports.updateOrderStatus = async (req, res) => {
             'text-indigo-500'
         );
 
-        return sendSuccess(res, 200, `Order status updated to ${status}`, order);
+        return sendSuccess(res, 200, `Order status updated to ${status}`, {
+            order,
+            timeline: generateTimeline(order),
+            activityLog: order.activityLog
+        });
     } catch (error) {
         console.error("Update Order Status Error:", error.message);
         return sendError(res, 500, "Failed to update order status", error);

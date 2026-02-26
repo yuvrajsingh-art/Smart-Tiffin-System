@@ -20,6 +20,16 @@ exports.getCustomerDashboard = async (req, res) => {
             endDate: { $gte: today }
         });
 
+        // Calculate remaining days
+        let remainingDays = 0;
+        if (activeSubscription) {
+            const endDate = new Date(activeSubscription.endDate);
+            endDate.setHours(0, 0, 0, 0);
+            const diffTime = endDate - today;
+            remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (remainingDays < 0) remainingDays = 0;
+        }
+
         // Get today's order
         const todayOrder = await Order.findOne({
             customer: customerId,
@@ -48,13 +58,15 @@ exports.getCustomerDashboard = async (req, res) => {
             success: true,
             data: {
                 hasActiveSubscription: !!activeSubscription,
+                remainingDays,
+                subscriptionEndDate: activeSubscription?.endDate,
                 liveStatus: todayOrder ? {
                     status: todayOrder.status,
                     currentStep: (() => {
-                        const status = todayOrder.status;
-                        if (['pending', 'confirmed', 'preparing'].includes(status)) return 1;
+                        const status = todayOrder.status.toLowerCase();
+                        if (status === 'confirmed') return 1;
                         if (status === 'cooking') return 2;
-                        if (['ready', 'packed'].includes(status)) return 3;
+                        if (status === 'prepared') return 3;
                         if (status === 'out_for_delivery') return 4;
                         if (status === 'delivered') return 5;
                         return 1;

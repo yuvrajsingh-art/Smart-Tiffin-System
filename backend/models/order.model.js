@@ -120,6 +120,9 @@ const orderSchema = new mongoose.Schema({
     },
 
     feedback: String,
+    
+    providerReply: String,
+    repliedAt: Date,
 
     customization: {
         spiceLevel: {
@@ -147,7 +150,16 @@ const orderSchema = new mongoose.Schema({
     },
     cancellationReason: String,
     cancelledAt: Date,
-    refundAmount: Number
+    refundAmount: Number,
+
+    // Activity Log
+    activityLog: [{
+        status: String,
+        timestamp: { type: Date, default: Date.now },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        updatedByRole: { type: String, enum: ["customer", "provider", "admin"] },
+        note: String
+    }]
 
 }, { timestamps: true });
 

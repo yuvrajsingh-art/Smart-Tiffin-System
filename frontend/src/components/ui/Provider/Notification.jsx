@@ -26,7 +26,7 @@ const Notification = () => {
 
     const markAsRead = async (id) => {
         try {
-            const response = await ProviderApi.put(`/notifications/${id}/read`);
+            const response = await ProviderApi.patch(`/notifications/${id}/read`);
             if (response.data.success) {
                 setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
             }
@@ -37,7 +37,7 @@ const Notification = () => {
 
     const markAllRead = async () => {
         try {
-            const response = await ProviderApi.put('/notifications/mark-all-read');
+            const response = await ProviderApi.patch('/notifications/mark-all-read');
             if (response.data.success) {
                 setNotifications(prev => prev.map(n => ({ ...n, read: true })));
             }

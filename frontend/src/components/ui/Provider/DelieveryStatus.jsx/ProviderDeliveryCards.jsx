@@ -1,7 +1,7 @@
-import { FaMapMarkedAlt } from "react-icons/fa";
+import { FaMapMarkedAlt, FaCheck } from "react-icons/fa";
 import { FaPhone } from "react-icons/fa6";
 
-function ProviderDeliveryCards({ filteredDeliveries, getStatusColor, getStatusIcon, getStatusText }) {
+function ProviderDeliveryCards({ filteredDeliveries, getStatusColor, getStatusIcon, getStatusText, onUpdateStatus }) {
     return (
         <>
             <div className="space-y-4">

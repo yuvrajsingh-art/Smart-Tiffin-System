@@ -1,22 +1,19 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const { protect, customerOnly } = require('../../middleware/authMiddleware.middleware');
+const feedbackController = require('../../controllers/customer/feedbackController');
 
-const {
-    getFeedbackData,
-    submitFeedback,
-    getFeedbackHistory,
-    getFeedbackTags,
-    updateFeedback
-} = require("../../controllers/customer/feedbackController");
+// All routes require customer authentication
+router.use(protect);
+router.use(customerOnly);
 
-const { protect } = require("../../middleware/authMiddleware.middleware");
-const { validate } = require("../../middleware/validateInput");
+// Submit feedback for an order
+router.post('/:orderId', feedbackController.submitFeedback);
 
-// Feedback routes
-router.get("/data", protect, getFeedbackData);
-router.post("/submit", protect, validate('submitFeedback'), submitFeedback);
-router.get("/history", protect, getFeedbackHistory);
-router.get("/tags", protect, getFeedbackTags);
-router.put("/update/:reviewId", protect, updateFeedback);
+// Get orders that need feedback
+router.get('/pending', feedbackController.getOrdersForFeedback);
+
+// Get feedback history
+router.get('/history', feedbackController.getFeedbackHistory);
 
 module.exports = router;

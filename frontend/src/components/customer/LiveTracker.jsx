@@ -1,6 +1,27 @@
 import React from 'react';
 
 const LiveTracker = ({ dashboardData }) => {
+    // Get display status text - same as Track page
+    const getStatusText = (status) => {
+        if (!status) return 'Preparing...';
+        const statusLower = status.toLowerCase();
+        switch (statusLower) {
+            case 'confirmed': return 'Order Confirmed';
+            case 'cooking': return 'Cooking';
+            case 'prepared': return 'Ready for Pickup';
+            case 'out_for_delivery': return 'Out for Delivery';
+            case 'delivered': return 'Delivered';
+            default: return status.replace(/_/g, ' ');
+        }
+    };
+
+    // Calculate delivery time based on current hour
+    const getDeliveryTime = () => {
+        const hour = new Date().getHours();
+        // Lunch: 9 AM - 11 AM, Dinner: 3 PM - 7 PM
+        return hour < 15 ? '11:00 AM' : '7:00 PM';
+    };
+
     return (
         <section className="glass-panel p-6 rounded-[2rem] relative overflow-hidden group border border-white/60 shadow-xl">
             {/* bg blobs */}
@@ -10,12 +31,12 @@ const LiveTracker = ({ dashboardData }) => {
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1 block">Live Status</span>
-                        <h2 className="text-xl font-black text-[#2D241E] capitalize">{dashboardData?.liveStatus?.status?.replace(/_/g, ' ') || "Preparing..."} 🍳</h2>
+                        <h2 className="text-xl font-black text-[#2D241E] capitalize">{getStatusText(dashboardData?.liveStatus?.status)} 🍳</h2>
                     </div>
                     <div className="bg-white/50 backdrop-blur-md px-4 py-2 rounded-xl border border-white/60 text-right">
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Estimated Arrival</p>
                         <p className="text-base font-black text-[#2D241E]">
-                            {new Date().getHours() < 15 ? dashboardData?.lunchTime : dashboardData?.dinnerTime}
+                            {getDeliveryTime()}
                         </p>
                     </div>
                 </div>

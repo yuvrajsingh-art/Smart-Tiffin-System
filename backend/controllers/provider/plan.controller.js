@@ -6,7 +6,7 @@ const { sendSuccess, sendError } = require("../../utils/responseHelper");
  */
 exports.getMyPlans = async (req, res) => {
     try {
-        const plans = await Plan.find({ provider: req.user._id, isActive: true }).sort({ price: 1 });
+        const plans = await Plan.find({ provider: req.user._id }).sort({ price: 1 });
         return sendSuccess(res, 200, "Your plans retrieved successfully", plans);
     } catch (error) {
         console.error("Get Provider Plans Error:", error.message);
@@ -30,7 +30,9 @@ exports.createPlan = async (req, res) => {
             color,
             badge,
             isStandard: false,
-            provider: req.user._id
+            provider: req.user._id,
+            isActive: true,
+            verificationStatus: 'Approved'
         });
 
         return sendSuccess(res, 201, "Plan created successfully", newPlan);

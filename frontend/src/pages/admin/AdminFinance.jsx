@@ -527,7 +527,7 @@ const SettlementModal = ({ data, onClose }) => {
 };
 
 // --- MODAL: Invoice Preview ---
-const InvoicePreviewModal = ({ data, onClose }) => {
+const InvoicePreviewModal = ({ data, onClose, onDownload }) => {
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-[#2D241E]/80 backdrop-blur-md animate-[fadeIn_0.3s]" onClick={onClose}></div>

@@ -31,12 +31,84 @@ exports.generateInvoicePDF = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Validate ID format
         if (!isValidObjectId(id)) {
             return sendError(res, 400, "Invalid invoice ID format");
         }
 
-        // Find transaction with populated order and customer
+        // Try to find subscription first
+        const Subscription = require('../../models/subscription.model');
+        const subscription = await Subscription.findById(id)
+            .populate('customer', 'fullName email')
+            .populate('provider', 'fullName businessName');
+
+        if (subscription) {
+            // Generate subscription invoice
+            const doc = new PDFDocument({ margin: 50 });
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=Invoice-${id.slice(-6).toUpperCase()}.pdf`);
+
+            doc.pipe(res);
+
+            // Header
+            doc.fillColor('#444444')
+                .fontSize(20)
+                .text('Smart Tiffin System', 110, 57)
+                .fontSize(10)
+                .text('Sector 62, Noida, UP', 200, 65, { align: 'right' })
+                .text('support@smarttiffin.com', 200, 80, { align: 'right' })
+                .moveDown();
+
+            // Invoice info
+            doc.fillColor('#000000')
+                .fontSize(20)
+                .text('INVOICE', 50, 160);
+
+            const invoiceNumber = `INV-${id.slice(-6).toUpperCase()}`;
+            const invoiceDate = formatDate(subscription.createdAt);
+
+            doc.fontSize(10)
+                .text(`Invoice Number: ${invoiceNumber}`, 50, 200)
+                .text(`Invoice Date: ${invoiceDate}`, 50, 215);
+
+            // Bill to
+            doc.text('Bill To:', 300, 200)
+                .font('Helvetica-Bold')
+                .text(subscription.customer?.fullName || 'Customer', 300, 215)
+                .font('Helvetica')
+                .text(subscription.customer?.email || '', 300, 230)
+                .moveDown();
+
+            // Table
+            const tableTop = 270;
+            doc.font('Helvetica-Bold');
+            doc.text('Item Description', 50, tableTop)
+                .text('Amount', 400, tableTop, { width: 90, align: 'right' });
+
+            doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+
+            doc.font('Helvetica');
+            const position = tableTop + 30;
+            const itemDescription = `${subscription.planName} - ${subscription.durationInDays} days`;
+            doc.text(itemDescription, 50, position)
+                .text(`₹${subscription.price}`, 400, position, { width: 90, align: 'right' });
+
+            doc.moveTo(50, position + 20).lineTo(550, position + 20).stroke();
+
+            // Total
+            doc.font('Helvetica-Bold')
+                .text('Total:', 350, position + 40, { align: 'right' })
+                .text(`₹${subscription.price}`, 400, position + 40, { width: 90, align: 'right' });
+
+            // Footer
+            doc.fontSize(10)
+                .text('Payment is complete. Thank you for your business.', 50, 700, { align: 'center', width: 500 });
+
+            doc.end();
+            return;
+        }
+
+        // Fallback to transaction
         const transaction = await Transaction.findById(id).populate({
             path: 'orderId',
             populate: { path: 'customer', select: 'fullName email address' }
@@ -50,16 +122,13 @@ exports.generateInvoicePDF = async (req, res) => {
         const customerName = customer?.fullName || 'Guest User';
         const customerEmail = customer?.email || '';
 
-        // Create PDF document
         const doc = new PDFDocument({ margin: 50 });
 
-        // Set response headers
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Invoice-${transaction._id}.pdf`);
 
         doc.pipe(res);
 
-        // Header section
         doc.fillColor('#444444')
             .fontSize(20)
             .text('Smart Tiffin System', 110, 57)
@@ -68,7 +137,6 @@ exports.generateInvoicePDF = async (req, res) => {
             .text('support@smarttiffin.com', 200, 80, { align: 'right' })
             .moveDown();
 
-        // Invoice info section
         doc.fillColor('#000000')
             .fontSize(20)
             .text('INVOICE', 50, 160);
@@ -81,7 +149,6 @@ exports.generateInvoicePDF = async (req, res) => {
             .text(`Invoice Date: ${invoiceDate}`, 50, 215)
             .text(`Balance Due: ₹0.00`, 50, 130, { align: 'right' });
 
-        // Bill to section
         doc.text('Bill To:', 300, 200)
             .font('Helvetica-Bold')
             .text(customerName, 300, 215)
@@ -89,7 +156,6 @@ exports.generateInvoicePDF = async (req, res) => {
             .text(customerEmail, 300, 230)
             .moveDown();
 
-        // Table section
         const tableTop = 270;
         doc.font('Helvetica-Bold');
         doc.text('Item Description', 50, tableTop)
@@ -105,19 +171,12 @@ exports.generateInvoicePDF = async (req, res) => {
 
         doc.moveTo(50, position + 20).lineTo(550, position + 20).stroke();
 
-        // Total section
         doc.font('Helvetica-Bold')
             .text('Total:', 350, position + 40, { align: 'right' })
             .text(`₹${transaction.amount}`, 400, position + 40, { width: 90, align: 'right' });
 
-        // Footer section
         doc.fontSize(10)
-            .text(
-                'Payment is complete. Thank you for your business.',
-                50,
-                700,
-                { align: 'center', width: 500 }
-            );
+            .text('Payment is complete. Thank you for your business.', 50, 700, { align: 'center', width: 500 });
 
         doc.end();
 

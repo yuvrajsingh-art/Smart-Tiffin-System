@@ -14,11 +14,25 @@ exports.getWalletSummary = async (req, res) => {
                 provider: providerId,
                 totalEarnings: 0,
                 withdrawableBalance: 0,
-                lockedAmount: 5000, // Default security hold
+                lockedAmount: 0,
                 monthlyChange: 0
             });
             await wallet.save();
         }
+        
+        // Calculate today's revenue from transactions
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayTransactions = await Transaction.find({
+            provider: providerId,
+            status: { $in: ['Success', 'Completed'] },
+            createdAt: { $gte: today, $lt: tomorrow }
+        });
+        
+        const todayRevenue = todayTransactions.reduce((sum, txn) => sum + Math.abs(txn.amount), 0);
         
         res.json({
             success: true,
@@ -26,7 +40,8 @@ exports.getWalletSummary = async (req, res) => {
                 totalEarnings: wallet.totalEarnings,
                 withdrawableBalance: wallet.withdrawableBalance,
                 lockedAmount: wallet.lockedAmount,
-                monthlyChange: wallet.monthlyChange
+                monthlyChange: wallet.monthlyChange,
+                todayRevenue: todayRevenue
             }
         });
         

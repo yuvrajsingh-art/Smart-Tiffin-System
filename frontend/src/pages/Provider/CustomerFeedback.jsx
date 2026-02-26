@@ -21,13 +21,13 @@ function CustomerFeedback() {
 
     const fetchFeedbacks = async () => {
         try {
-            const response = await ProviderApi.get('/provider-reviews/categorized');
+            const response = await ProviderApi.get('/provider/feedback/categorized');
 
-            if (response.data && response.data.reviews) {
+            if (response.data && response.data.data) {
                 const allReviews = [
-                    ...response.data.reviews.negative || [],
-                    ...response.data.reviews.neutral || [],
-                    ...response.data.reviews.positive || []
+                    ...(response.data.data.negative?.reviews || []),
+                    ...(response.data.data.neutral?.reviews || []),
+                    ...(response.data.data.positive?.reviews || [])
                 ];
                 const formattedFeedbacks = allReviews.map(review => ({
                     id: review._id,
@@ -38,7 +38,7 @@ function CustomerFeedback() {
                     date: new Date(review.createdAt).toLocaleDateString('en-IN'),
                     time: new Date(review.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                     orderId: review.order || 'N/A',
-                    item: 'N/A',
+                    item: review.mealType || 'N/A',
                     helpful: 0,
                     replied: !!review.response,
                     reply: review.response
@@ -72,8 +72,7 @@ function CustomerFeedback() {
         if (!replyText.trim()) return;
 
         try {
-            const response = await ProviderApi.put(`/provider-reviews/action/${feedbackId}`, {
-                action: 'reply',
+            const response = await ProviderApi.post(`/provider/feedback/reply/${feedbackId}`, {
                 replyText: replyText
             });
 
