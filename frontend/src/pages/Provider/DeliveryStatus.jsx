@@ -47,40 +47,14 @@ function DeliveryStatus() {
             console.log('Orders Response:', response.data);
             
             if (response.data && response.data.data) {
-<<<<<<< HEAD
-                const { lunch, dinner } = response.data.data;
-                const allOrders = [...lunch, ...dinner];
-=======
-                const allOrders = [
-<<<<<<< HEAD
-                    ...response.data.data.justIn.map(o => ({ ...o, status: 'preparing' })),
-                    ...response.data.data.preparing.map(o => ({ ...o, status: 'preparing' })),
-                    ...response.data.data.ready.map(o => ({ ...o, status: 'ready_for_pickup' })),
-                    ...response.data.data.dispatched.map(o => ({ ...o, status: 'out_for_delivery' })),
-                    ...(!filter || filter === 'all' || filter === 'delivered' ? [] : []) // Don't show delivered in main flow unless filtered, but for now show all
-                ];
-
-                const formattedDeliveries = allOrders.map(order => ({
-                    id: order._id,
-                    orderId: order.orderNo,
-                    customer: order.customerName || 'N/A',
-                    phone: 'N/A',
-                    address: 'N/A',
-                    items: order.items?.map(i => i.name) || [],
-                    status: order.status,
-                    orderTime: new Date(order.orderTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-                    estimatedDelivery: 'N/A',
-                    rider: null,
-                    amount: order.amount || 0
-                }));
-                // Also fetch delivered orders if needed, for now just keeping active flow
-=======
+                 const { lunch, dinner } = response.data.data;
+               
+                 const allOrders = [
                     ...response.data.data.justIn,
                     ...response.data.data.preparing,
                     ...response.data.data.ready,
                     ...response.data.data.dispatched
                 ];
->>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
                 
                 const formattedDeliveries = allOrders.map(order => {
                     const mealType = (order.mealType || 'lunch').toLowerCase();
@@ -136,14 +110,8 @@ function DeliveryStatus() {
                         amount: order.amount || 0,
                         orderType: order.orderType
                     };
-<<<<<<< HEAD
-                }).filter(Boolean); // Remove null entries
-                
-=======
                 });
->>>>>>> e0e90d30dc25ca4f82a351b90bcb99d93b91d4cd
->>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
-                setDeliveries(formattedDeliveries);
+                 setDeliveries(formattedDeliveries);
             }
         } catch (error) {
             console.error('Error fetching deliveries:', error);

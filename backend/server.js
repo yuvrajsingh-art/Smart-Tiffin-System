@@ -173,20 +173,15 @@ app.use("/api/provider-subscription", subscriptionRoutes);
 app.use("/api/provider-wallet", walletRoutes);
 app.use("/api/provider-reviews", reviewTriageRoutes);
 app.use("/api/provider-store", storeProfileRoutes);
-<<<<<<< HEAD
+ 
 app.use("/api/provider-orders", providerOrderRoutes);  // NEW: Order management
 app.use("/api/provider-plans", require("./routes/provider/planRoutes"));
 app.use("/api/notifications", providerNotificationRoutes);  // Provider Notifications
-=======
+ 
 app.use("/api/provider-orders", providerOrderRoutes);
 app.use("/api/notifications", providerNotificationRoutes);
 app.use("/api/provider", subscriptionPlanRoutes);
-<<<<<<< HEAD
-app.use("/api/provider/activities", activityRoutes);
-=======
->>>>>>> e0e90d30dc25ca4f82a351b90bcb99d93b91d4cd
->>>>>>> 8ab50e6422c6f34a0687aafaa4be61b62ab02564
-
+ 
 // Admin endpoints: /api/admin/*
 app.use("/api/admin", adminRoutes);
 
